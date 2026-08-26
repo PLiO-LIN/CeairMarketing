@@ -1,0 +1,102 @@
+﻿name: deploy-production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check frontend JavaScript
+        shell: bash
+        run: for file in apps/web-v32/*.js; do node --check "$file"; done
+      - name: Check whitespace
+        run: git diff --check
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run API tests
+        working-directory: services/platform-api
+        run: |
+          pip install -r requirements.txt pytest
+          pytest -q
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package release
+        shell: bash
+        run: |
+          tar --exclude=.git --exclude='**/node_modules' --exclude='**/__pycache__' --exclude='**/.pytest_cache' \
+            -czf ceair-marketing-${GITHUB_SHA}.tar.gz .
+
+      - name: Upload release package
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          source: ceair-marketing-${{ github.sha }}.tar.gz
+          target: /tmp
+
+      - name: Activate release on Tencent Cloud
+        uses: appleboy/ssh-action@v1
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          envs: RELEASE_SHA,RELEASE_TAG
+          script_stop: true
+          script: |
+            set -euo pipefail
+            APP_ROOT=/opt/ceair-marketing
+            RELEASE_DIR="$APP_ROOT/releases/$RELEASE_SHA"
+            ARCHIVE="/tmp/ceair-marketing-$RELEASE_SHA.tar.gz"
+            mkdir -p "$APP_ROOT/releases"
+            rm -rf "$RELEASE_DIR"
+            mkdir -p "$RELEASE_DIR"
+            tar -xzf "$ARCHIVE" -C "$RELEASE_DIR"
+            if [ -f "$APP_ROOT/current/.env" ]; then
+              cp "$APP_ROOT/current/.env" "$RELEASE_DIR/.env"
+            elif [ -f "$APP_ROOT/.env" ]; then
+              cp "$APP_ROOT/.env" "$RELEASE_DIR/.env"
+            else
+              echo "Production .env is missing under $APP_ROOT" >&2
+              exit 1
+            fi
+            cd "$RELEASE_DIR"
+            sudo docker compose build
+            sudo docker compose up -d --remove-orphans
+            for i in $(seq 1 30); do
+              if sudo docker compose ps --status running | grep -q 'ceair-marketing-web'; then
+                if curl -fsS http://127.0.0.1:8088/health >/dev/null; then break; fi
+              fi
+              sleep 5
+            done
+            curl -fsS http://127.0.0.1:8088/health >/dev/null
+            ln -sfn "$RELEASE_DIR" "$APP_ROOT/current"
+            find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -name "$RELEASE_SHA" -printf '%T@ %p\n' | sort -nr | tail -n +6 | cut -d' ' -f2- | xargs -r sudo rm -rf
+            rm -f "$ARCHIVE"
+            echo "Deployed $RELEASE_SHA ($RELEASE_TAG)"

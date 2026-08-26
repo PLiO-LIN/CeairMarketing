@@ -54,3 +54,9 @@ reverse proxy.
 ## Git workflow
 
 The system root is a Git repository. Keep runtime secrets in `.env` only; commit `.env.example` and source changes. Use small commits by change type, for example `fix(web): prevent repeated localization labels`, and run the API tests plus frontend syntax/build checks before pushing.
+
+## Production CI/CD
+
+A push to `main` triggers `.github/workflows/deploy-production.yml`. The workflow runs frontend syntax checks and API tests, uploads an immutable release package to Tencent Cloud over SSH, preserves the server `.env`, rebuilds Docker Compose services, checks `/health`, and updates `/opt/ceair-marketing/current` only after the new release is healthy.
+
+Configure the `production` GitHub environment with `DEPLOY_HOST`, `DEPLOY_PORT`, `DEPLOY_USER`, and `DEPLOY_SSH_KEY`. See `docs/deployment-ci-cd.md` for server prerequisites and rollback steps.
