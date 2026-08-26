@@ -44,7 +44,7 @@ jobs:
       - name: Package release
         shell: bash
         run: |
-          tar --exclude=.git --exclude='**/node_modules' --exclude='**/__pycache__' --exclude='**/.pytest_cache' \\
+          tar --exclude=.git --exclude='**/node_modules' --exclude='**/__pycache__' --exclude='**/.pytest_cache' \
             -czf "$RUNNER_TEMP/ceair-marketing-${GITHUB_SHA}.tar.gz" .
           cp "$RUNNER_TEMP/ceair-marketing-${GITHUB_SHA}.tar.gz" "ceair-marketing-${GITHUB_SHA}.tar.gz"
 
