@@ -1,0 +1,15 @@
+.env
+*.db
+**/__pycache__/
+**/.pytest_cache/
+apps/web/node_modules/
+apps/web/dist/
+**/.venv/
+**/dist/
+**/build/
+**/coverage/
+**/logs/
+**/uploads/
+*.log
+.DS_Store
+Thumbs.db
