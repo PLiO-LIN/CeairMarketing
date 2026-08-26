@@ -41,3 +41,23 @@ curl -fsS http://127.0.0.1:8088/health
 ```
 
 A rollback must be recorded as an issue or deployment note.
+
+## Current server key setup
+
+The public deployment key has been installed for the `ubuntu` account on `124.220.225.29`. The corresponding private key is intentionally outside the repository at:
+
+```text
+C:\Users\linly\.ssh\ceair-marketing-actions
+```
+
+In GitHub, open `Settings -> Environments -> production`, create the environment if it does not exist, and add:
+
+```text
+DEPLOY_HOST=124.220.225.29
+DEPLOY_PORT=22
+DEPLOY_USER=ubuntu
+DEPLOY_SSH_KEY=<entire contents of C:\Users\linly\.ssh\ceair-marketing-actions>
+```
+
+`DEPLOY_SSH_KEY` must include the full `BEGIN OPENSSH PRIVATE KEY` and `END OPENSSH PRIVATE KEY` lines. Do not paste the server password anywhere in GitHub.
+
