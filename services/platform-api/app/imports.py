@@ -11,9 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .db_models import ImportJobRecord, OntologyEntityRecord, OntologyRelationRecord
+from .ontology import object_type_ids, validate_relation_endpoints
 
 
-ENTITY_TYPES = {"Customer", "Audience", "Opportunity", "Flight", "Route", "Product", "ProductPackage", "Campaign", "Content", "Channel", "ConversionResult"}
+LEGACY_ENTITY_TYPES = {"Customer", "Audience", "Content", "ConversionResult"}
+ENTITY_TYPES = object_type_ids() | LEGACY_ENTITY_TYPES
 
 
 def import_file(session: Session, tenant_id: int, user_id: int, dataset_type: str, upload: UploadFile) -> ImportJobRecord:
@@ -129,12 +131,17 @@ def _insert_relation(session: Session, tenant_id: int, job_id: str, row: dict[st
     by_external_id = {item.external_id: item for item in entities}
     if source_external_id not in by_external_id or target_external_id not in by_external_id:
         raise ValueError("关系端点不存在于当前租户，请先导入实体")
+    source = by_external_id[source_external_id]
+    target = by_external_id[target_external_id]
+    validation_error = validate_relation_endpoints(relation_type, source.entity_type, target.entity_type)
+    if validation_error:
+        raise ValueError(validation_error)
     session.add(
         OntologyRelationRecord(
             tenant_id=tenant_id,
-            source_entity_id=by_external_id[source_external_id].id,
+            source_entity_id=source.id,
             relation_type=relation_type,
-            target_entity_id=by_external_id[target_external_id].id,
+            target_entity_id=target.id,
             evidence=str(row.get("evidence") or ""),
             source=str(row.get("provenance") or row.get("data_source") or "文件导入"),
             confidence=_confidence(row.get("confidence", 1.0)),

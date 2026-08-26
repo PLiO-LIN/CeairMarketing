@@ -1,5 +1,16 @@
 ﻿# Version History
 
+## v2.4 - 2026-08-26
+
+- Added the China Eastern marketing operations ontology semantic registry covering data, opportunity, audience, product, content, campaign, approval, execution, feedback, and review.
+- Added registered relation types, governed business actions, reusable business functions, and ontology read/write contracts for all six intelligent domains.
+- Added ontology semantic model and conformance status APIs without changing the existing platform workbench layout.
+- Extended governed data imports to accept registered ontology object types while retaining legacy compatibility.
+- Added an idempotent end-to-end marketing lifecycle ontology instance for the Shanghai-Sanya campaign.
+- Added ontology context events to agent runs so every run records the objects and functions it used.
+- Added registered relation endpoint validation while retaining tenant-defined extension relations.
+- Expanded the idempotent lifecycle instance with ticket, ancillary, coupon, channel and complete campaign spine objects.
+
 ## v2.3 - 2026-08-26
 
 - Updated the platform overview to reflect the meeting-defined loop: external signals, internal route operations, aggregated ToB/ToC audiences, AI suggestions with human approval, scheduled channel delivery, and anomaly-based learning.
@@ -39,4 +50,3 @@
 - Added a governed agent runtime with append-only execution events.
 - Added a marketing ontology graph with evidence and confidence metadata.
 - Added API tests and production frontend build verification.
-

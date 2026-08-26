@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from .auth import hash_password
 from .config import get_settings
 from .data import CAMPAIGNS
+from .ontology.bootstrap import seed_marketing_lifecycle
 from .db_models import (
     CampaignRecord,
     ModelProviderRecord,
@@ -73,6 +74,7 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
         )
     session.commit()
     _seed_graph(session, headquarters_id)
+    seed_marketing_lifecycle(session, headquarters_id)
 
 
 def _seed_graph(session: Session, tenant_id: int) -> None:

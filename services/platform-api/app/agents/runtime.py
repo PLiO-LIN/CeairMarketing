@@ -11,6 +11,7 @@ from ..data import AGENT_DOMAINS
 from ..db_models import AgentRunRecord, CampaignRecord, ModelProviderRecord, RuntimeEventRecord
 from ..llm import LLMClient, LLMConfig
 from ..models import AgentRun, AgentRunRequest, RuntimeEvent
+from ..ontology import agent_contract
 from ..security import SecretCipher
 
 
@@ -43,6 +44,14 @@ class AgentRuntime:
         emit("governance/guard-checked", guard="agent_domain_registered", accepted=domain is not None)
         if domain is None:
             return self._persist(session, context, request, operator, run_id, "failed", "智能域未注册。", None, events)
+        contract = agent_contract(request.domain_id)
+        emit(
+            "ontology/context-loaded",
+            reads=contract["reads"],
+            writes=contract["writes"],
+            functions=contract["functions"],
+        )
+
 
         provider = self._resolve_provider(session, context.tenant_id, request.provider_id)
         if provider is None:

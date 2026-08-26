@@ -28,6 +28,7 @@ from .models import (
     LoginRequest,
     LoginResponse,
     MarketingGraph,
+    OntologySemanticStatus,
     ModelProvider,
     ModelProviderCreate,
     ModelProviderUpdate,
@@ -38,7 +39,7 @@ from .models import (
     TenantCreate,
     TenantSummary,
 )
-from .ontology import build_campaign_graph, graph_stats
+from .ontology import build_campaign_graph, graph_stats, semantic_model, semantic_status
 from .security import SecretCipher
 from .seed import seed_database, seed_tenant_data
 
@@ -231,6 +232,16 @@ def run_agent(request: AgentRunRequest, context: TenantContext = Depends(require
 @app.get("/api/agent-runs", response_model=list[AgentRunListItem])
 def list_agent_runs(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     return list(session.scalars(select(AgentRunRecord).where(AgentRunRecord.tenant_id == context.tenant_id).order_by(AgentRunRecord.created_at.desc()).limit(100)))
+
+
+@app.get("/api/ontology/semantic-model")
+def ontology_semantic_model(_context: TenantContext = Depends(get_tenant_context)):
+    return semantic_model()
+
+
+@app.get("/api/ontology/status", response_model=OntologySemanticStatus)
+def ontology_status(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    return semantic_status(session, context.tenant_id)
 
 
 @app.get("/api/graph", response_model=MarketingGraph)

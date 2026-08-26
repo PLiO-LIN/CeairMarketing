@@ -7,6 +7,9 @@ The current release provides tenant-isolated marketing operations, governed
 ontology imports, dynamic graph exploration, configurable model providers, and
 platform-level tenant and user administration.
 
+The ontology contract is exposed through the authenticated, tenant-scoped
+/api/ontology/semantic-model, /api/ontology/status, and /api/graph endpoints.
+
 ## Structure
 
 ```text

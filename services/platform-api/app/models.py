@@ -214,3 +214,15 @@ class GraphStats(BaseModel):
     relation_count: int
     entity_types: dict[str, int]
     source_count: int
+
+
+class OntologySemanticStatus(BaseModel):
+    semantic_model_version: str
+    registered_object_type_count: int
+    registered_relation_type_count: int
+    instance_entity_count: int
+    instance_relation_count: int
+    registered_instance_types: dict[str, int]
+    legacy_or_extension_types: dict[str, int]
+    registered_instance_relations: dict[str, int]
+    legacy_or_extension_relations: dict[str, int]
