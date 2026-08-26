@@ -1,4 +1,10 @@
-# Version History
+﻿# Version History
+
+## v2.3 - 2026-08-26
+
+- Updated the platform overview to reflect the meeting-defined loop: external signals, internal route operations, aggregated ToB/ToC audiences, AI suggestions with human approval, scheduled channel delivery, and anomaly-based learning.
+- Replaced the placeholder sidebar character mark with the China Eastern brand symbol asset.
+
 
 ## v2.2 - 2026-08-26
 
@@ -33,3 +39,4 @@
 - Added a governed agent runtime with append-only execution events.
 - Added a marketing ontology graph with evidence and confidence metadata.
 - Added API tests and production frontend build verification.
+
