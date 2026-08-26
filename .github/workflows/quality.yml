@@ -1,0 +1,35 @@
+﻿name: quality
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check web-v32 JavaScript
+        shell: bash
+        run: for file in apps/web-v32/*.js; do node --check "$file"; done
+      - name: Check whitespace
+        run: git diff --check
+
+  api:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/platform-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+      - name: Run API tests
+        run: pytest -q
