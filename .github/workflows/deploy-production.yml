@@ -1,4 +1,4 @@
-﻿name: deploy-production
+name: deploy-production
 
 on:
   push:
@@ -100,4 +100,3 @@ jobs:
             find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -name "$RELEASE_SHA" -printf '%T@ %p\n' | sort -nr | tail -n +6 | cut -d' ' -f2- | xargs -r sudo rm -rf
             rm -f "$ARCHIVE"
             echo "Deployed $RELEASE_SHA ($RELEASE_TAG)"
-

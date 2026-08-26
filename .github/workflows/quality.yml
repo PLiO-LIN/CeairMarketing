@@ -1,4 +1,4 @@
-﻿name: quality
+name: quality
 
 on:
   pull_request:
@@ -33,4 +33,3 @@ jobs:
         run: pip install -r requirements.txt pytest
       - name: Run API tests
         run: python -m pytest -vv --tb=long
-
