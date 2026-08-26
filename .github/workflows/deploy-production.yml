@@ -1,4 +1,4 @@
-name: deploy-production
+﻿name: deploy-production
 
 on:
   push:
@@ -44,8 +44,9 @@ jobs:
       - name: Package release
         shell: bash
         run: |
-          tar --exclude=.git --exclude='**/node_modules' --exclude='**/__pycache__' --exclude='**/.pytest_cache' \
-            -czf ceair-marketing-${GITHUB_SHA}.tar.gz .
+          tar --exclude=.git --exclude='**/node_modules' --exclude='**/__pycache__' --exclude='**/.pytest_cache' \\
+            -czf "$RUNNER_TEMP/ceair-marketing-${GITHUB_SHA}.tar.gz" .
+          cp "$RUNNER_TEMP/ceair-marketing-${GITHUB_SHA}.tar.gz" "ceair-marketing-${GITHUB_SHA}.tar.gz"
 
       - name: Upload release package
         uses: appleboy/scp-action@v1
