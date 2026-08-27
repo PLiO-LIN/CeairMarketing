@@ -63,7 +63,7 @@ RELATION_TYPES = [
     {"id": "has_tag_attribute", "name": "具有可配置属性", "from_types": ["CustomerAggregate", "AudienceSnapshot", "Route", "Flight", "Product", "ProductPackage", "Campaign"], "to_types": ["ConfigurableAttribute"]},
     {"id": "contains_chunk", "name": "包含片段", "from_types": ["KnowledgeDocument"], "to_types": ["KnowledgeChunk"]},
     {"id": "supports_claim", "name": "支撑事实", "from_types": ["KnowledgeChunk", "Evidence"], "to_types": ["KnowledgeClaim", "Opportunity", "Recommendation", "BusinessRule"]},
-    {"id": "evidence_for", "name": "Evidence for", "from_types": ["KnowledgeChunk", "Evidence"], "to_types": ["MarketSignal", "Market", "Airport", "Route", "Flight", "MetricObservation", "Opportunity", "CustomerAggregate", "AudienceSnapshot", "Product", "ProductPackage", "ContentAsset", "MarketingCase", "Campaign", "CampaignVersion", "ApprovalTask", "ExecutionBatch", "Feedback", "Review", "Recommendation", "BusinessRule"]},
+    {"id": "evidence_for", "name": "提供业务证据", "from_types": ["KnowledgeChunk", "Evidence"], "to_types": ["Evidence", "MarketSignal", "Market", "Airport", "Route", "Flight", "MetricObservation", "Opportunity", "CustomerAggregate", "AudienceSnapshot", "Product", "ProductPackage", "ContentAsset", "MarketingCase", "Campaign", "CampaignVersion", "ApprovalTask", "ExecutionBatch", "Feedback", "Review", "Recommendation", "BusinessRule"]},
     {"id": "claims_about", "name": "描述对象", "from_types": ["KnowledgeClaim"], "to_types": ["Market", "Airport", "Route", "Flight", "MetricObservation", "Product", "ProductPackage", "BusinessRule", "Opportunity"]},
 ]
 
