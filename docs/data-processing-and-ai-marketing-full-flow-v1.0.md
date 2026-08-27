@@ -1,241 +1,255 @@
 # China Eastern Data Processing and AI Marketing Full Flow v1.0
 
-> Review document for the complete flow from data ingestion to ontology enrichment, agent execution, campaign approval, channel delivery, feedback and strategy learning. The Chinese business definitions below are copied from existing UTF-8 repository documents without transformation.
+> Review document for business, product, data and engineering teams. Based on the current repository implementation, ontology semantic model and production UI. The document separates implemented, partial and recommended capabilities.
 
-## 1. Review Scope
+## ??????
 
-This document is a review baseline. It separates current implementation from partial implementation and recommended production work. Operators should drop business files or use approved connectors; they should not manually maintain ontology entities and relations.
+?????????????????????????????????????????????????????????????????????????????????????OCR????????????????????????????????????????????????????????????
 
-## 2. Target End-to-end Flow
+????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 
-~~~text
-Documents / APIs / Databases
-  -> Unified ingestion
-  -> Parsing, OCR, tables and structure recognition
-  -> Cleaning, deduplication, standardization and quality checks
-  -> Data Processing Agent
-  -> Objects, relations, evidence and confidence
-  -> Knowledge base + Ontology graph
-  -> Six marketing agent domains
-  -> Human review, compliance, campaign execution and callbacks
-  -> Attribution, review and strategy learning
-~~~
+?????????????????????????????????????????????????????????????????????????????????? ? ???? ? ???? ? ???? ? ???? ? ???? ? ???? ? ???? ? ??????
 
-## 3. Current Implementation Assessment
+??????????????????????????????????? Harness???????????????????????????????/??????????????????????????????????????????????????
+
+## 1. Overall Positioning
+
+Marketing operators should not maintain ontology entities or relations manually. They should drop business files or use approved data sources. The system parses, cleans, extracts, validates and stores business knowledge, then makes it available to six marketing agent domains.
+
+Main chain:
+
+    Documents / APIs / Databases
+      -> Unified ingestion
+      -> Parsing, OCR and table extraction
+      -> Cleaning, deduplication and standardization
+      -> Data Processing Agent
+      -> Business objects, relations, evidence and confidence
+      -> Knowledge base + ontology graph
+      -> Opportunity -> Audience -> Product -> Activity -> Content
+      -> Approval and compliance -> Channel execution -> Feedback
+      -> Attribution -> Review and strategy learning
+
+The platform already has file ingestion, MinerU integration, a shared Harness, six agent-domain contracts, tenant isolation, model configuration, knowledge storage and ontology storage. Production gaps include durable workers, API/database connectors, candidate-fact review, real channel callbacks and complete object-level write-back from every agent domain.
+
+## 2. Operator-facing Workspaces
+
+| Workspace | Operator action | Automated work |
+| --- | --- | --- |
+| Data ingestion | Drop news, notices, service files or operation reports | Parse, clean, classify, extract and update the knowledge foundation |
+| Opportunity and audience | Review market signals, anomalies and audience evidence | Link route, flight, operation, profile and historical data |
+| Products and benefits | Select fare, ancillary, coupon, loyalty or intermodal products | Check eligibility, inventory, validity, rules and delivery |
+| Content workshop | Review and edit channel versions | Generate content from approved product facts and audience context |
+| Campaign center | Create, approve, publish and monitor campaigns | Link opportunity, audience, package, content, budget and channels |
+| Performance review | Inspect delivery, ticketing, coupon, ancillary and revenue | Attribute results and generate next-cycle recommendations |
+| Governance center | Inspect graph, providers, batches, permissions and audit | Maintain tenant, model, source and action records |
+
+The UI should hide external IDs, ontology types and relation endpoints. Review screens should show business name, source file, evidence excerpt, confidence, validity, proposed action and review state.
+
+## 3. Data Sources
+
+### 3.1 File Sources
+
+The current UI supports drag-and-drop and multiple file selection for TXT, Markdown, HTML, CSV, JSON, PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, PNG, JPG and JPEG.
+
+Typical China Eastern materials include news, route opening notices, seasonal schedule changes, passenger notices, special passenger services, transfer and air-rail rules, fare and refund rules, baggage and seat services, loyalty benefits, coupons, route operation reports, load-factor analysis, price monitoring, campaign plans, channel delivery logs and review reports.
+
+### 3.2 API Sources
+
+Administrators should configure connectors instead of asking operators to upload API response files. Priority sources are the user profile platform, product management platform, flight and route systems, operations analytics, channel systems, and transaction and fulfillment systems.
+
+Every connector should record source, version, sync time, incremental cursor, field mapping, quality result and failures. Agents may read only connector-authorized data and may not call arbitrary systems.
+
+### 3.3 Database Sources
+
+Database ingestion should use read-only credentials, table/view allow-lists, field allow-lists, incremental timestamps, masking and tenant ownership. The platform maps source rows into canonical business objects. Agents must not execute arbitrary write SQL.
+
+## 4. File Processing Pipeline
+
+Each file creates one DataPipelineJob. The create endpoint returns the job immediately and the UI polls the job endpoint.
+
+    queued -> running -> received -> extracting -> extracted
+             -> classifying -> classified -> persisting
+             -> ontology-updated
+             -> failed
+
+Business-facing stages:
+
+1. File receipt and security check: extension, size, tenant and submitter.
+2. Content parsing and structure recognition: text, Office, PDF, image and table content.
+3. Cleaning and knowledge chunking: headings, pages, sections, tables and source positions.
+4. AI business extraction: routes, flights, products, services, rules, opportunities and campaigns.
+5. Airline semantic validation: object types, relation direction, time windows and constraints.
+6. Knowledge and ontology persistence: raw evidence, chunks, candidate objects and relations.
+
+Current UI progress is a stage mapping, not a precise parser or model percentage. Production workers should report item counts, elapsed time, retry count and per-stage progress.
+
+## 5. Document Parsing and Error Handling
+
+PDF, Office and image documents are parsed through the configured MinerU integration. Administrators configure endpoint, key and parser options. The key is encrypted server-side and never returned to the browser.
+
+Recommended metadata includes file name, hash, size, source, uploader, tenant, submission time, parser version, MinerU task ID, elapsed time, page and section positions, table and image references, OCR confidence, parse errors and human review state.
+
+Errors should be separated into ingestion, parsing, data-quality, semantic, model and persistence errors. Each error should include file, page or row, reason, source excerpt, batch and recommended action. Retries must be idempotent. ZIP should be represented as a parent batch with child files, child jobs, a manifest, isolated failures and overall progress.
+
+## 6. Data Processing Agent
+
+The Data Processing Agent converts unstructured or semi-structured material into searchable knowledge and computable business objects. It is not a summarizer and must not directly change product, flight, customer or channel source systems.
+
+Outputs:
+
+- Raw knowledge: source file, parsed text and knowledge chunks.
+- Business facts: explicit route, flight, service, rule, product or campaign facts.
+- Candidate inferences: possible market signals, opportunities or customer needs inferred from multiple facts.
+- Relations and evidence: object links with source, excerpt, confidence, validity and batch.
+
+Processing steps are: load tenant and job context; read authorized documents and chunks; load ontology reads, writes and functions; extract objects and relations using China Eastern marketing semantics; separate facts from candidates; bind evidence and confidence; validate object types and relation endpoints; write to the knowledge foundation.
+
+The agent uses the shared Harness for MinerU, model calls, structured JSON, token usage, runtime events and controlled fallback. A fallback result must not be presented as a high-confidence fact.
+
+## 7. Knowledge Base and Ontology Foundation
+
+The knowledge base and ontology are complementary:
+
+| Layer | Stores | Answers |
+| --- | --- | --- |
+| Knowledge document | Original file, title, source, version and hash | What was the source? |
+| Knowledge chunk | Content with section and page context | What evidence supports the statement? |
+| Ontology object | Route, flight, product, audience, opportunity, campaign, approval and result | What business object is this? |
+| Ontology relation | Business links among objects | How are objects connected? |
+| Evidence | Source, confidence, validity and batch | Why should the operator trust it? |
+
+Lifecycle:
+
+    Market signal -> Opportunity -> Customer need -> Marketing objective
+    -> Audience snapshot -> Value proposition -> Product package
+    -> Strategy plan -> Touchpoint plan -> Content and campaign
+    -> Approval -> Execution -> Feedback -> Attribution -> Review
+
+The model should cover passenger tickets, fares, fare rules, routes, flights, air-rail intermodal products, baggage, seat selection, lounges, insurance, coupons, mileage, loyalty benefits, enterprise products, OTA/NDC channels and service rules.
+
+Labels are configurable attributes of customer aggregates or audience snapshots, not the whole audience model. They may come from the existing profile platform, authorized external data, travel and purchase behavior, loyalty and service behavior, or agent suggestions. Each label needs source, update time, calculation definition, consent usage, marketing eligibility and review state. A campaign uses a versioned audience snapshot rather than a label name alone.
+
+## 8. Six Marketing Agent Domains
+
+### Opportunity Insight
+
+Reads market interest, routes, flights, load factor, price, inventory, operation status, historical review and business rules. Detects demand/supply changes and unusual combinations. Outputs opportunity candidates, opportunity score, customer-need candidates, objectives and evidence. A business owner confirms whether an opportunity becomes a campaign.
+
+### Audience Insight
+
+Reads profile indicators, existing labels, customer relations, journey stage, history, consent, contact frequency and protection rules. Produces a versioned aggregate audience snapshot with size, evidence, label sources, exclusions and reachability. It cannot enlarge the approved audience scope.
+
+### Product Matching
+
+Reads customer needs, audience snapshots, value propositions, product-management versions, fare, inventory, flight, membership qualification and service rules. Matches fare, ancillary, intermodal, coupon and benefit packages. Outputs recommendation, fit score, qualification, limitations and evidence. It cannot invent price, inventory or benefit eligibility.
+
+### Activity Orchestration
+
+Reads objective, audience, product package, channel, budget, timing, frequency and compliance rules. Creates campaign version, touchpoint plan, schedule, budget, fallback contact and monitoring metrics. It produces an approval-ready plan and cannot bypass approval.
+
+### Content Generation
+
+Reads approved product facts, customer need, audience context, value proposition, campaign strategy, channel rules and brand policy. Generates App, SMS, WeChat, website and enterprise-channel variants. It must return fact-check and compliance-check results; humans approve brand, legal and price expressions.
+
+### Effect Analysis
+
+Reads delivery, send, open, click, ticket, coupon, ancillary, refund, complaint, fulfillment, revenue and control-group data. Produces feedback, attribution, review, anomaly findings and next-cycle recommendations. Attribution definitions and rule changes require human confirmation.
+
+## 9. Shared Harness and Governance
+
+All data and marketing agents use one provider-neutral Harness. Every run has tenant ID, run ID, agent ID, allowed reads, allowed writes and allowed functions. The Harness records context loading, tool calls, model calls, structured parsing, token usage, failures and fallback behavior.
+
+Agent results should use explicit states: fact, candidate, recommendation, human_confirmed, rejected and expired. A model output is not automatically a formal product, audience, strategy, compliance decision or campaign. Formal actions require a business confirmation event and preserve the original recommendation, edits, reviewer, time and reason.
+
+## 10. End-to-end Marketing Process
+
+    01 Opportunity discovery
+    02 Audience identification
+    03 Product package matching
+    04 Campaign creation and versioning
+    05 Content generation and review
+    06 Budget, consent, protection, frequency and compliance checks
+    07 Approval and controlled publication
+    08 Channel delivery and state callback
+    09 Ticket, coupon, ancillary, fulfillment and complaint feedback
+    10 Attribution, review and strategy learning
+
+Recommended campaign states are Draft, Content Review, Business Approval, Compliance Review, Ready to Publish, Running, Paused, Completed, Under Review and Archived. State transitions record operator, time, approval comment, version and evidence. No agent can move a campaign directly from Draft to Running.
+
+Before delivery, the system checks consent, protection lists, complaint protection period, cross-channel frequency, product validity, fare and inventory, membership qualification, coupon conditions, transfer/MCT constraints, content facts, budget and channel publication capability.
+
+## 11. Current Implementation Assessment
 
 ### Implemented
 
-- Multi-tenant access and tenant-scoped queries.
-- Drag-and-drop multi-file ingestion UI with task queue and progress polling.
+- Multi-tenant login, workspace and tenant-scoped queries.
+- Drag-and-drop multi-file data ingestion UI.
 - Pipeline creation, list query and single-job query.
-- Basic text, CSV and JSON handling.
-- MinerU configuration with encrypted server-side key storage.
+- Basic TXT, Markdown, JSON and CSV reading.
+- MinerU integration configuration with encrypted server-side key storage.
 - Knowledge documents, chunks, ontology objects and relations.
-- Data Processing Agent and shared Harness for context, tools, models, events and usage.
-- Six agent-domain contracts with reads, writes and business functions.
+- Data Processing Agent structured extraction, relation extraction and fallback.
+- Shared Harness context, tool, model, event and token-usage handling.
+- Six agent-domain contracts with reads, writes and functions.
+- Ontology semantic model, relation endpoint validation and knowledge search.
+- Model provider configuration, model listing, connection testing and usage statistics.
 
-### Partially Implemented
+### Partially implemented
 
-- Background processing still depends on the application process; durable queues and workers are not present.
-- Progress is stage-based rather than item-level parser/model progress.
-- Candidate persistence exists, but object/relation/evidence review and conflict resolution need a dedicated workbench.
-- Not every marketing domain writes a complete business object chain back to the ontology.
-- Real channel callbacks, transaction reconciliation and API/database connectors still need integration.
+- Background task execution exists, but there is no durable queue, worker fleet, retry policy, cancel operation or cross-instance recovery.
+- Progress is mapped by stage rather than measured by parser/model item counts.
+- Candidate object persistence exists, but a full candidate-review, conflict-resolution and release workflow is still required.
+- Agent runs and events are recorded, but not every domain writes a complete business object chain back to the ontology.
+- Activity, approval, execution and review screens have platform data and sample records, but real channel callbacks and transaction reconciliation remain to be connected.
+- File ingestion is available; API and database connectors, scheduling and source management are still required.
 
-### Recommended Production Work
+### Recommended production work
 
-- Durable raw-file storage, virus scanning, hash deduplication, retention and ZIP parent/child batches.
-- API/database connectors with read-only credentials, mapping, incremental sync and quality rules.
-- Candidate review, ontology versioning, effective dates, conflict detection, merge and decision history.
-- Campaign state machine, approval nodes, compliance execution, rollback and idempotent channel commands.
-- App, SMS, WeChat, website, enterprise, OTA and NDC callbacks.
-- Ticketing, refund, coupon, ancillary, fulfillment, complaint and revenue attribution.
-- Agent evaluation sets, model/prompt versioning, quality scoring, cost controls and feedback learning.
+- Durable object storage, virus scanning, hash deduplication, retention and ZIP parent/child batches.
+- Connector framework for APIs and databases with read-only credentials, mapping, incremental sync and quality rules.
+- Human review workbench for object, relation and evidence confirmation.
+- Ontology versioning, effective dates, conflict detection, merge and decision history.
+- Campaign state machine, approval nodes, compliance execution, publish rollback and idempotent channel commands.
+- Real App, SMS, WeChat, website, enterprise, OTA and NDC delivery callbacks.
+- Unified transaction, coupon, ancillary, fulfillment, refund and complaint attribution.
+- Agent evaluation sets, model and prompt versioning, quality scoring, cost controls and feedback loops.
 
-## 4. Decisions Required
+## 12. Decisions Required
 
-1. Which extracted objects may be auto-confirmed and which must wait for human review?
-2. What versioned interfaces are available from the product management platform?
-3. Does the profile platform return passenger-level data, aggregate audiences or label metrics?
-4. Can external data become ontology instances, or only signals and evidence?
-5. Does approval remain in OA or become a marketing-platform workflow?
-6. Are channel, ticketing, coupon, ancillary and fulfillment callbacks available as one event contract?
-7. What evidence must an operator see before approving content, product matching or attribution?
-8. Is application background processing acceptable for phase one, or is a durable worker required immediately?
+1. Which extracted objects may be auto-confirmed, and which must wait for human review?
+2. Should every ontology assertion be candidate-first, or can trusted master data become formal immediately?
+3. What exact versioned interfaces are available from the product management platform?
+4. Does the profile platform return passenger-level data, aggregate audiences or only label metrics? Is the marketing platform restricted to aggregate use?
+5. Can external data become ontology instances, or only market signals and evidence?
+6. Are channel delivery, ticketing, coupon and ancillary callbacks available in one event contract?
+7. Does approval remain in OA with integration, or become a marketing-platform workflow?
+8. Must candidate, formal and expired ontology objects be separated by status and version?
+9. Can each agent domain use a different model, or is there one tenant default with optional overrides?
+10. What evidence and explanation must an operator see before approving content, product matching or attribution?
 
+## 13. Recommended Delivery Priority
 
-# 东航数据处理与知识底座 v1.0
+### P0: Business-usable ingestion
 
-## 定位
+Finish drag-and-drop processing details, durable raw-file storage, candidate review, and the first approved interfaces to the profile and product management platforms.
 
-知识库和本体图谱共同组成平台知识底座。知识库保存文档原文、解析结果和可检索片段；本体保存市场、航线、航班、客户聚合、标签属性、产品、产品包、机会、活动、审批、执行、反馈和复盘等业务对象，以及对象之间可计算、可追溯的关系。两者通过知识文档、知识片段、知识事实和业务证据关联。
+### P1: Closed-loop campaign
 
-## 数据流水线
+Connect opportunity, audience, product, content, campaign, approval, execution, feedback and review. Integrate at least one official touchpoint and one real result source. Enforce product, consent, budget, frequency and compliance checks.
 
-数据进入平台后按以下阶段处理：
+### P2: Scale and governance
 
-1. 接收并记录租户、来源、文件类型、哈希和提交人。
-2. 文本、CSV、JSON、Markdown 直接结构化；PDF、Office、图片等文档调用 MinerU 解析。
-3. 文档写入知识文档，按内容位置切分为知识片段，保留来源和版本。
-4. 数据处理智能体通过统一 Harness 读取原始文本、知识底座语义和允许的本体类型，抽取对象、候选事实、关系、证据和置信度。
-5. 对抽取结果执行对象类型、关系端点、置信度和租户边界校验。
-6. 合格结果以候选状态更新本体，保留来源、证据和处理批次；需要业务确认的结果不直接改变正式业务决策。
-7. 六个智能域读取知识片段和本体关系，为机会识别、客群洞察、产品匹配、活动编排、内容生成和效果分析提供依据。
+Add API/database connectors, durable workers, large-file handling, ontology versioning, agent evaluation, model routing, cost monitoring, quality monitoring and cross-source conflict handling.
 
-## 运行方式
+## 14. Review Checklist
 
-数据处理智能体和六个营销智能域使用同一套 `app/agents/harness.py`。Harness 统一管理语义上下文、工具调用、模型调用、JSON 结构化输出、事件记录和失败回退。模型通过租户管理员配置的 OpenAI-compatible Provider 接入；没有可用模型时，数据处理流水线只执行受控的启发式兜底，不伪造业务事实。
+- [ ] Operators submit business files or configure approved sources; they do not manually import ontology entities and relations.
+- [ ] The Data Processing Agent extracts facts and candidates, binds evidence and confidence, and does not bypass human governance.
+- [ ] Knowledge documents preserve source evidence; the ontology expresses business objects and relationships.
+- [ ] All six marketing agent domains use the same governed context and ontology foundation.
+- [ ] Product management platform and user profile platform are upstream systems, not replaced by this platform.
+- [ ] Real channel and transaction callbacks are required for production attribution.
 
-## 管理接口
+Open comments:
 
-- `PUT /api/integrations/mineru`：管理员配置 MinerU 地址、API Key 和解析选项。
-- `POST /api/data-pipelines`：上传数据文件并执行流水线。
-- `GET /api/data-pipelines`：查看处理批次、阶段和落库统计。
-- `GET /api/knowledge/search?q=...`：按关键词检索知识片段并返回关联本体对象。
-- `GET /api/ontology/semantic-model`：查看本体语义契约。
-- `GET /api/ontology/status`：查看租户本体对象、关系和扩展统计。
-
-API Key 只保存为服务端加密值，响应只返回是否已配置，不返回密钥内容。文档解析和数据抽取均按租户隔离。
-
-# 航司营销业务本体 v1.1
-
-## 建设目标
-
-本体不是标签字典，也不是把营销教材章节复制进知识库。它用于统一表达东航营销活动中可识别、可审批、可执行、可度量的业务对象，并让六个智能域在同一条业务主线上协同。
-
-核心业务链为：
-
-`经营信号 -> 营销机会 -> 客户需求 -> 营销目标 -> 客群快照 -> 价值主张 -> 产品包 -> 策略方案 -> 触点计划 -> 内容与活动 -> 审批 -> 执行 -> 反馈 -> 归因 -> 复盘学习`
-
-## 营销管理方法映射
-
-本版本参考《营销管理（第16版）》中以下方法，并将其转译为平台对象：
-
-| 营销方法 | 平台本体对象 | 东航业务含义 |
-| --- | --- | --- |
-| G-STIC营销计划与控制 | `MarketingObjective`、`StrategyPlan`、`TouchpointPlan`、`AttributionResult` | 从目标设定、策略形成、战术执行到效果控制形成闭环 |
-| 目标市场选择与细分 | `CustomerAggregate`、`CustomerNeed`、`AudienceSnapshot` | 使用聚合画像、旅程阶段和需求形成活动客群快照，不暴露旅客明细 |
-| 顾客价值主张与定位 | `ValueProposition` | 说明特定客群为什么选择该产品包，以及差异化利益和事实依据 |
-| 产品与服务组合 | `Product`、`ProductPackage` | 组合客票、运价、联运、辅营、卡券和会员权益 |
-| 整合营销沟通 | `TouchpointPlan`、`ContentAsset`、`Channel` | 按旅程阶段统一触发条件、渠道、内容版本、时间窗口和频控 |
-| 多渠道管理 | `Channel`、`ExecutionBatch`、`Feedback` | 协调App、微信、短信、官网、企业及分销渠道的执行与回传 |
-| 获客、保留、忠诚和终身价值 | `MarketingObjective`、`MetricObservation`、`Review` | 同时衡量短期转化、会员活跃、客户保留和长期价值 |
-| 营销绩效控制 | `AttributionResult`、`Review`、`BusinessRule` | 将增量效果归因到客群、产品、内容、渠道和策略，形成下一轮规则建议 |
-
-参考材料位于：
-
-- `竞赛/05_参考工程/营销管理/营销管理第16版_02_0101-0200页.../full.md`：营销计划、目标、战略、战术、执行与控制。
-- `竞赛/05_参考工程/营销管理/营销管理第16版_04_0301-0400页.../full.md`：细分市场、目标客户、价值主张与定位。
-- `竞赛/05_参考工程/营销管理/营销管理第16版_05_0401-0500页.../full.md`：产品组合、产品线及服务设计。
-- `竞赛/05_参考工程/营销管理/营销管理第16版_07_0601-0700页.../full.md`：价格、促销和营销沟通。
-- `竞赛/05_参考工程/营销管理/营销管理第16版_08_0701-0800页.../full.md`：数字时代的整合营销与直接营销。
-- `竞赛/05_参考工程/营销管理/营销管理第16版_09_0801-0900页.../full.md`：多渠道、渠道合作与渠道评价。
-- `竞赛/05_参考工程/营销管理/营销管理第16版_11_1001-1100页.../full.md`：获客、保留、忠诚、客户关系与顾客终身价值。
-
-## 六智能域职责
-
-### 机会洞察智能域
-
-读取市场热度、搜索趋势、客座率、库存、价格和历史复盘，识别 `Opportunity`，同时生成候选 `CustomerNeed` 和可量化 `MarketingObjective`。机会和目标必须保留数据时间窗、来源、证据和人工确认状态。
-
-### 客群洞察智能域
-
-读取上游用户画像、客户关系、旅程阶段、历史反馈和可配置标签，评估目标客群吸引力、规模、长期价值和可触达性，输出版本化 `AudienceSnapshot`。标签是筛选属性，不替代客户需求和客群快照。
-
-### 产品匹配智能域
-
-围绕 `CustomerNeed` 和 `ValueProposition`，从产品管理平台提供的客票、辅营、联运、卡券和权益中选择 `ProductPackage`，校验库存、适用资格、MCT、价格和交付方式，输出待人工确认的匹配建议。
-
-### 活动编排智能域
-
-把 `MarketingObjective`、`AudienceSnapshot`、`ValueProposition` 和 `ProductPackage` 组织为 `StrategyPlan`，再形成 `TouchpointPlan`、活动版本、预算、频控、时间窗口和执行批次。它负责把策略转成可审批、可执行方案，不直接绕过审批触达客户。
-
-### 内容生成智能域
-
-读取客户需求、价值主张、产品事实、策略方案和渠道规范，为每个触点生成 `ContentAsset`。内容必须引用产品和规则证据，并经过事实、品牌、敏感词和合规审核。
-
-### 效果分析智能域
-
-合并渠道、交易、领券、辅营、履约、退订和投诉反馈，形成 `AttributionResult`，将增量效果关联到策略、客群、产品包、内容和渠道，再形成 `Review` 与下一轮规则建议。
-
-## 人工治理边界
-
-- 智能体可以创建候选机会、需求、价值主张、策略和归因结果，但不能自动发布活动。
-- 营销目标、客群快照、产品匹配、策略方案、内容、审批和归因结果均保留人工确认记录。
-- 事实、推断和人工决策分开存储，所有推荐必须能够回溯到知识片段、业务证据和源系统。
-- 触达前必须执行客户授权、频控、保护名单、预算、库存、产品资格和渠道合规校验。
-- 复盘结果只能形成规则更新建议，规则正式生效仍需业务人员确认。
-
-## 航司业务示例
-
-上海至三亚国庆航线在起飞前15天出现客座率偏低，同时外部目的地热度上升。机会洞察智能域形成营销机会和增量收入目标；客群洞察智能域生成“近期搜索但未出票、具有家庭出行特征”的聚合客群快照；产品匹配智能域将早鸟客票、额外行李、优选座位和目的地优惠券组合为产品包，并形成“一站式家庭早鸟出行更省心”的价值主张；活动编排智能域配置App触点、晚间发送窗口和七天一次频控；执行结果回传后，效果分析智能域把增量出票和辅营收入归因到客群、产品包、内容与渠道，最终形成下一轮策略建议。
-
-# Architecture v1.0
-
-## Agent runtime
-
-The runtime uses plugin-like registration and append-only events. Each domain
-declares responsibilities, inputs, outputs, and tools. The runtime owns
-governance checks, human approval gates, event records, and failures.
-
-## Marketing ontology
-
-Initial classes include Opportunity, Audience, Customer, Journey,
-ProductPackage, FareProduct, AncillaryProduct, BenefitCoupon, Campaign,
-Content, Channel, Approval, and ConversionResult. Relations carry source,
-evidence, confidence, and time so agents can explain recommendations and
-result feedback.
-
-## Domain boundaries
-
-- Product module creates, approves, serves, and delivers activity products.
-- Strategy module owns audience insight, snapshots, and protection rules.
-- Activity module owns planning, matching, orchestration, content, approval,
-  execution, feedback, and review.
-
-# Reference Adoption
-
-## DeepSeek Harness
-
-Adopted patterns:
-
-- Agent domains are registered capabilities rather than hard-coded UI actions.
-- Runtime facts are append-only events that can be audited and replayed.
-- Governance runs before tool execution and can reject a run.
-- Human approval is an explicit run status for orchestration and content.
-
-Primary reference areas:
-
-- `docs/architecture.zh.md`
-- `docs/agent-lifecycle.zh.md`
-- `docs/tool-execution-pipeline.zh.md`
-- `packages/core/session`
-- `packages/core/tools`
-- `packages/core/agent-loop`
-
-The full Harness repository is not embedded because it is a developer-preview
-general-purpose harness and would add unrelated shell, workspace, and coding
-agent capabilities.
-
-## Semantica
-
-Adopted patterns:
-
-- Graph nodes and edges carry provenance.
-- Relationship assertions carry evidence and confidence.
-- Campaign results feed back into audience entities.
-- Ontology is a decision service, not only a visualization.
-
-Primary reference areas:
-
-- `ARCHITECTURE.md`
-- `semantica/kg/graph_builder.py`
-- `semantica/kg/entity_resolver.py`
-- `semantica/ontology/ontology_validator.py`
-- `semantica/provenance/manager.py`
-- `semantica/context/decision_recorder.py`
-- `semantica/context/policy_engine.py`
-
-The full Semantica dependency set is not installed in the first vertical slice.
-The platform keeps its ontology contracts small so Neo4j, RDF, SHACL, and
-reasoning adapters can be introduced behind the service boundary later.
+Record business-flow, data-source, agent-boundary, ontology, approval or production-operation changes here.
