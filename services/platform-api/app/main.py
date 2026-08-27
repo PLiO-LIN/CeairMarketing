@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import func, select, text, update
+from sqlalchemy import delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -418,6 +418,36 @@ def get_data_pipeline(job_id: str, context: TenantContext = Depends(get_tenant_c
     if record is None:
         raise HTTPException(status_code=404, detail="数据处理任务不存在")
     return pipeline_view(record)
+
+
+@app.delete("/api/data-pipelines/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_data_pipeline(job_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(DataPipelineJobRecord).where(DataPipelineJobRecord.id == job_id, DataPipelineJobRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="数据处理任务不存在")
+    if record.status in {"queued", "running"}:
+        raise HTTPException(status_code=409, detail="任务正在处理，暂不能删除")
+    result = json.loads(record.result_json or "{}")
+    source_name = f"data-pipeline:{record.id}"
+    entities = session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == context.tenant_id, OntologyEntityRecord.source == source_name)).all()
+    entity_ids = [item.id for item in entities]
+    if entity_ids:
+        session.execute(delete(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == context.tenant_id, or_(OntologyRelationRecord.source_entity_id.in_(entity_ids), OntologyRelationRecord.target_entity_id.in_(entity_ids))))
+        session.execute(delete(OntologyEntityRecord).where(OntologyEntityRecord.id.in_(entity_ids)))
+    document_external_id = str(result.get("document_id") or "")
+    document = session.scalar(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == context.tenant_id, KnowledgeDocumentRecord.external_id == document_external_id)) if document_external_id else None
+    if document is not None:
+        chunk_external_ids = session.scalars(select(KnowledgeChunkRecord.external_id).where(KnowledgeChunkRecord.tenant_id == context.tenant_id, KnowledgeChunkRecord.document_id == document.id)).all()
+        graph_entities = session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == context.tenant_id, OntologyEntityRecord.external_id.in_([document.external_id, *chunk_external_ids]))).all()
+        graph_ids = [item.id for item in graph_entities]
+        if graph_ids:
+            session.execute(delete(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == context.tenant_id, or_(OntologyRelationRecord.source_entity_id.in_(graph_ids), OntologyRelationRecord.target_entity_id.in_(graph_ids))))
+            session.execute(delete(OntologyEntityRecord).where(OntologyEntityRecord.id.in_(graph_ids)))
+        session.execute(delete(KnowledgeChunkRecord).where(KnowledgeChunkRecord.tenant_id == context.tenant_id, KnowledgeChunkRecord.document_id == document.id))
+        session.delete(document)
+    session.delete(record)
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.post("/api/data-pipelines", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)

@@ -61,8 +61,6 @@ def seed_database(session: Session) -> int:
 
 def seed_tenant_data(session: Session, headquarters_id: int) -> None:
     settings = get_settings()
-    if session.scalar(select(CampaignRecord.id).where(CampaignRecord.tenant_id == headquarters_id).limit(1)) is None:
-        session.add_all([CampaignRecord(tenant_id=headquarters_id, **campaign.model_dump()) for campaign in CAMPAIGNS])
     if session.scalar(select(ModelProviderRecord.id).where(ModelProviderRecord.tenant_id == headquarters_id).limit(1)) is None:
         session.add(
             ModelProviderRecord(
@@ -111,8 +109,6 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
                 config_json=json.dumps({"model_version": "vlm", "enable_table": True, "is_ocr": False}, ensure_ascii=False),
             ))
     session.commit()
-    _seed_graph(session, headquarters_id)
-    seed_marketing_lifecycle(session, headquarters_id)
 
 
 def _seed_graph(session: Session, tenant_id: int) -> None:

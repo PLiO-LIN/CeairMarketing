@@ -86,7 +86,7 @@ class DataProcessingAgent:
         self._stage("received", "文件接收与安全检查", "completed", file_name=filename, bytes=len(content))
         self._stage("extracting", "文档解析与结构识别", "running")
         text = self._extract_text(filename, content)
-        self._stage("extracted", "解析完成，保留页码、章节和表格溯源", "completed", text_length=len(text), mineru_task_id=self.job.mineru_task_id)
+        self._stage("extracted", "解析完成，保留页码、章节和表格溯源", "completed", text_length=len(text), mineru_task_id=self.job.mineru_task_id, output_preview=text[:500])
         self._stage("knowledge-persisting", "清洗切分并写入营销知识库", "running")
         document_id = self._persist_knowledge(filename, text)
         self._stage("knowledge-ready", "营销知识文档已就绪", "completed", document_id=document_id)
@@ -96,7 +96,8 @@ class DataProcessingAgent:
         relation_count = len(candidates.get("relations", []))
         self.job.total_entities = entity_count
         self.job.total_relations = relation_count
-        self._stage("semantic-validation", "航空营销语义、关系方向和证据校验", "completed", entities=entity_count, relations=relation_count)
+        self._stage("agent-output", "数据处理智能体已输出候选对象与关系", "completed", entities=entity_count, relations=relation_count, output_preview={"entities": candidates.get("entities", [])[:5], "relations": candidates.get("relations", [])[:5]})
+        self._stage("semantic-validation", "航空营销语义、关系方向和证据校验", "completed", entities=entity_count, relations=relation_count, output_preview=f"通过语义校验：{entity_count} 个候选对象、{relation_count} 条候选关系")
         self.result.update({"text_length": len(text), "document_id": document_id, "candidates": candidates})
         self.job.status = "awaiting_confirmation"
         self.job.completed_at = datetime.now(timezone.utc)

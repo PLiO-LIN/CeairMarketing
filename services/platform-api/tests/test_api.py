@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database import SessionLocal
-from app.db_models import ModelProviderRecord
+from app.db_models import KnowledgeDocumentRecord, ModelProviderRecord
 from app.ontology import validate_relation_endpoints
 from app.ontology.bootstrap import LIFECYCLE_ENTITIES, LIFECYCLE_RELATIONS
 
@@ -239,7 +239,7 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
         auth, tenants = login(client)
         hq = next(item for item in tenants if item["code"] == "CEA-HQ")
         request_headers = headers(auth, hq["id"])
-        payload = "上海—三亚航线国庆客座率和目的地热度出现变化，建议关注高意向未购客群。"
+        payload = "Shanghai Sanya route load factor and destination demand changed; review the high-intent audience."
         response = client.post(
             "/api/data-pipelines",
             headers=request_headers,
@@ -260,9 +260,8 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
             {item["stage"] for item in job["result"]["events"] if "stage" in item}
         )
 
-        knowledge = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
-        assert knowledge.status_code == 200
-        assert knowledge.json()
+        with SessionLocal() as session:
+            assert session.query(KnowledgeDocumentRecord).filter(KnowledgeDocumentRecord.external_id == job["result"]["document_id"]).one_or_none() is not None
         review = client.post(
             f"/api/data-pipelines/{result['job']['id']}/review",
             headers=request_headers,
@@ -275,8 +274,15 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
         assert reviewed_job["result"]["review"]["decision"] == "approve"
         assert "ontology-updated" in {item["stage"] for item in reviewed_job["result"]["events"] if "stage" in item}
 
-        knowledge_after_review = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
-        assert knowledge_after_review.json()[0]["linked_objects"]
+        knowledge_after_review = client.get("/api/knowledge/search", headers=request_headers, params={"q": ""})
+        uploaded = next(item for item in knowledge_after_review.json() if item["document_id"] == job["result"]["document_id"])
+        assert uploaded["linked_objects"]
+
+        deleted = client.delete(f"/api/data-pipelines/{result['job']['id']}", headers=request_headers)
+        assert deleted.status_code == 204
+        assert client.get(f"/api/data-pipelines/{result['job']['id']}", headers=request_headers).status_code == 404
+        with SessionLocal() as session:
+            assert session.query(KnowledgeDocumentRecord).filter(KnowledgeDocumentRecord.external_id == job["result"]["document_id"]).one_or_none() is None
 
 
 def test_marketing_copilot_uses_tools_and_sources() -> None:
