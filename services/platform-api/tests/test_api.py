@@ -173,3 +173,25 @@ def test_marketing_ontology_semantic_contract() -> None:
         assert rejected.json()["accepted_rows"] == 0
         assert rejected.json()["rejected_rows"] == 1
         assert "has_tag_attribute" in rejected.json()["errors"][0]["message"]
+
+
+def test_data_pipeline_builds_knowledge_and_ontology() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        request_headers = headers(auth, hq["id"])
+        payload = "上海—三亚航线国庆客座率和目的地热度出现变化，建议关注高意向未购客群。"
+        response = client.post(
+            "/api/data-pipelines",
+            headers=request_headers,
+            files={"file": ("route-signal.txt", payload.encode("utf-8"), "text/plain")},
+        )
+        assert response.status_code == 201
+        result = response.json()
+        assert result["job"]["status"] == "completed"
+        assert result["job"]["accepted_entities"] >= 1
+        assert {"received", "extracted", "classified", "ontology-updated"}.issubset({item["stage"] for item in result["stages"] if "stage" in item})
+
+        knowledge = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
+        assert knowledge.status_code == 200
+        assert knowledge.json()

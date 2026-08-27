@@ -83,6 +83,22 @@ class ModelProviderRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
 
+class IntegrationConfigRecord(Base):
+    __tablename__ = "integration_configs"
+    __table_args__ = (UniqueConstraint("tenant_id", "integration_id", name="uq_integration_tenant_name"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    integration_id: Mapped[str] = mapped_column(String(80))
+    display_name: Mapped[str] = mapped_column(String(120))
+    base_url: Mapped[str] = mapped_column(String(300), default="")
+    encrypted_api_key: Mapped[str] = mapped_column(Text, default="")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    config_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class AgentRunRecord(Base):
     __tablename__ = "agent_runs"
 
@@ -125,6 +141,66 @@ class ImportJobRecord(Base):
     errors_json: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class DataPipelineJobRecord(Base):
+    __tablename__ = "data_pipeline_jobs"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    file_name: Mapped[str] = mapped_column(String(200))
+    file_format: Mapped[str] = mapped_column(String(16))
+    source_type: Mapped[str] = mapped_column(String(40), default="file")
+    status: Mapped[str] = mapped_column(String(32), default="queued")
+    current_stage: Mapped[str] = mapped_column(String(64), default="queued")
+    mineru_task_id: Mapped[str] = mapped_column(String(120), default="")
+    provider_id: Mapped[int | None] = mapped_column(ForeignKey("model_providers.id"), nullable=True)
+    total_entities: Mapped[int] = mapped_column(Integer, default=0)
+    total_relations: Mapped[int] = mapped_column(Integer, default=0)
+    accepted_entities: Mapped[int] = mapped_column(Integer, default=0)
+    accepted_relations: Mapped[int] = mapped_column(Integer, default=0)
+    rejected_items: Mapped[int] = mapped_column(Integer, default=0)
+    result_json: Mapped[str] = mapped_column(Text, default="{}")
+    error_message: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class KnowledgeDocumentRecord(Base):
+    __tablename__ = "knowledge_documents"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_knowledge_document_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(120), index=True)
+    title: Mapped[str] = mapped_column(String(240))
+    source_type: Mapped[str] = mapped_column(String(40), default="file")
+    source_name: Mapped[str] = mapped_column(String(240), default="")
+    content: Mapped[str] = mapped_column(Text, default="")
+    content_hash: Mapped[str] = mapped_column(String(64), index=True)
+    classification: Mapped[str] = mapped_column(String(40), default="internal")
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class KnowledgeChunkRecord(Base):
+    __tablename__ = "knowledge_chunks"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_knowledge_chunk_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("knowledge_documents.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(140), index=True)
+    sequence: Mapped[int] = mapped_column(Integer)
+    heading: Mapped[str] = mapped_column(String(240), default="")
+    content: Mapped[str] = mapped_column(Text)
+    token_estimate: Mapped[int] = mapped_column(Integer, default=0)
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
 class OntologyEntityRecord(Base):

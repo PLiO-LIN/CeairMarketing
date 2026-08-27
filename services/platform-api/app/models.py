@@ -171,6 +171,61 @@ class ProviderTestResult(BaseModel):
     message: str
 
 
+class IntegrationConfigUpdate(BaseModel):
+    display_name: str = Field(min_length=2, max_length=120)
+    base_url: str = "https://mineru.net"
+    api_key: str = ""
+    enabled: bool = False
+    config: dict[str, Any] = Field(default_factory=dict)
+
+
+class IntegrationConfig(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    integration_id: str
+    display_name: str
+    base_url: str
+    enabled: bool
+    api_key_configured: bool = False
+    config: dict[str, Any] = Field(default_factory=dict)
+    updated_at: datetime
+
+
+class DataPipelineJob(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    file_name: str
+    file_format: str
+    source_type: str
+    status: str
+    current_stage: str
+    mineru_task_id: str
+    provider_id: int | None
+    total_entities: int
+    total_relations: int
+    accepted_entities: int
+    accepted_relations: int
+    rejected_items: int
+    result: dict[str, Any] = Field(default_factory=dict)
+    error_message: str
+    created_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+
+
+class DataPipelineCreateResult(BaseModel):
+    job: DataPipelineJob
+    stages: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class KnowledgeSearchResult(BaseModel):
+    chunk_id: str
+    document_id: str
+    title: str
+    content: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    linked_objects: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class OntologyNode(BaseModel):
     id: str
     type: str

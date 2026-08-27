@@ -34,6 +34,9 @@ OBJECT_TYPES = [
     {"id": "Evidence", "name": "业务证据", "description": "支撑事实、推断、建议和人工决策的来源记录。", "module": "governance"},
     {"id": "HumanDecision", "name": "人工决策", "description": "对智能体建议、活动版本和审批节点的确认、修改或驳回。", "module": "governance"},
     {"id": "AgentRun", "name": "智能体运行", "description": "智能域读取本体、调用函数并产生候选结果的运行记录。", "module": "agent"},
+    {"id": "KnowledgeDocument", "name": "知识文档", "description": "经授权接入的航班、运价、产品、营销和运营文档原文。", "module": "knowledge"},
+    {"id": "KnowledgeChunk", "name": "知识片段", "description": "文档切分后的可检索片段，保留页码、段落和来源定位。", "module": "knowledge"},
+    {"id": "KnowledgeClaim", "name": "知识事实", "description": "从文档或数据中提取的待核验事实，连接原文证据与本体对象。", "module": "knowledge"},
 ]
 
 RELATION_TYPES = [
@@ -58,6 +61,9 @@ RELATION_TYPES = [
     {"id": "confirmed_by_human", "name": "经人工确认", "from_types": ["Recommendation", "Opportunity", "CampaignVersion", "AudienceSnapshot"], "to_types": ["HumanDecision"]},
     {"id": "has_evidence", "name": "具有证据", "from_types": ["Opportunity", "Recommendation", "HumanDecision", "MetricObservation"], "to_types": ["Evidence"]},
     {"id": "has_tag_attribute", "name": "具有可配置属性", "from_types": ["CustomerAggregate", "AudienceSnapshot", "Route", "Flight", "Product", "ProductPackage", "Campaign"], "to_types": ["ConfigurableAttribute"]},
+    {"id": "contains_chunk", "name": "包含片段", "from_types": ["KnowledgeDocument"], "to_types": ["KnowledgeChunk"]},
+    {"id": "supports_claim", "name": "支撑事实", "from_types": ["KnowledgeChunk", "Evidence"], "to_types": ["KnowledgeClaim", "Opportunity", "Recommendation", "BusinessRule"]},
+    {"id": "claims_about", "name": "描述对象", "from_types": ["KnowledgeClaim"], "to_types": ["Market", "Airport", "Route", "Flight", "MetricObservation", "Product", "ProductPackage", "BusinessRule", "Opportunity"]},
 ]
 
 ACTIONS = [
@@ -87,32 +93,32 @@ FUNCTIONS = [
 
 AGENT_CONTRACTS = {
     "opportunity-insight": {
-        "reads": ["MarketSignal", "MetricObservation", "Route", "Flight", "Review", "BusinessRule"],
+        "reads": ["MarketSignal", "MetricObservation", "Route", "Flight", "Review", "BusinessRule", "KnowledgeChunk", "KnowledgeClaim"],
         "writes": ["Opportunity", "Recommendation", "Evidence"],
         "functions": ["calculate_opportunity_score", "detect_business_anomaly"],
     },
     "audience-insight": {
-        "reads": ["CustomerAggregate", "ConfigurableAttribute", "Feedback", "HumanDecision"],
+        "reads": ["CustomerAggregate", "ConfigurableAttribute", "Feedback", "HumanDecision", "KnowledgeChunk", "KnowledgeClaim"],
         "writes": ["AudienceSnapshot", "Recommendation", "Evidence"],
         "functions": ["calculate_audience_size", "check_contact_frequency"],
     },
     "product-match": {
-        "reads": ["Opportunity", "AudienceSnapshot", "Product", "ProductPackage", "Flight", "BusinessRule"],
+        "reads": ["Opportunity", "AudienceSnapshot", "Product", "ProductPackage", "Flight", "BusinessRule", "KnowledgeChunk", "KnowledgeClaim"],
         "writes": ["Recommendation", "Evidence"],
         "functions": ["evaluate_product_eligibility", "validate_connection_time"],
     },
     "activity-orchestration": {
-        "reads": ["Opportunity", "AudienceSnapshot", "ProductPackage", "BusinessRule", "HumanDecision"],
+        "reads": ["Opportunity", "AudienceSnapshot", "ProductPackage", "BusinessRule", "HumanDecision", "KnowledgeChunk", "KnowledgeClaim"],
         "writes": ["MarketingCase", "Campaign", "CampaignVersion", "ExecutionBatch", "Recommendation"],
         "functions": ["check_contact_frequency"],
     },
     "content-generation": {
-        "reads": ["AudienceSnapshot", "ProductPackage", "CampaignVersion", "BusinessRule"],
+        "reads": ["AudienceSnapshot", "ProductPackage", "CampaignVersion", "BusinessRule", "KnowledgeChunk", "KnowledgeClaim"],
         "writes": ["ContentAsset", "Recommendation", "Evidence"],
         "functions": ["check_content_facts"],
     },
     "effect-analysis": {
-        "reads": ["Campaign", "ExecutionBatch", "Feedback", "MetricObservation", "HumanDecision"],
+        "reads": ["Campaign", "ExecutionBatch", "Feedback", "MetricObservation", "HumanDecision", "KnowledgeChunk", "KnowledgeClaim"],
         "writes": ["Review", "Recommendation", "Evidence"],
         "functions": ["calculate_campaign_effect", "detect_business_anomaly"],
     },
@@ -157,6 +163,7 @@ def semantic_model() -> dict:
             "标签作为对象的可配置业务属性，可复用已有系统标签，也可由运营或智能体产生。",
             "智能体输出先形成候选事实、推断或建议，人工通过业务动作确认后再进入正式流程。",
             "每个判断保留来源、证据、置信度、有效期、版本和人工决策状态。",
+            "知识文档和本体图谱共同构成知识底座：文档保存可追溯内容，本体表达可计算关系。",
         ],
         "lifecycle": ["data", "opportunity", "audience", "product", "content", "campaign", "approval", "execution", "feedback", "review"],
         "object_types": OBJECT_TYPES,

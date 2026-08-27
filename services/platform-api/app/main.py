@@ -1,4 +1,6 @@
 import json
+from datetime import datetime, timezone
+from uuid import uuid4
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 
@@ -13,7 +15,8 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, CampaignRecord, ImportJobRecord, ModelProviderRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, OntologyEntityRecord, OntologyRelationRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema
@@ -33,6 +36,11 @@ from .models import (
     ModelProviderCreate,
     ModelProviderUpdate,
     ProviderTestResult,
+    DataPipelineCreateResult,
+    DataPipelineJob,
+    IntegrationConfig,
+    IntegrationConfigUpdate,
+    KnowledgeSearchResult,
     MembershipCreate,
     PlatformUserCreate,
     PlatformUserSummary,
@@ -274,6 +282,139 @@ def create_import(
     session: Session = Depends(get_session),
 ):
     return import_view(import_file(session, context.tenant_id, context.user_id, dataset_type, file))
+
+
+def pipeline_view_internal(record: DataPipelineJobRecord) -> DataPipelineJob:
+    return DataPipelineJob.model_validate(record).model_copy(update={"result": json.loads(record.result_json or "{}")})
+
+
+@app.get("/api/internal/integrations/mineru", response_model=IntegrationConfig, include_in_schema=False)
+def get_mineru_integration_internal(context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    return integration_view(get_mineru_config(session, context.tenant_id))
+
+
+@app.put("/api/internal/integrations/mineru", response_model=IntegrationConfig, include_in_schema=False)
+def update_mineru_integration_internal(payload: IntegrationConfigUpdate, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    record = get_mineru_config(session, context.tenant_id)
+    if record is None:
+        record = IntegrationConfigRecord(tenant_id=context.tenant_id, integration_id="mineru", display_name=payload.display_name, base_url=payload.base_url)
+        session.add(record)
+    record.display_name = payload.display_name
+    record.base_url = payload.base_url.rstrip("/")
+    record.enabled = payload.enabled
+    record.config_json = json.dumps(payload.config, ensure_ascii=False)
+    if payload.api_key:
+        record.encrypted_api_key = cipher.encrypt(payload.api_key)
+    session.commit(); session.refresh(record)
+    return integration_view(record)
+
+
+@app.get("/api/internal/data-pipelines", response_model=list[DataPipelineJob], include_in_schema=False)
+def list_data_pipelines_internal(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(DataPipelineJobRecord).where(DataPipelineJobRecord.tenant_id == context.tenant_id).order_by(DataPipelineJobRecord.created_at.desc()).limit(100)).all()
+    return [pipeline_view(record) for record in records]
+
+
+@app.post("/api/internal/data-pipelines", response_model=DataPipelineCreateResult, status_code=status.HTTP_201_CREATED, include_in_schema=False)
+def create_data_pipeline_internal(file: UploadFile = File(...), context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    filename = file.filename or "upload.bin"
+    suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    supported = {"txt", "md", "json", "csv", "pdf", "png", "jpg", "jpeg", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "html"}
+    if suffix not in supported:
+        raise HTTPException(status_code=422, detail="不支持的数据文件类型")
+    raw = file.file.read()
+    if len(raw) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="数据文件不能超过 20MB")
+    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format=suffix, status="running", current_stage="queued")
+    session.add(job); session.commit(); session.refresh(job)
+    agent = DataProcessingAgent(session, context, job)
+    try:
+        job.started_at = datetime.now(timezone.utc)
+        events = agent.process(filename, raw)
+        job.status = "completed"
+        job.completed_at = datetime.now(timezone.utc)
+        session.commit()
+    except Exception as exc:
+        session.rollback()
+        job = session.get(DataPipelineJobRecord, job.id)
+        job.status = "failed"
+        job.current_stage = "failed"
+        job.error_message = str(exc)[:1000]
+        job.completed_at = datetime.now(timezone.utc)
+        session.commit()
+        raise HTTPException(status_code=502, detail=f"数据处理失败：{exc}") from exc
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=events)
+
+
+def pipeline_view(record: DataPipelineJobRecord) -> DataPipelineJob:
+    return DataPipelineJob.model_validate(record).model_copy(update={"result": json.loads(record.result_json or "{}")})
+
+
+@app.get("/api/integrations/mineru", response_model=IntegrationConfig)
+def get_mineru_integration(context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    return integration_view(get_mineru_config(session, context.tenant_id))
+
+
+@app.put("/api/integrations/mineru", response_model=IntegrationConfig)
+def update_mineru_integration(payload: IntegrationConfigUpdate, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    record = get_mineru_config(session, context.tenant_id)
+    if record is None:
+        record = IntegrationConfigRecord(tenant_id=context.tenant_id, integration_id="mineru", display_name=payload.display_name, base_url=payload.base_url)
+        session.add(record)
+    record.display_name = payload.display_name; record.base_url = payload.base_url.rstrip("/"); record.enabled = payload.enabled; record.config_json = json.dumps(payload.config, ensure_ascii=False)
+    if payload.api_key:
+        record.encrypted_api_key = cipher.encrypt(payload.api_key)
+    session.commit(); session.refresh(record)
+    return integration_view(record)
+
+
+@app.get("/api/data-pipelines", response_model=list[DataPipelineJob])
+def list_data_pipelines(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(DataPipelineJobRecord).where(DataPipelineJobRecord.tenant_id == context.tenant_id).order_by(DataPipelineJobRecord.created_at.desc()).limit(100)).all()
+    return [pipeline_view(record) for record in records]
+
+
+@app.post("/api/data-pipelines", response_model=DataPipelineCreateResult, status_code=status.HTTP_201_CREATED)
+def create_data_pipeline(file: UploadFile = File(...), context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    filename = file.filename or "upload.bin"
+    suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    allowed = {"txt", "md", "json", "csv", "pdf", "png", "jpg", "jpeg", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "html"}
+    if suffix not in allowed:
+        raise HTTPException(status_code=422, detail="不支持的数据文件类型")
+    raw = file.file.read()
+    if len(raw) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="数据文件不能超过 20MB")
+    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format=suffix, status="running", current_stage="queued")
+    session.add(job); session.commit(); session.refresh(job)
+    agent = DataProcessingAgent(session, context, job)
+    try:
+        job.started_at = datetime.now(timezone.utc); session.commit(); events = agent.process(filename, raw); job.status = "completed"; job.completed_at = datetime.now(timezone.utc); session.commit()
+    except Exception as exc:
+        session.rollback(); job = session.get(DataPipelineJobRecord, job.id)
+        if job is not None:
+            job.status = "failed"; job.current_stage = "failed"; job.error_message = str(exc)[:1000]; job.completed_at = datetime.now(timezone.utc); session.commit()
+        raise HTTPException(status_code=502, detail=f"数据处理失败：{exc}") from exc
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=events)
+
+
+@app.get("/api/knowledge/search", response_model=list[KnowledgeSearchResult])
+def search_knowledge(q: str = "", limit: int = 10, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    query = q.strip().lower()
+    chunks = session.scalars(select(KnowledgeChunkRecord).where(KnowledgeChunkRecord.tenant_id == context.tenant_id).order_by(KnowledgeChunkRecord.created_at.desc()).limit(500)).all()
+    documents = {item.id: item for item in session.scalars(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == context.tenant_id)).all()}
+    selected = [item for item in chunks if not query or query in item.content.lower()][:max(1, min(limit, 50))]
+    if not selected:
+        return []
+    chunk_ids = {item.id for item in selected}
+    relations = session.scalars(select(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == context.tenant_id, OntologyRelationRecord.source_entity_id.in_(chunk_ids))).all()
+    linked_ids = {item.target_entity_id for item in relations}
+    linked = {item.id: item for item in session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == context.tenant_id, OntologyEntityRecord.id.in_(linked_ids))).all()}
+    by_chunk = {}
+    for relation in relations:
+        target = linked.get(relation.target_entity_id)
+        if target:
+            by_chunk.setdefault(relation.source_entity_id, []).append({"id": target.external_id, "type": target.entity_type, "label": target.label, "confidence": relation.confidence})
+    return [KnowledgeSearchResult(chunk_id=item.external_id, document_id=documents[item.document_id].external_id, title=documents[item.document_id].title, content=item.content, metadata=json.loads(item.metadata_json or "{}"), linked_objects=by_chunk.get(item.id, [])) for item in selected if item.document_id in documents]
 
 
 @app.get("/api/model-providers", response_model=list[ModelProvider])

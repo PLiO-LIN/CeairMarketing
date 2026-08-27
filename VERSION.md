@@ -11,6 +11,13 @@
 - Added registered relation endpoint validation while retaining tenant-defined extension relations.
 - Expanded the idempotent lifecycle instance with ticket, ancillary, coupon, channel and complete campaign spine objects.
 
+## v2.5 - 2026-08-27
+
+- Added the data processing pipeline for text, structured files, and MinerU-supported documents.
+- Added a shared provider-neutral Harness used by the data processing agent and the six marketing intelligent domains.
+- Added the knowledge base layer for versioned documents and traceable knowledge chunks linked to ontology objects.
+- Added administrator-managed MinerU integration configuration and tenant-scoped pipeline and knowledge search APIs.
+
 ## v2.3 - 2026-08-26
 
 - Updated the platform overview to reflect the meeting-defined loop: external signals, internal route operations, aggregated ToB/ToC audiences, AI suggestions with human approval, scheduled channel delivery, and anomaly-based learning.

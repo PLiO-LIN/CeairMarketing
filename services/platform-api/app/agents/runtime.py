@@ -9,17 +9,17 @@ from sqlalchemy.orm import Session
 from ..auth import TenantContext
 from ..data import AGENT_DOMAINS
 from ..db_models import AgentRunRecord, CampaignRecord, ModelProviderRecord, RuntimeEventRecord
-from ..llm import LLMClient, LLMConfig
+from ..llm import LLMConfig
 from ..models import AgentRun, AgentRunRequest, RuntimeEvent
 from ..ontology import agent_contract
 from ..security import SecretCipher
+from .harness import HarnessContext, UnifiedHarness
 
 
 class AgentRuntime:
     """Tenant-scoped governed runtime with replaceable model providers and append-only events."""
 
     def __init__(self) -> None:
-        self._client = LLMClient()
         self._cipher = SecretCipher()
 
     def run(self, session: Session, context: TenantContext, request: AgentRunRequest) -> AgentRun:
@@ -28,6 +28,8 @@ class AgentRuntime:
 
         def emit(event_type: str, **payload: object) -> None:
             events.append(RuntimeEvent(id=f"EVT-{uuid4().hex[:10].upper()}", run_id=run_id, event_type=event_type, payload=payload))
+
+        harness = UnifiedHarness(lambda event_type, payload: emit(event_type, **payload))
 
         operator = request.operator or context.display_name
         emit("agent/run-started", operator=operator, tenant=context.tenant_code)
@@ -45,6 +47,7 @@ class AgentRuntime:
         if domain is None:
             return self._persist(session, context, request, operator, run_id, "failed", "智能域未注册。", None, events)
         contract = agent_contract(request.domain_id)
+        harness.load_context(HarnessContext(context.tenant_id, run_id, request.domain_id, contract["reads"], contract["writes"], contract["functions"]))
         emit(
             "ontology/context-loaded",
             reads=contract["reads"],
@@ -60,7 +63,7 @@ class AgentRuntime:
         emit("model/provider-selected", provider=provider.display_name, model=provider.model_name)
         emit("tool/pre-execute", inputs=domain.input_types)
         try:
-            model_output = self._client.generate(
+            model_output = harness.generate_text(
                 LLMConfig(
                     provider_type=provider.provider_type,
                     base_url=provider.base_url,
