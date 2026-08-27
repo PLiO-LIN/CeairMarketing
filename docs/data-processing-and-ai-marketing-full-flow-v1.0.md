@@ -1,245 +1,308 @@
-# China Eastern Data Processing and AI Marketing Full Flow v1.0
+# 东方航空智能营销平台数据处理与 AI 营销全流程说明 v1.0
 
-> Review document for business, product, data and engineering teams. Based on the current repository implementation, ontology semantic model and production UI. The document separates implemented, partial and recommended capabilities.
+> 本文用于项目评审和系统建设对齐，面向业务、产品、数据、AI 与工程团队。文档基于当前系统实现、可信数据空间/本体知识底座设计、统一 Harness 与生产化要求编写，并明确区分已实现、部分实现和建议建设能力。
 
-## 1. Overall Positioning
+## 1. 总体定位
 
-Marketing operators should not maintain ontology entities or relations manually. They should drop business files or use approved data sources. The system parses, cleans, extracts, validates and stores business knowledge, then makes it available to six marketing agent domains.
+本平台是面向东方航空营销运营人员的独立 AI 营销平台，上游对接用户画像平台、产品管理平台、航班与航线系统、经营分析系统及渠道系统。业务人员只需拖入业务文件或使用已授权的数据源，不需要手工维护本体实体和关系。
 
-Main chain:
+平台负责对多来源数据进行接入、解析、清洗、抽取、校验、沉淀和关联，形成知识库与本体知识底座，再为六个营销智能域提供可查询、可解释、可追溯、可约束的业务上下文。
 
-    Documents / APIs / Databases
-      -> Unified ingestion
-      -> Parsing, OCR and table extraction
-      -> Cleaning, deduplication and standardization
-      -> Data Processing Agent
-      -> Business objects, relations, evidence and confidence
-      -> Knowledge base + ontology graph
-      -> Opportunity -> Audience -> Product -> Activity -> Content
-      -> Approval and compliance -> Channel execution -> Feedback
-      -> Attribution -> Review and strategy learning
+端到端主链路：
 
-The platform already has file ingestion, MinerU integration, a shared Harness, six agent-domain contracts, tenant isolation, model configuration, knowledge storage and ontology storage. Production gaps include durable workers, API/database connectors, candidate-fact review, real channel callbacks and complete object-level write-back from every agent domain.
+    文档 / 接口 / 数据库
+      -> 统一接入
+      -> 解析、OCR 与表格抽取
+      -> 清洗、去重、标准化
+      -> 数据处理智能体
+      -> 业务对象、关系、证据与置信度
+      -> 知识库 + 本体图谱
+      -> 机会 -> 客群 -> 产品 -> 活动 -> 内容
+      -> 审批与合规 -> 渠道执行 -> 结果回传
+      -> 归因分析 -> 复盘与策略学习
 
-## 2. Operator-facing Workspaces
+当前系统已经具备文件接入、MinerU 配置、统一 Harness、六个智能域契约、多租户、模型配置、知识存储和本体存储等基础能力。生产化仍需补齐持久化任务队列、后台 Worker、接口和数据库连接器、候选事实审核、真实渠道回调以及各智能域完整写回业务对象链路等能力。
 
-| Workspace | Operator action | Automated work |
+## 2. 面向业务人员的工作台
+
+| 工作台 | 业务人员主要操作 | 系统与智能体自动完成的工作 |
 | --- | --- | --- |
-| Data ingestion | Drop news, notices, service files or operation reports | Parse, clean, classify, extract and update the knowledge foundation |
-| Opportunity and audience | Review market signals, anomalies and audience evidence | Link route, flight, operation, profile and historical data |
-| Products and benefits | Select fare, ancillary, coupon, loyalty or intermodal products | Check eligibility, inventory, validity, rules and delivery |
-| Content workshop | Review and edit channel versions | Generate content from approved product facts and audience context |
-| Campaign center | Create, approve, publish and monitor campaigns | Link opportunity, audience, package, content, budget and channels |
-| Performance review | Inspect delivery, ticketing, coupon, ancillary and revenue | Attribute results and generate next-cycle recommendations |
-| Governance center | Inspect graph, providers, batches, permissions and audit | Maintain tenant, model, source and action records |
+| 数据接入与处理 | 拖入新闻、须知、服务规则、航线报告、经营报表等文件，或使用已授权数据源 | 解析、清洗、分类、抽取事实、识别关系、生成证据并更新知识底座 |
+| 机会与客群 | 查看市场信号、航线异常、客座率变化、热点趋势和客群证据 | 关联航线、航班、区域、用户画像、出行行为和历史活动，形成可解释的机会建议 |
+| 产品与权益 | 选择客票、运价、空铁联运、卡券、会员权益、升舱、选座、行李、保险和其他辅营产品 | 校验适用人群、航班/航线、库存、有效期、运价规则、权益条件和交付方式 |
+| 内容工作台 | 查看并编辑短信、App、微信、官网、企业客户等渠道版本 | 基于已审核产品事实、客群特征、机会背景和渠道约束生成内容，并标记风险点 |
+| 活动中心 | 创建、审批、发布、执行和监控营销活动 | 串联机会、客群、产品包、内容、预算、频控、合规、渠道和结果回传 |
+| 效果复盘 | 查看送达、点击、购票、卡券核销、辅营购买、收入和投诉等结果 | 完成归因、对比目标、识别异常、总结有效策略并形成下一轮优化建议 |
+| 管理与治理 | 管理租户、用户、权限、模型、数据源、知识和本体版本 | 记录审计、调用、证据、人工反馈、模型版本、数据血缘和操作责任 |
 
-The UI should hide external IDs, ontology types and relation endpoints. Review screens should show business name, source file, evidence excerpt, confidence, validity, proposed action and review state.
+界面上不向业务人员暴露外部系统 ID、本体类型编码或关系端点。审核页面应展示业务名称、来源文件、证据摘要、置信度、有效期、建议动作、影响范围和当前审核状态。
 
-## 3. Data Sources
+## 3. 数据来源范围
 
-### 3.1 File Sources
+### 3.1 文件数据
 
-The current UI supports drag-and-drop and multiple file selection for TXT, Markdown, HTML, CSV, JSON, PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, PNG, JPG and JPEG.
+当前界面支持拖拽上传和多文件选择，覆盖 TXT、Markdown、HTML、CSV、JSON、PDF、DOC、DOCX、PPT、PPTX、XLS、XLSX、PNG、JPG 和 JPEG 等格式。
 
-Typical China Eastern materials include news, route opening notices, seasonal schedule changes, passenger notices, special passenger services, transfer and air-rail rules, fare and refund rules, baggage and seat services, loyalty benefits, coupons, route operation reports, load-factor analysis, price monitoring, campaign plans, channel delivery logs and review reports.
+结合东航实际，典型文件包括：航线开通和调整通知、冬春夏秋航季资料、旅客服务须知、特殊旅客服务规则、中转和空铁联运规则、客票和退改签规则、行李和选座服务、东方万里行会员权益、优惠券规则、航班运行报告、客座率分析、价格监测、营销活动方案、渠道投放日志和活动复盘报告等。
 
-### 3.2 API Sources
+### 3.2 接口数据
 
-Administrators should configure connectors instead of asking operators to upload API response files. Priority sources are the user profile platform, product management platform, flight and route systems, operations analytics, channel systems, and transaction and fulfillment systems.
+管理员应配置经过授权的接口连接器，不应要求业务人员把接口返回结果先下载成文件再导入。优先接入：
 
-Every connector should record source, version, sync time, incremental cursor, field mapping, quality result and failures. Agents may read only connector-authorized data and may not call arbitrary systems.
+- 用户画像平台：会员基础信息、出行行为、标签、客群统计和授权范围内的聚合指标；
+- 产品管理平台：客票、运价、航线航班、空铁联运、卡券、会员权益和辅营产品包；
+- 航班与航线系统：航班计划、航段、机型、航班状态、座位和库存等；
+- 经营分析系统：客座率、收益、航线热度、价格变化、异常波动等；
+- 渠道系统：App、短信、微信、官网、企业客户、OTA、NDC 等触达状态；
+- 交易与履约系统：购票、改退、卡券领取与核销、选座、行李、升舱、保险及投诉等结果。
 
-### 3.3 Database Sources
+每个连接器应记录数据源、接口版本、同步时间、增量游标、字段映射、质量检查结果和失败原因。智能体只能访问连接器授权范围内的数据，不得任意调用外部系统。
 
-Database ingestion should use read-only credentials, table/view allow-lists, field allow-lists, incremental timestamps, masking and tenant ownership. The platform maps source rows into canonical business objects. Agents must not execute arbitrary write SQL.
+### 3.3 数据库数据
 
-## 4. File Processing Pipeline
+数据库接入应采用只读账号、表/视图白名单、字段白名单、增量时间戳、脱敏规则和租户归属控制。平台将源表记录映射为统一的业务对象和指标，不允许智能体直接执行任意写入 SQL。
 
-Each file creates one DataPipelineJob. The create endpoint returns the job immediately and the UI polls the job endpoint.
+## 4. 文件处理流水线
 
-    queued -> running -> received -> extracting -> extracted
-             -> classifying -> classified -> persisting
-             -> ontology-updated
-             -> failed
+每次文件上传创建一个数据处理任务，接口立即返回任务编号，前端通过任务查询接口展示处理进度。
 
-Business-facing stages:
+    排队 -> 运行中 -> 已接收 -> 解析中 -> 已解析
+         -> 分类中 -> 已分类 -> 入库中
+         -> 本体已更新
+         -> 失败
 
-1. File receipt and security check: extension, size, tenant and submitter.
-2. Content parsing and structure recognition: text, Office, PDF, image and table content.
-3. Cleaning and knowledge chunking: headings, pages, sections, tables and source positions.
-4. AI business extraction: routes, flights, products, services, rules, opportunities and campaigns.
-5. Airline semantic validation: object types, relation direction, time windows and constraints.
-6. Knowledge and ontology persistence: raw evidence, chunks, candidate objects and relations.
+面向业务人员的处理阶段如下：
 
-Current UI progress is a stage mapping, not a precise parser or model percentage. Production workers should report item counts, elapsed time, retry count and per-stage progress.
+1. 文件接收与安全检查：检查文件类型、大小、租户、提交人、重复文件和病毒风险。
+2. 内容解析与结构识别：识别正文、章节、页码、表格、图片、附件和 Office 文档结构。
+3. 清洗与知识切分：按标题、页码、段落、表格和来源位置切分内容，保留原始证据。
+4. AI 业务抽取：识别航线、航班、航段、机场、产品、服务、运价、规则、机会、客群、活动和渠道等信息。
+5. 航空业务语义校验：校验对象类型、关系方向、时间窗口、航班条件、MCT、中转约束、产品资格和规则冲突。
+6. 人工确认与冲突处理：对低置信度、跨来源冲突、影响营销执行的关键事实进行审核。
+7. 知识和本体更新：把原文、解析片段、业务事实、关系、证据和状态写入知识底座。
+8. 通知后续智能域：向机会洞察、客群洞察、产品匹配、活动编排、内容生成和效果分析提供可用上下文。
 
-## 5. Document Parsing and Error Handling
+ZIP 文件应作为父批次管理，内部文件作为子任务处理，最终汇总整体处理进度、成功数、失败数和待审核数。失败任务需要保留失败阶段、错误信息、可重试动作和原始文件引用。
 
-PDF, Office and image documents are parsed through the configured MinerU integration. Administrators configure endpoint, key and parser options. The key is encrypted server-side and never returned to the browser.
+## 5. 文档解析与异常处理
 
-Recommended metadata includes file name, hash, size, source, uploader, tenant, submission time, parser version, MinerU task ID, elapsed time, page and section positions, table and image references, OCR confidence, parse errors and human review state.
+PDF、Office 和图片类文档优先通过 MinerU 进行版面分析、OCR、表格抽取和结构化解析。管理员在模型与解析服务配置页面维护 MinerU 地址和密钥，密钥只保存在服务端，前端不回显完整密钥。
 
-Errors should be separated into ingestion, parsing, data-quality, semantic, model and persistence errors. Each error should include file, page or row, reason, source excerpt, batch and recommended action. Retries must be idempotent. ZIP should be represented as a parent batch with child files, child jobs, a manifest, isolated failures and overall progress.
+解析结果至少包括：原始文件、文件哈希、页码、章节、段落、表格、图片、抽取文本、解析版本、任务状态和证据位置。对于航线表、运价表、航班时刻表、会员权益表和渠道效果表，应保留行列结构，避免仅转换成长文本后丢失业务含义。
 
-## 6. Data Processing Agent
+常见异常及处理方式：
 
-The Data Processing Agent converts unstructured or semi-structured material into searchable knowledge and computable business objects. It is not a summarizer and must not directly change product, flight, customer or channel source systems.
+| 异常 | 处理方式 |
+| --- | --- |
+| 文件格式不支持 | 在上传前提示支持格式，并记录失败原因 |
+| 文件过大或超时 | 切分、异步处理、支持重试，不阻塞其他任务 |
+| OCR 质量低 | 标记低质量区域，要求人工确认，不直接形成正式事实 |
+| 表格列错位 | 保留原图和解析表，进入表格校验队列 |
+| 同一航线规则冲突 | 按来源优先级、有效期和人工确认处理，不自动覆盖 |
+| 外部接口字段变化 | 连接器版本化，字段映射失败时暂停写回 |
+| 重复上传 | 通过文件哈希和来源标识去重，同时保留批次记录 |
 
-Outputs:
+## 6. 数据处理智能体
 
-- Raw knowledge: source file, parsed text and knowledge chunks.
-- Business facts: explicit route, flight, service, rule, product or campaign facts.
-- Candidate inferences: possible market signals, opportunities or customer needs inferred from multiple facts.
-- Relations and evidence: object links with source, excerpt, confidence, validity and batch.
+数据处理智能体是统一 Harness 中负责“从原始数据到可治理业务知识”的智能体。它不是简单的文本摘要工具，也不是可以直接修改正式业务数据的自动脚本。
 
-Processing steps are: load tenant and job context; read authorized documents and chunks; load ontology reads, writes and functions; extract objects and relations using China Eastern marketing semantics; separate facts from candidates; bind evidence and confidence; validate object types and relation endpoints; write to the knowledge foundation.
+### 6.1 输入
 
-The agent uses the shared Harness for MinerU, model calls, structured JSON, token usage, runtime events and controlled fallback. A fallback result must not be presented as a high-confidence fact.
+- 原始文件、接口记录、数据库记录和历史版本；
+- 解析后的正文、页码、章节、表格和图片区域；
+- 数据源说明、字段映射、业务词表、航空对象类型和校验规则；
+- 已有知识对象、本体关系、来源优先级和有效期规则。
 
-## 7. Knowledge Base and Ontology Foundation
+### 6.2 处理步骤
 
-The knowledge base and ontology are complementary:
+1. 判断数据类型：新闻、规则、产品、经营指标、航班运行、渠道结果或活动材料。
+2. 抽取业务对象：航线、航班、机场、客票、运价、卡券、会员权益、辅营服务、客群、机会、活动和渠道。
+3. 抽取业务属性：有效期、适用区域、适用航班、价格、库存、资格、限制、触达方式和结果指标。
+4. 识别对象之间的关系：适用、包含、绑定、限制、替代、触达、审批、执行、产生结果等。
+5. 生成证据引用：关联来源文件、页码、表格行、原文片段和解析版本。
+6. 计算置信度和风险等级：区分明确事实、推测关系、业务建议和需要确认的冲突。
+7. 输出候选对象和候选关系，交由业务审核后再发布为正式本体内容。
 
-| Layer | Stores | Answers |
-| --- | --- | --- |
-| Knowledge document | Original file, title, source, version and hash | What was the source? |
-| Knowledge chunk | Content with section and page context | What evidence supports the statement? |
-| Ontology object | Route, flight, product, audience, opportunity, campaign, approval and result | What business object is this? |
-| Ontology relation | Business links among objects | How are objects connected? |
-| Evidence | Source, confidence, validity and batch | Why should the operator trust it? |
+### 6.3 输出类型
 
-Lifecycle:
+- 原始知识：保留原文、表格、图片和解析结构；
+- 业务事实：例如某航班属于某航线、某卡券适用于某产品包；
+- 候选推断：例如客座率异常可能形成某区域促销机会；
+- 关系与证据：说明对象为何相关、来源在哪里、置信度多少；
+- 质量结果：重复、缺失、冲突、过期、解析失败和待审核项。
 
-    Market signal -> Opportunity -> Customer need -> Marketing objective
-    -> Audience snapshot -> Value proposition -> Product package
-    -> Strategy plan -> Touchpoint plan -> Content and campaign
-    -> Approval -> Execution -> Feedback -> Attribution -> Review
+所有输出都要带有来源、版本、有效期、置信度、处理智能体版本和审核状态。智能体不得绕过授权、保护名单、同意管理、频控、产品资格、库存、预算、合规和审批直接执行触达。
 
-The model should cover passenger tickets, fares, fare rules, routes, flights, air-rail intermodal products, baggage, seat selection, lounges, insurance, coupons, mileage, loyalty benefits, enterprise products, OTA/NDC channels and service rules.
+## 7. 知识库与本体知识底座
 
-Labels are configurable attributes of customer aggregates or audience snapshots, not the whole audience model. They may come from the existing profile platform, authorized external data, travel and purchase behavior, loyalty and service behavior, or agent suggestions. Each label needs source, update time, calculation definition, consent usage, marketing eligibility and review state. A campaign uses a versioned audience snapshot rather than a label name alone.
+知识库和本体图谱作为一个统一的知识底座使用：知识库保存“事实来自哪里”，本体描述“事实之间如何关联”。知识补充本体内容，本体帮助智能体按业务语义检索和推理。
 
-## 8. Six Marketing Agent Domains
+### 7.1 本体覆盖的业务对象
 
-### Opportunity Insight
+- 航线、航段、航班、机场、机型、航班计划和运行状态；
+- 客票、舱位、运价、退改签、行李、选座、升舱和库存规则；
+- 空铁联运、城市航站楼、中转服务和 MCT 规则；
+- 卡券、优惠、会员、里程、贵宾室、保险、行李、选座和其他辅营产品；
+- 企业客户、SME 客群、协议产品、旅行社、OTA、NDC 和官方渠道；
+- 市场信号、舆情、航线热度、客座率、价格、经营机会和异常事件；
+- 客户画像、客群快照、活动、内容、审批、触达、结果、归因和策略版本。
 
-Reads market interest, routes, flights, load factor, price, inventory, operation status, historical review and business rules. Detects demand/supply changes and unusual combinations. Outputs opportunity candidates, opportunity score, customer-need candidates, objectives and evidence. A business owner confirms whether an opportunity becomes a campaign.
+### 7.2 本体在流程中的使用
 
-### Audience Insight
+- 机会洞察智能域通过“市场信号—航线/航班—经营指标—时间窗口—产品可供给性”识别机会；
+- 客群洞察智能域通过“客群—画像标签—出行行为—会员等级—企业关系—触达授权”形成可投放人群；
+- 产品匹配智能域通过“机会—客群—产品包—资格—库存—有效期—渠道”筛选可用产品；
+- 活动编排智能域通过“活动—目标—客群—产品—预算—频控—审批—渠道”形成可执行方案；
+- 内容生成智能域通过“产品事实—客群语境—渠道规格—合规要求—版本”生成内容；
+- 效果分析智能域通过“触达—曝光—点击—购票—领取—核销—辅营购买—收入—投诉”完成结果归因和策略学习。
 
-Reads profile indicators, existing labels, customer relations, journey stage, history, consent, contact frequency and protection rules. Produces a versioned aggregate audience snapshot with size, evidence, label sources, exclusions and reachability. It cannot enlarge the approved audience scope.
+标签仍应支持添加、删除、停用、复用和版本管理。平台可以复用用户画像系统已有标签，也可以将经过审核的外部聚合标签作为候选属性，但标签不等于完整客群模型。营销使用时应以客群快照、授权状态、保护规则和活动有效期为准。
 
-### Product Matching
+### 7.3 状态与治理
 
-Reads customer needs, audience snapshots, value propositions, product-management versions, fare, inventory, flight, membership qualification and service rules. Matches fare, ancillary, intermodal, coupon and benefit packages. Outputs recommendation, fit score, qualification, limitations and evidence. It cannot invent price, inventory or benefit eligibility.
+本体断言和业务对象至少区分：候选、正式、生效、过期、冲突、已拒绝和已撤销。智能体结果至少区分：事实、候选、建议、人工确认、已拒绝和已过期。
 
-### Activity Orchestration
+知识与本体更新必须保留版本、来源、证据、操作者、智能体版本、模型版本、审核意见和更新时间，支持回溯、对比、撤销和重新发布。
 
-Reads objective, audience, product package, channel, budget, timing, frequency and compliance rules. Creates campaign version, touchpoint plan, schedule, budget, fallback contact and monitoring metrics. It produces an approval-ready plan and cannot bypass approval.
+## 8. 六个营销智能域
 
-### Content Generation
+| 智能域 | 主要输入 | 主要输出 | 人工边界 |
+| --- | --- | --- | --- |
+| 机会洞察 | 舆情、航线热度、客座率、价格、季节、节假日、航班运行和经营指标 | 机会候选、异常解释、影响范围、建议时机和证据 | 人工确认是否转入营销策划 |
+| 客群洞察 | 用户画像、出行记录、会员、企业关系、历史活动和授权信息 | 客群候选、画像解释、规模、可触达范围和排除条件 | 人工确认投放人群和保护规则 |
+| 产品匹配 | 产品管理平台产品包、航班/库存、运价、卡券、会员和辅营规则 | 产品推荐、适用性校验、替代产品和组合建议 | 人工确认最终产品包与承诺内容 |
+| 活动编排 | 目标、机会、客群、产品、预算、频控、渠道、时间和审批规则 | 活动方案、分批策略、触达计划、审批材料和执行任务 | 人工审批活动和预算 |
+| 内容生成 | 已审核产品事实、客群上下文、活动策略、渠道规格和合规要求 | 短信、App、微信、官网、企业客户等版本及风险提示 | 人工审核发布内容 |
+| 效果分析 | 发送、送达、曝光、点击、购票、卡券核销、辅营、收入、投诉和成本 | 归因结果、漏斗、异常、复盘报告和策略建议 | 人工确认结论并决定下一轮动作 |
 
-Reads approved product facts, customer need, audience context, value proposition, campaign strategy, channel rules and brand policy. Generates App, SMS, WeChat, website and enterprise-channel variants. It must return fact-check and compliance-check results; humans approve brand, legal and price expressions.
+六个智能域使用同一套 Harness 上下文、工具、模型调用、事件、权限、审计和 Token 用量记录，但每个智能域拥有独立输入输出契约、提示词版本、质量指标和人工审核节点。
 
-### Effect Analysis
+## 9. 统一 Harness 与治理要求
 
-Reads delivery, send, open, click, ticket, coupon, ancillary, refund, complaint, fulfillment, revenue and control-group data. Produces feedback, attribution, review, anomaly findings and next-cycle recommendations. Attribution definitions and rule changes require human confirmation.
+统一 Harness 为数据处理智能体和六个营销智能域提供一致的运行框架，包括：
 
-## 9. Shared Harness and Governance
+- 模型提供商和模型路由，可按租户、任务类型和成本要求配置；
+- 工具注册、权限校验、数据源授权和本体检索；
+- 运行上下文、任务状态、事件流、重试和超时；
+- 输入输出结构校验、证据绑定、置信度和人工确认；
+- Prompt、模型、工具、数据源和本体版本记录；
+- Token 用量、成本、耗时、错误率、质量评分和审计日志；
+- 敏感数据脱敏、租户隔离、操作权限和可追溯回放。
 
-All data and marketing agents use one provider-neutral Harness. Every run has tenant ID, run ID, agent ID, allowed reads, allowed writes and allowed functions. The Harness records context loading, tool calls, model calls, structured parsing, token usage, failures and fallback behavior.
+大模型采用 OpenAI 风格接口接入，管理员配置服务地址、模型名称、API Key、默认模型、超时、限流和用量告警。页面可以查询可用模型、连接状态、调用次数、Token 用量和费用估算，但不展示完整密钥。
 
-Agent results should use explicit states: fact, candidate, recommendation, human_confirmed, rejected and expired. A model output is not automatically a formal product, audience, strategy, compliance decision or campaign. Formal actions require a business confirmation event and preserve the original recommendation, edits, reviewer, time and reason.
+智能体生成的建议不能直接视为正式业务规则。涉及旅客权益、价格承诺、库存、会员资格、预算、合规和对外发布的结果，必须经过规则服务与人工审批。
 
-## 10. End-to-end Marketing Process
+## 10. 航空营销端到端流程
 
-    01 Opportunity discovery
-    02 Audience identification
-    03 Product package matching
-    04 Campaign creation and versioning
-    05 Content generation and review
-    06 Budget, consent, protection, frequency and compliance checks
-    07 Approval and controlled publication
-    08 Channel delivery and state callback
-    09 Ticket, coupon, ancillary, fulfillment and complaint feedback
-    10 Attribution, review and strategy learning
+### 10.1 机会发现
 
-Recommended campaign states are Draft, Content Review, Business Approval, Compliance Review, Ready to Publish, Running, Paused, Completed, Under Review and Archived. State transitions record operator, time, approval comment, version and evidence. No agent can move a campaign directly from Draft to Running.
+系统从外部舆情、旅游热点、节假日、竞品价格和市场趋势，以及内部客座率、航线热度、航班运行、收益、库存和历史活动中识别变化。对于国际及地区航线，可以重点关注提前窗口、航线热度和价格变化；对于中转和空铁联运，需要校验航班组合和 MCT，例如浦东国际中转的最短衔接时间要求。
 
-Before delivery, the system checks consent, protection lists, complaint protection period, cross-channel frequency, product validity, fare and inventory, membership qualification, coupon conditions, transfer/MCT constraints, content facts, budget and channel publication capability.
+机会洞察智能域输出机会说明、数据证据、影响航线/航班、预计窗口、可能客群和可供给产品，业务人员确认后进入活动策划。
 
-## 11. Current Implementation Assessment
+### 10.2 客群识别
 
-### Implemented
+平台从用户画像平台复用已有标签和指标，以客群聚合方式筛选目标人群，不在营销页面展示不必要的具体旅客信息。ToC 可以结合会员等级、近期开票、出行频次、目的地偏好、亲子/学生/老人等标签；ToB 和 SME 可以结合企业航段、差旅频次、协议关系和企业出行周期。
 
-- Multi-tenant login, workspace and tenant-scoped queries.
-- Drag-and-drop multi-file data ingestion UI.
-- Pipeline creation, list query and single-job query.
-- Basic TXT, Markdown, JSON and CSV reading.
-- MinerU integration configuration with encrypted server-side key storage.
-- Knowledge documents, chunks, ontology objects and relations.
-- Data Processing Agent structured extraction, relation extraction and fallback.
-- Shared Harness context, tool, model, event and token-usage handling.
-- Six agent-domain contracts with reads, writes and functions.
-- Ontology semantic model, relation endpoint validation and knowledge search.
-- Model provider configuration, model listing, connection testing and usage statistics.
+客群洞察智能域同时检查触达授权、保护名单、频控、重复触达、客群规模和数据有效期，输出客群快照及解释。
 
-### Partially implemented
+### 10.3 产品匹配
 
-- Background task execution exists, but there is no durable queue, worker fleet, retry policy, cancel operation or cross-instance recovery.
-- Progress is mapped by stage rather than measured by parser/model item counts.
-- Candidate object persistence exists, but a full candidate-review, conflict-resolution and release workflow is still required.
-- Agent runs and events are recorded, but not every domain writes a complete business object chain back to the ontology.
-- Activity, approval, execution and review screens have platform data and sample records, but real channel callbacks and transaction reconciliation remain to be connected.
-- File ingestion is available; API and database connectors, scheduling and source management are still required.
+产品匹配智能域通过产品管理平台读取可销售产品包，覆盖客票与运价、航线航班、空铁联运、会员权益、卡券、保险、选座、行李、升舱、贵宾室和其他辅营服务。匹配时需要联合校验适用航班、客群资格、库存、有效期、价格和退改规则，并输出主推产品、替代产品和不可用原因。
 
-### Recommended production work
+### 10.4 活动创建与内容生成
 
-- Durable object storage, virus scanning, hash deduplication, retention and ZIP parent/child batches.
-- Connector framework for APIs and databases with read-only credentials, mapping, incremental sync and quality rules.
-- Human review workbench for object, relation and evidence confirmation.
-- Ontology versioning, effective dates, conflict detection, merge and decision history.
-- Campaign state machine, approval nodes, compliance execution, publish rollback and idempotent channel commands.
-- Real App, SMS, WeChat, website, enterprise, OTA and NDC delivery callbacks.
-- Unified transaction, coupon, ancillary, fulfillment, refund and complaint attribution.
-- Agent evaluation sets, model and prompt versioning, quality scoring, cost controls and feedback loops.
+活动人员选择机会、客群快照和产品包，配置目标、预算、周期、频控、渠道、触达节奏和归因口径。内容生成智能域基于审核通过的产品事实和活动策略生成多个渠道版本，支持人工编辑、版本对比、敏感词检查、权益承诺检查和渠道长度校验。
 
-## 12. Decisions Required
+### 10.5 审批与合规
 
-1. Which extracted objects may be auto-confirmed, and which must wait for human review?
-2. Should every ontology assertion be candidate-first, or can trusted master data become formal immediately?
-3. What exact versioned interfaces are available from the product management platform?
-4. Does the profile platform return passenger-level data, aggregate audiences or only label metrics? Is the marketing platform restricted to aggregate use?
-5. Can external data become ontology instances, or only market signals and evidence?
-6. Are channel delivery, ticketing, coupon and ancillary callbacks available in one event contract?
-7. Does approval remain in OA with integration, or become a marketing-platform workflow?
-8. Must candidate, formal and expired ontology objects be separated by status and version?
-9. Can each agent domain use a different model, or is there one tenant default with optional overrides?
-10. What evidence and explanation must an operator see before approving content, product matching or attribution?
+活动提交后执行预算、客群、频控、授权、保护名单、产品资格、库存、价格、权益、内容和渠道合规检查。根据活动类型进入营销平台审批或对接 OA 审批。审批通过后才能生成可执行任务；审批拒绝、超时或规则失效时，活动不能进入发布状态。
 
-## 13. Recommended Delivery Priority
+### 10.6 渠道执行与回传
 
-### P0: Business-usable ingestion
+平台将执行任务分发到 App、短信、微信、官网、企业客户、OTA、NDC 等授权渠道，记录发送批次、渠道版本、计划时间、成功/失败状态和幂等编号。渠道应回传送达、曝光、点击、领取、购票、核销、辅营购买和退订等事件。
 
-Finish drag-and-drop processing details, durable raw-file storage, candidate review, and the first approved interfaces to the profile and product management platforms.
+### 10.7 复盘与策略学习
 
-### P1: Closed-loop campaign
+效果分析智能域建立触达、互动、交易、履约和成本漏斗，区分购票、卡券核销、选座、行李、升舱、保险、贵宾室等不同转化目标。系统识别异常，例如某一星期特定日期航班正常率或转化率异常，并结合历史活动、客群和产品关系解释原因。
 
-Connect opportunity, audience, product, content, campaign, approval, execution, feedback and review. Integrate at least one official touchpoint and one real result source. Enforce product, consent, budget, frequency and compliance checks.
+复盘结果形成可追溯的策略建议，不直接自动发布。人工确认后，可以更新活动策略、产品匹配规则、内容模板、客群条件和机会识别特征。
 
-### P2: Scale and governance
+## 11. 当前系统实现评估
 
-Add API/database connectors, durable workers, large-file handling, ontology versioning, agent evaluation, model routing, cost monitoring, quality monitoring and cross-source conflict handling.
+### 已实现
 
-## 14. Review Checklist
+- 多租户登录、工作区和租户隔离查询；
+- 拖拽上传、多文件数据接入和任务列表；
+- 数据处理任务创建、列表查询和单任务查询；
+- TXT、Markdown、JSON、CSV 等基础文件读取；
+- MinerU 解析配置与服务端密钥存储；
+- 知识文档、知识片段、本体对象和关系存储；
+- 数据处理智能体的结构化抽取、关系抽取和降级处理；
+- 统一 Harness 的上下文、工具、模型、事件和 Token 用量处理；
+- 六个智能域的输入输出契约、读取、写入和函数定义；
+- 本体语义模型、关系端点校验和知识检索；
+- 模型提供商配置、可用模型查询、连接测试和用量统计。
 
-- [ ] Operators submit business files or configure approved sources; they do not manually import ontology entities and relations.
-- [ ] The Data Processing Agent extracts facts and candidates, binds evidence and confidence, and does not bypass human governance.
-- [ ] Knowledge documents preserve source evidence; the ontology expresses business objects and relationships.
-- [ ] All six marketing agent domains use the same governed context and ontology foundation.
-- [ ] Product management platform and user profile platform are upstream systems, not replaced by this platform.
-- [ ] Real channel and transaction callbacks are required for production attribution.
+### 部分实现
 
-Open comments:
+- 当前存在后台任务执行，但还没有持久化队列、独立 Worker、完善重试策略、取消操作和跨实例恢复；
+- 进度主要按处理阶段映射，还不是基于解析条目、表格行数或模型处理数量的真实进度；
+- 候选对象可以保存，但完整的候选审核、冲突处理和正式发布流程仍需加强；
+- 智能体运行和事件已记录，但不是每个智能域都已经把完整业务对象链写回本体；
+- 活动、审批、执行和复盘页面已有平台数据和示例记录，但真实渠道回调、交易对账和辅营归因仍需接入；
+- 文件接入已经可用，接口和数据库连接器、定时同步和数据源管理仍需建设。
 
-Record business-flow, data-source, agent-boundary, ontology, approval or production-operation changes here.
+### 生产化建议建设
+
+- 对象存储、病毒扫描、文件哈希去重、保留策略和 ZIP 父子批次；
+- API/数据库连接器框架，支持只读账号、字段映射、增量同步、质量规则和失败告警；
+- 业务事实、关系和证据的人工审核工作台；
+- 本体版本、有效期、冲突检测、合并、撤销和决策历史；
+- 活动状态机、审批节点、合规执行、发布回滚和渠道命令幂等；
+- App、短信、微信、官网、企业客户、OTA 和 NDC 的真实触达回调；
+- 统一购票、卡券、辅营、履约、退改和投诉归因；
+- 智能体评测集、模型和 Prompt 版本、质量评分、成本控制和反馈闭环。
+
+## 12. 需要业务确认的关键决策
+
+1. 哪些抽取对象可以自动确认，哪些必须人工审核？
+2. 所有本体断言是否都先作为候选，还是允许可信主数据直接生效？
+3. 产品管理平台能够提供哪些稳定、版本化的接口？
+4. 用户画像平台返回的是旅客级数据、聚合客群，还是仅返回标签和规模指标？营销平台是否只允许聚合使用？
+5. 外部数据可以形成正式本体对象，还是只能作为市场信号和证据？
+6. 渠道触达、购票、卡券、辅营和履约回调是否可以统一为一个事件协议？
+7. 审批继续使用 OA 并与平台集成，还是由营销平台承载审批流程？
+8. 候选、正式、生效和过期的本体对象是否需要按状态与版本隔离？
+9. 六个智能域是否允许按任务使用不同模型，还是统一使用租户默认模型并支持局部覆盖？
+10. 业务人员在批准客群、产品匹配、内容和归因结论前，必须看到哪些证据和解释？
+
+## 13. 建议交付优先级
+
+### P0：先做到业务可用的数据接入
+
+完善拖拽上传、处理进度、原始文件存储、候选审核，并完成与用户画像平台、产品管理平台的首批正式接口对接。
+
+### P1：打通营销闭环
+
+连接机会、客群、产品、内容、活动、审批、执行、反馈和复盘，至少接入一个官方触点和一个真实结果来源，同时落实产品、同意、预算、频控和合规检查。
+
+### P2：规模化与治理
+
+增加接口/数据库连接器、持久化 Worker、大文件处理、本体版本治理、智能体评测、模型路由、成本监控、质量监控和跨来源冲突处理。
+
+## 14. 评审检查清单
+
+- [ ] 业务人员通过拖拽文件或授权数据源提交数据，不手工导入本体实体和关系。
+- [ ] 数据处理智能体抽取事实与候选关系，绑定证据和置信度，不绕过人工治理。
+- [ ] 知识库保留原始证据，本体表达业务对象及其关系。
+- [ ] 六个营销智能域使用统一的 Harness、权限、上下文和本体知识底座。
+- [ ] 产品管理平台和用户画像平台是上游系统，本平台负责营销编排和闭环，不替代上游系统。
+- [ ] 真实渠道、交易、卡券、辅营和履约回调是生产归因的必要条件。
+- [ ] 活动发布前必须完成预算、授权、保护、频控、产品资格、库存、内容和合规检查。
+- [ ] 智能体输出必须区分事实、候选、建议和人工确认结果。
+
+## 待补充意见
+
+请在此记录业务流程、数据来源、智能体边界、本体治理、审批方式、渠道回传或生产运维方面的调整意见。
