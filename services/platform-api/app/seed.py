@@ -89,6 +89,8 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
                 base_url=settings.bootstrap_model_base_url.rstrip("/"),
                 model_name=settings.bootstrap_model_name,
                 encrypted_api_key=SecretCipher().encrypt(settings.bootstrap_model_api_key),
+                timeout_seconds=180,
+                max_tokens=512,
                 enabled=True,
                 is_default=True,
             )
