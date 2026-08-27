@@ -195,3 +195,4 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
         knowledge = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
         assert knowledge.status_code == 200
         assert knowledge.json()
+        assert knowledge.json()[0]["linked_objects"]

@@ -405,8 +405,21 @@ def search_knowledge(q: str = "", limit: int = 10, context: TenantContext = Depe
     selected = [item for item in chunks if not query or query in item.content.lower()][:max(1, min(limit, 50))]
     if not selected:
         return []
-    chunk_ids = {item.id for item in selected}
-    relations = session.scalars(select(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == context.tenant_id, OntologyRelationRecord.source_entity_id.in_(chunk_ids))).all()
+    ontology_chunks = {
+        item.external_id: item
+        for item in session.scalars(
+            select(OntologyEntityRecord).where(
+                OntologyEntityRecord.tenant_id == context.tenant_id,
+                OntologyEntityRecord.external_id.in_([item.external_id for item in selected]),
+            )
+        ).all()
+    }
+    relations = session.scalars(
+        select(OntologyRelationRecord).where(
+            OntologyRelationRecord.tenant_id == context.tenant_id,
+            OntologyRelationRecord.source_entity_id.in_([item.id for item in ontology_chunks.values()]),
+        )
+    ).all()
     linked_ids = {item.target_entity_id for item in relations}
     linked = {item.id: item for item in session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == context.tenant_id, OntologyEntityRecord.id.in_(linked_ids))).all()}
     by_chunk = {}
@@ -414,7 +427,7 @@ def search_knowledge(q: str = "", limit: int = 10, context: TenantContext = Depe
         target = linked.get(relation.target_entity_id)
         if target:
             by_chunk.setdefault(relation.source_entity_id, []).append({"id": target.external_id, "type": target.entity_type, "label": target.label, "confidence": relation.confidence})
-    return [KnowledgeSearchResult(chunk_id=item.external_id, document_id=documents[item.document_id].external_id, title=documents[item.document_id].title, content=item.content, metadata=json.loads(item.metadata_json or "{}"), linked_objects=by_chunk.get(item.id, [])) for item in selected if item.document_id in documents]
+    return [KnowledgeSearchResult(chunk_id=item.external_id, document_id=documents[item.document_id].external_id, title=documents[item.document_id].title, content=item.content, metadata=json.loads(item.metadata_json or "{}"), linked_objects=by_chunk.get(ontology_chunks[item.external_id].id, [])) for item in selected if item.document_id in documents and item.external_id in ontology_chunks]
 
 
 @app.get("/api/model-providers", response_model=list[ModelProvider])

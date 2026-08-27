@@ -85,24 +85,6 @@ class DataProcessingAgent:
         result = self._persist_candidates(candidates, filename); self._stage("ontology-updated", "本体对象与关系更新", "completed", **result)
         self.job.result_json = json.dumps({"events": self.events, "text_length": len(text), "candidates": candidates}, ensure_ascii=False); self.session.commit(); return self.events
 
-    def _persist_knowledge(self, filename: str, text: str) -> None:
-        document_id = f"knowledge-doc-{self.job.id.lower()}"
-        document = self.session.scalar(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == self.tenant.tenant_id, OntologyEntityRecord.external_id == document_id))
-        if document is None:
-            document = OntologyEntityRecord(tenant_id=self.tenant.tenant_id, external_id=document_id)
-            self.session.add(document)
-        document.entity_type = "KnowledgeDocument"; document.label = filename; document.attributes_json = json.dumps({"pipeline_job_id": self.job.id, "content_length": len(text), "status": "parsed"}, ensure_ascii=False); document.source = f"data-pipeline:{filename}"; document.confidence = 1.0; self.session.flush()
-        for index, chunk_text in enumerate([text[i:i + 1800] for i in range(0, len(text), 1800)][:100]):
-            chunk_id = f"{document_id}-chunk-{index + 1}"
-            chunk = self.session.scalar(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == self.tenant.tenant_id, OntologyEntityRecord.external_id == chunk_id))
-            if chunk is None:
-                chunk = OntologyEntityRecord(tenant_id=self.tenant.tenant_id, external_id=chunk_id)
-                self.session.add(chunk)
-            chunk.entity_type = "KnowledgeChunk"; chunk.label = f"{filename} / 片段 {index + 1}"; chunk.attributes_json = json.dumps({"document_id": document_id, "sequence": index + 1, "text": chunk_text}, ensure_ascii=False); chunk.source = f"data-pipeline:{filename}"; chunk.confidence = 1.0; self.session.flush()
-            exists = self.session.scalar(select(OntologyRelationRecord.id).where(OntologyRelationRecord.tenant_id == self.tenant.tenant_id, OntologyRelationRecord.source_entity_id == document.id, OntologyRelationRecord.relation_type == "contains_chunk", OntologyRelationRecord.target_entity_id == chunk.id))
-            if exists is None: self.session.add(OntologyRelationRecord(tenant_id=self.tenant.tenant_id, source_entity_id=document.id, relation_type="contains_chunk", target_entity_id=chunk.id, evidence="文档切分", source=f"data-pipeline:{filename}", confidence=1.0))
-        self.session.commit()
-
     def _extract_text(self, filename: str, content: bytes) -> str:
         suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""; config = get_mineru_config(self.session, self.tenant.tenant_id)
         if suffix in DOCUMENT_SUFFIXES:
@@ -158,6 +140,14 @@ class DataProcessingAgent:
             record = self.session.scalar(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == self.tenant.tenant_id, OntologyEntityRecord.external_id == external_id))
             if record is None: record = OntologyEntityRecord(tenant_id=self.tenant.tenant_id, external_id=external_id); self.session.add(record)
             record.entity_type = entity_type; record.label = label; record.attributes_json = json.dumps({"pipeline_status": "candidate", **(item.get("attributes") or {})}, ensure_ascii=False); record.source = f"data-pipeline:{filename}"; record.confidence = max(0.0, min(1.0, float(item.get("confidence", 0.5)))); self.session.flush(); records[external_id] = record; accepted_entities += 1
+        knowledge_chunks = self.session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == self.tenant.tenant_id, OntologyEntityRecord.entity_type == "KnowledgeChunk", OntologyEntityRecord.source == f"data-pipeline:{filename}").order_by(OntologyEntityRecord.id).limit(1)).all()
+        if knowledge_chunks:
+            chunk = knowledge_chunks[0]
+            for record in records.values():
+                if validate_relation_endpoints("evidence_for", chunk.entity_type, record.entity_type) is None:
+                    exists = self.session.scalar(select(OntologyRelationRecord.id).where(OntologyRelationRecord.tenant_id == self.tenant.tenant_id, OntologyRelationRecord.source_entity_id == chunk.id, OntologyRelationRecord.relation_type == "evidence_for", OntologyRelationRecord.target_entity_id == record.id))
+                    if exists is None:
+                        self.session.add(OntologyRelationRecord(tenant_id=self.tenant.tenant_id, source_entity_id=chunk.id, relation_type="evidence_for", target_entity_id=record.id, evidence="data processing extraction evidence", source=f"data-pipeline:{filename}", confidence=record.confidence))
         accepted_relations = 0
         for item in relations:
             if not isinstance(item, dict): rejected += 1; continue
