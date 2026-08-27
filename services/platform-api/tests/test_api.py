@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -7,6 +8,26 @@ from app.database import SessionLocal
 from app.db_models import ModelProviderRecord
 from app.ontology import validate_relation_endpoints
 from app.ontology.bootstrap import LIFECYCLE_ENTITIES, LIFECYCLE_RELATIONS
+
+
+@pytest.fixture(autouse=True)
+def restore_model_provider_state():
+    with SessionLocal() as session:
+        snapshot = {
+            record.id: (record.enabled, record.is_default)
+            for record in session.query(ModelProviderRecord).all()
+        }
+        session.query(ModelProviderRecord).filter(ModelProviderRecord.provider_type != "mock").update({"enabled": False, "is_default": False})
+        session.query(ModelProviderRecord).filter(ModelProviderRecord.provider_type == "mock").update({"enabled": True, "is_default": True})
+        session.commit()
+    yield
+    with SessionLocal() as session:
+        for provider_id, (enabled, is_default) in snapshot.items():
+            record = session.get(ModelProviderRecord, provider_id)
+            if record is not None:
+                record.enabled = enabled
+                record.is_default = is_default
+        session.commit()
 
 
 def login(client: TestClient) -> tuple[dict[str, str], list[dict]]:
