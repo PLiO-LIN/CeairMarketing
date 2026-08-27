@@ -22,12 +22,15 @@ class MarketingCopilot:
         self._cipher: SecretCipher | None = None
         self._runtime = AgentRuntime()
 
-    def run(self, session: Session, context: TenantContext, request: AgentChatRequest) -> AgentChatResponse:
+    def run(self, session: Session, context: TenantContext, request: AgentChatRequest, event_sink: Callable[[dict[str, Any]], None] | None = None) -> AgentChatResponse:
         trace: list[dict[str, Any]] = []
         sources: list[dict[str, Any]] = []
 
         def emit(event: str, payload: dict[str, Any]) -> None:
-            trace.append({"event": event, "timestamp": datetime.now(timezone.utc).isoformat(), **payload})
+            item = {"event": event, "timestamp": datetime.now(timezone.utc).isoformat(), **payload}
+            trace.append(item)
+            if event_sink:
+                event_sink(item)
 
         provider = self._resolve_provider(session, context.tenant_id, request.provider_id)
         if provider is None:

@@ -1,10 +1,14 @@
 import json
+import queue
+import threading
+import time
 from datetime import datetime, timezone
 from uuid import uuid4
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 
 from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import delete, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
@@ -360,6 +364,48 @@ def list_agent_domains(_context: TenantContext = Depends(get_tenant_context)):
 def run_agent(request: AgentRunRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     return runtime.run(session, context, request)
 
+
+@app.post("/api/agent-chat/stream")
+def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = Depends(require_write)):
+    """SSE chat channel: harness events arrive before answer tokens."""
+    events: queue.Queue[dict[str, object]] = queue.Queue()
+
+    def worker() -> None:
+        try:
+            with SessionLocal() as worker_session:
+                result = copilot.run(worker_session, context, payload, event_sink=lambda item: events.put({"type": "trace", "item": item}))
+                events.put({"type": "result", "result": result.model_dump(mode="json")})
+        except Exception as exc:
+            events.put({"type": "error", "message": f"智能体运行失败：{exc}"})
+        finally:
+            events.put({"type": "done"})
+
+    threading.Thread(target=worker, name="ceair-agent-chat", daemon=True).start()
+
+    def encode(event: str, data: object) -> str:
+        return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+    def stream():
+        yield ": ceair-agent-stream\n\n"
+        while True:
+            item = events.get()
+            kind = item.get("type")
+            if kind == "trace":
+                yield encode("trace", item["item"])
+            elif kind == "result":
+                result = item["result"]
+                answer = str(result.get("answer") or "")
+                for index in range(0, len(answer), 18):
+                    yield encode("token", {"text": answer[index:index + 18]})
+                    time.sleep(0.012)
+                yield encode("complete", result)
+            elif kind == "error":
+                yield encode("error", {"message": item["message"]})
+            elif kind == "done":
+                yield encode("done", {})
+                break
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"})
 
 @app.get("/api/agent-runs/{run_id}", response_model=AgentRun)
 def get_agent_run(run_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
