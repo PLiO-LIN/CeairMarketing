@@ -4,6 +4,17 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def resolve_env_file() -> str | None:
+    """Resolve .env in both the repository checkout and the container image."""
+    parents = list(Path(__file__).resolve().parents)
+    candidates = [
+        parents[3] / ".env" if len(parents) > 3 else None,
+        parents[2] / ".env" if len(parents) > 2 else None,
+        Path("/app/.env"),
+    ]
+    return next((str(path) for path in candidates if path is not None and path.is_file()), None)
+
+
 class Settings(BaseSettings):
     app_name: str = "China Eastern Intelligent Marketing Platform API"
     environment: str = "development"
@@ -22,7 +33,7 @@ class Settings(BaseSettings):
     bootstrap_mineru_api_key: str = ""
 
     # Resolve the repository env file independent of the process working directory.
-    model_config = SettingsConfigDict(env_file=(Path(__file__).resolve().parents[3] / ".env"), extra="ignore")
+    model_config = SettingsConfigDict(env_file=resolve_env_file(), extra="ignore")
 
     @property
     def cors_origin_list(self) -> list[str]:
