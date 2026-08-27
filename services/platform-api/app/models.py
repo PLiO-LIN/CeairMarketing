@@ -171,6 +171,33 @@ class ProviderTestResult(BaseModel):
     message: str
 
 
+class ProviderModel(BaseModel):
+    id: str
+    owned_by: str = ""
+
+
+class ProviderModelsResult(BaseModel):
+    provider_id: int
+    models: list[ProviderModel]
+
+
+class ModelUsageItem(BaseModel):
+    model_name: str
+    request_count: int
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
+
+class ProviderUsageResult(BaseModel):
+    provider_id: int
+    request_count: int
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    by_model: list[ModelUsageItem]
+
+
 class IntegrationConfigUpdate(BaseModel):
     display_name: str = Field(min_length=2, max_length=120)
     base_url: str = "https://mineru.net"

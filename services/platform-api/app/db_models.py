@@ -99,6 +99,22 @@ class IntegrationConfigRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
 
+class ModelUsageRecord(Base):
+    __tablename__ = "model_usage"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    provider_id: Mapped[int] = mapped_column(ForeignKey("model_providers.id", ondelete="CASCADE"), index=True)
+    run_id: Mapped[str] = mapped_column(String(40), default="", index=True)
+    agent_id: Mapped[str] = mapped_column(String(80), default="")
+    request_type: Mapped[str] = mapped_column(String(40), default="agent")
+    model_name: Mapped[str] = mapped_column(String(120), default="")
+    prompt_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+
+
 class AgentRunRecord(Base):
     __tablename__ = "agent_runs"
 

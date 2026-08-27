@@ -1,5 +1,14 @@
 ﻿# Version History
 
+## v2.6 - 2026-08-27
+
+- Expanded the airline marketing ontology from operational lifecycle objects to a complete objective, need, value proposition, strategy, touchpoint, attribution, and learning chain.
+- Mapped marketing planning, segmentation, value proposition, integrated communication, channel management, loyalty, lifetime value, and performance control concepts to executable China Eastern business objects.
+- Extended all six intelligent-domain contracts so agents share governed marketing context while retaining human approval boundaries.
+- Added a richer Shanghai-Sanya lifecycle graph covering measurable objectives, customer needs, product value, strategy, touchpoint planning, and multi-dimensional attribution.
+- Updated the data processing agent to extract the extended marketing semantic objects and removed duplicate knowledge-document persistence.
+- Added model discovery and tenant-scoped token usage accounting for OpenAI-compatible providers.
+
 ## v2.4 - 2026-08-26
 
 - Added the China Eastern marketing operations ontology semantic registry covering data, opportunity, audience, product, content, campaign, approval, execution, feedback, and review.

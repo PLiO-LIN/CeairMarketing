@@ -5,7 +5,7 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
-  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], providers: [], domains: [], runs: [] };
+  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], providers: [], domains: [], runs: [], mineru: null };
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -196,6 +196,19 @@
 <button class="btn primary">??????</button>
 </form>
 </div>
+<div class="panel model-detail-panel">
+<div class="panel-head"><h2>模型可用性与用量</h2><span id="modelDetailProvider">选择一个模型服务</span></div>
+<div class="panel-body" id="modelDetail"><div class="production-status">点击“可用模型”或“用量”查看实时信息。</div></div>
+</div>
+<div class="panel mineru-panel">
+<div class="panel-head"><h2>MinerU 文档解析</h2><span id="mineruState">未配置</span></div>
+<form class="production-form" id="mineruForm">
+<label>服务地址<input name="base_url" value="https://mineru.net"></label>
+<label>API Key<input name="api_key" type="password" placeholder="留空表示不修改"></label>
+<label><input name="enabled" type="checkbox">启用文档解析</label>
+<button class="btn primary">保存 MinerU 配置</button>
+</form>
+</div>
 </div>
 </section>`);
     if (!q('#tenants')) content.insertAdjacentHTML('beforeend', `<section id="tenants" class="view">
@@ -362,6 +375,34 @@
 </td>
 <td>${new Date(item.created_at).toLocaleString('zh-CN')}</td>
 </tr>`).join('')}`; }
+
+  async function showProviderModels(providerId) {
+    const provider=tenantData.providers.find(item=>item.id===providerId);
+    q('#modelDetailProvider').textContent=provider?.display_name||'模型服务';
+    q('#modelDetail').innerHTML='<div class="production-status">正在查询可用模型...</div>';
+    try {
+      const result=await request(`/api/model-providers/${providerId}/models`);
+      q('#modelDetail').innerHTML=result.models.length?`<div class="model-chip-grid">${result.models.map(item=>`<button type="button" class="model-chip" data-model-name="${escapeHtml(item.id)}"><b>${escapeHtml(item.id)}</b><span>${escapeHtml(item.owned_by||'OpenAI Compatible')}</span></button>`).join('')}</div>`:'<div class="production-status">服务商未返回可用模型。</div>';
+    } catch(cause) { q('#modelDetail').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`; }
+  }
+
+  async function showProviderUsage(providerId) {
+    const provider=tenantData.providers.find(item=>item.id===providerId);
+    q('#modelDetailProvider').textContent=provider?.display_name||'模型服务';
+    q('#modelDetail').innerHTML='<div class="production-status">正在统计调用量...</div>';
+    try {
+      const value=await request(`/api/model-providers/${providerId}/usage`);
+      q('#modelDetail').innerHTML=`<div class="usage-metrics"><div><span>请求次数</span><b>${value.request_count.toLocaleString()}</b></div><div><span>输入 Token</span><b>${value.prompt_tokens.toLocaleString()}</b></div><div><span>输出 Token</span><b>${value.completion_tokens.toLocaleString()}</b></div><div><span>总 Token</span><b>${value.total_tokens.toLocaleString()}</b></div></div>${value.by_model.length?`<table class="table usage-table"><tr><th>模型</th><th>请求</th><th>总 Token</th></tr>${value.by_model.map(item=>`<tr><td>${escapeHtml(item.model_name)}</td><td>${item.request_count}</td><td>${item.total_tokens.toLocaleString()}</td></tr>`).join('')}</table>`:''} `;
+    } catch(cause) { q('#modelDetail').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`; }
+  }
+
+  function renderMineru() {
+    const panel=q('.mineru-panel'); if(!panel) return;
+    panel.hidden=activeTenant()?.role!=='admin';
+    const config=tenantData.mineru; if(!config) return;
+    const form=q('#mineruForm'); form.base_url.value=config.base_url||'https://mineru.net'; form.enabled.checked=!!config.enabled;
+    q('#mineruState').textContent=config.api_key_configured?(config.enabled?'已启用':'已配置未启用'):'未配置密钥';
+  }
   function renderModels() { const table=q('#modelTable'); if (!table) return; q('#modelCount').textContent=`${tenantData.providers.length}?`; table.innerHTML=`<tr>
 <th>??</th>
 <th>??</th>
@@ -381,7 +422,7 @@
 <td>${item.is_default?'?':'?'}</td>
 <td>
 <div class="production-actions">
-<button class="btn" data-provider-test="${item.id}">??</button>${item.is_default?'':`<button class="btn" data-provider-default="${item.id}">????</button>`}</div>
+<button class="btn" data-provider-test="${item.id}">测试</button><button class="btn" data-provider-models="${item.id}">可用模型</button><button class="btn" data-provider-usage="${item.id}">用量</button>${item.is_default?'':`<button class="btn" data-provider-default="${item.id}">设为默认</button>`}</div>
 </td>
 </tr>`).join('')}`; }
 
@@ -415,12 +456,15 @@
       const button=event.target.closest('button'); if(!button) return;
       if(button.dataset.productionImport) return upload(button.dataset.productionImport);
       if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'??????');}
+      if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
+      if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
       if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('???????');await loadTenantData();renderModels();}
       const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateContent:'content-generation',generateReview:'effect-analysis'};
       const domain=agentMap[button.dataset.action]; if(domain&&tenantData.campaigns[0]) request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})}).then(result=>toast(result.summary)).catch(cause=>toast(cause.message));
     });
     q('.user-switch').addEventListener('click',event=>{event.stopImmediatePropagation();showWorkspace();},true);
     q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('???????');await loadTenantData();renderModels();});
+    q('#mineruForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
     q('#tenantForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('?????');await loadPlatform();});
   }
 
@@ -439,7 +483,7 @@
 </div>
 </div>`;document.body.appendChild(layer);layer.addEventListener('click',async event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();const option=event.target.closest('[data-tenant]');if(option){tenantId=Number(option.dataset.tenant);localStorage.setItem(tenantKey,String(tenantId));layer.remove();await loadTenantData();}if(event.target.closest('[data-logout]'))logout();});}
 
-  async function loadTenantData(){updateIdentity();tenantData=await Promise.all(['/api/campaigns','/api/graph','/api/imports','/api/model-providers','/api/agent-domains','/api/agent-runs'].map(path=>request(path))).then(([campaigns,graph,imports,providers,domains,runs])=>({campaigns,graph,imports,providers,domains,runs}));renderCampaigns();renderDynamicGraph();renderImports();renderModels();}
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/model-providers','/api/agent-domains','/api/agent-runs'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,providers,domains,runs]=values;tenantData={campaigns,graph,imports,providers,domains,runs,mineru};renderCampaigns();renderDynamicGraph();renderImports();renderModels();renderMineru();}
   async function initializeSession(){injectNavigation();bindProductionActions();await loadTenantData();if(window.lucide)lucide.createIcons();}
   function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'????????');});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

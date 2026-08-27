@@ -3,6 +3,8 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.ontology import validate_relation_endpoints
+from app.ontology.bootstrap import LIFECYCLE_ENTITIES, LIFECYCLE_RELATIONS
 
 
 def login(client: TestClient) -> tuple[dict[str, str], list[dict]]:
@@ -59,8 +61,21 @@ def test_model_providers_are_tenant_scoped() -> None:
         auth, tenants = login(client)
         hq = next(item for item in tenants if item["code"] == "CEA-HQ")
         ecom = next(item for item in tenants if item["code"] == "CEA-ECOM")
-        assert client.get("/api/model-providers", headers=headers(auth, hq["id"])).json()
+        providers = client.get("/api/model-providers", headers=headers(auth, hq["id"])).json()
+        assert providers
+        assert all("api_key" not in provider and "encrypted_api_key" not in provider for provider in providers)
+        provider_id = providers[0]["id"]
+        discovered = client.get(f"/api/model-providers/{provider_id}/models", headers=headers(auth, hq["id"]))
+        assert discovered.status_code == 200
+        assert discovered.json()["models"][0]["id"] == providers[0]["model_name"]
+        run = client.post("/api/agent-runs", headers=headers(auth, hq["id"]), json={"campaign_id": "ACT-2026-0921", "domain_id": "opportunity-insight", "provider_id": provider_id})
+        assert run.status_code == 200
+        usage = client.get(f"/api/model-providers/{provider_id}/usage", headers=headers(auth, hq["id"]))
+        assert usage.status_code == 200
+        assert usage.json()["request_count"] >= 1
+        assert usage.json()["total_tokens"] >= 1
         assert client.get("/api/model-providers", headers=headers(auth, ecom["id"])).json() == []
+        assert client.get(f"/api/model-providers/{provider_id}/usage", headers=headers(auth, ecom["id"])).status_code == 404
 
 
 def test_marketing_ontology_semantic_contract() -> None:
@@ -76,13 +91,19 @@ def test_marketing_ontology_semantic_contract() -> None:
         assert {
             "MarketingCase",
             "Opportunity",
+            "MarketingObjective",
+            "CustomerNeed",
             "AudienceSnapshot",
             "ProductPackage",
+            "ValueProposition",
+            "StrategyPlan",
+            "TouchpointPlan",
             "ContentAsset",
             "Campaign",
             "ApprovalTask",
             "ExecutionBatch",
             "Feedback",
+            "AttributionResult",
             "Review",
             "ConfigurableAttribute",
         }.issubset(object_types)
@@ -90,15 +111,21 @@ def test_marketing_ontology_semantic_contract() -> None:
         assert model["lifecycle"] == [
             "data",
             "opportunity",
+            "objective",
             "audience",
+            "value",
             "product",
+            "strategy",
             "content",
-            "campaign",
             "approval",
             "execution",
             "feedback",
+            "attribution",
             "review",
         ]
+
+        lifecycle_types = {item[0]: item[1] for item in LIFECYCLE_ENTITIES}
+        assert all(validate_relation_endpoints(relation, lifecycle_types[source], lifecycle_types[target]) is None for source, relation, target, _, _ in LIFECYCLE_RELATIONS)
 
         entities = [
             {
@@ -136,18 +163,22 @@ def test_marketing_ontology_semantic_contract() -> None:
         status_response = client.get("/api/ontology/status", headers=request_headers)
         assert status_response.status_code == 200
         status = status_response.json()
-        assert status["semantic_model_version"] == "ceair-marketing-ontology-v1.0"
+        assert status["semantic_model_version"] == "ceair-marketing-ontology-v1.1"
         assert status["registered_instance_types"]["MarketSignal"] >= 1
         assert status["registered_instance_types"]["ConfigurableAttribute"] >= 1
 
         graph = client.get("/api/graph", headers=request_headers).json()
         graph_types = {node["type"] for node in graph["nodes"]}
-        assert {"MarketingCase", "ApprovalTask", "ExecutionBatch", "Review"}.issubset(graph_types)
+        assert {"MarketingCase", "MarketingObjective", "CustomerNeed", "ValueProposition", "StrategyPlan", "TouchpointPlan", "ApprovalTask", "ExecutionBatch", "AttributionResult", "Review"}.issubset(graph_types)
         graph_relations = {edge["relation"] for edge in graph["edges"]}
         assert {
             "has_campaign_version",
             "requires_approval",
             "produces_feedback",
+            "has_strategy_plan",
+            "uses_touchpoint_plan",
+            "produces_attribution",
+            "attributes_to",
             "generates_recommendation",
         }.issubset(graph_relations)
 

@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, text, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,7 +15,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, OntologyEntityRecord, OntologyRelationRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
@@ -35,7 +35,9 @@ from .models import (
     ModelProvider,
     ModelProviderCreate,
     ModelProviderUpdate,
+    ProviderModelsResult,
     ProviderTestResult,
+    ProviderUsageResult,
     DataPipelineCreateResult,
     DataPipelineJob,
     IntegrationConfig,
@@ -496,6 +498,53 @@ def test_model_provider(provider_id: int, context: TenantContext = Depends(requi
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"模型连接失败：{exc}") from exc
     return ProviderTestResult(ok=True, provider=record.display_name, model=record.model_name, message=result[:160])
+
+
+@app.get("/api/model-providers/{provider_id}/models", response_model=ProviderModelsResult)
+def discover_provider_models(provider_id: int, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    record = scoped_provider(session, context.tenant_id, provider_id)
+    try:
+        models = llm_client.list_models(LLMConfig(
+            record.provider_type,
+            record.base_url,
+            record.model_name,
+            cipher.decrypt(record.encrypted_api_key),
+            record.timeout_seconds,
+            record.temperature,
+            record.max_tokens,
+        ))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"获取可用模型失败：{exc}") from exc
+    return ProviderModelsResult(provider_id=provider_id, models=models)
+
+
+@app.get("/api/model-providers/{provider_id}/usage", response_model=ProviderUsageResult)
+def get_provider_usage(provider_id: int, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    scoped_provider(session, context.tenant_id, provider_id)
+    rows = session.execute(
+        select(
+            ModelUsageRecord.model_name,
+            func.count(ModelUsageRecord.id),
+            func.coalesce(func.sum(ModelUsageRecord.prompt_tokens), 0),
+            func.coalesce(func.sum(ModelUsageRecord.completion_tokens), 0),
+            func.coalesce(func.sum(ModelUsageRecord.total_tokens), 0),
+        )
+        .where(ModelUsageRecord.tenant_id == context.tenant_id, ModelUsageRecord.provider_id == provider_id)
+        .group_by(ModelUsageRecord.model_name)
+        .order_by(func.sum(ModelUsageRecord.total_tokens).desc())
+    ).all()
+    by_model = [
+        {"model_name": row[0], "request_count": row[1], "prompt_tokens": row[2], "completion_tokens": row[3], "total_tokens": row[4]}
+        for row in rows
+    ]
+    return ProviderUsageResult(
+        provider_id=provider_id,
+        request_count=sum(item["request_count"] for item in by_model),
+        prompt_tokens=sum(item["prompt_tokens"] for item in by_model),
+        completion_tokens=sum(item["completion_tokens"] for item in by_model),
+        total_tokens=sum(item["total_tokens"] for item in by_model),
+        by_model=by_model,
+    )
 
 
 @app.delete("/api/model-providers/{provider_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from .agents import HarnessContext, UnifiedHarness
 from .auth import TenantContext
-from .db_models import DataPipelineJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, OntologyEntityRecord, OntologyRelationRecord
+from .db_models import DataPipelineJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord
 from .llm import LLMConfig
 from .ontology import object_type_ids, validate_relation_endpoints
 from .security import SecretCipher
@@ -80,7 +80,6 @@ class DataProcessingAgent:
 
     def process(self, filename: str, content: bytes) -> list[dict[str, Any]]:
         self._stage("received", "数据接收", "completed"); text = self._extract_text(filename, content); self._persist_knowledge(filename, text); self._stage("extracted", "文档结构化提取", "completed")
-        self._persist_knowledge(filename, text)
         candidates = self._extract_candidates(text, filename); self._stage("classified", "对象与关系分级分类", "completed", entities=len(candidates.get("entities", [])), relations=len(candidates.get("relations", [])))
         result = self._persist_candidates(candidates, filename); self._stage("ontology-updated", "本体对象与关系更新", "completed", **result)
         self.job.result_json = json.dumps({"events": self.events, "text_length": len(text), "candidates": candidates}, ensure_ascii=False); self.session.commit(); return self.events
@@ -95,12 +94,31 @@ class DataProcessingAgent:
         raise ValueError(f"不支持的数据文件类型: .{suffix}")
 
     def _extract_candidates(self, text: str, filename: str) -> dict[str, Any]:
-        provider = default_provider(self.session, self.tenant.tenant_id); reads = ["MarketSignal", "MetricObservation", "Flight", "Route", "Product", "CustomerAggregate"]; writes = ["Evidence", "Opportunity", "ConfigurableAttribute", "BusinessRule"]; functions = ["detect_business_anomaly"]
+        provider = default_provider(self.session, self.tenant.tenant_id)
+        reads = ["MarketSignal", "MetricObservation", "Flight", "Route", "Product", "CustomerAggregate", "KnowledgeChunk"]
+        writes = ["Evidence", "Opportunity", "MarketingObjective", "CustomerNeed", "ValueProposition", "StrategyPlan", "TouchpointPlan", "AttributionResult", "ConfigurableAttribute", "BusinessRule"]
+        functions = ["detect_business_anomaly", "evaluate_target_attractiveness"]
         self.harness.load_context(HarnessContext(self.tenant.tenant_id, self.job.id, "data-processing", reads, writes, functions))
         if provider is not None:
             try:
-                from .llm import LLMConfig
-                data = self.harness.generate_json(LLMConfig(provider.provider_type, provider.base_url, provider.model_name, SecretCipher().decrypt(provider.encrypted_api_key), provider.timeout_seconds, provider.temperature, min(provider.max_tokens, 4096)), "你是东航营销数据处理智能体。只输出合法JSON。抽取航空营销业务对象、关系、证据和置信度，不要杜撰事实。", json.dumps({"file": filename, "text": text[:50000], "allowed_types": sorted(object_type_ids())}, ensure_ascii=False))
+                self.harness.set_usage_recorder(lambda result: self.session.add(ModelUsageRecord(
+                    tenant_id=self.tenant.tenant_id,
+                    provider_id=provider.id,
+                    run_id=self.job.id,
+                    agent_id="data-processing",
+                    request_type="data-pipeline",
+                    model_name=result.model_name or provider.model_name,
+                    prompt_tokens=result.prompt_tokens,
+                    completion_tokens=result.completion_tokens,
+                    total_tokens=result.total_tokens,
+                )))
+                system_prompt = (
+                    "你是东航营销数据处理智能体。只输出合法JSON，包含entities和relations。"
+                    "从市场、航班、经营、客户、产品、活动和渠道数据中抽取可追溯对象与关系。"
+                    "重点区分观测事实、营销机会、客户需求、营销目标、价值主张、策略方案、触点计划和归因结果。"
+                    "不得把推断写成已确认事实；推断必须标记candidate状态、证据、有效期和置信度，不得杜撰旅客个人信息。"
+                )
+                data = self.harness.generate_json(LLMConfig(provider.provider_type, provider.base_url, provider.model_name, SecretCipher().decrypt(provider.encrypted_api_key), provider.timeout_seconds, provider.temperature, min(provider.max_tokens, 4096)), system_prompt, json.dumps({"file": filename, "text": text[:50000], "allowed_types": sorted(object_type_ids())}, ensure_ascii=False))
                 if isinstance(data.get("entities"), list): return data
             except Exception as exc: self.harness.emit("harness/model-fallback", reason=type(exc).__name__)
         return heuristic_candidates(text, filename)

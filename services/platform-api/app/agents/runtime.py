@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import TenantContext
 from ..data import AGENT_DOMAINS
-from ..db_models import AgentRunRecord, CampaignRecord, ModelProviderRecord, RuntimeEventRecord
+from ..db_models import AgentRunRecord, CampaignRecord, ModelProviderRecord, ModelUsageRecord, RuntimeEventRecord
 from ..llm import LLMConfig
 from ..models import AgentRun, AgentRunRequest, RuntimeEvent
 from ..ontology import agent_contract
@@ -60,6 +60,17 @@ class AgentRuntime:
         if provider is None:
             emit("model/provider-missing", requested_provider_id=request.provider_id)
             return self._persist(session, context, request, operator, run_id, "failed", "当前租户未配置可用的大模型。", None, events)
+        harness.set_usage_recorder(lambda result: session.add(ModelUsageRecord(
+            tenant_id=context.tenant_id,
+            provider_id=provider.id,
+            run_id=run_id,
+            agent_id=request.domain_id,
+            request_type="agent",
+            model_name=result.model_name or provider.model_name,
+            prompt_tokens=result.prompt_tokens,
+            completion_tokens=result.completion_tokens,
+            total_tokens=result.total_tokens,
+        )))
         emit("model/provider-selected", provider=provider.display_name, model=provider.model_name)
         emit("tool/pre-execute", inputs=domain.input_types)
         try:

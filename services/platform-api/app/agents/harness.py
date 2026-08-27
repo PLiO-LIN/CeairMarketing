@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from ..llm import LLMClient, LLMConfig
+from ..llm import LLMClient, LLMConfig, LLMResult
 
 
 @dataclass
@@ -23,13 +23,17 @@ class HarnessContext:
 class UnifiedHarness:
     """Execute governed agent steps with consistent context and event output."""
 
-    def __init__(self, emit: Callable[[str, dict[str, Any]], None] | None = None) -> None:
+    def __init__(self, emit: Callable[[str, dict[str, Any]], None] | None = None, record_usage: Callable[[LLMResult], None] | None = None) -> None:
         self._emit_callback = emit
+        self._record_usage = record_usage
         self._llm = LLMClient()
 
     def emit(self, event_type: str, **payload: Any) -> None:
         if self._emit_callback:
             self._emit_callback(event_type, payload)
+
+    def set_usage_recorder(self, recorder: Callable[[LLMResult], None] | None) -> None:
+        self._record_usage = recorder
 
     def load_context(self, context: HarnessContext) -> None:
         self.emit("harness/context-loaded", agent_id=context.agent_id, reads=context.reads, writes=context.writes, functions=context.functions)
@@ -52,9 +56,11 @@ class UnifiedHarness:
 
     def generate_text(self, config: LLMConfig, system_prompt: str, user_prompt: str) -> str:
         self.emit("harness/model-started", model=config.model_name)
-        output = self._llm.generate(config, system_prompt, user_prompt)
-        self.emit("harness/model-finished", output_length=len(output))
-        return output
+        result = self._llm.generate_result(config, system_prompt, user_prompt)
+        self.emit("harness/model-finished", output_length=len(result.content), prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, total_tokens=result.total_tokens, model=result.model_name)
+        if self._record_usage:
+            self._record_usage(result)
+        return result.content
 
     @staticmethod
     def _parse_json(output: str) -> dict[str, Any]:
