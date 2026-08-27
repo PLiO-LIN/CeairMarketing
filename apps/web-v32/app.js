@@ -1,5 +1,5 @@
 ﻿const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const titles={overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',graph:'营销关系图谱',permissions:'权限与审计'};
+const titles={overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',graph:'知识中心',permissions:'权限与审计'};
 let toastTimer=null,wizardStep=0,selectedDecision='approve';const toastEl=$('#toast');
 function toast(t){if(!toastEl)return;toastEl.textContent=t;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2800)}
 function icons(){if(window.lucide)lucide.createIcons()}
