@@ -244,6 +244,11 @@ class DataPipelineCreateResult(BaseModel):
     stages: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class DataPipelineReviewRequest(BaseModel):
+    decision: Literal["approve", "reject"]
+    note: str = Field(default="", max_length=500)
+
+
 class KnowledgeSearchResult(BaseModel):
     chunk_id: str
     document_id: str
@@ -251,6 +256,28 @@ class KnowledgeSearchResult(BaseModel):
     content: str
     metadata: dict[str, Any] = Field(default_factory=dict)
     linked_objects: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AgentChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=12000)
+
+
+class AgentChatRequest(BaseModel):
+    message: str = Field(min_length=1, max_length=12000)
+    conversation_id: str = Field(default="", max_length=80)
+    domain_id: str = Field(default="marketing-copilot", max_length=80)
+    provider_id: int | None = None
+    history: list[AgentChatMessage] = Field(default_factory=list, max_length=30)
+
+
+class AgentChatResponse(BaseModel):
+    conversation_id: str
+    answer: str
+    provider_id: int
+    model_name: str
+    trace: list[dict[str, Any]] = Field(default_factory=list)
+    sources: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class OntologyNode(BaseModel):

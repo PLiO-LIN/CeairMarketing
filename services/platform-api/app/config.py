@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,7 +21,8 @@ class Settings(BaseSettings):
     bootstrap_mineru_base_url: str = "https://mineru.net"
     bootstrap_mineru_api_key: str = ""
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Resolve the repository env file independent of the process working directory.
+    model_config = SettingsConfigDict(env_file=(Path(__file__).resolve().parents[3] / ".env"), extra="ignore")
 
     @property
     def cors_origin_list(self) -> list[str]:

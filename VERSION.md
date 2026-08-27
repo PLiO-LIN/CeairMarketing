@@ -1,4 +1,13 @@
-﻿# Version History
+# Version History
+## v2.7 - 2026-08-27
+
+- Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.
+- Added checkpointed processing events for parsing, knowledge persistence, Harness/model execution, semantic validation, review and ontology update.
+- Added a marketing Copilot API with authorized knowledge search, ontology query, campaign inspection and product lookup tools through the shared Harness.
+- Added unified Marketing Knowledge workspace combining the ontology graph and traceable knowledge search.
+- Added drag-and-drop pipeline monitoring with live polling, candidate object preview and confirm/reject controls.
+- Added provider workspace with model discovery, connection status and tenant-scoped usage distribution.
+- Fixed repository-root environment loading so local development and tests do not depend on the process working directory.
 
 ## v2.6 - 2026-08-27
 

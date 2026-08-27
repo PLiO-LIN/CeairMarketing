@@ -3,6 +3,8 @@ import json
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.database import SessionLocal
+from app.db_models import ModelProviderRecord
 from app.ontology import validate_relation_endpoints
 from app.ontology.bootstrap import LIFECYCLE_ENTITIES, LIFECYCLE_RELATIONS
 
@@ -209,6 +211,10 @@ def test_marketing_ontology_semantic_contract() -> None:
 
 def test_data_pipeline_builds_knowledge_and_ontology() -> None:
     with TestClient(app) as client:
+        with SessionLocal() as session:
+            session.query(ModelProviderRecord).filter(ModelProviderRecord.provider_type == "openai-compatible").update({"enabled": False, "is_default": False})
+            session.query(ModelProviderRecord).filter(ModelProviderRecord.provider_type == "mock").update({"enabled": True, "is_default": True})
+            session.commit()
         auth, tenants = login(client)
         hq = next(item for item in tenants if item["code"] == "CEA-HQ")
         request_headers = headers(auth, hq["id"])
@@ -226,13 +232,45 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
         job_response = client.get(f"/api/data-pipelines/{result['job']['id']}", headers=request_headers)
         assert job_response.status_code == 200
         job = job_response.json()
-        assert job["status"] == "completed"
-        assert job["accepted_entities"] >= 1
-        assert {"received", "extracting", "extracted", "classifying", "classified", "persisting", "ontology-updated"}.issubset(
+        assert job["status"] == "awaiting_confirmation"
+        assert job["accepted_entities"] == 0
+        assert job["total_entities"] >= 1
+        assert {"received", "extracting", "extracted", "knowledge-persisting", "knowledge-ready", "agent-processing", "semantic-validation", "awaiting-confirmation"}.issubset(
             {item["stage"] for item in job["result"]["events"] if "stage" in item}
         )
 
         knowledge = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
         assert knowledge.status_code == 200
         assert knowledge.json()
-        assert knowledge.json()[0]["linked_objects"]
+        review = client.post(
+            f"/api/data-pipelines/{result['job']['id']}/review",
+            headers=request_headers,
+            json={"decision": "approve", "note": "测试确认候选本体更新"},
+        )
+        assert review.status_code == 200
+        reviewed_job = review.json()
+        assert reviewed_job["status"] == "completed"
+        assert reviewed_job["accepted_entities"] >= 1
+        assert reviewed_job["result"]["review"]["decision"] == "approve"
+        assert "ontology-updated" in {item["stage"] for item in reviewed_job["result"]["events"] if "stage" in item}
+
+        knowledge_after_review = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
+        assert knowledge_after_review.json()[0]["linked_objects"]
+
+
+def test_marketing_copilot_uses_tools_and_sources() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        response = client.post(
+            "/api/agent-chat",
+            headers=headers(auth, hq["id"]),
+            json={"message": "查询上海三亚航线相关营销机会和产品", "provider_id": 1},
+        )
+        assert response.status_code == 200
+        payload = response.json()
+        assert payload["answer"]
+        event_types = {item["event"] for item in payload["trace"]}
+        assert "harness/context-loaded" in event_types
+        assert "harness/tool-started" in event_types
+        assert isinstance(payload["sources"], list)

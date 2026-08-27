@@ -10,7 +10,7 @@ from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from .agents import AgentRuntime
+from .agents import AgentRuntime, MarketingCopilot
 from .auth import TenantContext, create_token, get_current_user, get_tenant_context, hash_password, require_admin, require_platform_admin, require_write, verify_password
 from .config import get_settings
 from .data import AGENT_DOMAINS
@@ -24,6 +24,8 @@ from .models import (
     AgentRun,
     AgentRunListItem,
     AgentRunRequest,
+    AgentChatRequest,
+    AgentChatResponse,
     Campaign,
     CurrentUser,
     GraphStats,
@@ -40,6 +42,7 @@ from .models import (
     ProviderUsageResult,
     DataPipelineCreateResult,
     DataPipelineJob,
+    DataPipelineReviewRequest,
     IntegrationConfig,
     IntegrationConfigUpdate,
     KnowledgeSearchResult,
@@ -93,6 +96,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 runtime = AgentRuntime()
+copilot = MarketingCopilot()
 cipher = SecretCipher()
 llm_client = LLMClient()
 
@@ -244,6 +248,16 @@ def list_agent_runs(context: TenantContext = Depends(get_tenant_context), sessio
     return list(session.scalars(select(AgentRunRecord).where(AgentRunRecord.tenant_id == context.tenant_id).order_by(AgentRunRecord.created_at.desc()).limit(100)))
 
 
+@app.post("/api/agent-chat", response_model=AgentChatResponse)
+def run_agent_chat(payload: AgentChatRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    try:
+        return copilot.run(session, context, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"智能体运行失败：{exc}") from exc
+
+
 @app.get("/api/ontology/semantic-model")
 def ontology_semantic_model(_context: TenantContext = Depends(get_tenant_context)):
     return semantic_model()
@@ -362,8 +376,6 @@ def process_data_pipeline_job(job_id: str, context: TenantContext, filename: str
             job.started_at = datetime.now(timezone.utc)
             session.commit()
             DataProcessingAgent(session, context, job).process(filename, raw)
-            job.status = "completed"
-            job.completed_at = datetime.now(timezone.utc)
             session.commit()
         except Exception as exc:
             session.rollback()
@@ -404,7 +416,7 @@ def list_data_pipelines(context: TenantContext = Depends(get_tenant_context), se
 def get_data_pipeline(job_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     record = session.scalar(select(DataPipelineJobRecord).where(DataPipelineJobRecord.id == job_id, DataPipelineJobRecord.tenant_id == context.tenant_id))
     if record is None:
-        raise HTTPException(status_code=404, detail="?????????")
+        raise HTTPException(status_code=404, detail="数据处理任务不存在")
     return pipeline_view(record)
 
 
@@ -421,7 +433,20 @@ def create_data_pipeline(background_tasks: BackgroundTasks, file: UploadFile = F
     job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format=suffix, status="queued", current_stage="queued")
     session.add(job); session.commit(); session.refresh(job)
     background_tasks.add_task(process_data_pipeline_job, job.id, context, filename, raw)
-    return DataPipelineCreateResult(job=pipeline_view(job), stages=[{"stage": "queued", "label": "queued", "status": "pending"}])
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=[{"stage": "queued", "label": "文件已进入处理队列", "status": "pending", "timestamp": datetime.now(timezone.utc).isoformat()}])
+
+
+@app.post("/api/data-pipelines/{job_id}/review", response_model=DataPipelineJob)
+def review_data_pipeline(job_id: str, payload: DataPipelineReviewRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(DataPipelineJobRecord).where(DataPipelineJobRecord.id == job_id, DataPipelineJobRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="数据处理任务不存在")
+    if record.status != "awaiting_confirmation":
+        raise HTTPException(status_code=409, detail="该任务当前不处于待确认状态")
+    reviewer = session.get(UserRecord, context.user_id)
+    DataProcessingAgent(session, context, record).confirm(payload.decision, payload.note, reviewer.display_name if reviewer else str(context.user_id))
+    session.refresh(record)
+    return pipeline_view(record)
 
 
 
