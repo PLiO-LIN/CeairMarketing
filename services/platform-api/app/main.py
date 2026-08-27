@@ -490,14 +490,16 @@ def set_default_provider(provider_id: int, context: TenantContext = Depends(requ
 def test_model_provider(provider_id: int, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
     record = scoped_provider(session, context.tenant_id, provider_id)
     try:
-        result = llm_client.generate(
+        result = llm_client.generate_result(
             LLMConfig(record.provider_type, record.base_url, record.model_name, cipher.decrypt(record.encrypted_api_key), record.timeout_seconds, record.temperature, min(record.max_tokens, 256)),
             "你是东方航空智能营销平台的模型连通性检测助手。",
             "仅回复：模型连接正常。",
         )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"模型连接失败：{exc}") from exc
-    return ProviderTestResult(ok=True, provider=record.display_name, model=record.model_name, message=result[:160])
+    session.add(ModelUsageRecord(tenant_id=context.tenant_id, provider_id=record.id, request_type="connectivity-test", model_name=result.model_name or record.model_name, prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, total_tokens=result.total_tokens))
+    session.commit()
+    return ProviderTestResult(ok=True, provider=record.display_name, model=result.model_name or record.model_name, message=result.content[:160])
 
 
 @app.get("/api/model-providers/{provider_id}/models", response_model=ProviderModelsResult)

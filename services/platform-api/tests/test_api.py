@@ -64,12 +64,13 @@ def test_model_providers_are_tenant_scoped() -> None:
         providers = client.get("/api/model-providers", headers=headers(auth, hq["id"])).json()
         assert providers
         assert all("api_key" not in provider and "encrypted_api_key" not in provider for provider in providers)
-        provider_id = providers[0]["id"]
+        provider = next(item for item in providers if item["provider_type"] == "mock")
+        provider_id = provider["id"]
         discovered = client.get(f"/api/model-providers/{provider_id}/models", headers=headers(auth, hq["id"]))
         assert discovered.status_code == 200
-        assert discovered.json()["models"][0]["id"] == providers[0]["model_name"]
-        run = client.post("/api/agent-runs", headers=headers(auth, hq["id"]), json={"campaign_id": "ACT-2026-0921", "domain_id": "opportunity-insight", "provider_id": provider_id})
-        assert run.status_code == 200
+        assert discovered.json()["models"][0]["id"] == provider["model_name"]
+        tested = client.post(f"/api/model-providers/{provider_id}/test", headers=headers(auth, hq["id"]))
+        assert tested.status_code == 200
         usage = client.get(f"/api/model-providers/{provider_id}/usage", headers=headers(auth, hq["id"]))
         assert usage.status_code == 200
         assert usage.json()["request_count"] >= 1

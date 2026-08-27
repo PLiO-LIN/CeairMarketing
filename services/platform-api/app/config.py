@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     token_ttl_minutes: int = 480
     initial_admin_username: str = "admin"
     initial_admin_password: str = "Admin@12345"
+    bootstrap_model_display_name: str = "预置大模型服务"
+    bootstrap_model_base_url: str = ""
+    bootstrap_model_name: str = ""
+    bootstrap_model_api_key: str = ""
+    bootstrap_mineru_base_url: str = "https://mineru.net"
+    bootstrap_mineru_api_key: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

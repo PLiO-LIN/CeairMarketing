@@ -9,6 +9,7 @@ from .data import CAMPAIGNS
 from .ontology.bootstrap import seed_marketing_lifecycle
 from .db_models import (
     CampaignRecord,
+    IntegrationConfigRecord,
     ModelProviderRecord,
     OntologyEntityRecord,
     OntologyRelationRecord,
@@ -16,6 +17,7 @@ from .db_models import (
     TenantRecord,
     UserRecord,
 )
+from .security import SecretCipher
 
 
 def seed_database(session: Session) -> int:
@@ -58,6 +60,7 @@ def seed_database(session: Session) -> int:
 
 
 def seed_tenant_data(session: Session, headquarters_id: int) -> None:
+    settings = get_settings()
     if session.scalar(select(CampaignRecord.id).where(CampaignRecord.tenant_id == headquarters_id).limit(1)) is None:
         session.add_all([CampaignRecord(tenant_id=headquarters_id, **campaign.model_dump()) for campaign in CAMPAIGNS])
     if session.scalar(select(ModelProviderRecord.id).where(ModelProviderRecord.tenant_id == headquarters_id).limit(1)) is None:
@@ -72,6 +75,39 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
                 is_default=True,
             )
         )
+    if settings.bootstrap_model_api_key and settings.bootstrap_model_base_url and settings.bootstrap_model_name:
+        bootstrap_provider = session.scalar(select(ModelProviderRecord).where(
+            ModelProviderRecord.tenant_id == headquarters_id,
+            ModelProviderRecord.display_name == settings.bootstrap_model_display_name,
+        ))
+        if bootstrap_provider is None:
+            session.query(ModelProviderRecord).filter(ModelProviderRecord.tenant_id == headquarters_id).update({"is_default": False})
+            bootstrap_provider = ModelProviderRecord(
+                tenant_id=headquarters_id,
+                display_name=settings.bootstrap_model_display_name,
+                provider_type="openai-compatible",
+                base_url=settings.bootstrap_model_base_url.rstrip("/"),
+                model_name=settings.bootstrap_model_name,
+                encrypted_api_key=SecretCipher().encrypt(settings.bootstrap_model_api_key),
+                enabled=True,
+                is_default=True,
+            )
+            session.add(bootstrap_provider)
+    if settings.bootstrap_mineru_api_key:
+        mineru = session.scalar(select(IntegrationConfigRecord).where(
+            IntegrationConfigRecord.tenant_id == headquarters_id,
+            IntegrationConfigRecord.integration_id == "mineru",
+        ))
+        if mineru is None:
+            session.add(IntegrationConfigRecord(
+                tenant_id=headquarters_id,
+                integration_id="mineru",
+                display_name="MinerU 文档解析",
+                base_url=settings.bootstrap_mineru_base_url.rstrip("/"),
+                encrypted_api_key=SecretCipher().encrypt(settings.bootstrap_mineru_api_key),
+                enabled=True,
+                config_json=json.dumps({"model_version": "vlm", "enable_table": True, "is_ocr": False}, ensure_ascii=False),
+            ))
     session.commit()
     _seed_graph(session, headquarters_id)
     seed_marketing_lifecycle(session, headquarters_id)
