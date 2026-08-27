@@ -7,6 +7,7 @@
   let tenantId = null;
   let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null };
   const pipelineFiles = new Map();
+  const roleLabels = { admin: '租户管理员', manager: '营销经理', analyst: '营销分析师', viewer: '只读用户' };
   let pipelinePollTimer = null;
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -15,6 +16,8 @@
   const statusClass = value => /待|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
 
   function activeTenant() { return session?.tenants?.find(item => item.id === tenantId) || session?.tenants?.[0]; }
+  function canWrite() { return ['admin', 'manager', 'analyst'].includes(activeTenant()?.role); }
+  function isTenantAdmin() { return activeTenant()?.role === 'admin'; }
   async function request(path, options = {}, form = false) {
     const response = await fetch(`${mount}${path}`, {
       ...options,
@@ -75,7 +78,7 @@
     if (!q('[data-view="imports"]')) submenu.insertAdjacentHTML('beforeend', `<button data-view="imports">
 <i data-lucide="database">
 </i>数据接入</button>
-<button data-view="models">
+<button class="tenant-admin-only" data-view="models">
 <i data-lucide="server-cog">
 </i>模型配置</button>
 <button class="production-admin-only" data-view="tenants">
@@ -197,13 +200,29 @@
 
   function updateIdentity() {
     const tenant = activeTenant(); const user = q('.user');
-    q('b', user).textContent = tenant?.name || '营销工作空间';
-    q('span', user).textContent = `当前用户：${session.display_name} · ${tenant?.role || ''}`;
+    q('b', user).textContent = tenant?.name || '未选择租户';
+    q('span', user).textContent = `当前用户：${session.display_name} · ${roleLabels[tenant?.role] || tenant?.role || '未授权'}`;
+    const switchButton = q('.user-switch');
+    if (switchButton) switchButton.innerHTML = '<i data-lucide="repeat-2"></i>切换租户';
     document.body.classList.toggle('platform-admin', !!session.is_platform_admin);
+    document.body.classList.toggle('tenant-admin', isTenantAdmin());
+    document.body.classList.toggle('tenant-readonly', !canWrite());
     const actions = q('.top-actions');
     let select = q('.production-tenant', actions);
     if (!select) { select=document.createElement('select'); select.className='production-tenant'; actions.prepend(select); select.addEventListener('change', async () => { tenantId=Number(select.value); localStorage.setItem(tenantKey,String(tenantId)); await loadTenantData(); }); }
-    select.innerHTML = session.tenants.map(item => `<option value="${item.id}" ${item.id===tenant.id?'selected':''}>${escapeHtml(item.name)}</option>`).join('');
+    select.title = '切换当前租户';
+    select.setAttribute('aria-label', '切换当前租户');
+    select.innerHTML = session.tenants.map(item => `<option value="${item.id}" ${item.id===tenant.id?'selected':''}>${escapeHtml(item.name)} · ${escapeHtml(roleLabels[item.role] || item.role)}</option>`).join('');
+    qa('[data-action="createCampaign"], [data-action="aiOrchestrate"]').forEach(button => {
+      button.disabled = !canWrite();
+      button.title = canWrite() ? '' : '当前为只读权限，不能创建或修改活动';
+    });
+    const dropzone = q('#pipelineDropzone');
+    if (dropzone) {
+      dropzone.classList.toggle('is-readonly', !canWrite());
+      dropzone.setAttribute('aria-disabled', String(!canWrite()));
+      dropzone.title = canWrite() ? '' : '当前为只读权限，不能上传数据';
+    }
   }
 
   function renderCampaigns() {
@@ -258,7 +277,7 @@
 
   function renderDynamicGraph() {
     const canvas=q('#graphCanvas'); if (!canvas || !window.d3) return; canvas.innerHTML='';
-    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前工作空间暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
+    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
     const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
     const nodes=source.nodes.map(item=>({...item,title:displayText(item.label,'未命名对象'),type:String(item.type||'entity').toLowerCase(),w:154,h:52}));
     const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(item.relation,'关联')}));
@@ -298,7 +317,7 @@
   function renderPipelineQueue(){const queue=q('#pipelineQueue');if(!queue)return;const active=(tenantData.pipelines||[]).filter(item=>['queued','running'].includes(item.status));const local=[...pipelineFiles.values()].filter(item=>!item.job||['uploading','failed'].includes(item.status));const merged=[...local,...active.filter(item=>!local.some(localItem=>localItem.job&&localItem.job.id===item.id))];q('#pipelineQueueCount').textContent=merged.length+' \u4e2a\u4efb\u52a1';if(!merged.length){queue.innerHTML='<div class="pipeline-empty"><i data-lucide="inbox"></i><b>\u6682\u65e0\u5904\u7406\u4efb\u52a1</b><span>\u62d6\u5165\u6587\u4ef6\u540e\u5c06\u5728\u8fd9\u91cc\u663e\u793a\u8fdb\u5ea6</span></div>';}else{queue.innerHTML=merged.map(item=>{const job=item.job||item;const info=item.status==='uploading'?{label:'\u6b63\u5728\u4e0a\u4f20',progress:item.progress||8}:stageInfo(job);const failed=item.status==='failed'||job.status==='failed';return '<article class="pipeline-task '+(failed?'is-failed':'')+'"><div class="pipeline-file-icon"><i data-lucide="file-text"></i></div><div class="pipeline-task-main"><div class="pipeline-task-title"><b>'+escapeHtml(item.file?item.file.name:job.file_name)+'</b><span>'+(item.file?formatBytes(item.file.size):escapeHtml((job.file_format||'').toUpperCase()))+'</span></div><div class="pipeline-progress"><i style="width:'+info.progress+'%"></i></div><div class="pipeline-task-meta"><span>'+(failed?'\u5904\u7406\u5931\u8d25':info.label)+'</span><small>'+(failed?escapeHtml(item.error||job.error_message||'\u8bf7\u68c0\u67e5\u6587\u4ef6\u540e\u91cd\u8bd5'):info.progress+'% \u00b7 \u7cfb\u7edf\u6b63\u5728\u81ea\u52a8\u5904\u7406')+'</small></div></div>'+(failed&&item.file?'<button class="btn" data-pipeline-retry="'+item.localId+'"><i data-lucide="rotate-ccw"></i>\u91cd\u8bd5</button>':'')+'</article>';}).join('');}if(window.lucide)lucide.createIcons();}
   async function refreshPipelines(){tenantData.pipelines=await request('/api/data-pipelines');for(const [localId,entry] of pipelineFiles){if(!entry.job)continue;const latest=tenantData.pipelines.find(item=>item.id===entry.job.id);if(!latest)continue;entry.job=latest;if(latest.status==='failed'){entry.status='failed';entry.error=latest.error_message;}else if(latest.status==='completed'){pipelineFiles.delete(localId);}}renderPipelineQueue();renderImports();const hasActive=tenantData.pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function uploadPipelineFile(entry){entry.status='uploading';entry.progress=8;renderPipelineQueue();const form=new FormData();form.append('file',entry.file);try{const result=await request('/api/data-pipelines',{method:'POST',body:form},true);entry.job=result.job;entry.status='queued';entry.progress=10;await refreshPipelines();}catch(cause){entry.status='failed';entry.error=cause.message||'\u4e0a\u4f20\u5931\u8d25';renderPipelineQueue();}}
-  function queuePipelineFiles(files){const allowed=/\.(txt|md|json|csv|pdf|png|jpe?g|docx?|pptx?|xlsx?|html)$/i;[...files].forEach(file=>{const localId=Date.now()+'-'+Math.random().toString(16).slice(2);if(!allowed.test(file.name)){toast('\u4e0d\u652f\u6301\u6587\u4ef6\uff1a'+file.name);return;}if(file.size>20*1024*1024){toast('\u6587\u4ef6\u8d85\u8fc7 20MB\uff1a'+file.name);return;}const entry={localId,file,status:'queued',progress:0};pipelineFiles.set(localId,entry);uploadPipelineFile(entry);});}
+  function queuePipelineFiles(files){if(!canWrite()){toast('当前角色只有只读权限，不能上传数据');return;}const allowed=/\.(txt|md|json|csv|pdf|png|jpe?g|docx?|pptx?|xlsx?|html)$/i;[...files].forEach(file=>{const localId=Date.now()+'-'+Math.random().toString(16).slice(2);if(!allowed.test(file.name)){toast('\u4e0d\u652f\u6301\u6587\u4ef6\uff1a'+file.name);return;}if(file.size>20*1024*1024){toast('\u6587\u4ef6\u8d85\u8fc7 20MB\uff1a'+file.name);return;}const entry={localId,file,status:'queued',progress:0};pipelineFiles.set(localId,entry);uploadPipelineFile(entry);});}
 
   async function showProviderModels(providerId) {
     const provider=tenantData.providers.find(item=>item.id===providerId);
@@ -360,7 +379,7 @@
 <td>
 <strong>${escapeHtml(item.name)}</strong>
 </td>
-<td>${escapeHtml(item.role)}</td>
+<td>${escapeHtml(roleLabels[item.role] || item.role)}</td>
 </tr>`).join('')}`; q('#userTable').innerHTML=`<tr>
 <th>姓名</th>
 <th>用户名</th>
@@ -371,7 +390,7 @@
 <strong>${escapeHtml(item.display_name===['内置','演示模型'].join('')?'内置测试模型':item.display_name)}</strong>
 </td>
 <td>${escapeHtml(item.username)}</td>
-<td>${item.memberships.map(m=>`${escapeHtml(m.name)}（${escapeHtml(m.role)}）`).join('、')}</td>
+<td>${item.memberships.map(m=>`${escapeHtml(m.name)}（${escapeHtml(roleLabels[m.role] || m.role)}）`).join('、')}</td>
 <td>${item.is_platform_admin?'平台管理员':'普通用户'}</td>
 </tr>`).join('')}`; }
 
@@ -394,21 +413,21 @@
     ['dragleave','drop'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.remove('is-dragging');}));
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
     q('#refreshPipelines').addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
-    q('.user-switch').addEventListener('click',event=>{event.stopImmediatePropagation();showWorkspace();},true);
+    q('.user-switch').addEventListener('click',event=>{event.stopImmediatePropagation();showTenantSwitcher();},true);
     q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
     q('#mineruForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
     q('#tenantForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
 
-  function showWorkspace(){const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card">
+  function showTenantSwitcher(){const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card">
 <div class="production-modal-head">
-<b>切换营销工作空间</b>
+<b>切换租户</b>
 <button class="btn" data-close>关闭</button>
 </div>
-<div class="production-modal-body">${session.tenants.map(item=>`<button class="workspace-option ${item.id===activeTenant().id?'active':''}" data-tenant="${item.id}">
+<div class="production-modal-body">${session.tenants.map(item=>`<button class="tenant-option ${item.id===activeTenant().id?'active':''}" data-tenant="${item.id}">
 <span>
 <b>${escapeHtml(item.name)}</b>
-<small>${escapeHtml(item.code)} · ${escapeHtml(item.role)}</small>
+<small>${escapeHtml(item.code)} · ${escapeHtml(roleLabels[item.role] || item.role)}</small>
 </span>
 <em>${item.id===activeTenant().id?'当前':'切换'}</em>
 </button>`).join('')}<button class="btn" data-logout>退出登录</button>
@@ -417,6 +436,6 @@
 
   async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,mineru};renderCampaigns();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function initializeSession(){injectNavigation();bindProductionActions();await loadTenantData();if(window.lucide)lucide.createIcons();}
-  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'工作空间加载失败，请稍后重试');});}
+  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
