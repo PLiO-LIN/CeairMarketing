@@ -9,6 +9,7 @@
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const displayText = (value, fallback) => /^\?+$/.test(String(value ?? '').trim()) ? fallback : String(value ?? fallback);
   const statusClass = value => /待|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
 
   function activeTenant() { return session?.tenants?.find(item => item.id === tenantId) || session?.tenants?.[0]; }
@@ -323,8 +324,8 @@
     const canvas=q('#graphCanvas'); if (!canvas || !window.d3) return; canvas.innerHTML='';
     const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前工作空间暂无图谱数据，请先通过数据接入导入实体与关系。</div>'; return; }
     const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
-    const nodes=source.nodes.map(item=>({...item,title:item.label,type:String(item.type||'entity').toLowerCase(),w:154,h:52}));
-    const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:item.relation}));
+    const nodes=source.nodes.map(item=>({...item,title:displayText(item.label,'未命名对象'),type:String(item.type||'entity').toLowerCase(),w:154,h:52}));
+    const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(item.relation,'关联')}));
     const svg=d3.select(canvas).append('svg').attr('width',width).attr('height',height), defs=svg.append('defs');
     defs.append('marker').attr('id','production-arrow').attr('viewBox','0 0 8 8').attr('refX',7).attr('refY',4).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,0 L8,4 L0,8 z').attr('fill','#93b2c4');
     const root=svg.append('g'); svg.call(d3.zoom().scaleExtent([.55,2]).on('zoom',event=>root.attr('transform',event.transform)));
@@ -341,7 +342,7 @@
 <dt>对象 ID</dt>
 <dd>${escapeHtml(item.id)}</dd>
 <dt>数据来源</dt>
-<dd>${escapeHtml(item.source)}</dd>
+<dd>${escapeHtml(displayText(item.source,'未知来源'))}</dd>
 <dt>置信度</dt>
 <dd>${Math.round((item.confidence||0)*100)}%</dd>
 </dl>
@@ -412,7 +413,7 @@
 <th>操作</th>
 </tr>${tenantData.providers.map(item=>`<tr>
 <td>
-<strong>${escapeHtml(item.display_name)}</strong>
+<strong>${escapeHtml(item.display_name===['内置','演示模型'].join('')?'内置测试模型':item.display_name)}</strong>
 </td>
 <td>${escapeHtml(item.provider_type)}</td>
 <td>${escapeHtml(item.model_name)}</td>
@@ -444,7 +445,7 @@
 <th>平台权限</th>
 </tr>${users.map(item=>`<tr>
 <td>
-<strong>${escapeHtml(item.display_name)}</strong>
+<strong>${escapeHtml(item.display_name===['内置','演示模型'].join('')?'内置测试模型':item.display_name)}</strong>
 </td>
 <td>${escapeHtml(item.username)}</td>
 <td>${item.memberships.map(m=>`${escapeHtml(m.name)}（${escapeHtml(m.role)}）`).join('、')}</td>

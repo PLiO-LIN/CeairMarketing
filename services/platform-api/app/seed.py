@@ -67,7 +67,7 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
         session.add(
             ModelProviderRecord(
                 tenant_id=headquarters_id,
-                display_name="内置演示模型",
+                display_name="内置测试模型",
                 provider_type="mock",
                 base_url="",
                 model_name="ceair-governed-mock-v1",

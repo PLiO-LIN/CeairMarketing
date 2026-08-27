@@ -32,7 +32,7 @@ class LLMClient:
 
     def generate_result(self, config: LLMConfig, system_prompt: str, user_prompt: str) -> LLMResult:
         if config.provider_type == "mock":
-            content = "模拟模型已完成业务推理，输出已通过事实约束、合规规则和人工审核门禁。"
+            content = "测试模型已完成业务推理，输出已通过事实约束、合规规则和人工审核门禁。"
             return LLMResult(content=content, prompt_tokens=32, completion_tokens=24, total_tokens=56, model_name=config.model_name)
 
         endpoint = f"{config.base_url.rstrip('/')}/chat/completions"

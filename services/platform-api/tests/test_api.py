@@ -132,17 +132,17 @@ def test_marketing_ontology_semantic_contract() -> None:
             {
                 "external_id": "market-signal-test-001",
                 "entity_type": "MarketSignal",
-                "label": "??????",
+                "label": "三亚目的地热度信号",
                 "attributes": {"signal_type": "trend", "valid_to": "2026-09-30"},
-                "source": "??????",
+                "source": "市场数据接入",
                 "confidence": 0.9,
             },
             {
                 "external_id": "attribute-test-001",
                 "entity_type": "ConfigurableAttribute",
-                "label": "???????",
+                "label": "会员出行偏好属性",
                 "attributes": {"source_mode": "existing_profile_api"},
-                "source": "??????",
+                "source": "市场数据接入",
                 "confidence": 1.0,
             },
         ]
