@@ -9,6 +9,7 @@
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const statusClass = value => /待|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
 
   function activeTenant() { return session?.tenants?.find(item => item.id === tenantId) || session?.tenants?.[0]; }
   async function request(path, options = {}, form = false) {
@@ -32,7 +33,7 @@
     const layer = document.createElement('div');
     layer.className = 'production-login';
     layer.innerHTML = `<section class="production-login-brand">
-<img src="./brand/ceair-wordmark.svg" alt="??????">
+<img src="./brand/ceair-wordmark.svg" alt="中国东方航空">
 <div>
 <h1>东航智慧营销云</h1>
 <p>面向航空营销全生命周期的运营、智能决策与治理平台</p>
@@ -40,13 +41,13 @@
 </section>
 <form class="production-login-form">
 <h2>登录营销运营工作台</h2>
-<label>???<input name="username" value="admin" autocomplete="username">
+<label>用户名<input name="username" value="admin" autocomplete="username">
 </label>
-<label>??<input name="password" type="password" autocomplete="current-password" autofocus>
+<label>密码<input name="password" type="password" autocomplete="current-password" autofocus>
 </label>
 <p class="production-login-error" hidden>
 </p>
-<button class="btn primary">????</button>
+<button class="btn primary">登录平台</button>
 </form>`;
     document.body.appendChild(layer);
     q('form', layer).addEventListener('submit', async event => {
@@ -70,39 +71,39 @@
     const submenu = q('.submenu', governance);
     if (!q('[data-view="imports"]')) submenu.insertAdjacentHTML('beforeend', `<button data-view="imports">
 <i data-lucide="database">
-</i>????</button>
+</i>数据接入</button>
 <button data-view="models">
 <i data-lucide="server-cog">
-</i>????</button>
+</i>模型配置</button>
 <button class="production-admin-only" data-view="tenants">
 <i data-lucide="building-2">
-</i>?????</button>`);
+</i>租户与用户</button>`);
     const content = q('.content');
     if (!q('#imports')) content.insertAdjacentHTML('beforeend', `<section id="imports" class="view">
 <div class="page-head">
 <div>
-<h1>????</h1>
-<p>????????????????????????????</p>
+<h1>数据接入</h1>
+<p>按租户导入客户、客群、航线、产品包、活动、渠道与营销结果关系</p>
 </div>
 </div>
 <div class="production-grid">
 <div class="panel">
 <div class="panel-head">
-<h2>??????</h2>
-<span>CSV / JSON ? ??10MB</span>
+<h2>新建导入批次</h2>
+<span>支持 CSV / JSON，单文件不超过 10MB</span>
 </div>
 <div class="panel-body">
 <div class="production-upload">
 <b>实体数据</b>
-<p>external_id?entity_type?label?attributes?source?confidence</p>
+<p>external_id、entity_type、label、attributes、source、confidence</p>
 <input type="file" id="entityFile" accept=".csv,.json">
-<button class="btn primary" data-production-import="entities">???????</button>
+<button class="btn primary" data-production-import="entities">校验并导入实体</button>
 </div>
 <div class="production-upload">
-<b>????</b>
-<p>source_external_id?relation_type?target_external_id?evidence?confidence</p>
+<b>关系数据</b>
+<p>source_external_id、relation_type、target_external_id、evidence、confidence</p>
 <input type="file" id="relationFile" accept=".csv,.json">
-<button class="btn" data-production-import="relations">???????</button>
+<button class="btn" data-production-import="relations">校验并导入关系</button>
 </div>
 <div id="importStatus">
 </div>
@@ -110,8 +111,8 @@
 </div>
 <div class="panel">
 <div class="panel-head">
-<h2>??????</h2>
-<span>????</span>
+<h2>接入治理规则</h2>
+<span>自动执行</span>
 </div>
 <div class="panel-body">
 <div class="control-list">
@@ -119,24 +120,24 @@
 <i data-lucide="shield-check">
 </i>
 <div>
-<b>????</b>
-<span>????????????????</span>
+<b>租户归属</b>
+<span>实体、关系和批次自动绑定当前租户</span>
 </div>
 </div>
 <div class="control-item">
 <i data-lucide="refresh-cw">
 </i>
 <div>
-<b>????</b>
-<span>? external_id ?????</span>
+<b>实体更新</b>
+<span>按 external_id 新增或更新</span>
 </div>
 </div>
 <div class="control-item">
 <i data-lucide="alert-triangle">
 </i>
 <div>
-<b>????</b>
-<span>???????????????</span>
+<b>错误隔离</b>
+<span>错误行保留行号、原因与数据摘要</span>
 </div>
 </div>
 </div>
@@ -145,8 +146,8 @@
 </div>
 <div class="panel">
 <div class="panel-head">
-<h2>????</h2>
-<span id="importCount">0???</span>
+<h2>导入历史</h2>
+<span id="importCount">0 个批次</span>
 </div>
 <div class="panel-body">
 <table class="table" id="importTable">
@@ -157,15 +158,15 @@
     if (!q('#models')) content.insertAdjacentHTML('beforeend', `<section id="models" class="view">
 <div class="page-head">
 <div>
-<h1>????</h1>
-<p>?????????????????????????????</p>
+<h1>模型配置</h1>
+<p>为当前租户配置可替换的大模型服务，智能域运行时按租户选择模型</p>
 </div>
 </div>
 <div class="production-grid">
 <div class="panel">
 <div class="panel-head">
-<h2>??????</h2>
-<span id="modelCount">0?</span>
+<h2>模型服务清单</h2>
+<span id="modelCount">0 个</span>
 </div>
 <div class="panel-body">
 <table class="table" id="modelTable">
@@ -174,26 +175,25 @@
 </div>
 <div class="panel">
 <div class="panel-head">
-<h2>??????</h2>
-<span>OpenAI????</span>
+<h2>新增模型服务</h2>
+<span>OpenAI 兼容接口</span>
 </div>
 <form class="production-form" id="modelForm">
-<label>????<input name="display_name" required placeholder="??????????">
+<label>配置名称<input name="display_name" required placeholder="例如：营销主模型">
 </label>
-<label>????<select name="provider_type">
+<label>服务类型<select name="provider_type">
 <option value="openai-compatible">OpenAI Compatible</option>
-<option value="mock">??????</option>
 </select>
 </label>
-<label>????<input name="base_url" placeholder="https://.../v1">
+<label>服务地址<input name="base_url" placeholder="https://.../v1">
 </label>
-<label>????<input name="model_name" required placeholder="????">
+<label>模型名称<input name="model_name" required placeholder="输入模型标识">
 </label>
 <label>API Key<input name="api_key" type="password">
 </label>
 <label>
-<input name="is_default" type="checkbox">??????</label>
-<button class="btn primary">??????</button>
+<input name="is_default" type="checkbox">设为默认模型</label>
+<button class="btn primary">保存模型配置</button>
 </form>
 </div>
 <div class="panel model-detail-panel">
@@ -214,15 +214,15 @@
     if (!q('#tenants')) content.insertAdjacentHTML('beforeend', `<section id="tenants" class="view">
 <div class="page-head">
 <div>
-<h1>?????</h1>
-<p>?????????????????????</p>
+<h1>租户与用户</h1>
+<p>管理营销运营组织、账号、角色和数据权限边界</p>
 </div>
 </div>
 <div class="production-grid">
 <div class="panel">
 <div class="panel-head">
-<h2>????</h2>
-<span id="tenantCount">0?</span>
+<h2>租户清单</h2>
+<span id="tenantCount">0 个</span>
 </div>
 <div class="panel-body">
 <table class="table" id="tenantTable">
@@ -231,22 +231,22 @@
 </div>
 <div class="panel">
 <div class="panel-head">
-<h2>??????</h2>
-<span>?????</span>
+<h2>新建运营租户</h2>
+<span>平台管理员</span>
 </div>
 <form class="production-form" id="tenantForm">
-<label>????<input name="code" required placeholder="CEA-NORTH">
+<label>租户编码<input name="code" required placeholder="CEA-NORTH">
 </label>
-<label>????<input name="name" required placeholder="????????">
+<label>租户名称<input name="name" required placeholder="例如：华北营销中心">
 </label>
-<button class="btn primary">????</button>
+<button class="btn primary">创建租户</button>
 </form>
 </div>
 </div>
 <div class="panel">
 <div class="panel-head">
-<h2>???????</h2>
-<span id="userCount">0?</span>
+<h2>用户与租户授权</h2>
+<span id="userCount">0 人</span>
 </div>
 <div class="panel-body">
 <table class="table" id="userTable">
@@ -260,8 +260,8 @@
 
   function updateIdentity() {
     const tenant = activeTenant(); const user = q('.user');
-    q('b', user).textContent = tenant?.name || '??????';
-    q('span', user).textContent = `?????${session.display_name} ? ${tenant?.role || ''}`;
+    q('b', user).textContent = tenant?.name || '营销工作空间';
+    q('span', user).textContent = `当前用户：${session.display_name} · ${tenant?.role || ''}`;
     document.body.classList.toggle('platform-admin', !!session.is_platform_admin);
     const actions = q('.top-actions');
     let select = q('.production-tenant', actions);
@@ -282,29 +282,29 @@
 <td>${escapeHtml(item.stage)}</td>
 <td>${escapeHtml(item.version)}</td>
 <td>${escapeHtml(item.owner)}</td>
-<td>??</td>
+<td>刚刚</td>
 <td>
-<span class="status ${item.status.includes('??')?'good':'warn'}">${escapeHtml(item.status)}</span>
+<span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
 </td>
-<td class="action" data-open-campaign="${escapeHtml(item.name)}">????</td>
+<td class="action" data-open-campaign="${escapeHtml(item.name)}">进入活动</td>
 </tr>`).join('');
     const campaignTable = q('#campaigns .table'); if (campaignTable) campaignTable.innerHTML = `<tr>
-<th>????</th>
-<th>????</th>
-<th>????</th>
-<th>????</th>
-<th>???</th>
-<th>????</th>
-<th>??</th>
-<th>??</th>
+<th>活动编号</th>
+<th>活动名称</th>
+<th>当前节点</th>
+<th>当前版本</th>
+<th>负责人</th>
+<th>最近变更</th>
+<th>状态</th>
+<th>操作</th>
 </tr>${rows}`;
     const overviewTable = q('#overview .table'); if (overviewTable) overviewTable.innerHTML = `<tr>
-<th>??</th>
-<th>????</th>
-<th>???</th>
-<th>??</th>
-<th>??</th>
-<th>??</th>
+<th>活动</th>
+<th>当前节点</th>
+<th>负责人</th>
+<th>版本</th>
+<th>状态</th>
+<th>操作</th>
 </tr>${campaigns.map(item=>`<tr>
 <td>
 <strong>${escapeHtml(item.name)}</strong>
@@ -313,15 +313,15 @@
 <td>${escapeHtml(item.owner)}</td>
 <td>${escapeHtml(item.version)}</td>
 <td>
-<span class="status ${item.status.includes('??')?'good':'warn'}">${escapeHtml(item.status)}</span>
+<span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
 </td>
-<td class="action" data-open-campaign="${escapeHtml(item.name)}">??</td>
+<td class="action" data-open-campaign="${escapeHtml(item.name)}">查看</td>
 </tr>`).join('')}`;
   }
 
   function renderDynamicGraph() {
     const canvas=q('#graphCanvas'); if (!canvas || !window.d3) return; canvas.innerHTML='';
-    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">????????????????????????????</div>'; return; }
+    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前工作空间暂无图谱数据，请先通过数据接入导入实体与关系。</div>'; return; }
     const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
     const nodes=source.nodes.map(item=>({...item,title:item.label,type:String(item.type||'entity').toLowerCase(),w:154,h:52}));
     const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:item.relation}));
@@ -338,35 +338,35 @@
 <span>${escapeHtml(item.type)}</span>
 </div>
 <dl>
-<dt>??ID</dt>
+<dt>对象 ID</dt>
 <dd>${escapeHtml(item.id)}</dd>
-<dt>????</dt>
+<dt>数据来源</dt>
 <dd>${escapeHtml(item.source)}</dd>
-<dt>???</dt>
+<dt>置信度</dt>
 <dd>${Math.round((item.confidence||0)*100)}%</dd>
 </dl>
 <div class="ai-result">
-<b>????</b>
+<b>对象属性</b>
 <p>${escapeHtml(JSON.stringify(item.attributes||{}))}</p>
 </div>`;});
     const simulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(item=>item.id).distance(145).strength(.7)).force('charge',d3.forceManyBody().strength(-420)).force('collide',d3.forceCollide().radius(90)).force('center',d3.forceCenter(width/2,height/2)).on('tick',()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);labels.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);node.attr('transform',item=>`translate(${item.x},${item.y})`)});
     node.filter((_,index)=>index===0).dispatch('click');
   }
 
-  function renderImports() { const table=q('#importTable'); if (!table) return; q('#importCount').textContent=`${tenantData.imports.length}???`; table.innerHTML=`<tr>
-<th>??</th>
-<th>??</th>
-<th>???</th>
-<th>??</th>
-<th>??</th>
-<th>??</th>
-<th>??</th>
+  function renderImports() { const table=q('#importTable'); if (!table) return; q('#importCount').textContent=`${tenantData.imports.length} 个批次`; table.innerHTML=`<tr>
+<th>文件</th>
+<th>类型</th>
+<th>总行数</th>
+<th>成功</th>
+<th>失败</th>
+<th>状态</th>
+<th>时间</th>
 </tr>${tenantData.imports.map(item=>`<tr>
 <td>
 <strong>${escapeHtml(item.file_name)}</strong>
 <small>${escapeHtml(item.id)}</small>
 </td>
-<td>${item.dataset_type==='entities'?'??':'??'}</td>
+<td>${item.dataset_type==='entities'?'实体':'关系'}</td>
 <td>${item.total_rows}</td>
 <td>${item.accepted_rows}</td>
 <td>${item.rejected_rows}</td>
@@ -403,13 +403,13 @@
     const form=q('#mineruForm'); form.base_url.value=config.base_url||'https://mineru.net'; form.enabled.checked=!!config.enabled;
     q('#mineruState').textContent=config.api_key_configured?(config.enabled?'已启用':'已配置未启用'):'未配置密钥';
   }
-  function renderModels() { const table=q('#modelTable'); if (!table) return; q('#modelCount').textContent=`${tenantData.providers.length}?`; table.innerHTML=`<tr>
-<th>??</th>
-<th>??</th>
-<th>??</th>
-<th>??</th>
-<th>??</th>
-<th>??</th>
+  function renderModels() { const table=q('#modelTable'); if (!table) return; q('#modelCount').textContent=`${tenantData.providers.length} 个`; table.innerHTML=`<tr>
+<th>名称</th>
+<th>类型</th>
+<th>模型</th>
+<th>状态</th>
+<th>默认</th>
+<th>操作</th>
 </tr>${tenantData.providers.map(item=>`<tr>
 <td>
 <strong>${escapeHtml(item.display_name)}</strong>
@@ -417,20 +417,20 @@
 <td>${escapeHtml(item.provider_type)}</td>
 <td>${escapeHtml(item.model_name)}</td>
 <td>
-<span class="status ${item.enabled?'good':'warn'}">${item.enabled?'??':'??'}</span>
+<span class="status ${item.enabled?'good':'warn'}">${item.enabled?'启用':'停用'}</span>
 </td>
-<td>${item.is_default?'?':'?'}</td>
+<td>${item.is_default?'是':'否'}</td>
 <td>
 <div class="production-actions">
 <button class="btn" data-provider-test="${item.id}">测试</button><button class="btn" data-provider-models="${item.id}">可用模型</button><button class="btn" data-provider-usage="${item.id}">用量</button>${item.is_default?'':`<button class="btn" data-provider-default="${item.id}">设为默认</button>`}</div>
 </td>
 </tr>`).join('')}`; }
 
-  async function upload(datasetType) { const input=q(datasetType==='entities'?'#entityFile':'#relationFile'); if (!input?.files?.[0]) return toast('????CSV?JSON??'); const form=new FormData(); form.append('dataset_type',datasetType); form.append('file',input.files[0]); q('#importStatus').innerHTML='<div class="production-status">???????...</div>'; try { const result=await request('/api/imports',{method:'POST',body:form},true); q('#importStatus').innerHTML=`<div class="production-status">??????? ${result.accepted_rows} ???? ${result.rejected_rows} ??</div>`; await loadTenantData(); renderImports(); } catch(cause){q('#importStatus').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`;} }
-  async function loadPlatform() { if(!session.is_platform_admin) return; const [tenants,users]=await Promise.all([request('/api/platform/tenants'),request('/api/platform/users')]); q('#tenantCount').textContent=`${tenants.length}?`; q('#userCount').textContent=`${users.length}?`; q('#tenantTable').innerHTML=`<tr>
-<th>??</th>
-<th>????</th>
-<th>??</th>
+  async function upload(datasetType) { const input=q(datasetType==='entities'?'#entityFile':'#relationFile'); if (!input?.files?.[0]) return toast('请选择 CSV 或 JSON 文件'); const form=new FormData(); form.append('dataset_type',datasetType); form.append('file',input.files[0]); q('#importStatus').innerHTML='<div class="production-status">正在校验并导入...</div>'; try { const result=await request('/api/imports',{method:'POST',body:form},true); q('#importStatus').innerHTML=`<div class="production-status">导入完成：成功 ${result.accepted_rows} 行，失败 ${result.rejected_rows} 行</div>`; await loadTenantData(); renderImports(); } catch(cause){q('#importStatus').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`;} }
+  async function loadPlatform() { if(!session.is_platform_admin) return; const [tenants,users]=await Promise.all([request('/api/platform/tenants'),request('/api/platform/users')]); q('#tenantCount').textContent=`${tenants.length} 个`; q('#userCount').textContent=`${users.length} 人`; q('#tenantTable').innerHTML=`<tr>
+<th>编码</th>
+<th>租户名称</th>
+<th>角色</th>
 </tr>${tenants.map(item=>`<tr>
 <td>${escapeHtml(item.code)}</td>
 <td>
@@ -438,53 +438,53 @@
 </td>
 <td>${escapeHtml(item.role)}</td>
 </tr>`).join('')}`; q('#userTable').innerHTML=`<tr>
-<th>??</th>
-<th>???</th>
-<th>????</th>
-<th>????</th>
+<th>姓名</th>
+<th>用户名</th>
+<th>租户授权</th>
+<th>平台权限</th>
 </tr>${users.map(item=>`<tr>
 <td>
 <strong>${escapeHtml(item.display_name)}</strong>
 </td>
 <td>${escapeHtml(item.username)}</td>
-<td>${item.memberships.map(m=>`${escapeHtml(m.name)}?${escapeHtml(m.role)}?`).join('?')}</td>
-<td>${item.is_platform_admin?'?????':'????'}</td>
+<td>${item.memberships.map(m=>`${escapeHtml(m.name)}（${escapeHtml(m.role)}）`).join('、')}</td>
+<td>${item.is_platform_admin?'平台管理员':'普通用户'}</td>
 </tr>`).join('')}`; }
 
   function bindProductionActions() {
     document.addEventListener('click', async event => {
       const button=event.target.closest('button'); if(!button) return;
       if(button.dataset.productionImport) return upload(button.dataset.productionImport);
-      if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'??????');}
+      if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'模型连接正常');}
       if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
       if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
-      if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('???????');await loadTenantData();renderModels();}
+      if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('默认模型已更新');await loadTenantData();renderModels();}
       const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateContent:'content-generation',generateReview:'effect-analysis'};
       const domain=agentMap[button.dataset.action]; if(domain&&tenantData.campaigns[0]) request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})}).then(result=>toast(result.summary)).catch(cause=>toast(cause.message));
     });
     q('.user-switch').addEventListener('click',event=>{event.stopImmediatePropagation();showWorkspace();},true);
-    q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('???????');await loadTenantData();renderModels();});
+    q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
     q('#mineruForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
-    q('#tenantForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('?????');await loadPlatform();});
+    q('#tenantForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
 
   function showWorkspace(){const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card">
 <div class="production-modal-head">
-<b>????????</b>
-<button class="btn" data-close>??</button>
+<b>切换营销工作空间</b>
+<button class="btn" data-close>关闭</button>
 </div>
 <div class="production-modal-body">${session.tenants.map(item=>`<button class="workspace-option ${item.id===activeTenant().id?'active':''}" data-tenant="${item.id}">
 <span>
 <b>${escapeHtml(item.name)}</b>
-<small>${escapeHtml(item.code)} ? ${escapeHtml(item.role)}</small>
+<small>${escapeHtml(item.code)} · ${escapeHtml(item.role)}</small>
 </span>
-<em>${item.id===activeTenant().id?'??':'??'}</em>
-</button>`).join('')}<button class="btn" data-logout>????</button>
+<em>${item.id===activeTenant().id?'当前':'切换'}</em>
+</button>`).join('')}<button class="btn" data-logout>退出登录</button>
 </div>
 </div>`;document.body.appendChild(layer);layer.addEventListener('click',async event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();const option=event.target.closest('[data-tenant]');if(option){tenantId=Number(option.dataset.tenant);localStorage.setItem(tenantKey,String(tenantId));layer.remove();await loadTenantData();}if(event.target.closest('[data-logout]'))logout();});}
 
   async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/model-providers','/api/agent-domains','/api/agent-runs'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,providers,domains,runs]=values;tenantData={campaigns,graph,imports,providers,domains,runs,mineru};renderCampaigns();renderDynamicGraph();renderImports();renderModels();renderMineru();}
   async function initializeSession(){injectNavigation();bindProductionActions();await loadTenantData();if(window.lucide)lucide.createIcons();}
-  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'????????');});}
+  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'工作空间加载失败，请稍后重试');});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

@@ -16,6 +16,8 @@ jobs:
       - name: Check web-v32 JavaScript
         shell: bash
         run: for file in apps/web-v32/*.js; do node --check "$file"; done
+      - name: Check production-facing copy
+        run: node scripts/check-production-copy.mjs
       - name: Check whitespace
         run: git diff --check
 
