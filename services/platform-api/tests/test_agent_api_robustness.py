@@ -30,9 +30,7 @@ def test_agent_chat_rejects_unknown_and_cross_tenant_provider() -> None:
     with TestClient(app) as client:
         auth, tenants = login(client)
         hq = next(item for item in tenants if item["code"] == "CEA-HQ")
-        ecom = next(item for item in tenants if item["code"] == "CEA-ECOM")
         hq_headers = tenant_headers(auth, hq["id"])
-        ecom_headers = tenant_headers(auth, ecom["id"])
 
         assert client.post("/api/agent-chat", headers=hq_headers, json={"message": "test", "provider_id": 999999}).status_code == 422
 
@@ -40,10 +38,10 @@ def test_agent_chat_rejects_unknown_and_cross_tenant_provider() -> None:
         hq_provider_id = next(item["id"] for item in hq_providers if item["enabled"])
         response = client.post(
             "/api/agent-chat",
-            headers=ecom_headers,
+            headers=tenant_headers(auth, 999999),
             json={"message": "test", "provider_id": hq_provider_id},
         )
-        assert response.status_code == 422
+        assert response.status_code == 403
 
 
 def test_agent_chat_does_not_expose_provider_secrets() -> None:

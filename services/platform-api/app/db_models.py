@@ -63,6 +63,59 @@ class CampaignRecord(Base):
     roi_target: Mapped[float] = mapped_column(Float)
 
 
+class OpportunityRecord(Base):
+    __tablename__ = "marketing_opportunities"
+    __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_opportunity_tenant_business_id"),)
+
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), primary_key=True)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    market_scope: Mapped[str] = mapped_column(String(40), default="国内")
+    route: Mapped[str] = mapped_column(String(120), default="")
+    signal_summary: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="待评估")
+    score: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_audience: Mapped[int] = mapped_column(Integer, default=0)
+    estimated_revenue_yuan: Mapped[int] = mapped_column(Integer, default=0)
+    owner: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class AudienceTagRecord(Base):
+    __tablename__ = "audience_tags"
+    __table_args__ = (UniqueConstraint("tenant_id", "code", name="uq_audience_tag_tenant_code"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    code: Mapped[str] = mapped_column(String(80))
+    name: Mapped[str] = mapped_column(String(120))
+    category: Mapped[str] = mapped_column(String(80), default="基础属性")
+    source: Mapped[str] = mapped_column(String(120), default="用户画像平台")
+    description: Mapped[str] = mapped_column(Text, default="")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class AudiencePackageRecord(Base):
+    __tablename__ = "audience_packages"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_audience_package_tenant_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(40), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    selection_mode: Mapped[str] = mapped_column(String(32), default="tag-combination")
+    tag_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+    expression_json: Mapped[str] = mapped_column(Text, default="{}")
+    estimated_size: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(32), default="草稿")
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class ModelProviderRecord(Base):
     __tablename__ = "model_providers"
     __table_args__ = (UniqueConstraint("tenant_id", "display_name", name="uq_model_provider_tenant_name"),)

@@ -5,7 +5,7 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
-  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null };
+  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], documents: [] };
   const pipelineFiles = new Map();
   const roleLabels = { admin: '租户管理员', manager: '营销经理', analyst: '营销分析师', viewer: '只读用户' };
   let pipelinePollTimer = null;
@@ -199,6 +199,8 @@
   }
 
   function updateIdentity() {
+    session.tenants = (session.tenants || []).filter(item => item.code !== 'CEA-ECOM' && !String(item.name || '').includes('电商运营中心'));
+    if (!session.tenants.some(item => item.id === tenantId)) tenantId = session.tenants[0]?.id;
     const tenant = activeTenant(); const user = q('.user');
     q('b', user).textContent = tenant?.name || '未选择租户';
     q('span', user).textContent = `当前用户：${session.display_name} · ${roleLabels[tenant?.role] || tenant?.role || '未授权'}`;
@@ -225,7 +227,26 @@
     }
   }
 
-  function renderCampaigns() {
+  const cleanText = (value, fallback = '') => { const text = String(value ?? ''); return !text.trim() || (text.match(/\?/g)||[]).length > Math.max(2, text.length * .35) || text.includes('?') ? fallback : text; };
+  const roleText = value => ({admin:'\u79df\u6237\u7ba1\u7406\u5458',manager:'\u8425\u9500\u7ecf\u7406',analyst:'\u8425\u9500\u5206\u6790\u5e08',viewer:'\u53ea\u8bfb\u7528\u6237'}[value] || cleanText(value, '\u672a\u6388\u6743'));
+
+  function renderOpportunities(){
+    const table=q('#opportunities .opportunity-table'); if(!table)return; const rows=tenantData.opportunities||[]; if(!rows.length)return;
+    table.innerHTML='<tr><th>\u673a\u4f1a\u540d\u79f0</th><th>\u4fe1\u53f7</th><th>\u5ba2\u7fa4</th><th>\u4ef7\u503c</th><th>\u72b6\u6001</th><th>\u64cd\u4f5c</th></tr>'+rows.map(item=>'<tr><td><strong>'+escapeHtml(cleanText(item.name,'\u672a\u547d\u540d\u673a\u4f1a'))+'</strong><small>'+escapeHtml(cleanText(item.market_scope,'\u56fd\u5185'))+' · '+escapeHtml(cleanText(item.route,'\u822a\u7ebf\u5f85\u8865\u5145'))+'</small></td><td>'+escapeHtml(cleanText(item.signal_summary,'\u5f85\u8865\u5145\u4fe1\u53f7'))+'</td><td>'+Number(item.estimated_audience||0).toLocaleString('zh-CN')+'</td><td class="score">'+item.score+'</td><td><span class="status '+(item.status==='\u5f85\u8bc4\u4f30'||item.status==='\u5f85\u5904\u7406'?'warn':'good')+'">'+escapeHtml(cleanText(item.status,'\u5f85\u8bc4\u4f30'))+'</span></td><td class="production-actions"><button class="btn" data-opportunity-edit="'+escapeHtml(item.id)+'">\u7f16\u8f91</button><button class="btn danger" data-opportunity-delete="'+escapeHtml(item.id)+'">\u5220\u9664</button></td></tr>').join('');
+  }
+  function renderAudienceStructure(){
+    const panel=q('#audiences .grid2 .panel:first-child .panel-body'); if(!panel)return; const packages=tenantData.audiencePackages||[], tags=tenantData.audienceTags||[];
+    panel.innerHTML='<div class="audience-builder"><div class="audience-layer"><b>\u5ba2\u7fa4\u6807\u7b7e</b><div class="audience-chips">'+(tags.length?tags.map(t=>'<span class="tag blue">'+escapeHtml(cleanText(t.name,'\u672a\u547d\u540d\u6807\u7b7e'))+'</span>').join(''):'<span class="muted">\u6682\u65e0\u540c\u6b65\u6807\u7b7e</span>')+'</div></div><div class="audience-connector">\u6807\u7b7e\u7ec4\u5408 / AI\u5708\u9009</div><div class="audience-layer output"><b>\u5ba2\u7fa4\u5305</b><div class="audience-packages">'+(packages.length?packages.map(item=>'<div class="audience-package"><strong>'+escapeHtml(cleanText(item.name,'\u672a\u547d\u540d\u5ba2\u7fa4\u5305'))+'</strong><span>'+Number(item.estimated_size||0).toLocaleString('zh-CN')+'\u4eba ? '+escapeHtml(item.selection_mode==='ai-selection'?'AI\u5708\u9009':'\u6807\u7b7e\u7ec4\u5408')+'</span></div>').join(''):'<span class="muted">\u70b9\u51fb\u201c\u65b0\u5efa\u5ba2\u7fa4\u201d\u521b\u5efa\u7b2c\u4e00\u4e2a\u5ba2\u7fa4\u5305</span>')+'</div></div></div>';
+  }
+  function renderKnowledgeDocuments(){
+    const host=q('#graph .graph-layout'); if(!host)return; let panel=q('#knowledgeDocuments'); if(!panel){panel=document.createElement('div');panel.id='knowledgeDocuments';panel.className='panel knowledge-documents';host.appendChild(panel);} const docs=tenantData.documents||[];
+    panel.innerHTML='<div class="panel-head"><h2>\u77e5\u8bc6\u6587\u6863</h2><span>'+docs.length+' \u4e2a\u6587\u6863 · \u5220\u9664\u5c06\u540c\u6b65\u6e05\u7406\u672c\u4f53\u5bf9\u8c61</span></div><div class="panel-body">'+(docs.length?'<table class="table"><tr><th>\u6587\u6863</th><th>\u6765\u6e90</th><th>\u5207\u7247</th><th>\u672c\u4f53\u5bf9\u8c61</th><th>\u7248\u672c</th><th>\u64cd\u4f5c</th></tr>'+docs.map(d=>'<tr><td><strong>'+escapeHtml(cleanText(d.title,'\u672a\u547d\u540d\u6587\u6863'))+'</strong><small>'+escapeHtml(d.external_id)+'</small></td><td>'+escapeHtml(cleanText(d.source_name,d.source_type))+'</td><td>'+d.chunk_count+'</td><td>'+d.entity_count+'</td><td>V'+d.version+'</td><td class="production-actions"><button class="btn" data-document-edit="'+d.id+'">\u7f16\u8f91</button><button class="btn danger" data-document-delete="'+d.id+'">\u5220\u9664</button></td></tr>').join('')+'</table>':'<div class="empty-action">\u6682\u65e0\u77e5\u8bc6\u6587\u6863\u3002\u4e0a\u4f20\u6587\u4ef6\u540e\uff0c\u5904\u7406\u7ed3\u679c\u4f1a\u5728\u8fd9\u91cc\u5f62\u6210\u77e5\u8bc6\u4e0e\u672c\u4f53\u3002</div>')+'</div>';
+  }
+  function showAgentTrace(run){
+    const events=run?.events||[]; const html='<div class="agent-trace"><div class="agent-trace-head"><i data-lucide="bot"></i><b>Agent\u6267\u884c\u8fc7\u7a0b</b><span>'+escapeHtml(cleanText(run?.status,'\u5df2\u5b8c\u6210'))+'</span></div><div class="agent-trace-list">'+(events.length?events.map((e,i)=>'<div class="agent-trace-item"><i>'+(i+1)+'</i><div><b>'+escapeHtml(cleanText(e.event_type,'\u5904\u7406\u6b65\u9aa4'))+'</b><small>'+new Date(e.timestamp).toLocaleString('zh-CN')+'</small><p>'+escapeHtml(JSON.stringify(e.payload||{}))+'</p></div></div>').join(''):'<div class="empty-action">\u672a\u8fd4\u56de\u6b65\u9aa4\u4e8b\u4ef6</div>')+'</div><div class="drawer-ai">'+escapeHtml(cleanText(run?.summary,'Agent\u5df2\u5b8c\u6210\u5904\u7406'))+'</div></div>';
+    const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>\u667a\u80fd\u57df\u8fc7\u7a0b\u8ffd\u8e2a</b><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body">'+html+'</div></div>';document.body.appendChild(layer);layer.addEventListener('click',e=>{if(e.target===layer||e.target.closest('[data-close]'))layer.remove();});if(window.lucide)lucide.createIcons();
+  }
+  function renderCampaigns(){
     const campaigns = tenantData.campaigns; const overviewKpis = qa('#overview .kpi b');
     if (overviewKpis[0]) overviewKpis[0].textContent = campaigns.length;
     if (overviewKpis[2]) overviewKpis[2].textContent = campaigns.reduce((sum,item)=>sum+item.audience_size,0).toLocaleString('zh-CN');
@@ -335,7 +356,7 @@
     q('#modelDetail').innerHTML='<div class="production-status">正在统计调用量...</div>';
     try {
       const value=await request(`/api/model-providers/${providerId}/usage`);
-      q('#modelDetail').innerHTML=`<div class="usage-metrics"><div><span>请求次数</span><b>${value.request_count.toLocaleString()}</b></div><div><span>输入 Token</span><b>${value.prompt_tokens.toLocaleString()}</b></div><div><span>输出 Token</span><b>${value.completion_tokens.toLocaleString()}</b></div><div><span>总 Token</span><b>${value.total_tokens.toLocaleString()}</b></div></div>${value.by_model.length?`<table class="table usage-table"><tr><th>模型</th><th>请求</th><th>总 Token</th></tr>${value.by_model.map(item=>`<tr><td>${escapeHtml(item.model_name)}</td><td>${item.request_count}</td><td>${item.total_tokens.toLocaleString()}</td></tr>`).join('')}</table>`:''} `;
+      q('#modelDetail').innerHTML=`<div class="usage-metrics"><div><span>请求次数</span><b>${value.request_count.toLocaleString()}</b></div><div><span>输入 Token</span><b>${value.prompt_tokens.toLocaleString()}</b></div><div><span>输出 Token</span><b>${value.completion_tokens.toLocaleString()}</b></div><div><span>总 Token</span><b>${value.total_tokens.toLocaleString()}</b></div></div>${value.by_model.length?`<table class="table usage-table"><tr><th>模型</th><th>请求</th><th>总 Token</th></tr>${value.by_model.map(item=>`<tr><td>${escapeHtml(cleanText(item.model_name, '\u6a21\u578b\u6807\u8bc6\u672a\u8fd4\u56de'))}</td><td>${item.request_count}</td><td>${item.total_tokens.toLocaleString()}</td></tr>`).join('')}</table>`:''} `;
     } catch(cause) { q('#modelDetail').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`; }
   }
 
@@ -357,8 +378,8 @@
 <td>
 <strong>${escapeHtml(item.display_name===['内置','演示模型'].join('')?'内置测试模型':item.display_name)}</strong>
 </td>
-<td>${escapeHtml(item.provider_type)}</td>
-<td>${escapeHtml(item.model_name)}</td>
+<td>${escapeHtml(cleanText(item.provider_type, 'OpenAI Compatible'))}</td>
+<td>${escapeHtml(cleanText(item.model_name, '未返回模型名称'))}</td>
 <td>
 <span class="status ${item.enabled?'good':'warn'}">${item.enabled?'启用':'停用'}</span>
 </td>
@@ -398,12 +419,30 @@
     document.addEventListener('click', async event => {
       const button=event.target.closest('button'); if(!button) return;
       if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
+      if(button.dataset.opportunityDelete){
+        if(!canWrite()||!window.confirm('删除后该机会及其关联引用将不再出现在当前租户，确定继续吗？')) return;
+        try{await request(`/api/opportunities/${encodeURIComponent(button.dataset.opportunityDelete)}`,{method:'DELETE'});toast('机会已删除');await loadTenantData();}catch(cause){toast(cause.message||'机会删除失败');}return;
+      }
+      if(button.dataset.opportunityEdit){
+        const item=(tenantData.opportunities||[]).find(value=>value.id===button.dataset.opportunityEdit);if(!item)return;
+        const name=window.prompt('机会名称',item.name);if(name===null)return;const summary=window.prompt('信号摘要',item.signal_summary||'');if(summary===null)return;
+        try{await request(`/api/opportunities/${encodeURIComponent(item.id)}`,{method:'PUT',body:JSON.stringify({...item,name:name.trim()||item.name,signal_summary:summary})});toast('机会已更新');await loadTenantData();}catch(cause){toast(cause.message||'机会更新失败');}return;
+      }
+      if(button.dataset.documentDelete){
+        if(!canWrite()||!window.confirm('删除文档将同步删除知识切片、本体对象及关系，确定继续吗？'))return;
+        try{await request(`/api/knowledge/documents/${button.dataset.documentDelete}`,{method:'DELETE'});toast('文档及关联知识、本体已删除');await loadTenantData();}catch(cause){toast(cause.message||'文档删除失败');}return;
+      }
+      if(button.dataset.documentEdit){
+        const item=(tenantData.documents||[]).find(value=>String(value.id)===String(button.dataset.documentEdit));if(!item)return;
+        const title=window.prompt('文档名称',item.title);if(title===null)return;const classification=window.prompt('知识分类',item.classification||'internal');if(classification===null)return;
+        try{await request(`/api/knowledge/documents/${item.id}`,{method:'PUT',body:JSON.stringify({title:title.trim()||item.title,classification})});toast('知识文档已更新');await loadTenantData();}catch(cause){toast(cause.message||'文档更新失败');}return;
+      }
       if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'模型连接正常');}
       if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
       if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
       if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('默认模型已更新');await loadTenantData();renderModels();}
       const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateContent:'content-generation',generateReview:'effect-analysis'};
-      const domain=agentMap[button.dataset.action]; if(domain&&tenantData.campaigns[0]) request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})}).then(result=>toast(result.summary)).catch(cause=>toast(cause.message));
+      const domain=agentMap[button.dataset.action]; if(domain&&tenantData.campaigns[0]) request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})}).then(result=>{toast(result.summary);showAgentTrace(result);}).catch(cause=>toast(cause.message));
     });
     const dropzone=q('#pipelineDropzone'),fileInput=q('#pipelineFiles');
     dropzone.addEventListener('click',()=>fileInput.click());
@@ -434,8 +473,23 @@
 </div>
 </div>`;document.body.appendChild(layer);layer.addEventListener('click',async event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();const option=event.target.closest('[data-tenant]');if(option){tenantId=Number(option.dataset.tenant);localStorage.setItem(tenantKey,String(tenantId));layer.remove();await loadTenantData();}if(event.target.closest('[data-logout]'))logout();});}
 
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,mineru};renderCampaigns();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
-  async function initializeSession(){injectNavigation();bindProductionActions();await loadTenantData();if(window.lucide)lucide.createIcons();}
+  function mountMarketingAssistantLegacy(){
+    if(q('#marketingAssistant'))return; const root=document.createElement('div');root.id='marketingAssistant';root.innerHTML='<button class="assistant-fab" title="\u003f\u003f\u003f\u003f\u003f\u003f"><i data-lucide="bot"></i><span>\u003f\u003f\u003f\u003f</span></button><section class="assistant-panel" hidden><header><b>\u003f\u003f\u003f\u003f\u003f\u003f</b><button class="icon-btn" data-assistant-close aria-label="\u003f\u003f"><i data-lucide="x"></i></button></header><div class="assistant-messages"><div class="assistant-message assistant">\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f</div></div><form><input name="message" placeholder="\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f" autocomplete="off"><button class="btn primary">\u003f\u003f</button></form></section>';document.body.appendChild(root);const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),messages=q('.assistant-messages',root);fab.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)q('input',root).focus();});q('[data-assistant-close]',root).addEventListener('click',()=>panel.hidden=true);q('form',root).addEventListener('submit',async e=>{e.preventDefault();const input=q('input',root),message=input.value.trim();if(!message)return;messages.insertAdjacentHTML('beforeend','<div class="assistant-message user">'+escapeHtml(message)+'</div>');input.value='';messages.insertAdjacentHTML('beforeend','<div class="assistant-message assistant pending">\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u002e\u002e\u002e</div>');const pending=messages.lastElementChild;try{const result=await request('/api/agent-chat',{method:'POST',body:JSON.stringify({message,domain_id:'marketing-copilot',history:[]})});pending.classList.remove('pending');pending.innerHTML=escapeHtml(cleanText(result.answer,'\u0041\u0067\u0065\u006e\u0074\u003f\u003f\u003f\u003f\u003f\u003f\u003f'))+(result.trace?.length?'<details><summary>\u003f\u003f\u003f\u003f\u003f\u003f</summary><pre>'+escapeHtml(JSON.stringify(result.trace,null,2))+'</pre></details>':'');}catch(err){pending.classList.remove('pending');pending.textContent='\u003f\u003f\u003f\u003f\u003f'+(err.message||'\u003f\u003f\u003f\u003f\u003f\u003f\u003f');}});if(window.lucide)lucide.createIcons();
+  }
+
+  function mountMarketingAssistantV2(){
+    if(q('#marketingAssistant')) q('#marketingAssistant').remove();
+    const root=document.createElement('div'); root.id='marketingAssistant';
+    root.innerHTML='<button class="assistant-fab" title="打开营销助手"><i data-lucide="bot"></i><span>营销助手</span></button><section class="assistant-panel" hidden><header><b>AI营销助手</b><button class="icon-btn" data-assistant-close aria-label="关闭"><i data-lucide="x"></i></button></header><div class="assistant-messages"><div class="assistant-message assistant">你好，我可以协助检索知识中心、分析营销机会、圈选客群、匹配产品包，并查看活动状态。</div></div><form><input name="message" placeholder="输入你的营销问题或操作" autocomplete="off"><button class="btn primary">发送</button></form></section>';
+    document.body.appendChild(root);
+    const fab=q('.assistant-fab',root), panel=q('.assistant-panel',root), messages=q('.assistant-messages',root);
+    fab.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)q('input',root).focus();});
+    q('[data-assistant-close]',root).addEventListener('click',()=>panel.hidden=true);
+    q('form',root).addEventListener('submit',async e=>{e.preventDefault();const input=q('input',root),message=input.value.trim();if(!message)return;messages.insertAdjacentHTML('beforeend','<div class="assistant-message user">'+escapeHtml(message)+'</div>');input.value='';messages.insertAdjacentHTML('beforeend','<div class="assistant-message assistant pending">正在调用营销智能体…</div>');const pending=messages.lastElementChild;try{const result=await request('/api/agent-chat',{method:'POST',body:JSON.stringify({message,domain_id:'marketing-copilot',history:[]})});pending.classList.remove('pending');pending.innerHTML=escapeHtml(cleanText(result.answer,'智能体暂未返回结果'))+(result.trace?.length?'<details><summary>查看智能体过程</summary><pre>'+escapeHtml(JSON.stringify(result.trace,null,2))+'</pre></details>':'');}catch(err){pending.classList.remove('pending');pending.textContent='请求失败：'+(err.message||'请稍后重试');}});
+    if(window.lucide)lucide.createIcons();
+  }
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,documents]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,documents,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
+  async function initializeSession(){injectNavigation();bindProductionActions();mountMarketingAssistantV2();await loadTenantData();if(window.lucide)lucide.createIcons();}
   function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

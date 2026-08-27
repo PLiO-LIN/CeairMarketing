@@ -15,13 +15,17 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema
 from .models import (
     AgentRun,
+    AudiencePackage,
+    AudiencePackageBase,
+    AudienceTag,
+    AudienceTagBase,
     AgentRunListItem,
     AgentRunRequest,
     AgentChatRequest,
@@ -34,6 +38,9 @@ from .models import (
     LoginResponse,
     MarketingGraph,
     OntologySemanticStatus,
+    Opportunity,
+    OpportunityCreate,
+    OpportunityUpdate,
     ModelProvider,
     ModelProviderCreate,
     ModelProviderUpdate,
@@ -45,6 +52,9 @@ from .models import (
     DataPipelineReviewRequest,
     IntegrationConfig,
     IntegrationConfigUpdate,
+    InterfacePipelineRequest,
+    KnowledgeDocument,
+    KnowledgeDocumentUpdate,
     KnowledgeSearchResult,
     MembershipCreate,
     PlatformUserCreate,
@@ -233,6 +243,114 @@ def get_campaign(campaign_id: str, context: TenantContext = Depends(get_tenant_c
     return campaign
 
 
+def audience_package_view(record: AudiencePackageRecord) -> AudiencePackage:
+    return AudiencePackage(
+        id=record.id,
+        external_id=record.external_id,
+        name=record.name,
+        selection_mode=record.selection_mode,
+        tag_ids=json.loads(record.tag_ids_json or "[]"),
+        expression=json.loads(record.expression_json or "{}"),
+        estimated_size=record.estimated_size,
+        status=record.status,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+@app.get("/api/opportunities", response_model=list[Opportunity])
+def list_opportunities(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    return session.scalars(select(OpportunityRecord).where(OpportunityRecord.tenant_id == context.tenant_id).order_by(OpportunityRecord.score.desc(), OpportunityRecord.updated_at.desc())).all()
+
+
+@app.post("/api/opportunities", response_model=Opportunity, status_code=status.HTTP_201_CREATED)
+def create_opportunity(payload: OpportunityCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    opportunity_id = payload.id.strip() or f"OPP-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}"
+    if session.get(OpportunityRecord, (context.tenant_id, opportunity_id)) is not None:
+        raise HTTPException(status_code=409, detail="Request failed")
+    record = OpportunityRecord(tenant_id=context.tenant_id, id=opportunity_id, **payload.model_dump(exclude={"id"}))
+    session.add(record); session.commit(); session.refresh(record)
+    return record
+
+
+@app.put("/api/opportunities/{opportunity_id}", response_model=Opportunity)
+def update_opportunity(opportunity_id: str, payload: OpportunityUpdate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.get(OpportunityRecord, (context.tenant_id, opportunity_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="Request failed")
+    for key, value in payload.model_dump().items():
+        setattr(record, key, value)
+    session.commit(); session.refresh(record)
+    return record
+
+
+@app.delete("/api/opportunities/{opportunity_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_opportunity(opportunity_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.get(OpportunityRecord, (context.tenant_id, opportunity_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="Request failed")
+    session.delete(record); session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/audience-tags", response_model=list[AudienceTag])
+def list_audience_tags(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    return session.scalars(select(AudienceTagRecord).where(AudienceTagRecord.tenant_id == context.tenant_id).order_by(AudienceTagRecord.category, AudienceTagRecord.name)).all()
+
+
+@app.post("/api/audience-tags", response_model=AudienceTag, status_code=status.HTTP_201_CREATED)
+def create_audience_tag(payload: AudienceTagBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = AudienceTagRecord(tenant_id=context.tenant_id, **payload.model_dump())
+    session.add(record)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback(); raise HTTPException(status_code=409, detail="Request failed") from exc
+    session.refresh(record); return record
+
+
+@app.put("/api/audience-tags/{tag_id}", response_model=AudienceTag)
+def update_audience_tag(tag_id: int, payload: AudienceTagBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(AudienceTagRecord).where(AudienceTagRecord.id == tag_id, AudienceTagRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Request failed")
+    for key, value in payload.model_dump().items(): setattr(record, key, value)
+    session.commit(); session.refresh(record); return record
+
+
+@app.delete("/api/audience-tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_audience_tag(tag_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(AudienceTagRecord).where(AudienceTagRecord.id == tag_id, AudienceTagRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Request failed")
+    session.delete(record); session.commit(); return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/audience-packages", response_model=list[AudiencePackage])
+def list_audience_packages(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(AudiencePackageRecord).where(AudiencePackageRecord.tenant_id == context.tenant_id).order_by(AudiencePackageRecord.updated_at.desc())).all()
+    return [audience_package_view(record) for record in records]
+
+
+@app.post("/api/audience-packages", response_model=AudiencePackage, status_code=status.HTTP_201_CREATED)
+def create_audience_package(payload: AudiencePackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = AudiencePackageRecord(tenant_id=context.tenant_id, external_id=f"AUD-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}", name=payload.name, selection_mode=payload.selection_mode, tag_ids_json=json.dumps(payload.tag_ids), expression_json=json.dumps(payload.expression, ensure_ascii=False), estimated_size=payload.estimated_size, status=payload.status, created_by=context.user_id)
+    session.add(record); session.commit(); session.refresh(record); return audience_package_view(record)
+
+
+@app.put("/api/audience-packages/{package_id}", response_model=AudiencePackage)
+def update_audience_package(package_id: int, payload: AudiencePackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == package_id, AudiencePackageRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Request failed")
+    record.name=payload.name; record.selection_mode=payload.selection_mode; record.tag_ids_json=json.dumps(payload.tag_ids); record.expression_json=json.dumps(payload.expression, ensure_ascii=False); record.estimated_size=payload.estimated_size; record.status=payload.status
+    session.commit(); session.refresh(record); return audience_package_view(record)
+
+
+@app.delete("/api/audience-packages/{package_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_audience_package(package_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == package_id, AudiencePackageRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Request failed")
+    session.delete(record); session.commit(); return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @app.get("/api/agent-domains")
 def list_agent_domains(_context: TenantContext = Depends(get_tenant_context)):
     return AGENT_DOMAINS
@@ -241,6 +359,16 @@ def list_agent_domains(_context: TenantContext = Depends(get_tenant_context)):
 @app.post("/api/agent-runs", response_model=AgentRun)
 def run_agent(request: AgentRunRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     return runtime.run(session, context, request)
+
+
+@app.get("/api/agent-runs/{run_id}", response_model=AgentRun)
+def get_agent_run(run_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    record = session.scalar(select(AgentRunRecord).where(AgentRunRecord.id == run_id, AgentRunRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Agent run record not found")
+    events = []
+    for event in sorted(record.events, key=lambda item: item.timestamp):
+        events.append({"id": event.id, "event_type": event.event_type, "timestamp": event.timestamp, "payload": json.loads(event.payload_json or "{}")})
+    return AgentRun(id=record.id, campaign_id=record.campaign_id, domain_id=record.domain_id, status=record.status, summary=record.summary, events=events)
 
 
 @app.get("/api/agent-runs", response_model=list[AgentRunListItem])
@@ -282,6 +410,46 @@ def tenant_graph_stats(context: TenantContext = Depends(get_tenant_context), ses
 def campaign_graph(campaign_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     get_campaign(campaign_id, context, session)
     return build_campaign_graph(session, context.tenant_id, campaign_id)
+
+
+def knowledge_document_view(record: KnowledgeDocumentRecord, session: Session) -> KnowledgeDocument:
+    chunk_count = session.scalar(select(func.count(KnowledgeChunkRecord.id)).where(KnowledgeChunkRecord.document_id == record.id)) or 0
+    entity_count = session.scalar(select(func.count(OntologyEntityRecord.id)).where(OntologyEntityRecord.tenant_id == record.tenant_id, OntologyEntityRecord.external_id == record.external_id)) or 0
+    return KnowledgeDocument(id=record.id, external_id=record.external_id, title=record.title, source_type=record.source_type, source_name=record.source_name, classification=record.classification, status=record.status, version=record.version, chunk_count=chunk_count, entity_count=entity_count, created_at=record.created_at, updated_at=record.updated_at)
+
+
+def delete_knowledge_document_data(session: Session, context: TenantContext, document: KnowledgeDocumentRecord) -> None:
+    chunk_ids = session.scalars(select(KnowledgeChunkRecord.external_id).where(KnowledgeChunkRecord.document_id == document.id)).all()
+    entities = session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == context.tenant_id, OntologyEntityRecord.external_id.in_([document.external_id, *chunk_ids]))).all()
+    entity_ids = [item.id for item in entities]
+    if entity_ids:
+        session.execute(delete(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == context.tenant_id, or_(OntologyRelationRecord.source_entity_id.in_(entity_ids), OntologyRelationRecord.target_entity_id.in_(entity_ids))))
+        session.execute(delete(OntologyEntityRecord).where(OntologyEntityRecord.id.in_(entity_ids)))
+    session.execute(delete(KnowledgeChunkRecord).where(KnowledgeChunkRecord.document_id == document.id))
+    session.delete(document)
+
+
+@app.get("/api/knowledge/documents", response_model=list[KnowledgeDocument])
+def list_knowledge_documents(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == context.tenant_id).order_by(KnowledgeDocumentRecord.updated_at.desc())).all()
+    return [knowledge_document_view(record, session) for record in records]
+
+
+@app.put("/api/knowledge/documents/{document_id}", response_model=KnowledgeDocument)
+def update_knowledge_document(document_id: int, payload: KnowledgeDocumentUpdate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.id == document_id, KnowledgeDocumentRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Resource not found")
+    for key, value in payload.model_dump(exclude_none=True).items(): setattr(record, key, value)
+    record.version += 1
+    session.commit(); session.refresh(record); return knowledge_document_view(record, session)
+
+
+@app.delete("/api/knowledge/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_knowledge_document(document_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.id == document_id, KnowledgeDocumentRecord.tenant_id == context.tenant_id))
+    if record is None: raise HTTPException(status_code=404, detail="Knowledge document not found")
+    delete_knowledge_document_data(session, context, record)
+    session.commit(); return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/api/imports", response_model=list[ImportJob])
@@ -404,6 +572,23 @@ def update_mineru_integration(payload: IntegrationConfigUpdate, context: TenantC
         record.encrypted_api_key = cipher.encrypt(payload.api_key)
     session.commit(); session.refresh(record)
     return integration_view(record)
+
+
+@app.post("/api/data-pipelines/interface", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
+def create_interface_pipeline(payload: InterfacePipelineRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    raw = json.dumps(payload.records, ensure_ascii=False).encode("utf-8")
+    filename = f"{payload.source_name}.json"
+    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format="json", source_type=payload.source_type, status="running", current_stage="queued")
+    session.add(job); session.commit(); session.refresh(job)
+    agent = DataProcessingAgent(session, context, job)
+    try:
+        job.started_at = datetime.now(timezone.utc)
+        stages = agent.process(filename, raw)
+        job.status = "completed"; job.completed_at = datetime.now(timezone.utc); session.commit()
+    except Exception as exc:
+        session.rollback(); job = session.get(DataPipelineJobRecord, job.id); job.status="failed"; job.current_stage="failed"; job.error_message=str(exc)[:1000]; job.completed_at=datetime.now(timezone.utc); session.commit()
+        raise HTTPException(status_code=502, detail=f"Interface data processing failed: {exc}") from exc
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=stages)
 
 
 @app.get("/api/data-pipelines", response_model=list[DataPipelineJob])

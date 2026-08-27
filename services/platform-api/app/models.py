@@ -76,6 +76,92 @@ class Campaign(BaseModel):
     roi_target: float
 
 
+class OpportunityBase(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    market_scope: str = Field(default="\u8349\u7a3f", max_length=40)
+    route: str = Field(default="", max_length=120)
+    signal_summary: str = Field(default="", max_length=2000)
+    status: str = Field(default="\u5f85\u8bc4\u4f30", max_length=32)
+    score: int = Field(default=0, ge=0, le=100)
+    estimated_audience: int = Field(default=0, ge=0)
+    estimated_revenue_yuan: int = Field(default=0, ge=0)
+    owner: str = Field(default="", max_length=64)
+
+
+class OpportunityCreate(OpportunityBase):
+    id: str = Field(default="", max_length=32)
+
+
+class OpportunityUpdate(OpportunityBase):
+    pass
+
+
+class Opportunity(OpportunityBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class AudienceTagBase(BaseModel):
+    code: str = Field(min_length=2, max_length=80)
+    name: str = Field(min_length=2, max_length=120)
+    category: str = Field(default="\u57fa\u7840\u5c5e\u6027", max_length=80)
+    source: str = Field(default="\u7528\u6237\u753b\u50cf\u5e73\u53f0", max_length=120)
+    description: str = Field(default="", max_length=1000)
+    enabled: bool = True
+
+
+class AudienceTag(AudienceTagBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class AudiencePackageBase(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    selection_mode: Literal["tag-combination", "ai-selection"] = "tag-combination"
+    tag_ids: list[int] = Field(default_factory=list)
+    expression: dict[str, Any] = Field(default_factory=dict)
+    estimated_size: int = Field(default=0, ge=0)
+    status: str = Field(default="\u8349\u7a3f", max_length=32)
+
+
+class AudiencePackage(AudiencePackageBase):
+    id: int
+    external_id: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class KnowledgeDocument(BaseModel):
+    id: int
+    external_id: str
+    title: str
+    source_type: str
+    source_name: str
+    classification: str
+    status: str
+    version: int
+    chunk_count: int = 0
+    entity_count: int = 0
+    created_at: datetime
+    updated_at: datetime
+
+
+class KnowledgeDocumentUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=2, max_length=240)
+    classification: str | None = Field(default=None, max_length=40)
+    status: str | None = Field(default=None, max_length=32)
+
+
+class InterfacePipelineRequest(BaseModel):
+    source_type: Literal["flight", "customer", "market", "operation", "hotspot"]
+    source_name: str = Field(min_length=2, max_length=120)
+    records: list[dict[str, Any]] = Field(min_length=1, max_length=5000)
+
+
 class AgentDomain(BaseModel):
     id: str
     name: str

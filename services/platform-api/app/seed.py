@@ -1,6 +1,6 @@
 import json
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from .auth import hash_password
@@ -11,6 +11,9 @@ from .db_models import (
     CampaignRecord,
     IntegrationConfigRecord,
     ModelProviderRecord,
+    OpportunityRecord,
+    AudienceTagRecord,
+    AudiencePackageRecord,
     OntologyEntityRecord,
     OntologyRelationRecord,
     TenantMembershipRecord,
@@ -22,17 +25,17 @@ from .security import SecretCipher
 
 def seed_database(session: Session) -> int:
     settings = get_settings()
+    # 租户模型只保留业务租户；清理早期版本遗留的演示电商租户。
+    legacy_tenant = session.scalar(select(TenantRecord).where(TenantRecord.code == "CEA-ECOM"))
+    if legacy_tenant is not None:
+        session.execute(delete(TenantMembershipRecord).where(TenantMembershipRecord.tenant_id == legacy_tenant.id))
+        session.delete(legacy_tenant)
+        session.flush()
     headquarters = session.scalar(select(TenantRecord).where(TenantRecord.code == "CEA-HQ"))
     if headquarters is None:
         headquarters = TenantRecord(code="CEA-HQ", name="东航营销运营中心")
         session.add(headquarters)
         session.flush()
-    ecommerce = session.scalar(select(TenantRecord).where(TenantRecord.code == "CEA-ECOM"))
-    if ecommerce is None:
-        ecommerce = TenantRecord(code="CEA-ECOM", name="东航电商运营中心")
-        session.add(ecommerce)
-        session.flush()
-
     admin = session.scalar(select(UserRecord).where(UserRecord.username == settings.initial_admin_username))
     if admin is None:
         admin = UserRecord(
@@ -45,7 +48,7 @@ def seed_database(session: Session) -> int:
         session.flush()
     elif not admin.is_platform_admin:
         admin.is_platform_admin = True
-    for tenant in (headquarters, ecommerce):
+    for tenant in (headquarters,):
         membership = session.scalar(
             select(TenantMembershipRecord).where(
                 TenantMembershipRecord.tenant_id == tenant.id,
@@ -108,6 +111,15 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
                 enabled=True,
                 config_json=json.dumps({"model_version": "vlm", "enable_table": True, "is_ocr": False}, ensure_ascii=False),
             ))
+    if session.scalar(select(OpportunityRecord.id).where(OpportunityRecord.tenant_id == headquarters_id).limit(1)) is None:
+        session.add_all([
+            OpportunityRecord(tenant_id=headquarters_id, id="OPP-2026-0821-05", name="\u4e0a\u6d77\u2014\u4e09\u4e9a\u56fd\u5e86\u65e9\u9e1f", market_scope="\u56fd\u5185", route="\u4e0a\u6d77\u6d66\u4e1c\u2014\u4e09\u4e9a\u51e4\u51f0", signal_summary="\u641c\u7d22\u70ed\u5ea6\u4e0a\u534732%\uff1b\u822a\u7ebf\u4f9b\u7ed9\u5145\u8db3\uff1b\u63d0\u524d21\u5929\u7a97\u53e3", status="\u5f85\u5904\u7406", score=92, estimated_audience=36420, estimated_revenue_yuan=1860000, owner="\u8425\u9500\u8fd0\u8425"),
+            OpportunityRecord(tenant_id=headquarters_id, id="OPP-2026-0822-02", name="\u897f\u5b89\u2014\u6210\u90fd\u5bb6\u5ead\u51fa\u6e38", market_scope="\u56fd\u5185", route="\u897f\u5b89\u2014\u6210\u90fd", signal_summary="\u6bd4\u4ef7\u884c\u4e3a\u4e0a\u534724%\uff1b\u884c\u674e\u4e0e\u9009\u5ea7\u9700\u6c42\u660e\u663e", status="\u5f85\u5904\u7406", score=87, estimated_audience=24860, estimated_revenue_yuan=920000, owner="\u822a\u7ebf\u8425\u9500"),
+        ])
+    if session.scalar(select(AudienceTagRecord.id).where(AudienceTagRecord.tenant_id == headquarters_id).limit(1)) is None:
+        tags=[AudienceTagRecord(tenant_id=headquarters_id, code="TRAVEL_INTENT_HIGH", name="\u9ad8\u51fa\u884c\u610f\u5411", category="\u884c\u4e3a\u610f\u5411", source="\u7528\u6237\u753b\u50cf\u5e73\u53f0"), AudienceTagRecord(tenant_id=headquarters_id, code="DEST_SANYA", name="\u4e09\u4e9a\u76ee\u7684\u5730\u504f\u597d", category="\u76ee\u7684\u5730\u504f\u597d", source="\u7528\u6237\u753b\u50cf\u5e73\u53f0"), AudienceTagRecord(tenant_id=headquarters_id, code="NOT_BOOKED", name="\u8fd114\u5929\u672a\u51fa\u7968", category="\u4ea4\u6613\u72b6\u6001", source="\u7528\u6237\u753b\u50cf\u5e73\u53f0"), AudienceTagRecord(tenant_id=headquarters_id, code="FAMILY", name="\u5bb6\u5ead\u540c\u884c", category="\u51fa\u884c\u5173\u7cfb", source="\u7528\u6237\u753b\u50cf\u5e73\u53f0")]
+        session.add_all(tags); session.flush()
+        session.add(AudiencePackageRecord(tenant_id=headquarters_id, external_id="AUD-2026-0421", name="\u4e09\u4e9a\u9ad8\u610f\u5411\u672a\u8d2d", selection_mode="tag-combination", tag_ids_json=json.dumps([tag.id for tag in tags[:3]]), expression_json=json.dumps({"operator":"AND"}, ensure_ascii=False), estimated_size=36420, status="\u53ef\u7528", created_by=session.scalar(select(UserRecord.id).where(UserRecord.username == settings.initial_admin_username))))
     session.commit()
 
 
