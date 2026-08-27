@@ -79,9 +79,17 @@ class DataProcessingAgent:
         self.harness = UnifiedHarness(lambda event, payload: self.events.append({"event": event, **payload}))
 
     def process(self, filename: str, content: bytes) -> list[dict[str, Any]]:
-        self._stage("received", "数据接收", "completed"); text = self._extract_text(filename, content); self._persist_knowledge(filename, text); self._stage("extracted", "文档结构化提取", "completed")
-        candidates = self._extract_candidates(text, filename); self._stage("classified", "对象与关系分级分类", "completed", entities=len(candidates.get("entities", [])), relations=len(candidates.get("relations", [])))
-        result = self._persist_candidates(candidates, filename); self._stage("ontology-updated", "本体对象与关系更新", "completed", **result)
+        self._stage("received", "\u6587\u4ef6\u63a5\u6536\u4e0e\u5b89\u5168\u68c0\u67e5", "completed")
+        self._stage("extracting", "\u5185\u5bb9\u89e3\u6790\u4e0e\u7ed3\u6784\u8bc6\u522b", "running")
+        text = self._extract_text(filename, content)
+        self._stage("extracted", "\u5185\u5bb9\u6e05\u6d17\u4e0e\u77e5\u8bc6\u5207\u5206", "running")
+        self._persist_knowledge(filename, text)
+        self._stage("classifying", "\u667a\u80fd\u62bd\u53d6\u4e1a\u52a1\u5bf9\u8c61\u4e0e\u5173\u7cfb", "running")
+        candidates = self._extract_candidates(text, filename)
+        self._stage("classified", "\u822a\u7a7a\u4e1a\u52a1\u8bed\u4e49\u6821\u9a8c", "completed", entities=len(candidates.get("entities", [])), relations=len(candidates.get("relations", [])))
+        self._stage("persisting", "\u77e5\u8bc6\u4e0e\u672c\u4f53\u5165\u5e93", "running")
+        result = self._persist_candidates(candidates, filename)
+        self._stage("ontology-updated", "\u77e5\u8bc6\u5e95\u5ea7\u66f4\u65b0\u5b8c\u6210", "completed", **result)
         self.job.result_json = json.dumps({"events": self.events, "text_length": len(text), "candidates": candidates}, ensure_ascii=False); self.session.commit(); return self.events
 
     def _extract_text(self, filename: str, content: bytes) -> str:

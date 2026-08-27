@@ -218,11 +218,19 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
             headers=request_headers,
             files={"file": ("route-signal.txt", payload.encode("utf-8"), "text/plain")},
         )
-        assert response.status_code == 201
+        assert response.status_code == 202
         result = response.json()
-        assert result["job"]["status"] == "completed"
-        assert result["job"]["accepted_entities"] >= 1
-        assert {"received", "extracted", "classified", "ontology-updated"}.issubset({item["stage"] for item in result["stages"] if "stage" in item})
+        assert result["job"]["status"] == "queued"
+        assert result["stages"][0]["stage"] == "queued"
+
+        job_response = client.get(f"/api/data-pipelines/{result['job']['id']}", headers=request_headers)
+        assert job_response.status_code == 200
+        job = job_response.json()
+        assert job["status"] == "completed"
+        assert job["accepted_entities"] >= 1
+        assert {"received", "extracting", "extracted", "classifying", "classified", "persisting", "ontology-updated"}.issubset(
+            {item["stage"] for item in job["result"]["events"] if "stage" in item}
+        )
 
         knowledge = client.get("/api/knowledge/search", headers=request_headers, params={"q": "三亚航线"})
         assert knowledge.status_code == 200

@@ -5,7 +5,9 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
-  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], providers: [], domains: [], runs: [], mineru: null };
+  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null };
+  const pipelineFiles = new Map();
+  let pipelinePollTimer = null;
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -81,81 +83,15 @@
 </i>租户与用户</button>`);
     const content = q('.content');
     if (!q('#imports')) content.insertAdjacentHTML('beforeend', `<section id="imports" class="view">
-<div class="page-head">
-<div>
-<h1>数据接入</h1>
-<p>按租户导入客户、客群、航线、产品包、活动、渠道与营销结果关系</p>
-</div>
-</div>
-<div class="production-grid">
-<div class="panel">
-<div class="panel-head">
-<h2>新建导入批次</h2>
-<span>支持 CSV / JSON，单文件不超过 10MB</span>
-</div>
-<div class="panel-body">
-<div class="production-upload">
-<b>实体数据</b>
-<p>external_id、entity_type、label、attributes、source、confidence</p>
-<input type="file" id="entityFile" accept=".csv,.json">
-<button class="btn primary" data-production-import="entities">校验并导入实体</button>
-</div>
-<div class="production-upload">
-<b>关系数据</b>
-<p>source_external_id、relation_type、target_external_id、evidence、confidence</p>
-<input type="file" id="relationFile" accept=".csv,.json">
-<button class="btn" data-production-import="relations">校验并导入关系</button>
-</div>
-<div id="importStatus">
-</div>
-</div>
-</div>
-<div class="panel">
-<div class="panel-head">
-<h2>接入治理规则</h2>
-<span>自动执行</span>
-</div>
-<div class="panel-body">
-<div class="control-list">
-<div class="control-item">
-<i data-lucide="shield-check">
-</i>
-<div>
-<b>租户归属</b>
-<span>实体、关系和批次自动绑定当前租户</span>
-</div>
-</div>
-<div class="control-item">
-<i data-lucide="refresh-cw">
-</i>
-<div>
-<b>实体更新</b>
-<span>按 external_id 新增或更新</span>
-</div>
-</div>
-<div class="control-item">
-<i data-lucide="alert-triangle">
-</i>
-<div>
-<b>错误隔离</b>
-<span>错误行保留行号、原因与数据摘要</span>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="panel">
-<div class="panel-head">
-<h2>导入历史</h2>
-<span id="importCount">0 个批次</span>
-</div>
-<div class="panel-body">
-<table class="table" id="importTable">
-</table>
-</div>
-</div>
-</section>`);
+<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1><p>\u6295\u9012\u6587\u6863\u3001\u8868\u683c\u548c\u7ed3\u6784\u5316\u6570\u636e\uff0c\u7cfb\u7edf\u81ea\u52a8\u89e3\u6790\u5e76\u66f4\u65b0\u77e5\u8bc6\u5e95\u5ea7</p></div><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div>
+<div class="ingestion-workbench">
+<div class="panel ingestion-entry"><div class="panel-head"><h2>\u6295\u9012\u6570\u636e\u6587\u4ef6</h2><span>\u5355\u6587\u4ef6\u4e0d\u8d85\u8fc7 20MB</span></div><div class="panel-body">
+<div class="pipeline-dropzone" id="pipelineDropzone" tabindex="0" role="button" aria-label="\u9009\u62e9\u6216\u62d6\u62fd\u6587\u4ef6"><input id="pipelineFiles" type="file" multiple accept=".txt,.md,.json,.csv,.pdf,.png,.jpg,.jpeg,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.html"><span class="dropzone-icon"><i data-lucide="cloud-upload"></i></span><b>\u5c06\u6587\u4ef6\u62d6\u5230\u8fd9\u91cc</b><p>\u6216\u70b9\u51fb\u9009\u62e9\u6587\u4ef6\uff0c\u53ef\u4e00\u6b21\u6295\u9012\u591a\u4e2a</p><small>PDF / Word / Excel / PPT / CSV / JSON / TXT / \u56fe\u7247</small></div>
+<div class="pipeline-flow"><span><i data-lucide="file-check-2"></i>\u63a5\u6536</span><i data-lucide="chevron-right"></i><span><i data-lucide="scan-text"></i>\u89e3\u6790</span><i data-lucide="chevron-right"></i><span><i data-lucide="sparkles"></i>AI\u62bd\u53d6</span><i data-lucide="chevron-right"></i><span><i data-lucide="shield-check"></i>\u6821\u9a8c</span><i data-lucide="chevron-right"></i><span><i data-lucide="database-zap"></i>\u5165\u5e93</span></div>
+</div></div>
+<div class="panel pipeline-queue-panel"><div class="panel-head"><h2>\u5904\u7406\u961f\u5217</h2><span id="pipelineQueueCount">0 \u4e2a\u4efb\u52a1</span></div><div class="panel-body pipeline-queue" id="pipelineQueue"><div class="pipeline-empty"><i data-lucide="inbox"></i><b>\u5c1a\u65e0\u5904\u7406\u4efb\u52a1</b><span>\u62d6\u5165\u6587\u4ef6\u540e\u5c06\u5728\u8fd9\u91cc\u663e\u793a\u8fdb\u5ea6</span></div></div></div>
+<div class="panel pipeline-history-panel"><div class="panel-head"><h2>\u5904\u7406\u8bb0\u5f55</h2><span id="importCount">0 \u4e2a\u6279\u6b21</span></div><div class="panel-body"><table class="table pipeline-history" id="importTable"></table></div></div>
+</div></section>`);
     if (!q('#models')) content.insertAdjacentHTML('beforeend', `<section id="models" class="view">
 <div class="page-head">
 <div>
@@ -322,7 +258,7 @@
 
   function renderDynamicGraph() {
     const canvas=q('#graphCanvas'); if (!canvas || !window.d3) return; canvas.innerHTML='';
-    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前工作空间暂无图谱数据，请先通过数据接入导入实体与关系。</div>'; return; }
+    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前工作空间暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
     const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
     const nodes=source.nodes.map(item=>({...item,title:displayText(item.label,'未命名对象'),type:String(item.type||'entity').toLowerCase(),w:154,h:52}));
     const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(item.relation,'关联')}));
@@ -354,28 +290,15 @@
     node.filter((_,index)=>index===0).dispatch('click');
   }
 
-  function renderImports() { const table=q('#importTable'); if (!table) return; q('#importCount').textContent=`${tenantData.imports.length} 个批次`; table.innerHTML=`<tr>
-<th>文件</th>
-<th>类型</th>
-<th>总行数</th>
-<th>成功</th>
-<th>失败</th>
-<th>状态</th>
-<th>时间</th>
-</tr>${tenantData.imports.map(item=>`<tr>
-<td>
-<strong>${escapeHtml(item.file_name)}</strong>
-<small>${escapeHtml(item.id)}</small>
-</td>
-<td>${item.dataset_type==='entities'?'实体':'关系'}</td>
-<td>${item.total_rows}</td>
-<td>${item.accepted_rows}</td>
-<td>${item.rejected_rows}</td>
-<td>
-<span class="status ${item.rejected_rows?'warn':'good'}">${escapeHtml(item.status)}</span>
-</td>
-<td>${new Date(item.created_at).toLocaleString('zh-CN')}</td>
-</tr>`).join('')}`; }
+  const pipelineStages={queued:['\u7b49\u5f85\u5904\u7406',6],received:['\u6587\u4ef6\u68c0\u67e5',16],extracting:['\u5185\u5bb9\u89e3\u6790',32],extracted:['\u6e05\u6d17\u5207\u5206',48],classifying:['AI \u8bed\u4e49\u62bd\u53d6',65],classified:['\u4e1a\u52a1\u6821\u9a8c',78],persisting:['\u77e5\u8bc6\u5165\u5e93',90],'ontology-updated':['\u5904\u7406\u5b8c\u6210',100],failed:['\u5904\u7406\u5931\u8d25',100]};
+  const pipelineStatusText={queued:'\u6392\u961f\u4e2d',running:'\u5904\u7406\u4e2d',completed:'\u5df2\u5b8c\u6210',failed:'\u5931\u8d25'};
+  const formatBytes=value=>value>=1048576?(value/1048576).toFixed(1)+' MB':Math.max(1,Math.round(value/1024))+' KB';
+  function stageInfo(item){const value=pipelineStages[item.current_stage]||[item.current_stage||'\u5904\u7406\u4e2d',item.status==='completed'?100:12];return {label:value[0],progress:value[1]};}
+  function renderImports(){const table=q('#importTable');if(!table)return;const items=tenantData.pipelines||[];q('#importCount').textContent=items.length+' \u4e2a\u6279\u6b21';let html='<tr><th>\u6587\u4ef6</th><th>\u683c\u5f0f</th><th>\u5904\u7406\u7ed3\u679c</th><th>\u72b6\u6001</th><th>\u5b8c\u6210\u65f6\u95f4</th></tr>';items.forEach(item=>{html+='<tr><td><strong>'+escapeHtml(item.file_name)+'</strong><small>'+escapeHtml(item.id)+'</small></td><td>'+escapeHtml((item.file_format||'').toUpperCase())+'</td><td>\u4e1a\u52a1\u5bf9\u8c61 '+item.accepted_entities+' \u00b7 \u5173\u7cfb '+item.accepted_relations+(item.rejected_items?' \u00b7 \u5f85\u590d\u6838 '+item.rejected_items:'')+'</td><td><span class="status '+(item.status==='failed'?'warn':'good')+'">'+escapeHtml(pipelineStatusText[item.status]||item.status)+'</span>'+(item.error_message?'<small class="pipeline-error">'+escapeHtml(item.error_message)+'</small>':'')+'</td><td>'+new Date(item.completed_at||item.created_at).toLocaleString('zh-CN')+'</td></tr>';});table.innerHTML=html;}
+  function renderPipelineQueue(){const queue=q('#pipelineQueue');if(!queue)return;const active=(tenantData.pipelines||[]).filter(item=>['queued','running'].includes(item.status));const local=[...pipelineFiles.values()].filter(item=>!item.job||['uploading','failed'].includes(item.status));const merged=[...local,...active.filter(item=>!local.some(localItem=>localItem.job&&localItem.job.id===item.id))];q('#pipelineQueueCount').textContent=merged.length+' \u4e2a\u4efb\u52a1';if(!merged.length){queue.innerHTML='<div class="pipeline-empty"><i data-lucide="inbox"></i><b>\u6682\u65e0\u5904\u7406\u4efb\u52a1</b><span>\u62d6\u5165\u6587\u4ef6\u540e\u5c06\u5728\u8fd9\u91cc\u663e\u793a\u8fdb\u5ea6</span></div>';}else{queue.innerHTML=merged.map(item=>{const job=item.job||item;const info=item.status==='uploading'?{label:'\u6b63\u5728\u4e0a\u4f20',progress:item.progress||8}:stageInfo(job);const failed=item.status==='failed'||job.status==='failed';return '<article class="pipeline-task '+(failed?'is-failed':'')+'"><div class="pipeline-file-icon"><i data-lucide="file-text"></i></div><div class="pipeline-task-main"><div class="pipeline-task-title"><b>'+escapeHtml(item.file?item.file.name:job.file_name)+'</b><span>'+(item.file?formatBytes(item.file.size):escapeHtml((job.file_format||'').toUpperCase()))+'</span></div><div class="pipeline-progress"><i style="width:'+info.progress+'%"></i></div><div class="pipeline-task-meta"><span>'+(failed?'\u5904\u7406\u5931\u8d25':info.label)+'</span><small>'+(failed?escapeHtml(item.error||job.error_message||'\u8bf7\u68c0\u67e5\u6587\u4ef6\u540e\u91cd\u8bd5'):info.progress+'% \u00b7 \u7cfb\u7edf\u6b63\u5728\u81ea\u52a8\u5904\u7406')+'</small></div></div>'+(failed&&item.file?'<button class="btn" data-pipeline-retry="'+item.localId+'"><i data-lucide="rotate-ccw"></i>\u91cd\u8bd5</button>':'')+'</article>';}).join('');}if(window.lucide)lucide.createIcons();}
+  async function refreshPipelines(){tenantData.pipelines=await request('/api/data-pipelines');for(const [localId,entry] of pipelineFiles){if(!entry.job)continue;const latest=tenantData.pipelines.find(item=>item.id===entry.job.id);if(!latest)continue;entry.job=latest;if(latest.status==='failed'){entry.status='failed';entry.error=latest.error_message;}else if(latest.status==='completed'){pipelineFiles.delete(localId);}}renderPipelineQueue();renderImports();const hasActive=tenantData.pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
+  async function uploadPipelineFile(entry){entry.status='uploading';entry.progress=8;renderPipelineQueue();const form=new FormData();form.append('file',entry.file);try{const result=await request('/api/data-pipelines',{method:'POST',body:form},true);entry.job=result.job;entry.status='queued';entry.progress=10;await refreshPipelines();}catch(cause){entry.status='failed';entry.error=cause.message||'\u4e0a\u4f20\u5931\u8d25';renderPipelineQueue();}}
+  function queuePipelineFiles(files){const allowed=/\.(txt|md|json|csv|pdf|png|jpe?g|docx?|pptx?|xlsx?|html)$/i;[...files].forEach(file=>{const localId=Date.now()+'-'+Math.random().toString(16).slice(2);if(!allowed.test(file.name)){toast('\u4e0d\u652f\u6301\u6587\u4ef6\uff1a'+file.name);return;}if(file.size>20*1024*1024){toast('\u6587\u4ef6\u8d85\u8fc7 20MB\uff1a'+file.name);return;}const entry={localId,file,status:'queued',progress:0};pipelineFiles.set(localId,entry);uploadPipelineFile(entry);});}
 
   async function showProviderModels(providerId) {
     const provider=tenantData.providers.find(item=>item.id===providerId);
@@ -427,7 +350,7 @@
 </td>
 </tr>`).join('')}`; }
 
-  async function upload(datasetType) { const input=q(datasetType==='entities'?'#entityFile':'#relationFile'); if (!input?.files?.[0]) return toast('请选择 CSV 或 JSON 文件'); const form=new FormData(); form.append('dataset_type',datasetType); form.append('file',input.files[0]); q('#importStatus').innerHTML='<div class="production-status">正在校验并导入...</div>'; try { const result=await request('/api/imports',{method:'POST',body:form},true); q('#importStatus').innerHTML=`<div class="production-status">导入完成：成功 ${result.accepted_rows} 行，失败 ${result.rejected_rows} 行</div>`; await loadTenantData(); renderImports(); } catch(cause){q('#importStatus').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`;} }
+
   async function loadPlatform() { if(!session.is_platform_admin) return; const [tenants,users]=await Promise.all([request('/api/platform/tenants'),request('/api/platform/users')]); q('#tenantCount').textContent=`${tenants.length} 个`; q('#userCount').textContent=`${users.length} 人`; q('#tenantTable').innerHTML=`<tr>
 <th>编码</th>
 <th>租户名称</th>
@@ -455,7 +378,7 @@
   function bindProductionActions() {
     document.addEventListener('click', async event => {
       const button=event.target.closest('button'); if(!button) return;
-      if(button.dataset.productionImport) return upload(button.dataset.productionImport);
+      if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
       if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'模型连接正常');}
       if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
       if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
@@ -463,6 +386,14 @@
       const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateContent:'content-generation',generateReview:'effect-analysis'};
       const domain=agentMap[button.dataset.action]; if(domain&&tenantData.campaigns[0]) request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})}).then(result=>toast(result.summary)).catch(cause=>toast(cause.message));
     });
+    const dropzone=q('#pipelineDropzone'),fileInput=q('#pipelineFiles');
+    dropzone.addEventListener('click',()=>fileInput.click());
+    dropzone.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();fileInput.click();}});
+    fileInput.addEventListener('change',()=>{queuePipelineFiles(fileInput.files);fileInput.value='';});
+    ['dragenter','dragover'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.add('is-dragging');}));
+    ['dragleave','drop'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.remove('is-dragging');}));
+    dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
+    q('#refreshPipelines').addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
     q('.user-switch').addEventListener('click',event=>{event.stopImmediatePropagation();showWorkspace();},true);
     q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
     q('#mineruForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
@@ -484,7 +415,7 @@
 </div>
 </div>`;document.body.appendChild(layer);layer.addEventListener('click',async event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();const option=event.target.closest('[data-tenant]');if(option){tenantId=Number(option.dataset.tenant);localStorage.setItem(tenantKey,String(tenantId));layer.remove();await loadTenantData();}if(event.target.closest('[data-logout]'))logout();});}
 
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/model-providers','/api/agent-domains','/api/agent-runs'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,providers,domains,runs]=values;tenantData={campaigns,graph,imports,providers,domains,runs,mineru};renderCampaigns();renderDynamicGraph();renderImports();renderModels();renderMineru();}
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,mineru};renderCampaigns();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function initializeSession(){injectNavigation();bindProductionActions();await loadTenantData();if(window.lucide)lucide.createIcons();}
   function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'工作空间加载失败，请稍后重试');});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();

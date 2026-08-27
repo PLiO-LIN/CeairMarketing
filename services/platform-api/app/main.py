@@ -4,7 +4,7 @@ from uuid import uuid4
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError
@@ -352,6 +352,30 @@ def pipeline_view(record: DataPipelineJobRecord) -> DataPipelineJob:
     return DataPipelineJob.model_validate(record).model_copy(update={"result": json.loads(record.result_json or "{}")})
 
 
+def process_data_pipeline_job(job_id: str, context: TenantContext, filename: str, raw: bytes) -> None:
+    with SessionLocal() as session:
+        job = session.get(DataPipelineJobRecord, job_id)
+        if job is None:
+            return
+        try:
+            job.status = "running"
+            job.started_at = datetime.now(timezone.utc)
+            session.commit()
+            DataProcessingAgent(session, context, job).process(filename, raw)
+            job.status = "completed"
+            job.completed_at = datetime.now(timezone.utc)
+            session.commit()
+        except Exception as exc:
+            session.rollback()
+            job = session.get(DataPipelineJobRecord, job_id)
+            if job is not None:
+                job.status = "failed"
+                job.current_stage = "failed"
+                job.error_message = str(exc)[:1000]
+                job.completed_at = datetime.now(timezone.utc)
+                session.commit()
+
+
 @app.get("/api/integrations/mineru", response_model=IntegrationConfig)
 def get_mineru_integration(context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
     return integration_view(get_mineru_config(session, context.tenant_id))
@@ -376,8 +400,16 @@ def list_data_pipelines(context: TenantContext = Depends(get_tenant_context), se
     return [pipeline_view(record) for record in records]
 
 
-@app.post("/api/data-pipelines", response_model=DataPipelineCreateResult, status_code=status.HTTP_201_CREATED)
-def create_data_pipeline(file: UploadFile = File(...), context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+@app.get("/api/data-pipelines/{job_id}", response_model=DataPipelineJob)
+def get_data_pipeline(job_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    record = session.scalar(select(DataPipelineJobRecord).where(DataPipelineJobRecord.id == job_id, DataPipelineJobRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="?????????")
+    return pipeline_view(record)
+
+
+@app.post("/api/data-pipelines", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
+def create_data_pipeline(background_tasks: BackgroundTasks, file: UploadFile = File(...), context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     filename = file.filename or "upload.bin"
     suffix = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     allowed = {"txt", "md", "json", "csv", "pdf", "png", "jpg", "jpeg", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "html"}
@@ -386,17 +418,11 @@ def create_data_pipeline(file: UploadFile = File(...), context: TenantContext = 
     raw = file.file.read()
     if len(raw) > 20 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="数据文件不能超过 20MB")
-    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format=suffix, status="running", current_stage="queued")
+    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format=suffix, status="queued", current_stage="queued")
     session.add(job); session.commit(); session.refresh(job)
-    agent = DataProcessingAgent(session, context, job)
-    try:
-        job.started_at = datetime.now(timezone.utc); session.commit(); events = agent.process(filename, raw); job.status = "completed"; job.completed_at = datetime.now(timezone.utc); session.commit()
-    except Exception as exc:
-        session.rollback(); job = session.get(DataPipelineJobRecord, job.id)
-        if job is not None:
-            job.status = "failed"; job.current_stage = "failed"; job.error_message = str(exc)[:1000]; job.completed_at = datetime.now(timezone.utc); session.commit()
-        raise HTTPException(status_code=502, detail=f"数据处理失败：{exc}") from exc
-    return DataPipelineCreateResult(job=pipeline_view(job), stages=events)
+    background_tasks.add_task(process_data_pipeline_job, job.id, context, filename, raw)
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=[{"stage": "queued", "label": "queued", "status": "pending"}])
+
 
 
 @app.get("/api/knowledge/search", response_model=list[KnowledgeSearchResult])
