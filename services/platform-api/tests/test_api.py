@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database import SessionLocal
-from app.db_models import KnowledgeDocumentRecord, ModelProviderRecord
+from app.db_models import KnowledgeDocumentRecord, ModelProviderRecord, OntologyEntityRecord
 from app.ontology import validate_relation_endpoints
 from app.ontology.bootstrap import LIFECYCLE_ENTITIES, LIFECYCLE_RELATIONS
 
@@ -271,6 +271,35 @@ def test_data_pipeline_builds_knowledge_and_ontology() -> None:
         assert client.get(f"/api/data-pipelines/{result['job']['id']}", headers=request_headers).status_code == 404
         with SessionLocal() as session:
             assert session.query(KnowledgeDocumentRecord).filter(KnowledgeDocumentRecord.external_id == job["result"]["document_id"]).one_or_none() is None
+
+
+def test_data_pipeline_keeps_general_knowledge_out_of_ontology() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        request_headers = headers(auth, hq["id"])
+        payload = "This document describes general office writing guidance and contains no airline marketing business object."
+        response = client.post(
+            "/api/data-pipelines",
+            headers=request_headers,
+            files={"file": ("general-guidance.txt", payload.encode("utf-8"), "text/plain")},
+        )
+        assert response.status_code == 202
+        job_id = response.json()["job"]["id"]
+        job = client.get(f"/api/data-pipelines/{job_id}", headers=request_headers).json()
+        assert job["status"] == "completed"
+        assert job["current_stage"] in {"knowledge-only", "ontology-skipped"}
+        assert job["result"]["ontology_gate"]["decision"] == "knowledge_only"
+        assert job["accepted_entities"] == 0
+        assert job["accepted_relations"] == 0
+
+        knowledge = client.get("/api/knowledge/search", headers=request_headers, params={"q": "office writing guidance"})
+        assert knowledge.status_code == 200
+        uploaded = next(item for item in knowledge.json() if item["document_id"] == job["result"]["document_id"])
+        assert uploaded["linked_objects"] == []
+        with SessionLocal() as session:
+            source = f"data-pipeline:{job_id}"
+            assert session.query(OntologyEntityRecord).filter(OntologyEntityRecord.source == source).count() == 0
 
 
 def test_marketing_copilot_uses_tools_and_sources() -> None:

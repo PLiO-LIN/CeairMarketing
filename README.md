@@ -1,4 +1,4 @@
-# China Eastern Intelligent Marketing Platform
+# 东方航空智能营销平台
 
 Production-oriented system for airline marketing operators, product operators,
 approvers, and effect analysts.

@@ -301,3 +301,40 @@ class OntologyRelationRecord(Base):
     confidence: Mapped[float] = mapped_column(Float, default=1.0)
     import_job_id: Mapped[str | None] = mapped_column(ForeignKey("import_jobs.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class MarketHotspotRecord(Base):
+    """Normalized external market signal with agent and source provenance."""
+
+    __tablename__ = "market_hotspots"
+    __table_args__ = (UniqueConstraint("tenant_id", "dedupe_key", name="uq_market_hotspot_tenant_dedupe"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    source_name: Mapped[str] = mapped_column(String(160))
+    source_type: Mapped[str] = mapped_column(String(40), default="rss")
+    source_url: Mapped[str] = mapped_column(String(500), default="")
+    external_id: Mapped[str] = mapped_column(String(240), default="")
+    canonical_url: Mapped[str] = mapped_column(String(500), default="")
+    title: Mapped[str] = mapped_column(String(500))
+    content: Mapped[str] = mapped_column(Text, default="")
+    summary: Mapped[str] = mapped_column(Text, default="")
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    language: Mapped[str] = mapped_column(String(16), default="zh")
+    region: Mapped[str] = mapped_column(String(120), default="")
+    topics_json: Mapped[str] = mapped_column(Text, default="[]")
+    keywords_json: Mapped[str] = mapped_column(Text, default="[]")
+    entities_json: Mapped[str] = mapped_column(Text, default="[]")
+    decision_json: Mapped[str] = mapped_column(Text, default="{}")
+    trace_json: Mapped[str] = mapped_column(Text, default="[]")
+    relevance_score: Mapped[float] = mapped_column(Float, default=0.0)
+    trend_score: Mapped[float] = mapped_column(Float, default=0.0)
+    sentiment: Mapped[str] = mapped_column(String(24), default="neutral")
+    dedupe_key: Mapped[str] = mapped_column(String(64), index=True)
+    content_hash: Mapped[str] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(32), default="collected")
+    ontology_status: Mapped[str] = mapped_column(String(32), default="not_evaluated")
+    agent_run_id: Mapped[str] = mapped_column(String(40), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)

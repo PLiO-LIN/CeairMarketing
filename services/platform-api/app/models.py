@@ -103,6 +103,92 @@ class Opportunity(OpportunityBase):
     updated_at: datetime
 
 
+class MarketHotspotInput(BaseModel):
+    source_name: str = Field(min_length=2, max_length=160)
+    source_type: Literal["rss", "atom", "opml", "api", "web", "social", "manual"] = "api"
+    source_url: str = Field(default="", max_length=500)
+    external_id: str = Field(default="", max_length=240)
+    canonical_url: str = Field(default="", max_length=500)
+    title: str = Field(min_length=2, max_length=500)
+    content: str = Field(default="", max_length=50000)
+    published_at: datetime | None = None
+    language: str = Field(default="zh", max_length=16)
+    region: str = Field(default="", max_length=120)
+
+
+class MarketHotspotIngestRequest(BaseModel):
+    records: list[MarketHotspotInput] = Field(min_length=1, max_length=500)
+    process_with_agent: bool = True
+
+
+class MarketHotspotSource(BaseModel):
+    source_name: str = Field(min_length=2, max_length=160)
+    source_url: str = Field(min_length=8, max_length=500)
+    source_type: Literal["rss", "atom"] = "rss"
+    max_items: int = Field(default=30, ge=1, le=200)
+
+
+class MarketHotspotSourceInput(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    url: str = Field(min_length=8, max_length=500)
+    source_type: Literal["rss", "atom", "opml"] = "rss"
+    max_items: int = Field(default=30, ge=1, le=100)
+
+
+class MarketHotspotCollectRequest(BaseModel):
+    sources: list[MarketHotspotSourceInput] = Field(min_length=1, max_length=30)
+    process_with_agent: bool = True
+
+
+class MarketHotspotReviewRequest(BaseModel):
+    decision: Literal["approve", "reject"]
+    note: str = Field(default="", max_length=500)
+
+
+class MarketHotspotOpportunityRequest(BaseModel):
+    owner: str = Field(default="", max_length=64)
+    estimated_audience: int = Field(default=0, ge=0)
+    estimated_revenue_yuan: int = Field(default=0, ge=0)
+
+
+class MarketHotspot(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    source_name: str
+    source_type: str
+    source_url: str
+    external_id: str
+    canonical_url: str
+    title: str
+    content: str
+    summary: str
+    published_at: datetime | None
+    collected_at: datetime
+    language: str
+    region: str
+    topics: list[str] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list)
+    entities: list[dict[str, Any]] = Field(default_factory=list)
+    decision: dict[str, Any] = Field(default_factory=dict)
+    trace: list[dict[str, Any]] = Field(default_factory=list)
+    relevance_score: float
+    trend_score: float
+    sentiment: str
+    status: str
+    ontology_status: str
+    agent_run_id: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class MarketHotspotBatchResult(BaseModel):
+    created: int = 0
+    duplicates: int = 0
+    failed: int = 0
+    hotspots: list[MarketHotspot] = Field(default_factory=list)
+    source_health: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class AudienceTagBase(BaseModel):
     code: str = Field(min_length=2, max_length=80)
     name: str = Field(min_length=2, max_length=120)
@@ -161,6 +247,11 @@ class InterfacePipelineRequest(BaseModel):
     source_name: str = Field(min_length=2, max_length=120)
     records: list[dict[str, Any]] = Field(min_length=1, max_length=5000)
 
+
+class FlightProductPipelineRequest(BaseModel):
+    source_name: str = Field(default="China Eastern flight and product scraper", min_length=2, max_length=160)
+    payload: dict[str, Any] = Field(default_factory=dict)
+    require_confirmation: bool = True
 
 class AgentDomain(BaseModel):
     id: str

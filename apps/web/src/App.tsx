@@ -6,6 +6,7 @@ import {
   UsersRound, X, MessageSquare, BookOpen, Check, XCircle, Eye, Clock3, Sparkles, Trash2,
 } from 'lucide-react'
 import './App.css'
+import './App.premium.css'
 
 type Tenant = { id: number; code: string; name: string; role: string }
 type Session = { access_token: string; display_name: string; tenants: Tenant[]; is_platform_admin: boolean }

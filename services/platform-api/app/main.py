@@ -18,8 +18,9 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
+from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema
@@ -44,6 +45,13 @@ from .models import (
     Opportunity,
     OpportunityCreate,
     OpportunityUpdate,
+    MarketHotspot,
+    MarketHotspotIngestRequest,
+    MarketHotspotReviewRequest,
+    MarketHotspotCollectRequest,
+    MarketHotspotOpportunityRequest,
+    MarketHotspotBatchResult,
+    MarketHotspotSource,
     ModelProvider,
     ModelProviderCreate,
     ModelProviderUpdate,
@@ -56,6 +64,7 @@ from .models import (
     IntegrationConfig,
     IntegrationConfigUpdate,
     InterfacePipelineRequest,
+    FlightProductPipelineRequest,
     KnowledgeDocument,
     KnowledgeDocumentUpdate,
     KnowledgeSearchResult,
@@ -318,6 +327,87 @@ def update_audience_tag(tag_id: int, payload: AudienceTagBase, context: TenantCo
     if record is None: raise HTTPException(status_code=404, detail="Request failed")
     for key, value in payload.model_dump().items(): setattr(record, key, value)
     session.commit(); session.refresh(record); return record
+
+
+def market_hotspot_view(record: MarketHotspotRecord) -> MarketHotspot:
+    return MarketHotspot.model_validate(hotspot_view(record))
+
+
+@app.get("/api/market-hotspots", response_model=list[MarketHotspot])
+def list_market_hotspots(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(MarketHotspotRecord).where(MarketHotspotRecord.tenant_id == context.tenant_id).order_by(MarketHotspotRecord.trend_score.desc(), MarketHotspotRecord.created_at.desc()).limit(200)).all()
+    return [market_hotspot_view(record) for record in records]
+
+
+@app.get("/api/market-hotspots/{hotspot_id}", response_model=MarketHotspot)
+def get_market_hotspot(hotspot_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    record = session.scalar(select(MarketHotspotRecord).where(MarketHotspotRecord.id == hotspot_id, MarketHotspotRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="市场热点不存在")
+    return market_hotspot_view(record)
+
+
+@app.post("/api/market-hotspots/ingest", response_model=MarketHotspotBatchResult, status_code=status.HTTP_202_ACCEPTED)
+def ingest_market_hotspots(payload: MarketHotspotIngestRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    return ingest_hotspots(session, context, [item.model_dump() for item in payload.records], payload.process_with_agent)
+
+
+@app.post("/api/market-hotspots/collect", response_model=MarketHotspotBatchResult, status_code=status.HTTP_202_ACCEPTED)
+def collect_market_hotspots(payload: MarketHotspotCollectRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    rows = []
+    health = []
+    for source in payload.sources:
+        try:
+            items, source_health = collect_source(source.name, source.url, source.source_type, source.max_items)
+            rows.extend(items)
+            health.extend(source_health)
+        except Exception as exc:
+            health.append({"name": source.name, "url": source.url, "status": "failed", "error": type(exc).__name__})
+    result = ingest_hotspots(session, context, rows, payload.process_with_agent)
+    result["source_health"] = health
+    return result
+
+
+@app.post("/api/market-hotspots/{hotspot_id}/process", response_model=MarketHotspot)
+def reprocess_market_hotspot(hotspot_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(MarketHotspotRecord).where(MarketHotspotRecord.id == hotspot_id, MarketHotspotRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="市场热点不存在")
+    process_hotspot(session, context, record)
+    return market_hotspot_view(record)
+
+
+@app.post("/api/market-hotspots/{hotspot_id}/review", response_model=MarketHotspot)
+def review_market_hotspot(hotspot_id: str, payload: MarketHotspotReviewRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(MarketHotspotRecord).where(MarketHotspotRecord.id == hotspot_id, MarketHotspotRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="市场热点不存在")
+    reviewer = session.get(UserRecord, context.user_id)
+    try:
+        confirm_hotspot_ontology(session, context, record, reviewer.display_name if reviewer else str(context.user_id), payload.decision, payload.note)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    return market_hotspot_view(record)
+
+
+@app.post("/api/market-hotspots/{hotspot_id}/opportunity", response_model=Opportunity, status_code=status.HTTP_201_CREATED)
+def hotspot_to_opportunity(hotspot_id: str, payload: MarketHotspotOpportunityRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(MarketHotspotRecord).where(MarketHotspotRecord.id == hotspot_id, MarketHotspotRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="市场热点不存在")
+    try:
+        return create_opportunity_from_hotspot(session, context, record, payload.owner, payload.estimated_audience, payload.estimated_revenue_yuan)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@app.delete("/api/market-hotspots/{hotspot_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_market_hotspot(hotspot_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(MarketHotspotRecord).where(MarketHotspotRecord.id == hotspot_id, MarketHotspotRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="市场热点不存在")
+    delete_hotspot(session, context, record)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.delete("/api/audience-tags/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -640,6 +730,24 @@ def create_interface_pipeline(payload: InterfacePipelineRequest, context: Tenant
     return DataPipelineCreateResult(job=pipeline_view(job), stages=stages)
 
 
+@app.post("/api/data-pipelines/flight-products", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
+def create_flight_product_pipeline(payload: FlightProductPipelineRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    filename = f"{payload.source_name}.json"
+    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format="json", source_type="scraper", status="running", current_stage="queued")
+    session.add(job); session.commit(); session.refresh(job)
+    agent = DataProcessingAgent(session, context, job)
+    try:
+        job.started_at = datetime.now(timezone.utc)
+        stages = agent.process_structured(payload.payload, payload.source_name)
+        if not payload.require_confirmation and job.status == "awaiting_confirmation":
+            agent.confirm("approve", "Auto-confirmed by explicitly requested trusted pipeline mode", "system")
+        session.commit()
+    except Exception as exc:
+        session.rollback(); job = session.get(DataPipelineJobRecord, job.id)
+        job.status = "failed"; job.current_stage = "failed"; job.error_message = str(exc)[:1000]; job.completed_at = datetime.now(timezone.utc); session.commit()
+        raise HTTPException(status_code=502, detail=f"Flight/product pipeline failed: {exc}") from exc
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=stages)
+
 @app.get("/api/data-pipelines", response_model=list[DataPipelineJob])
 def list_data_pipelines(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     records = session.scalars(select(DataPipelineJobRecord).where(DataPipelineJobRecord.tenant_id == context.tenant_id).order_by(DataPipelineJobRecord.created_at.desc()).limit(100)).all()
@@ -744,7 +852,7 @@ def search_knowledge(q: str = "", limit: int = 10, context: TenantContext = Depe
         target = linked.get(relation.target_entity_id)
         if target:
             by_chunk.setdefault(relation.source_entity_id, []).append({"id": target.external_id, "type": target.entity_type, "label": target.label, "confidence": relation.confidence})
-    return [KnowledgeSearchResult(chunk_id=item.external_id, document_id=documents[item.document_id].external_id, title=documents[item.document_id].title, content=item.content, metadata=json.loads(item.metadata_json or "{}"), linked_objects=by_chunk.get(ontology_chunks[item.external_id].id, [])) for item in selected if item.document_id in documents and item.external_id in ontology_chunks]
+    return [KnowledgeSearchResult(chunk_id=item.external_id, document_id=documents[item.document_id].external_id, title=documents[item.document_id].title, content=item.content, metadata=json.loads(item.metadata_json or "{}"), linked_objects=by_chunk.get(ontology_chunks[item.external_id].id, []) if item.external_id in ontology_chunks else []) for item in selected if item.document_id in documents]
 
 
 @app.get("/api/model-providers", response_model=list[ModelProvider])
