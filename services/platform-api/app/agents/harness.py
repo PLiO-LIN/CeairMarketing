@@ -62,6 +62,20 @@ class UnifiedHarness:
             self._record_usage(result)
         return result.content
 
+    def generate_text_stream(
+        self,
+        config: LLMConfig,
+        system_prompt: str,
+        user_prompt: str,
+        on_token: Callable[[str], None],
+    ) -> str:
+        self.emit("harness/model-started", model=config.model_name, mode="stream")
+        result = self._llm.generate_stream_result(config, system_prompt, user_prompt, on_token)
+        self.emit("harness/model-finished", output_length=len(result.content), prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, total_tokens=result.total_tokens, model=result.model_name, mode="stream")
+        if self._record_usage:
+            self._record_usage(result)
+        return result.content
+
     @staticmethod
     def _parse_json(output: str) -> dict[str, Any]:
         text = output.strip()

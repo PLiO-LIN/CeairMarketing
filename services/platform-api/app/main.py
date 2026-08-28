@@ -1,7 +1,6 @@
 import json
 import queue
 import threading
-import time
 from datetime import datetime, timezone
 from uuid import uuid4
 from contextlib import asynccontextmanager
@@ -373,7 +372,13 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
     def worker() -> None:
         try:
             with SessionLocal() as worker_session:
-                result = copilot.run(worker_session, context, payload, event_sink=lambda item: events.put({"type": "trace", "item": item}))
+                result = copilot.run(
+                    worker_session,
+                    context,
+                    payload,
+                    event_sink=lambda item: events.put({"type": "trace", "item": item}),
+                    token_sink=lambda token: events.put({"type": "token", "text": token}),
+                )
                 events.put({"type": "result", "result": result.model_dump(mode="json")})
         except Exception as exc:
             events.put({"type": "error", "message": f"智能体运行失败：{exc}"})
@@ -392,12 +397,10 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
             kind = item.get("type")
             if kind == "trace":
                 yield encode("trace", item["item"])
+            elif kind == "token":
+                yield encode("token", {"text": item["text"]})
             elif kind == "result":
                 result = item["result"]
-                answer = str(result.get("answer") or "")
-                for index in range(0, len(answer), 18):
-                    yield encode("token", {"text": answer[index:index + 18]})
-                    time.sleep(0.012)
                 yield encode("complete", result)
             elif kind == "error":
                 yield encode("error", {"message": item["message"]})

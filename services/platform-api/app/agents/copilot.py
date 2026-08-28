@@ -22,7 +22,14 @@ class MarketingCopilot:
         self._cipher: SecretCipher | None = None
         self._runtime = AgentRuntime()
 
-    def run(self, session: Session, context: TenantContext, request: AgentChatRequest, event_sink: Callable[[dict[str, Any]], None] | None = None) -> AgentChatResponse:
+    def run(
+        self,
+        session: Session,
+        context: TenantContext,
+        request: AgentChatRequest,
+        event_sink: Callable[[dict[str, Any]], None] | None = None,
+        token_sink: Callable[[str], None] | None = None,
+    ) -> AgentChatResponse:
         trace: list[dict[str, Any]] = []
         sources: list[dict[str, Any]] = []
 
@@ -81,8 +88,10 @@ class MarketingCopilot:
         if provider.provider_type == "mock":
             observations = self._mock_observations(harness, tools, request.message)
             answer = self._mock_answer(request.message, observations)
+            if token_sink:
+                token_sink(answer)
         else:
-            answer = self._agent_loop(harness, config, request, tools)
+            answer = self._agent_loop(harness, config, request, tools, token_sink)
         session.commit()
         return AgentChatResponse(
             conversation_id=request.conversation_id or f"CONV-{uuid4().hex[:10].upper()}",
@@ -93,7 +102,14 @@ class MarketingCopilot:
             sources=self._deduplicate_sources(sources),
         )
 
-    def _agent_loop(self, harness: UnifiedHarness, config: LLMConfig, request: AgentChatRequest, tools: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]) -> str:
+    def _agent_loop(
+        self,
+        harness: UnifiedHarness,
+        config: LLMConfig,
+        request: AgentChatRequest,
+        tools: dict[str, Callable[[dict[str, Any]], dict[str, Any]]],
+        token_sink: Callable[[str], None] | None = None,
+    ) -> str:
         observations: list[dict[str, Any]] = []
         history = [{"role": item.role, "content": item.content} for item in request.history[-12:]]
         system_prompt = (
@@ -106,7 +122,7 @@ class MarketingCopilot:
         )
         for step in range(4):
             planner_input = json.dumps({"question": request.message, "history": history, "observations": observations, "step": step + 1}, ensure_ascii=False)
-            harness.emit("agent/planning", step=step + 1, summary="??????????????")
+            harness.emit("agent/planning", step=step + 1, summary="分析问题并选择下一步业务工具")
             try:
                 decision = harness.generate_json(config, system_prompt, planner_input)
             except Exception:
@@ -116,7 +132,8 @@ class MarketingCopilot:
             action = str(decision.get("action") or "")
             harness.emit("agent/decision", step=step + 1, action=action or "unknown", reason=str(decision.get("reason") or ""), arguments=decision.get("arguments") if isinstance(decision.get("arguments"), dict) else {})
             if action == "final" and decision.get("answer"):
-                return str(decision["answer"])
+                observations.append({"tool": "planner_conclusion", "result": {"answer": str(decision["answer"])}})
+                break
             if action not in tools:
                 observations.append({"tool": action or "unknown", "error": "工具不在授权列表中"})
                 continue
@@ -124,11 +141,10 @@ class MarketingCopilot:
             result = harness.run_tool(action, lambda action=action, arguments=arguments: tools[action](arguments))
             observations.append({"tool": action, "reason": decision.get("reason", ""), "result": result})
         synthesis_prompt = json.dumps({"question": request.message, "history": history, "tool_observations": observations}, ensure_ascii=False)
-        return harness.generate_text(
-            config,
-            "你是东航营销业务助手。仅根据工具观测回答，给出可执行结论、引用的数据依据、风险和需要人工确认的事项，不得编造。",
-            synthesis_prompt,
-        )
+        final_system_prompt = "你是东航营销业务助手。仅根据工具观测回答，给出可执行结论、引用的数据依据、风险和需要人工确认的事项，不得编造。"
+        if token_sink:
+            return harness.generate_text_stream(config, final_system_prompt, synthesis_prompt, token_sink)
+        return harness.generate_text(config, final_system_prompt, synthesis_prompt)
 
     def _mock_observations(self, harness: UnifiedHarness, tools: dict[str, Callable[[dict[str, Any]], dict[str, Any]]], message: str) -> list[dict[str, Any]]:
         selected = ["search_marketing_knowledge", "query_marketing_ontology"]
