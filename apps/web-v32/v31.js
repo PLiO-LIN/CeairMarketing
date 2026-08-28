@@ -45,7 +45,7 @@
   };
   const search = () => openDrawer('全局业务搜索','检索机会、客群、产品包、内容和活动',section('搜索条件','<div class="drawer-form"><label>关键字<input value="三亚"></label><label>对象类型<select><option>全部业务对象</option><option>营销活动</option><option>客群</option><option>产品包</option><option>内容</option></select></label></div>') + section('相关对象','<div class="drawer-list"><button data-open="campaign"><span>上海—三亚国庆早鸟</span><b>营销活动 ›</b></button><button data-nav="audiences"><span>三亚高意向未购</span><b>动态客群 ›</b></button><button data-open="product"><span>三亚国庆早鸟产品包</span><b>产品包 ›</b></button></div>'),'<button class="btn primary" data-drawer="search">查询</button>');
 
-  $$('.menu-toggle').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); b.closest('.menu-group').classList.toggle('open'); }));
+  document.querySelectorAll('.menu-toggle').forEach(b => { if (b.dataset.bound === '1') return; b.dataset.bound = '1'; const group = b.closest('.menu-group'); b.setAttribute('aria-expanded', group?.classList.contains('open') ? 'true' : 'false'); b.addEventListener('click', e => { e.stopPropagation(); const next = !group.classList.contains('open'); group.classList.toggle('open', next); b.setAttribute('aria-expanded', String(next)); }); });
   drawer.addEventListener('click', e => { if (e.target === drawer) closeDrawer(); });
   $$('.selection-box,.content-option').forEach(e => e.addEventListener('click', () => e.classList.toggle('selected')));
 
