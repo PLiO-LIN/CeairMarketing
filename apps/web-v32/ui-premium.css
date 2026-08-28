@@ -65,6 +65,17 @@ button { -webkit-tap-highlight-color: transparent; }
 .page-head { margin-bottom: 20px; }
 .page-head h1 { color: var(--ink); letter-spacing: -.1px; font-size: 22px; }
 .page-head p { color: var(--muted); line-height: 1.7; }
+
+/* Production workspaces show actions and live state, not slide-style narration. */
+.page-head p,
+.lifecycle,
+.nav-count {
+  display: none !important;
+}
+
+.page-head h1 {
+  margin-bottom: 0;
+}
 .panel { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); box-shadow: var(--shadow-sm); overflow: hidden; }
 .panel:hover { box-shadow: var(--shadow-md); }
 .panel-head { min-height: 52px; padding: 14px 18px; border-bottom: 1px solid #e8f0f4; background: linear-gradient(180deg, #fff, #fbfdfe); }
