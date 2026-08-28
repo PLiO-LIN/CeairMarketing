@@ -1,4 +1,4 @@
-﻿/* China Eastern Smart Marketing Cloud - premium operations console layer */
+/* China Eastern Smart Marketing Cloud - premium operations console layer */
 :root {
   --nav: #071b31;
   --nav-2: #0c2c49;
@@ -130,3 +130,5 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: #51a9cb
 @media (max-width: 900px) { .topbar { padding-inline: 14px; } .content { padding: 18px 14px 30px; } .panel-head { padding-inline: 14px; } .panel-body { padding-inline: 14px; } }
 @media (max-width: 600px) { .content { padding-inline: 10px; } .brand { padding-inline: 13px; } .page-head h1 { font-size: 20px; } .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .kpi { min-height: 92px; padding: 13px; } .kpi b { font-size: 22px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+
+.sub-action{width:calc(100% - 18px);margin:1px 9px 5px;padding-left:42px;height:30px;border:0;background:transparent;color:#8fb6ca;border-radius:5px;display:flex;align-items:center;gap:8px;text-align:left;font-size:12px;cursor:pointer}.sub-action:hover{background:rgba(255,255,255,.07);color:#fff}.sub-action svg{width:14px}
