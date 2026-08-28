@@ -4,7 +4,20 @@ let toastTimer=null,wizardStep=0,selectedDecision='approve',editingCampaignRow=n
 function toast(t){if(!toastEl)return;toastEl.textContent=t;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2800)}
 function icons(){if(window.lucide)lucide.createIcons()}
 function activate(view){$$('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$$('.view').forEach(v=>v.classList.toggle('active',v.id===view));if($('#crumbTitle'))$('#crumbTitle').textContent=titles[view]||titles.overview;if($('#activeTab'))$('#activeTab').textContent=titles[view]||titles.overview;if(view==='graph')requestAnimationFrame(()=>graph.resize())}
-$$('.nav button[data-view]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.view)));
+document.addEventListener('click',event=>{
+  const toggle=event.target.closest('.menu-toggle');
+  if(toggle){
+    event.preventDefault();
+    event.stopPropagation();
+    const group=toggle.closest('.menu-group');
+    const expanded=!group.classList.contains('open');
+    group.classList.toggle('open',expanded);
+    toggle.setAttribute('aria-expanded',String(expanded));
+    return;
+  }
+  const nav=event.target.closest('.nav button[data-view]');
+  if(nav)activate(nav.dataset.view);
+});
 $$('[data-jump]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.jump)));
 function openLayer(id){const e=$(`#${id}`);if(e){e.classList.add('open');e.setAttribute('aria-hidden','false');document.body.classList.add('layer-open');icons()}}function closeLayer(id){const e=$(`#${id}`);if(e){e.classList.remove('open');e.setAttribute('aria-hidden','true')}if(!$('.modal-layer.open,.drawer-layer.open'))document.body.classList.remove('layer-open')}
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeLayer(b.dataset.close)));
