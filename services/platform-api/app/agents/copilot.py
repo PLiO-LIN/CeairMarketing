@@ -106,6 +106,7 @@ class MarketingCopilot:
         )
         for step in range(4):
             planner_input = json.dumps({"question": request.message, "history": history, "observations": observations, "step": step + 1}, ensure_ascii=False)
+            harness.emit("agent/planning", step=step + 1, summary="??????????????")
             try:
                 decision = harness.generate_json(config, system_prompt, planner_input)
             except Exception:
@@ -113,6 +114,7 @@ class MarketingCopilot:
                     observations.append({"tool": "search_marketing_knowledge", "result": harness.run_tool("search_marketing_knowledge", lambda: tools["search_marketing_knowledge"]({"query": request.message}))})
                 break
             action = str(decision.get("action") or "")
+            harness.emit("agent/decision", step=step + 1, action=action or "unknown", reason=str(decision.get("reason") or ""), arguments=decision.get("arguments") if isinstance(decision.get("arguments"), dict) else {})
             if action == "final" and decision.get("answer"):
                 return str(decision["answer"])
             if action not in tools:
