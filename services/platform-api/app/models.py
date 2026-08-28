@@ -76,6 +76,10 @@ class Campaign(BaseModel):
     roi_target: float
 
 
+class CampaignUpdate(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+
+
 class OpportunityBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     market_scope: str = Field(default="\u8349\u7a3f", max_length=40)

@@ -35,6 +35,7 @@ from .models import (
     AgentChatRequest,
     AgentChatResponse,
     Campaign,
+    CampaignUpdate,
     CurrentUser,
     GraphStats,
     ImportJob,
@@ -253,6 +254,26 @@ def get_campaign(campaign_id: str, context: TenantContext = Depends(get_tenant_c
     if campaign is None:
         raise HTTPException(status_code=404, detail="活动不存在")
     return campaign
+
+
+@app.put("/api/campaigns/{campaign_id}", response_model=Campaign)
+def update_campaign(campaign_id: str, payload: CampaignUpdate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="活动不存在")
+    campaign.name = payload.name
+    campaign.version = campaign.version or "V1"
+    session.commit()
+    return campaign
+
+
+@app.delete("/api/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_campaign(campaign_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="活动不存在")
+    session.delete(campaign)
+    session.commit()
 
 
 def audience_package_view(record: AudiencePackageRecord) -> AudiencePackage:

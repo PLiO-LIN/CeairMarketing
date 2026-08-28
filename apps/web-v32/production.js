@@ -263,7 +263,7 @@
 <td>
 <span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
 </td>
-<td class="action" data-open-campaign="${escapeHtml(item.name)}">进入活动</td>
+<td class="production-actions"><button class="btn" data-production-campaign-view="${escapeHtml(item.id)}">查看</button><button class="btn" data-production-campaign-edit="${escapeHtml(item.id)}">编辑</button><button class="btn danger" data-production-campaign-delete="${escapeHtml(item.id)}">删除</button></td>
 </tr>`).join('');
     const campaignTable = q('#campaigns .table'); if (campaignTable) campaignTable.innerHTML = `<tr>
 <th>活动编号</th>
@@ -418,6 +418,9 @@
   function bindProductionActions() {
     document.addEventListener('click', async event => {
       const button=event.target.closest('button'); if(!button) return;
+      if(button.dataset.productionCampaignView){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignView);if(item){if(typeof window.openCampaign==='function')window.openCampaign(item.name);toast('已打开活动：'+item.name);}return;}
+      if(button.dataset.productionCampaignDelete){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignDelete);if(!item||!canWrite()||!window.confirm('确认删除活动“'+item.name+'”？删除后不可恢复。'))return;try{await request('/api/campaigns/'+encodeURIComponent(item.id),{method:'DELETE'});toast('活动“'+item.name+'”已删除');await loadTenantData();}catch(cause){toast(cause.message||'活动删除失败');}return;}
+      if(button.dataset.productionCampaignEdit){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignEdit);if(!item||!canWrite())return;const name=window.prompt('活动名称',item.name);if(name===null)return;const next=name.trim();if(next.length<2){toast('活动名称至少需要2个字符');return;}try{await request('/api/campaigns/'+encodeURIComponent(item.id),{method:'PUT',body:JSON.stringify({name:next})});toast('活动“'+next+'”已更新');await loadTenantData();}catch(cause){toast(cause.message||'活动更新失败');}return;}
       if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
       if(button.dataset.opportunityDelete){
         if(!canWrite()||!window.confirm('删除后该机会及其关联引用将不再出现在当前租户，确定继续吗？')) return;
