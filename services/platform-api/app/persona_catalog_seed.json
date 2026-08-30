@@ -1,0 +1,2684 @@
+{
+  "source_file": "\u753b\u50cf\u7ef4\u5ea6\u53ca\u7c7b\u578b.xlsx",
+  "catalog_version": "2026-08-30",
+  "dimensions": [
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u4f1a\u5458\u7f16\u53f7",
+      "field_code": "member_id",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u751f\u6210",
+      "required_mode": "required",
+      "allowed_values": "\u81ea\u52a8\u751f\u6210",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 3
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u59d3\u540d",
+      "field_code": "full_name",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7528\u6237\u586b\u5199",
+      "required_mode": "required",
+      "allowed_values": "\u81ea\u7531\u6587\u672c",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 4
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u6027\u522b",
+      "field_code": "gender",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199/\u8bc1\u4ef6\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "\u7537/\u5973",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 5
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u51fa\u751f\u65e5\u671f",
+      "field_code": "birth_date",
+      "data_type": "date",
+      "source_data_type": "\u65e5\u671f",
+      "collection_method": "\u8bc1\u4ef6\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "YYYY-MM-DD",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 6
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u56fd\u7c4d",
+      "field_code": "nationality",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u8bc1\u4ef6\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "\u4e0b\u62c9\u9009\u62e9\uff08\u5168\u7403\u56fd\u5bb6\u5217\u8868\uff09",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 7
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u8bc1\u4ef6\u7c7b\u578b",
+      "field_code": "id_type",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u8bc1\u4ef6\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "\u8eab\u4efd\u8bc1/\u62a4\u7167/\u6e2f\u6fb3\u53f0\u901a\u884c\u8bc1",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 8
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u8bc1\u4ef6\u53f7\u7801",
+      "field_code": "id_number",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u8bc1\u4ef6\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "\u81ea\u7531\u6587\u672c",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 9
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u5e38\u9a7b\u5730\uff08\u7701\u4efd\uff09",
+      "field_code": "province",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199/IP\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "\u4e0b\u62c9\u9009\u62e9\uff0834\u4e2a\u7701\u7ea7\u884c\u653f\u533a\uff09",
+      "update_frequency": "\u5b63\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 10
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u5e38\u9a7b\u5730\uff08\u57ce\u5e02\uff09",
+      "field_code": "city",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199/IP\u8bc6\u522b",
+      "required_mode": "required",
+      "allowed_values": "\u4e0b\u62c9\u9009\u62e9\uff08\u57ce\u5e02\u5217\u8868\uff09",
+      "update_frequency": "\u5b63\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 11
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u624b\u673a\u53f7\u7801",
+      "field_code": "mobile",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7528\u6237\u586b\u5199",
+      "required_mode": "required",
+      "allowed_values": "11\u4f4d\u6570\u5b57",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 12
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u7535\u5b50\u90ae\u7bb1",
+      "field_code": "email",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7528\u6237\u586b\u5199",
+      "required_mode": "required",
+      "allowed_values": "\u90ae\u7bb1\u683c\u5f0f",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 13
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u6ce8\u518c\u6e20\u9053",
+      "field_code": "register_channel",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "required",
+      "allowed_values": "App/\u5b98\u7f51/\u5c0f\u7a0b\u5e8f/\u7ebf\u4e0b\u67dc\u53f0/\u7b2c\u4e09\u65b9",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 14
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u6700\u9ad8\u5b66\u5386",
+      "field_code": "education",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199",
+      "required_mode": "optional",
+      "allowed_values": "\u535a\u58eb/\u7855\u58eb/\u672c\u79d1/\u5927\u4e13/\u9ad8\u4e2d\u53ca\u4ee5\u4e0b",
+      "update_frequency": "\u5e74\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 15
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u804c\u4e1a\u7c7b\u578b",
+      "field_code": "occupation",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199/\u884c\u4e3a\u63a8\u65ad",
+      "required_mode": "optional",
+      "allowed_values": "\u4f01\u4e1a\u9ad8\u7ba1/\u4f01\u4e1a\u4e2d\u5c42/\u4e13\u4e1a\u4eba\u58eb/\u516c\u52a1\u5458/\u81ea\u7531\u804c\u4e1a/\u5b66\u751f/\u9000\u4f11/\u5176\u4ed6",
+      "update_frequency": "\u5b63\u5ea6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 16
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u884c\u4e1a\u7c7b\u522b",
+      "field_code": "industry",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199",
+      "required_mode": "optional",
+      "allowed_values": "\u4e0b\u62c9\u9009\u62e9\uff08\u53c2\u7167\u56fd\u6c11\u7ecf\u6d4e\u884c\u4e1a\u5206\u7c7b\uff09",
+      "update_frequency": "\u5e74\u5ea6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 17
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u6708\u6536\u5165\u533a\u95f4",
+      "field_code": "income",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7528\u6237\u586b\u5199/\u6d88\u8d39\u63a8\u65ad",
+      "required_mode": "optional",
+      "allowed_values": "5000\u4ee5\u4e0b/5001-10000/10001-15000/15001-20000/20001-30000/30001-50000/50000\u4ee5\u4e0a",
+      "update_frequency": "\u5b63\u5ea6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 18
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u9996\u6b21\u4e58\u673a\u65e5\u671f",
+      "field_code": "first_flight_date",
+      "data_type": "date",
+      "source_data_type": "\u65e5\u671f",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9996\u5f20\u673a\u7968\u51fa\u7968\u65e5\u671f",
+      "update_frequency": "\u9759\u6001",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 20
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u7d2f\u8ba1\u98de\u884c\u6b21\u6570",
+      "field_code": "total_flights",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5386\u53f2\u603b\u98de\u884c\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 21
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u98de\u884c\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 22
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u6708\u5747\u98de\u884c\u6b21\u6570",
+      "field_code": "monthly_avg_flights",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u6708\u5747",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 23
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u7d2f\u8ba1\u98de\u884c\u91cc\u7a0b",
+      "field_code": "total_mileage",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5386\u53f2\u603b\u91cc\u7a0b\uff08\u516c\u91cc\uff09",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 24
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u5e74\u98de\u884c\u91cc\u7a0b",
+      "field_code": "annual_mileage",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u91cc\u7a0b",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 25
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u6700\u8fd1\u4e00\u6b21\u98de\u884c\u65e5\u671f",
+      "field_code": "last_flight_date",
+      "data_type": "date",
+      "source_data_type": "\u65e5\u671f",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6700\u8fd1\u822a\u73ed\u65e5\u671f",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 26
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u8ddd\u4e0a\u6b21\u98de\u884c\u5929\u6570",
+      "field_code": "days_since_last_flight",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "R\u503c\uff08Recency\uff09",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 27
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u6700\u5e38\u51fa\u53d1\u673a\u573a",
+      "field_code": "preferred_dep_airport",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9891\u6b21\u6700\u9ad8\u7684\u51fa\u53d1\u673a\u573a\u4e09\u5b57\u7801",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 28
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u6700\u5e38\u5230\u8fbe\u673a\u573a",
+      "field_code": "preferred_arr_airport",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9891\u6b21\u6700\u9ad8\u7684\u5230\u8fbe\u673a\u573a\u4e09\u5b57\u7801",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 29
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u6700\u5e38\u4e58\u5750\u822a\u7ebf",
+      "field_code": "preferred_route",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9891\u6b21\u6700\u9ad8\u7684OD\u5bf9",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 30
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u51fa\u884c\u9ad8\u5cf0\u65f6\u6bb5",
+      "field_code": "peak_travel_time",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u65e9\u73ed(6-9\u70b9)/\u5348\u73ed(10-15\u70b9)/\u665a\u73ed(16-21\u70b9)/\u7ea2\u773c(22-5\u70b9)",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 31
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u51fa\u884c\u65e5\u504f\u597d",
+      "field_code": "weekday_preference",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5de5\u4f5c\u65e5/\u5468\u672b/\u8282\u5047\u65e5/\u7075\u6d3b",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 32
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u9884\u8ba2\u63d0\u524d\u671f",
+      "field_code": "booking_lead_time",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u22643\u5929/4-7\u5929/8-15\u5929/16-30\u5929/>30\u5929",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 33
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u51fa\u884c\u76ee\u7684\uff08\u63a8\u65ad\uff09",
+      "field_code": "travel_purpose",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u63a8\u65ad",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5546\u52a1/\u65c5\u6e38/\u63a2\u4eb2\u8bbf\u53cb/\u672a\u77e5",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 34
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u5e38\u89c1\u51fa\u884c\u65b9\u5f0f",
+      "field_code": "travel_companion",
+      "data_type": "multi_select",
+      "source_data_type": "\u591a\u9009\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u72ec\u81ea/\u5bb6\u5ead(\u542b\u513f\u7ae5)/\u5bb6\u5ead(\u542b\u8001\u4eba)/\u60c5\u4fa3/\u56e2\u961f(\u226510\u4eba)/\u5546\u52a1\u540c\u884c",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 35
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u662f\u5426\u6709\u513f\u7ae5\u968f\u884c",
+      "field_code": "has_children",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C"
+      ],
+      "source_row": 36
+    },
+    {
+      "module_key": "travel_behavior",
+      "module_name": "\u4e8c\u3001\u51fa\u884c\u884c\u4e3a",
+      "field_name": "\u662f\u5426\u6709\u8001\u4eba\u968f\u884c",
+      "field_code": "has_elderly",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C"
+      ],
+      "source_row": 37
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u8231\u4f4d\u504f\u597d",
+      "field_code": "cabin_preference",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5934\u7b49\u8231/\u516c\u52a1\u8231/\u9ad8\u7aef\u7ecf\u6d4e\u8231/\u7ecf\u6d4e\u8231",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 39
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u4e24\u8231\u4e58\u673a\u5360\u6bd4",
+      "field_code": "premium_cabin_ratio",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u4e24\u8231\u6b21\u6570/\u603b\u98de\u884c\u6b21\u6570",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "A",
+        "D"
+      ],
+      "source_row": 40
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u673a\u578b\u504f\u597d",
+      "field_code": "aircraft_type_preference",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5bbd\u4f53\u673a(\u53cc\u901a\u9053)/\u7a84\u4f53\u673a(\u5355\u901a\u9053)/\u65e0\u504f\u597d",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "A",
+        "B"
+      ],
+      "source_row": 41
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u504f\u597d\u9760\u7a97\u5ea7\u4f4d",
+      "field_code": "window_seat_preference",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790/\u7528\u6237\u8bbe\u7f6e",
+      "required_mode": "optional",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 42
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u504f\u597d\u8fc7\u9053\u5ea7\u4f4d",
+      "field_code": "aisle_seat_preference",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790/\u7528\u6237\u8bbe\u7f6e",
+      "required_mode": "optional",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 43
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u8d2d\u4e70\u8fc7\u5347\u8231",
+      "field_code": "has_purchased_upgrade",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 44
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u5347\u8231\u8d2d\u4e70\u9891\u6b21",
+      "field_code": "upgrade_frequency",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u5347\u8231\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 45
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u5347\u8231\u7c7b\u578b\u504f\u597d",
+      "field_code": "upgrade_type_preference",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5730\u9762\u5347\u8231/\u7a7a\u4e2d\u5347\u8231/\u79ef\u5206\u5347\u8231",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 46
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u8d2d\u4e70\u8fc7\u989d\u5916\u884c\u674e",
+      "field_code": "has_purchased_extra_baggage",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C",
+        "D"
+      ],
+      "source_row": 47
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u4f7f\u7528\u8fc7Wi-Fi\u670d\u52a1",
+      "field_code": "has_used_wifi",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 48
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "Wi-Fi\u4f7f\u7528\u9891\u6b21",
+      "field_code": "wifi_usage_frequency",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708Wi-Fi\u4f7f\u7528\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "D"
+      ],
+      "source_row": 49
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u4f7f\u7528\u8fc7\u8d35\u5bbe\u5ba4",
+      "field_code": "has_used_lounge",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "A",
+        "D"
+      ],
+      "source_row": 50
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u8d35\u5bbe\u5ba4\u4f7f\u7528\u9891\u6b21",
+      "field_code": "lounge_usage_frequency",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u8d35\u5bbe\u5ba4\u4f7f\u7528\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "A",
+        "D"
+      ],
+      "source_row": 51
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u8d2d\u4e70\u8fc7\u63a5\u9001\u673a",
+      "field_code": "has_purchased_transfer",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 52
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u9884\u8ba2\u8fc7\u9152\u5e97",
+      "field_code": "has_booked_hotel",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C",
+        "D"
+      ],
+      "source_row": 53
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u79df\u7528\u8fc7\u8f66\u8f86",
+      "field_code": "has_rented_car",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55",
+      "required_mode": "system_generated",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 54
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u8f85\u8425\u670d\u52a1\u6d88\u8d39\u504f\u597d",
+      "field_code": "ancillary_preference",
+      "data_type": "multi_select",
+      "source_data_type": "\u591a\u9009\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5347\u8231/\u884c\u674e/Wi-Fi/\u8d35\u5bbe\u5ba4/\u63a5\u9001\u673a/\u9152\u5e97/\u79df\u8f66/\u65e0",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 55
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u8ba2\u7968\u6e20\u9053\u504f\u597d",
+      "field_code": "booking_channel_preference",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "App/\u5b98\u7f51/\u5c0f\u7a0b\u5e8f/OTA/\u7ebf\u4e0b\u67dc\u53f0/\u4f01\u4e1a\u5dee\u65c5\u5e73\u53f0",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 56
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "App\u4f7f\u7528\u9891\u6b21",
+      "field_code": "app_usage_frequency",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9ad8\u9891(\u65e5\u5747\u22653\u6b21)/\u4e2d\u9891(\u65e5\u57471-2\u6b21)/\u4f4e\u9891(\u5468\u5747<1\u6b21)/\u4ece\u672a\u4f7f\u7528",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "A",
+        "B",
+        "C"
+      ],
+      "source_row": 57
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u4e1c\u822a\u8d2d\u7968\u5360\u6bd4",
+      "field_code": "cea_booking_ratio",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u4e1c\u822a\u8d2d\u7968\u91cf/\u603b\u8d2d\u7968\u91cf",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 58
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u662f\u5426\u5173\u6ce8\u4e1c\u822a\u793e\u4ea4\u5a92\u4f53",
+      "field_code": "follows_social_media",
+      "data_type": "boolean",
+      "source_data_type": "\u5e03\u5c14",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55/\u7528\u6237\u586b\u5199",
+      "required_mode": "optional",
+      "allowed_values": "\u662f/\u5426",
+      "update_frequency": "\u5b63\u5ea6",
+      "applicable_personas": [
+        "C",
+        "D",
+        "E"
+      ],
+      "source_row": 59
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u5e38\u5173\u6ce8\u7684\u793e\u4ea4\u5a92\u4f53\u5e73\u53f0",
+      "field_code": "social_media_platforms",
+      "data_type": "multi_select",
+      "source_data_type": "\u591a\u9009\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u8bb0\u5f55/\u7528\u6237\u586b\u5199",
+      "required_mode": "optional",
+      "allowed_values": "\u5fae\u4fe1/\u5fae\u535a/\u6296\u97f3/\u5c0f\u7ea2\u4e66/\u65e0",
+      "update_frequency": "\u5b63\u5ea6",
+      "applicable_personas": [
+        "C",
+        "D",
+        "E"
+      ],
+      "source_row": 60
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u5f53\u524d\u4f1a\u5458\u7b49\u7ea7",
+      "field_code": "member_tier",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u7ef4\u62a4",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7ec8\u8eab\u767d\u91d1/\u767d\u91d1/\u91d1/\u94f6/\u5c0a\u4eab\u91d1/\u5c0a\u4eab\u94f6/\u666e\u5361",
+      "update_frequency": "\u5e74\u5ea6/\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 62
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u4f1a\u5458\u7b49\u7ea7\u6709\u6548\u671f",
+      "field_code": "tier_expiry",
+      "data_type": "date",
+      "source_data_type": "\u65e5\u671f",
+      "collection_method": "\u7cfb\u7edf\u7ef4\u62a4",
+      "required_mode": "system_generated",
+      "allowed_values": "YYYY-MM-DD",
+      "update_frequency": "\u5e74\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 63
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u7d2f\u8ba1\u6d88\u8d39\u91d1\u989d",
+      "field_code": "total_spend",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5386\u53f2\u603b\u8d2d\u7968\u91d1\u989d\uff08\u5143\uff09",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 64
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u5e74\u6d88\u8d39\u91d1\u989d",
+      "field_code": "annual_spend",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd112\u4e2a\u6708\u8d2d\u7968\u91d1\u989d\uff08\u5143\uff09",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 65
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u7d2f\u8ba1\u6d88\u8d39\u79ef\u5206",
+      "field_code": "total_points",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5386\u53f2\u7d2f\u8ba1\u79ef\u5206",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 66
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u53ef\u7528\u79ef\u5206\u4f59\u989d",
+      "field_code": "available_points",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5f53\u524d\u53ef\u7528\u79ef\u5206",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 67
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u5165\u4f1a\u65f6\u957f\uff08\u6708\uff09",
+      "field_code": "membership_months",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6ce8\u518c\u81f3\u4eca\u6708\u4efd\u6570",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 68
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "L\u503c\uff08\u5fe0\u8bda\u5ea6\uff09",
+      "field_code": "loyalty_score",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "0-1\u5206",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 69
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "R\u503c\uff08\u6700\u8fd1\u6d88\u8d39\uff09",
+      "field_code": "recency_days",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8ddd\u6700\u8fd1\u4e00\u6b21\u98de\u884c\u5929\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 70
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "F\u503c\uff08\u6d88\u8d39\u9891\u7387\uff09",
+      "field_code": "frequency_score",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5e74\u98de\u884c\u6b21\u6570\u5f52\u4e00\u5316",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 71
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "M\u503c\uff08\u6d88\u8d39\u91d1\u989d\uff09",
+      "field_code": "monetary_score",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5e74\u6d88\u8d39\u91d1\u989d\u5f52\u4e00\u5316",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 72
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "C\u503c\uff08\u6d88\u8d39\u884c\u4e3a\uff09",
+      "field_code": "behavior_score",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u57fa\u4e8e\u8231\u4f4d\u548c\u9644\u52a0\u670d\u52a1\u6d88\u8d39\u7ed3\u6784",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 73
+    },
+    {
+      "module_key": "value_and_loyalty",
+      "module_name": "\u56db\u3001\u4ef7\u503c\u4e0e\u5fe0\u8bda",
+      "field_name": "\u5ba2\u6237\u77e9\u9635\u5206\u7c7b",
+      "field_code": "customer_matrix",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u631a\u53cb\u578b/\u8774\u8776\u578b/\u85e4\u58f6\u578b/\u964c\u751f\u578b",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 74
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u5f53\u524d\u4f1a\u8bddID",
+      "field_code": "session_id",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u751f\u6210",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6bcf\u6b21\u8bbf\u95ee\u552f\u4e00\u6807\u8bc6",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 76
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u8bbf\u95ee\u65f6\u95f4",
+      "field_code": "visit_timestamp",
+      "data_type": "timestamp",
+      "source_data_type": "\u65f6\u95f4\u6233",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5f53\u524d\u8bbf\u95ee\u65f6\u95f4",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 77
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u8bbf\u95ee\u6765\u6e90",
+      "field_code": "visit_source",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "App/\u5b98\u7f51/\u5c0f\u7a0b\u5e8f/\u5176\u4ed6",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 78
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u8bbe\u5907\u7c7b\u578b",
+      "field_code": "device_type",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "iOS/Android/PC/\u5176\u4ed6",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 79
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u5173\u952e\u8bcd",
+      "field_code": "search_keywords",
+      "data_type": "text",
+      "source_data_type": "\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7528\u6237\u8f93\u5165\u7684\u641c\u7d22\u8bcd",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 80
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u76ee\u7684\u5730",
+      "field_code": "search_destination",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u4ece\u5173\u952e\u8bcd\u4e2d\u63d0\u53d6\u7684\u76ee\u7684\u5730",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 81
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u65e5\u671f\u8303\u56f4",
+      "field_code": "search_date_range",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7528\u6237\u9009\u62e9\u7684\u51fa\u884c\u65e5\u671f\u8303\u56f4",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 82
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u4ef7\u683c\u533a\u95f4",
+      "field_code": "search_price_range",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7528\u6237\u7b5b\u9009\u7684\u4ef7\u683c\u8303\u56f4",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 83
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u5ba2\u8231\u7b49\u7ea7",
+      "field_code": "search_cabin",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7528\u6237\u7b5b\u9009\u7684\u8231\u4f4d\u7b49\u7ea7",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 84
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u9891\u6b21\uff08\u8fd124\u5c0f\u65f6\uff09",
+      "field_code": "search_frequency_24h",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd124\u5c0f\u65f6\u641c\u7d22\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 85
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u641c\u7d22\u9891\u6b21\uff08\u8fd17\u5929\uff09",
+      "field_code": "search_frequency_7d",
+      "data_type": "integer",
+      "source_data_type": "\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u7edf\u8ba1",
+      "required_mode": "system_generated",
+      "allowed_values": "\u8fd17\u5929\u641c\u7d22\u6b21\u6570",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 86
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u6d4f\u89c8\u76ee\u7684\u5730\u9875\u9762",
+      "field_code": "browsed_destinations",
+      "data_type": "multi_text",
+      "source_data_type": "\u591a\u9009\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6d4f\u89c8\u8fc7\u7684\u76ee\u7684\u5730\u4ecb\u7ecd\u9875",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C",
+        "E"
+      ],
+      "source_row": 87
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u6d4f\u89c8\u822a\u73ed\u8be6\u60c5",
+      "field_code": "browsed_flights",
+      "data_type": "multi_text",
+      "source_data_type": "\u591a\u9009\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6d4f\u89c8\u8fc7\u7684\u822a\u73ed\u8be6\u60c5",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 88
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u6d4f\u89c8\u9152\u5e97\u8be6\u60c5",
+      "field_code": "browsed_hotels",
+      "data_type": "multi_text",
+      "source_data_type": "\u591a\u9009\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6d4f\u89c8\u8fc7\u7684\u9152\u5e97/\u4f4f\u5bbf\u9875",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C",
+        "D"
+      ],
+      "source_row": 89
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u6d4f\u89c8\u65c5\u6e38\u653b\u7565",
+      "field_code": "browsed_guides",
+      "data_type": "multi_text",
+      "source_data_type": "\u591a\u9009\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6d4f\u89c8\u8fc7\u7684\u653b\u7565/\u6e38\u8bb0\u9875",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C"
+      ],
+      "source_row": 90
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u6536\u85cf/\u5173\u6ce8\u76ee\u7684\u5730",
+      "field_code": "saved_destinations",
+      "data_type": "multi_text",
+      "source_data_type": "\u591a\u9009\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7528\u6237\u6536\u85cf\u7684\u76ee\u7684\u5730",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "C",
+        "D"
+      ],
+      "source_row": 91
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u70b9\u51fb\u8425\u9500\u5185\u5bb9",
+      "field_code": "clicked_promotions",
+      "data_type": "multi_text",
+      "source_data_type": "\u591a\u9009\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u91c7\u96c6",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7528\u6237\u70b9\u51fb\u7684\u8425\u9500\u6d3b\u52a8ID",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 92
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u5f53\u524d\u51fa\u884c\u610f\u5411",
+      "field_code": "current_intent",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u63a8\u65ad",
+      "required_mode": "system_generated",
+      "allowed_values": "\u6709\u660e\u786e\u76ee\u7684\u5730/\u6709\u51fa\u884c\u610f\u56fe(\u76ee\u7684\u5730\u672a\u5b9a)/\u65e0\u660e\u786e\u51fa\u884c\u610f\u56fe",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 93
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u610f\u5411\u76ee\u7684\u5730",
+      "field_code": "intent_destination",
+      "data_type": "string",
+      "source_data_type": "\u5b57\u7b26\u4e32",
+      "collection_method": "\u7cfb\u7edf\u63a8\u65ad",
+      "required_mode": "system_generated",
+      "allowed_values": "\u5f53\u524d\u6700\u53ef\u80fd\u51fa\u884c\u76ee\u7684\u5730",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 94
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u610f\u5411\u51fa\u884c\u65e5\u671f",
+      "field_code": "intent_travel_date",
+      "data_type": "date",
+      "source_data_type": "\u65e5\u671f",
+      "collection_method": "\u7cfb\u7edf\u63a8\u65ad",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9884\u6d4b\u7684\u6700\u53ef\u80fd\u51fa\u884c\u65e5\u671f",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 95
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u51b3\u7b56\u9636\u6bb5",
+      "field_code": "decision_stage",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u63a8\u65ad",
+      "required_mode": "system_generated",
+      "allowed_values": "\u79cd\u8349\u671f/\u6bd4\u4ef7\u671f/\u51b3\u7b56\u671f/\u4e34\u8fd1\u671f",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 96
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u610f\u5411\u7f6e\u4fe1\u5ea6",
+      "field_code": "intent_confidence",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "0-1\u4e4b\u95f4",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 97
+    },
+    {
+      "module_key": "real_time_intent",
+      "module_name": "\u4e94\u3001\u5b9e\u65f6\u610f\u5411",
+      "field_name": "\u5916\u90e8\u610f\u5411\u4fe1\u53f7",
+      "field_code": "external_intent_signals",
+      "data_type": "multi_select",
+      "source_data_type": "\u591a\u9009\u679a\u4e3e",
+      "collection_method": "\u5916\u90e8\u6570\u636e\u63a5\u5165",
+      "required_mode": "system_generated",
+      "allowed_values": "\u65c5\u6e38\u641c\u7d22\u5f15\u64ce\u641c\u7d22/\u793e\u4ea4\u5a92\u4f53\u8bdd\u9898\u5173\u6ce8/\u76ee\u7684\u5730\u9152\u5e97/\u666f\u533a\u641c\u7d22",
+      "update_frequency": "\u5c0f\u65f6\u7ea7",
+      "applicable_personas": [
+        "C",
+        "D",
+        "E"
+      ],
+      "source_row": 98
+    },
+    {
+      "module_key": "persona_classification",
+      "module_name": "\u516d\u3001\u753b\u50cf\u5206\u7c7b\u7ed3\u679c",
+      "field_name": "\u753b\u50cf\u7c7b\u578b",
+      "field_code": "persona_type",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u81ea\u52a8\u5206\u7c7b",
+      "required_mode": "system_generated",
+      "allowed_values": "A.\u6838\u5fc3\u5546\u52a1\u7cbe\u82f1/B.\u5546\u52a1\u5e38\u65c5\u5ba2/C.\u4f11\u95f2\u5ea6\u5047\u5ba2/D.\u9ad8\u4ef7\u503c\u6563\u5ba2/E.\u4ef7\u683c\u72e9\u730e\u8005/F.\u6c89\u7761\u5524\u9192\u7fa4",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 100
+    },
+    {
+      "module_key": "persona_classification",
+      "module_name": "\u516d\u3001\u753b\u50cf\u5206\u7c7b\u7ed3\u679c",
+      "field_name": "\u753b\u50cf\u7c7b\u578b\u7f6e\u4fe1\u5ea6",
+      "field_code": "persona_confidence",
+      "data_type": "decimal",
+      "source_data_type": "\u6d6e\u70b9\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "0-1\u4e4b\u95f4",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 101
+    },
+    {
+      "module_key": "persona_classification",
+      "module_name": "\u516d\u3001\u753b\u50cf\u5206\u7c7b\u7ed3\u679c",
+      "field_name": "\u8425\u9500\u4f18\u5148\u7ea7",
+      "field_code": "marketing_priority",
+      "data_type": "enum",
+      "source_data_type": "\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u2b50\u2b50\u2b50\u2b50\u2b50/\u2b50\u2b50\u2b50\u2b50/\u2b50\u2b50\u2b50/\u2b50\u2b50",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 102
+    },
+    {
+      "module_key": "persona_classification",
+      "module_name": "\u516d\u3001\u753b\u50cf\u5206\u7c7b\u7ed3\u679c",
+      "field_name": "\u63a8\u8350\u8425\u9500\u7b56\u7565",
+      "field_code": "recommended_strategy",
+      "data_type": "text",
+      "source_data_type": "\u6587\u672c",
+      "collection_method": "\u7cfb\u7edf\u63a8\u8350",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7cfb\u7edf\u6839\u636e\u753b\u50cf\u7c7b\u578b\u81ea\u52a8\u751f\u6210",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 103
+    },
+    {
+      "module_key": "basic_info",
+      "module_name": "\u4e00\u3001\u57fa\u7840\u4fe1\u606f",
+      "field_name": "\u5e74\u9f84",
+      "field_code": "age",
+      "data_type": "integer",
+      "source_data_type": "\u6d3e\u751f\u6574\u6570",
+      "collection_method": "\u7cfb\u7edf\u8ba1\u7b97",
+      "required_mode": "system_generated",
+      "allowed_values": "\u7531\u51fa\u751f\u65e5\u671f\u8ba1\u7b97",
+      "update_frequency": "\u5b9e\u65f6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 0,
+      "is_supplemental": true
+    },
+    {
+      "module_key": "purchase_preferences",
+      "module_name": "\u4e09\u3001\u6d88\u8d39\u504f\u597d",
+      "field_name": "\u4ef7\u683c\u654f\u611f\u5ea6",
+      "field_code": "price_sensitivity",
+      "data_type": "enum",
+      "source_data_type": "\u8865\u5145\u679a\u4e3e",
+      "collection_method": "\u7cfb\u7edf\u5206\u6790",
+      "required_mode": "system_generated",
+      "allowed_values": "\u9ad8/\u4e2d/\u4f4e/\u62a2\u7968\u578b",
+      "update_frequency": "\u6708\u5ea6",
+      "applicable_personas": [
+        "ALL"
+      ],
+      "source_row": 0,
+      "is_supplemental": true
+    }
+  ],
+  "segments": [
+    {
+      "segment_code": "A1",
+      "primary_persona_code": "A",
+      "primary_persona_name": "\u6838\u5fc3\u5546\u52a1\u7cbe\u82f1",
+      "segment_name": "\u4eac\u6caa\u5feb\u7ebf\u578b",
+      "belongs_to": "To B",
+      "within_persona_share": "0.4",
+      "recommended_products": "\u4eac\u6caa\u5feb\u7ebf\u65f6\u523b\u8868+\u8d35\u5bbe\u5ba4",
+      "recommended_channels": "App\u63a8\u9001+\u8d35\u5bbe\u5ba4\u4e13\u5c5e",
+      "source_row": 2
+    },
+    {
+      "segment_code": "A2",
+      "primary_persona_code": "A",
+      "primary_persona_name": "\u6838\u5fc3\u5546\u52a1\u7cbe\u82f1",
+      "segment_name": "\u56fd\u9645\u822a\u7ebf\u578b",
+      "belongs_to": "To B",
+      "within_persona_share": "0.35",
+      "recommended_products": "\u56fd\u9645\u4e24\u8231\u5957\u7968+\u514d\u8d39\u4e2d\u8f6c\u4f4f\u5bbf",
+      "recommended_channels": "App\u63a8\u9001+95530\u4e13\u5c5e",
+      "source_row": 6
+    },
+    {
+      "segment_code": "A3",
+      "primary_persona_code": "A",
+      "primary_persona_name": "\u6838\u5fc3\u5546\u52a1\u7cbe\u82f1",
+      "segment_name": "\u79ef\u5206\u9ad8\u51c0\u503c\u578b",
+      "belongs_to": "To C",
+      "within_persona_share": "0.25",
+      "recommended_products": "\u79ef\u5206\u5347\u8231+\u79ef\u5206\u5151\u6362\u9152\u5e97",
+      "recommended_channels": "\u90ae\u4ef6+App\u63a8\u9001",
+      "source_row": 10
+    },
+    {
+      "segment_code": "B1",
+      "primary_persona_code": "B",
+      "primary_persona_name": "\u5546\u52a1\u5e38\u65c5\u5ba2",
+      "segment_name": "\u4f01\u4e1a\u5dee\u65c5\u578b",
+      "belongs_to": "To B",
+      "within_persona_share": "0.45",
+      "recommended_products": "SME\u4f01\u4e1a\u4e13\u533a+\u4f01\u4e1a\u4e13\u5c5e\u8fd0\u4ef7",
+      "recommended_channels": "\u4f01\u4e1a\u5dee\u65c5\u5e73\u53f0+\u90ae\u4ef6",
+      "source_row": 14
+    },
+    {
+      "segment_code": "B2",
+      "primary_persona_code": "B",
+      "primary_persona_name": "\u5546\u52a1\u5e38\u65c5\u5ba2",
+      "segment_name": "\u7075\u6d3b\u5546\u52a1\u578b",
+      "belongs_to": "To C",
+      "within_persona_share": "0.3",
+      "recommended_products": "\u6613\u4eab\u9000+Wi-Fi\u4f1a\u5458\u6743\u76ca",
+      "recommended_channels": "App\u63a8\u9001+\u90ae\u4ef6",
+      "source_row": 18
+    },
+    {
+      "segment_code": "B3",
+      "primary_persona_code": "B",
+      "primary_persona_name": "\u5546\u52a1\u5e38\u65c5\u5ba2",
+      "segment_name": "\u533a\u57df\u5546\u52a1\u578b",
+      "belongs_to": "To B",
+      "within_persona_share": "0.25",
+      "recommended_products": "\u533a\u57df\u901a+\u591a\u822a\u6bb5\u5957\u7968",
+      "recommended_channels": "\u5b98\u7f51+\u90ae\u4ef6",
+      "source_row": 22
+    },
+    {
+      "segment_code": "C1",
+      "primary_persona_code": "C",
+      "primary_persona_name": "\u4f11\u95f2\u5ea6\u5047\u5ba2",
+      "segment_name": "\u4eb2\u5b50\u5bb6\u5ead\u578b",
+      "belongs_to": "To C",
+      "within_persona_share": "0.3",
+      "recommended_products": "\u5bb6\u5ead\u5957\u9910+\u884c\u674e\u95e8\u5230\u95e8",
+      "recommended_channels": "\u793e\u4ea4\u5a92\u4f53+App\u63a8\u9001",
+      "source_row": 26
+    },
+    {
+      "segment_code": "C2",
+      "primary_persona_code": "C",
+      "primary_persona_name": "\u4f11\u95f2\u5ea6\u5047\u5ba2",
+      "segment_name": "\u94f6\u53d1\u65cf\u578b",
+      "belongs_to": null,
+      "within_persona_share": "0.2",
+      "recommended_products": "\u94f6\u7ffc\u957f\u8005\u4e13\u5c5e\u8fd0\u4ef7+\u63a5\u9001\u673a",
+      "recommended_channels": "\u77ed\u4fe1+\u90ae\u4ef6",
+      "source_row": 30
+    },
+    {
+      "segment_code": "C3",
+      "primary_persona_code": "C",
+      "primary_persona_name": "\u4f11\u95f2\u5ea6\u5047\u5ba2",
+      "segment_name": "\u5e74\u8f7b\u60c5\u4fa3\u578b",
+      "belongs_to": null,
+      "within_persona_share": "0.25",
+      "recommended_products": "\u7f51\u7ea2\u76ee\u7684\u5730\u653b\u7565+AIGC\u77ed\u89c6\u9891",
+      "recommended_channels": "\u793e\u4ea4\u5a92\u4f53(\u6296\u97f3/\u5c0f\u7ea2\u4e66)",
+      "source_row": 34
+    },
+    {
+      "segment_code": "C4",
+      "primary_persona_code": "C",
+      "primary_persona_name": "\u4f11\u95f2\u5ea6\u5047\u5ba2",
+      "segment_name": "\u6df1\u5ea6\u81ea\u7531\u884c\u578b",
+      "belongs_to": null,
+      "within_persona_share": null,
+      "recommended_products": "\u673a+\u9152\u5957\u9910+\u5343\u95eeAI\u884c\u7a0b\u89c4\u5212",
+      "recommended_channels": "App+\u90ae\u4ef6",
+      "source_row": 38
+    },
+    {
+      "segment_code": "D1",
+      "primary_persona_code": "D",
+      "primary_persona_name": "\u9ad8\u4ef7\u503c\u6563\u5ba2",
+      "segment_name": "\u54c1\u8d28\u4f53\u9a8c\u578b",
+      "belongs_to": null,
+      "within_persona_share": "0.4",
+      "recommended_products": "\u4e24\u8231\u4f53\u9a8c\u65e5+\u5347\u8231\u9650\u65f6\u4f18\u60e0",
+      "recommended_channels": "\u90ae\u4ef6+\u793e\u4ea4\u5a92\u4f53",
+      "source_row": 42
+    },
+    {
+      "segment_code": "D2",
+      "primary_persona_code": "D",
+      "primary_persona_name": "\u9ad8\u4ef7\u503c\u6563\u5ba2",
+      "segment_name": "\u5f02\u4e1a\u8054\u540d\u578b",
+      "belongs_to": null,
+      "within_persona_share": "0.3",
+      "recommended_products": "\u661f\u5df4\u514b/\u534e\u4f4f\u4f1a\u8054\u540d+\u5343\u95eeAI\u5f15\u6d41\u5238",
+      "recommended_channels": "\u793e\u4ea4\u5a92\u4f53+\u90ae\u4ef6",
+      "source_row": 46
+    },
+    {
+      "segment_code": "D3",
+      "primary_persona_code": "D",
+      "primary_persona_name": "\u9ad8\u4ef7\u503c\u6563\u5ba2",
+      "segment_name": "\u8282\u65e5\u8109\u51b2\u578b",
+      "belongs_to": null,
+      "within_persona_share": null,
+      "recommended_products": "\u8282\u5047\u65e5\u65e9\u9e1f\u9884\u8ba2+\u5bb6\u5ead\u4e24\u8231\u5957\u7968",
+      "recommended_channels": "App\u63a8\u9001+\u90ae\u4ef6",
+      "source_row": 50
+    },
+    {
+      "segment_code": "E1",
+      "primary_persona_code": "E",
+      "primary_persona_name": "\u4ef7\u683c\u72e9\u730e\u8005",
+      "segment_name": "\u5b66\u751f\u7279\u4ef7\u578b",
+      "belongs_to": null,
+      "within_persona_share": "0.5",
+      "recommended_products": "\u5b66\u751f\u4e13\u4eab\u8fd0\u4ef7+\u5bd2\u6691\u5047\u7279\u4ef7",
+      "recommended_channels": "\u5c0f\u7a0b\u5e8f+\u793e\u4ea4\u5a92\u4f53",
+      "source_row": 54
+    },
+    {
+      "segment_code": "E2",
+      "primary_persona_code": "E",
+      "primary_persona_name": "\u4ef7\u683c\u72e9\u730e\u8005",
+      "segment_name": "\u5927\u4fc3\u8ddf\u968f\u578b",
+      "belongs_to": null,
+      "within_persona_share": null,
+      "recommended_products": "\u5927\u4fc3\u7279\u4ef7+\u9650\u65f6\u79d2\u6740+\u6de1\u5b63\u586b\u4ed3",
+      "recommended_channels": "\u5c0f\u7a0b\u5e8f+\u77ed\u4fe1",
+      "source_row": 58
+    },
+    {
+      "segment_code": "F1",
+      "primary_persona_code": "F",
+      "primary_persona_name": "\u6c89\u7761\u5524\u9192\u7fa4",
+      "segment_name": "\u9ad8\u4ef7\u503c\u6c89\u7761\u578b",
+      "belongs_to": "To B",
+      "within_persona_share": "0.3",
+      "recommended_products": "\u4e13\u5c5e\u56de\u5f52\u4f18\u60e0+\u5ba2\u6237\u7ecf\u7406\u4e3b\u52a8\u8054\u7cfb",
+      "recommended_channels": "\u7535\u8bdd+\u90ae\u4ef6+\u77ed\u4fe1",
+      "source_row": 62
+    },
+    {
+      "segment_code": "F2",
+      "primary_persona_code": "F",
+      "primary_persona_name": "\u6c89\u7761\u5524\u9192\u7fa4",
+      "segment_name": "\u81ea\u7136\u4f11\u7720\u578b",
+      "belongs_to": "To C",
+      "within_persona_share": "0.7",
+      "recommended_products": "\u901a\u7528\u4f18\u60e0\u5238+\u65c5\u6e38\u5185\u5bb9\u79cd\u8349",
+      "recommended_channels": "\u90ae\u4ef6+\u77ed\u4fe1",
+      "source_row": 66
+    }
+  ],
+  "rules": [
+    {
+      "segment_code": "A1",
+      "dimension_name": "\u822a\u7ebf\u504f\u597d",
+      "field_code": "preferred_route",
+      "field_variant": null,
+      "condition_expression": "=\"\u5317\u4eac-\u4e0a\u6d77\"",
+      "condition_operator": "expression",
+      "condition_value": "\"\u5317\u4eac-\u4e0a\u6d77\"",
+      "data_source": "\u7cfb\u7edf\u7edf\u8ba1",
+      "field_registered": true,
+      "rule_order": 1,
+      "source_row": 2
+    },
+    {
+      "segment_code": "A1",
+      "dimension_name": "\u51fa\u884c\u65f6\u6bb5",
+      "field_code": "peak_travel_time",
+      "field_variant": null,
+      "condition_expression": "= \u65e9\u73ed(6-9\u70b9)",
+      "condition_operator": "expression",
+      "condition_value": "\u65e9\u73ed(6-9\u70b9)",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 2,
+      "source_row": 3
+    },
+    {
+      "segment_code": "A1",
+      "dimension_name": "\u51b3\u7b56\u4e60\u60ef",
+      "field_code": "booking_lead_time",
+      "field_variant": null,
+      "condition_expression": "=\u22643\u5929",
+      "condition_operator": "lte",
+      "condition_value": "3\u5929",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 3,
+      "source_row": 4
+    },
+    {
+      "segment_code": "A1",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "has_used_lounge",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 4,
+      "source_row": 5
+    },
+    {
+      "segment_code": "A2",
+      "dimension_name": "\u8231\u4f4d\u504f\u597d",
+      "field_code": "premium_cabin_ratio",
+      "field_variant": null,
+      "condition_expression": "\u2265 70%",
+      "condition_operator": "gte",
+      "condition_value": "70%",
+      "data_source": "\u8231\u4f4d\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 5,
+      "source_row": 6
+    },
+    {
+      "segment_code": "A2",
+      "dimension_name": "\u5230\u8fbe\u673a\u573a",
+      "field_code": "preferred_arr_airport",
+      "field_variant": null,
+      "condition_expression": "\u2208 \u5883\u5916\u673a\u573a",
+      "condition_operator": "in",
+      "condition_value": "\u5883\u5916\u673a\u573a",
+      "data_source": "\u7cfb\u7edf\u7edf\u8ba1",
+      "field_registered": true,
+      "rule_order": 6,
+      "source_row": 7
+    },
+    {
+      "segment_code": "A2",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "has_purchased_upgrade",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 7,
+      "source_row": 8
+    },
+    {
+      "segment_code": "A2",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "has_used_wifi",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 8,
+      "source_row": 9
+    },
+    {
+      "segment_code": "A3",
+      "dimension_name": "\u79ef\u5206\u4f59\u989d",
+      "field_code": "available_points",
+      "field_variant": null,
+      "condition_expression": "\u2265 100000",
+      "condition_operator": "gte",
+      "condition_value": "100000",
+      "data_source": "\u4f1a\u5458\u7cfb\u7edf",
+      "field_registered": true,
+      "rule_order": 9,
+      "source_row": 10
+    },
+    {
+      "segment_code": "A3",
+      "dimension_name": "\u4f1a\u5458\u7b49\u7ea7",
+      "field_code": "member_tier",
+      "field_variant": null,
+      "condition_expression": "\u2208 {\u7ec8\u8eab\u767d\u91d1, \u767d\u91d1}",
+      "condition_operator": "in",
+      "condition_value": "{\u7ec8\u8eab\u767d\u91d1, \u767d\u91d1}",
+      "data_source": "\u4f1a\u5458\u7cfb\u7edf",
+      "field_registered": true,
+      "rule_order": 10,
+      "source_row": 11
+    },
+    {
+      "segment_code": "A3",
+      "dimension_name": "\u5e74\u6d88\u8d39\u91d1\u989d",
+      "field_code": "annual_spend",
+      "field_variant": null,
+      "condition_expression": "\u2265 20\u4e07\u5143",
+      "condition_operator": "gte",
+      "condition_value": "20\u4e07\u5143",
+      "data_source": "\u6d88\u8d39\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 11,
+      "source_row": 12
+    },
+    {
+      "segment_code": "A3",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "ancillary_preference",
+      "field_variant": null,
+      "condition_expression": "\u5305\u542b\"\u9152\u5e97\"\u6216\"\u5347\u8231\"",
+      "condition_operator": "contains",
+      "condition_value": "\"\u9152\u5e97\"\u6216\"\u5347\u8231\"",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 12,
+      "source_row": 13
+    },
+    {
+      "segment_code": "B1",
+      "dimension_name": "\u8ba2\u7968\u6e20\u9053",
+      "field_code": "booking_channel_preference",
+      "field_variant": null,
+      "condition_expression": "=\u4f01\u4e1a\u5dee\u65c5\u5e73\u53f0",
+      "condition_operator": "expression",
+      "condition_value": "\u4f01\u4e1a\u5dee\u65c5\u5e73\u53f0",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 13,
+      "source_row": 14
+    },
+    {
+      "segment_code": "B1",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "20-40\u6b21",
+      "condition_operator": "between",
+      "condition_value": "20-40\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 14,
+      "source_row": 15
+    },
+    {
+      "segment_code": "B1",
+      "dimension_name": "\u8231\u4f4d\u504f\u597d",
+      "field_code": "cabin_preference",
+      "field_variant": null,
+      "condition_expression": "=\u7ecf\u6d4e\u8231",
+      "condition_operator": "expression",
+      "condition_value": "\u7ecf\u6d4e\u8231",
+      "data_source": "\u8231\u4f4d\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 15,
+      "source_row": 16
+    },
+    {
+      "segment_code": "B1",
+      "dimension_name": "\u51fa\u884c\u65f6\u6bb5",
+      "field_code": "weekday_preference",
+      "field_variant": null,
+      "condition_expression": "=\u5de5\u4f5c\u65e5",
+      "condition_operator": "expression",
+      "condition_value": "\u5de5\u4f5c\u65e5",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 16,
+      "source_row": 17
+    },
+    {
+      "segment_code": "B2",
+      "dimension_name": "\u8ba2\u7968\u6e20\u9053",
+      "field_code": "booking_channel_preference",
+      "field_variant": null,
+      "condition_expression": "\u2208 {App, OTA}",
+      "condition_operator": "in",
+      "condition_value": "{App, OTA}",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 17,
+      "source_row": 18
+    },
+    {
+      "segment_code": "B2",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "15-35\u6b21",
+      "condition_operator": "between",
+      "condition_value": "15-35\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 18,
+      "source_row": 19
+    },
+    {
+      "segment_code": "B2",
+      "dimension_name": "\u5347\u8231\u8bb0\u5f55",
+      "field_code": "has_purchased_upgrade",
+      "field_variant": null,
+      "condition_expression": "=\u5076\u5c14",
+      "condition_operator": "expression",
+      "condition_value": "\u5076\u5c14",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 19,
+      "source_row": 20
+    },
+    {
+      "segment_code": "B2",
+      "dimension_name": "\u4ef7\u683c\u654f\u611f\u5ea6",
+      "field_code": "price_sensitivity",
+      "field_variant": null,
+      "condition_expression": "=\u4e2d",
+      "condition_operator": "expression",
+      "condition_value": "\u4e2d",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 20,
+      "source_row": 21
+    },
+    {
+      "segment_code": "B3",
+      "dimension_name": "\u51fa\u53d1\u673a\u573a",
+      "field_code": "preferred_dep_airport",
+      "field_variant": null,
+      "condition_expression": "\u2208 \u533a\u57df\u67a2\u7ebd",
+      "condition_operator": "in",
+      "condition_value": "\u533a\u57df\u67a2\u7ebd",
+      "data_source": "\u7cfb\u7edf\u7edf\u8ba1",
+      "field_registered": true,
+      "rule_order": 21,
+      "source_row": 22
+    },
+    {
+      "segment_code": "B3",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "15-25\u6b21",
+      "condition_operator": "between",
+      "condition_value": "15-25\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 22,
+      "source_row": 23
+    },
+    {
+      "segment_code": "B3",
+      "dimension_name": "\u51fa\u884c\u76ee\u7684",
+      "field_code": "travel_purpose",
+      "field_variant": null,
+      "condition_expression": "=\u5546\u52a1",
+      "condition_operator": "expression",
+      "condition_value": "\u5546\u52a1",
+      "data_source": "\u7cfb\u7edf\u63a8\u65ad",
+      "field_registered": true,
+      "rule_order": 23,
+      "source_row": 24
+    },
+    {
+      "segment_code": "B3",
+      "dimension_name": "\u51b3\u7b56\u4e60\u60ef",
+      "field_code": "booking_lead_time",
+      "field_variant": null,
+      "condition_expression": "= 8-15\u5929",
+      "condition_operator": "between",
+      "condition_value": "8-15\u5929",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 24,
+      "source_row": 25
+    },
+    {
+      "segment_code": "C1",
+      "dimension_name": "\u968f\u884c\u7279\u5f81",
+      "field_code": "has_children",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 25,
+      "source_row": 26
+    },
+    {
+      "segment_code": "C1",
+      "dimension_name": "\u51fa\u884c\u65b9\u5f0f",
+      "field_code": "travel_companion",
+      "field_variant": null,
+      "condition_expression": "=\u5bb6\u5ead(\u542b\u513f\u7ae5)",
+      "condition_operator": "expression",
+      "condition_value": "\u5bb6\u5ead(\u542b\u513f\u7ae5)",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 26,
+      "source_row": 27
+    },
+    {
+      "segment_code": "C1",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "has_purchased_extra_baggage",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 27,
+      "source_row": 28
+    },
+    {
+      "segment_code": "C1",
+      "dimension_name": "\u6d4f\u89c8\u5185\u5bb9",
+      "field_code": "browsed_destinations",
+      "field_variant": null,
+      "condition_expression": "\u5305\u542b\"\u4e3b\u9898\u4e50\u56ed/\u6d77\u8fb9\"",
+      "condition_operator": "contains",
+      "condition_value": "\"\u4e3b\u9898\u4e50\u56ed/\u6d77\u8fb9\"",
+      "data_source": "\u5b9e\u65f6\u884c\u4e3a",
+      "field_registered": true,
+      "rule_order": 28,
+      "source_row": 29
+    },
+    {
+      "segment_code": "C2",
+      "dimension_name": "\u5e74\u9f84",
+      "field_code": "age",
+      "field_variant": null,
+      "condition_expression": "\u2265 60\u5c81",
+      "condition_operator": "gte",
+      "condition_value": "60\u5c81",
+      "data_source": "\u8bc1\u4ef6\u4fe1\u606f",
+      "field_registered": true,
+      "rule_order": 29,
+      "source_row": 30
+    },
+    {
+      "segment_code": "C2",
+      "dimension_name": "\u804c\u4e1a",
+      "field_code": "occupation",
+      "field_variant": null,
+      "condition_expression": "=\u9000\u4f11",
+      "condition_operator": "expression",
+      "condition_value": "\u9000\u4f11",
+      "data_source": "\u7528\u6237\u586b\u5199",
+      "field_registered": true,
+      "rule_order": 30,
+      "source_row": 31
+    },
+    {
+      "segment_code": "C2",
+      "dimension_name": "\u51fa\u884c\u65b9\u5f0f",
+      "field_code": "travel_companion",
+      "field_variant": null,
+      "condition_expression": "\u2208 {\u5bb6\u5ead(\u542b\u8001\u4eba), \u56e2\u961f}",
+      "condition_operator": "in",
+      "condition_value": "{\u5bb6\u5ead(\u542b\u8001\u4eba), \u56e2\u961f}",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 31,
+      "source_row": 32
+    },
+    {
+      "segment_code": "C2",
+      "dimension_name": "\u51b3\u7b56\u4e60\u60ef",
+      "field_code": "booking_lead_time",
+      "field_variant": null,
+      "condition_expression": "= >30\u5929",
+      "condition_operator": "gt",
+      "condition_value": "30\u5929",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 32,
+      "source_row": 33
+    },
+    {
+      "segment_code": "C3",
+      "dimension_name": "\u5e74\u9f84",
+      "field_code": "age",
+      "field_variant": null,
+      "condition_expression": "18-35\u5c81",
+      "condition_operator": "between",
+      "condition_value": "18-35\u5c81",
+      "data_source": "\u8bc1\u4ef6\u4fe1\u606f",
+      "field_registered": true,
+      "rule_order": 33,
+      "source_row": 34
+    },
+    {
+      "segment_code": "C3",
+      "dimension_name": "\u51fa\u884c\u65b9\u5f0f",
+      "field_code": "travel_companion",
+      "field_variant": null,
+      "condition_expression": "\u2208 {\u60c5\u4fa3, \u72ec\u81ea}",
+      "condition_operator": "in",
+      "condition_value": "{\u60c5\u4fa3, \u72ec\u81ea}",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 34,
+      "source_row": 35
+    },
+    {
+      "segment_code": "C3",
+      "dimension_name": "\u793e\u4ea4\u5a92\u4f53",
+      "field_code": "follows_social_media",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7528\u6237\u586b\u5199",
+      "field_registered": true,
+      "rule_order": 35,
+      "source_row": 36
+    },
+    {
+      "segment_code": "C3",
+      "dimension_name": "\u6d4f\u89c8\u5185\u5bb9",
+      "field_code": "browsed_destinations",
+      "field_variant": null,
+      "condition_expression": "\u5305\u542b\"\u7f51\u7ea2/\u5c0f\u4f17\u76ee\u7684\u5730\"",
+      "condition_operator": "contains",
+      "condition_value": "\"\u7f51\u7ea2/\u5c0f\u4f17\u76ee\u7684\u5730\"",
+      "data_source": "\u5b9e\u65f6\u884c\u4e3a",
+      "field_registered": true,
+      "rule_order": 36,
+      "source_row": 37
+    },
+    {
+      "segment_code": "C4",
+      "dimension_name": "\u6d4f\u89c8\u884c\u4e3a",
+      "field_code": "browsed_guides",
+      "field_variant": null,
+      "condition_expression": "=\u9ad8\u9891",
+      "condition_operator": "expression",
+      "condition_value": "\u9ad8\u9891",
+      "data_source": "\u5b9e\u65f6\u884c\u4e3a",
+      "field_registered": true,
+      "rule_order": 37,
+      "source_row": 38
+    },
+    {
+      "segment_code": "C4",
+      "dimension_name": "\u51b3\u7b56\u4e60\u60ef",
+      "field_code": "booking_lead_time",
+      "field_variant": null,
+      "condition_expression": "= >30\u5929",
+      "condition_operator": "gt",
+      "condition_value": "30\u5929",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 38,
+      "source_row": 39
+    },
+    {
+      "segment_code": "C4",
+      "dimension_name": "\u9152\u5e97\u9884\u8ba2",
+      "field_code": "has_booked_hotel",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 39,
+      "source_row": 40
+    },
+    {
+      "segment_code": "C4",
+      "dimension_name": "\u5916\u90e8\u4fe1\u53f7",
+      "field_code": "external_intent_signals",
+      "field_variant": null,
+      "condition_expression": "\u5305\u542b\"\u65c5\u6e38\u641c\u7d22\u5f15\u64ce\"",
+      "condition_operator": "contains",
+      "condition_value": "\"\u65c5\u6e38\u641c\u7d22\u5f15\u64ce\"",
+      "data_source": "\u5916\u90e8\u6570\u636e",
+      "field_registered": true,
+      "rule_order": 40,
+      "source_row": 41
+    },
+    {
+      "segment_code": "D1",
+      "dimension_name": "\u8231\u4f4d\u504f\u597d",
+      "field_code": "cabin_preference",
+      "field_variant": null,
+      "condition_expression": "\u2208 {\u9ad8\u7aef\u7ecf\u6d4e\u8231, \u516c\u52a1\u8231}",
+      "condition_operator": "in",
+      "condition_value": "{\u9ad8\u7aef\u7ecf\u6d4e\u8231, \u516c\u52a1\u8231}",
+      "data_source": "\u8231\u4f4d\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 41,
+      "source_row": 42
+    },
+    {
+      "segment_code": "D1",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "has_used_lounge",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 42,
+      "source_row": 43
+    },
+    {
+      "segment_code": "D1",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "has_used_wifi",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 43,
+      "source_row": 44
+    },
+    {
+      "segment_code": "D1",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "5-12\u6b21",
+      "condition_operator": "between",
+      "condition_value": "5-12\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 44,
+      "source_row": 45
+    },
+    {
+      "segment_code": "D2",
+      "dimension_name": "\u9152\u5e97\u9884\u8ba2",
+      "field_code": "has_booked_hotel",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7cfb\u7edf\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 45,
+      "source_row": 46
+    },
+    {
+      "segment_code": "D2",
+      "dimension_name": "\u793e\u4ea4\u5a92\u4f53",
+      "field_code": "follows_social_media",
+      "field_variant": null,
+      "condition_expression": "=\u662f",
+      "condition_operator": "expression",
+      "condition_value": "\u662f",
+      "data_source": "\u7528\u6237\u586b\u5199",
+      "field_registered": true,
+      "rule_order": 46,
+      "source_row": 47
+    },
+    {
+      "segment_code": "D2",
+      "dimension_name": "\u8f85\u8425\u504f\u597d",
+      "field_code": "ancillary_preference",
+      "field_variant": null,
+      "condition_expression": "\u5305\u542b\"\u9152\u5e97\"",
+      "condition_operator": "contains",
+      "condition_value": "\"\u9152\u5e97\"",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 47,
+      "source_row": 48
+    },
+    {
+      "segment_code": "D2",
+      "dimension_name": "\u5916\u90e8\u4fe1\u53f7",
+      "field_code": "external_intent_signals",
+      "field_variant": null,
+      "condition_expression": "\u5305\u542b\"\u793e\u4ea4\u5a92\u4f53\u65c5\u6e38\u8bdd\u9898\"",
+      "condition_operator": "contains",
+      "condition_value": "\"\u793e\u4ea4\u5a92\u4f53\u65c5\u6e38\u8bdd\u9898\"",
+      "data_source": "\u5916\u90e8\u6570\u636e",
+      "field_registered": true,
+      "rule_order": 48,
+      "source_row": 49
+    },
+    {
+      "segment_code": "D3",
+      "dimension_name": "\u51fa\u884c\u65f6\u6bb5",
+      "field_code": "weekday_preference",
+      "field_variant": null,
+      "condition_expression": "=\u8282\u5047\u65e5",
+      "condition_operator": "expression",
+      "condition_value": "\u8282\u5047\u65e5",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 49,
+      "source_row": 50
+    },
+    {
+      "segment_code": "D3",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "3-8\u6b21",
+      "condition_operator": "between",
+      "condition_value": "3-8\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 50,
+      "source_row": 51
+    },
+    {
+      "segment_code": "D3",
+      "dimension_name": "\u5e74\u6d88\u8d39\u91d1\u989d",
+      "field_code": "annual_spend",
+      "field_variant": null,
+      "condition_expression": "3-8\u4e07\u5143",
+      "condition_operator": "between",
+      "condition_value": "3-8\u4e07\u5143",
+      "data_source": "\u6d88\u8d39\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 51,
+      "source_row": 52
+    },
+    {
+      "segment_code": "D3",
+      "dimension_name": "\u51b3\u7b56\u4e60\u60ef",
+      "field_code": "booking_lead_time",
+      "field_variant": null,
+      "condition_expression": "= 16-30\u5929",
+      "condition_operator": "between",
+      "condition_value": "16-30\u5929",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 52,
+      "source_row": 53
+    },
+    {
+      "segment_code": "E1",
+      "dimension_name": "\u804c\u4e1a",
+      "field_code": "occupation",
+      "field_variant": null,
+      "condition_expression": "=\u5b66\u751f",
+      "condition_operator": "expression",
+      "condition_value": "\u5b66\u751f",
+      "data_source": "\u7528\u6237\u586b\u5199",
+      "field_registered": true,
+      "rule_order": 53,
+      "source_row": 54
+    },
+    {
+      "segment_code": "E1",
+      "dimension_name": "\u5e74\u9f84",
+      "field_code": "age",
+      "field_variant": null,
+      "condition_expression": "18-25\u5c81",
+      "condition_operator": "between",
+      "condition_value": "18-25\u5c81",
+      "data_source": "\u8bc1\u4ef6\u4fe1\u606f",
+      "field_registered": true,
+      "rule_order": 54,
+      "source_row": 55
+    },
+    {
+      "segment_code": "E1",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "1-4\u6b21",
+      "condition_operator": "between",
+      "condition_value": "1-4\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 55,
+      "source_row": 56
+    },
+    {
+      "segment_code": "E1",
+      "dimension_name": "\u51b3\u7b56\u4e60\u60ef",
+      "field_code": "booking_lead_time",
+      "field_variant": null,
+      "condition_expression": "=\u22643\u5929",
+      "condition_operator": "lte",
+      "condition_value": "3\u5929",
+      "data_source": "\u8ba2\u7968\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 56,
+      "source_row": 57
+    },
+    {
+      "segment_code": "E2",
+      "dimension_name": "\u4ef7\u683c\u654f\u611f\u5ea6",
+      "field_code": "price_sensitivity",
+      "field_variant": null,
+      "condition_expression": "=\u62a2\u7968\u578b",
+      "condition_operator": "expression",
+      "condition_value": "\u62a2\u7968\u578b",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 57,
+      "source_row": 58
+    },
+    {
+      "segment_code": "E2",
+      "dimension_name": "\u5e74\u98de\u884c\u6b21\u6570",
+      "field_code": "annual_flights",
+      "field_variant": null,
+      "condition_expression": "2-5\u6b21",
+      "condition_operator": "between",
+      "condition_value": "2-5\u6b21",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 58,
+      "source_row": 59
+    },
+    {
+      "segment_code": "E2",
+      "dimension_name": "\u8ba2\u7968\u6e20\u9053",
+      "field_code": "booking_channel_preference",
+      "field_variant": null,
+      "condition_expression": "\u2208 {\u5c0f\u7a0b\u5e8f, OTA}",
+      "condition_operator": "in",
+      "condition_value": "{\u5c0f\u7a0b\u5e8f, OTA}",
+      "data_source": "\u7cfb\u7edf\u5206\u6790",
+      "field_registered": true,
+      "rule_order": 59,
+      "source_row": 60
+    },
+    {
+      "segment_code": "E2",
+      "dimension_name": "\u5e74\u6d88\u8d39\u91d1\u989d",
+      "field_code": "annual_spend",
+      "field_variant": null,
+      "condition_expression": "\u2264 1.5\u4e07\u5143",
+      "condition_operator": "lte",
+      "condition_value": "1.5\u4e07\u5143",
+      "data_source": "\u6d88\u8d39\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 60,
+      "source_row": 61
+    },
+    {
+      "segment_code": "F1",
+      "dimension_name": "\u5386\u53f2\u4f1a\u5458\u7b49\u7ea7",
+      "field_code": "member_tier",
+      "field_variant": "historical",
+      "condition_expression": "\u2208 {\u91d1, \u94f6}",
+      "condition_operator": "in",
+      "condition_value": "{\u91d1, \u94f6}",
+      "data_source": "\u4f1a\u5458\u7cfb\u7edf",
+      "field_registered": true,
+      "rule_order": 61,
+      "source_row": 62
+    },
+    {
+      "segment_code": "F1",
+      "dimension_name": "\u7d2f\u8ba1\u6d88\u8d39\u91d1\u989d",
+      "field_code": "total_spend",
+      "field_variant": null,
+      "condition_expression": "\u2265 5\u4e07\u5143",
+      "condition_operator": "gte",
+      "condition_value": "5\u4e07\u5143",
+      "data_source": "\u6d88\u8d39\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 62,
+      "source_row": 63
+    },
+    {
+      "segment_code": "F1",
+      "dimension_name": "\u8ddd\u4e0a\u6b21\u98de\u884c",
+      "field_code": "days_since_last_flight",
+      "field_variant": null,
+      "condition_expression": "\u2265 180\u5929",
+      "condition_operator": "gte",
+      "condition_value": "180\u5929",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 63,
+      "source_row": 64
+    },
+    {
+      "segment_code": "F1",
+      "dimension_name": "\u5386\u53f2\u5fe0\u8bda\u5ea6",
+      "field_code": "loyalty_score",
+      "field_variant": "historical",
+      "condition_expression": "\u2265 0.6",
+      "condition_operator": "gte",
+      "condition_value": "0.6",
+      "data_source": "LRFMC\u8ba1\u7b97",
+      "field_registered": true,
+      "rule_order": 64,
+      "source_row": 65
+    },
+    {
+      "segment_code": "F2",
+      "dimension_name": "\u4f1a\u5458\u7b49\u7ea7",
+      "field_code": "member_tier",
+      "field_variant": null,
+      "condition_expression": "=\u666e\u5361",
+      "condition_operator": "expression",
+      "condition_value": "\u666e\u5361",
+      "data_source": "\u4f1a\u5458\u7cfb\u7edf",
+      "field_registered": true,
+      "rule_order": 65,
+      "source_row": 66
+    },
+    {
+      "segment_code": "F2",
+      "dimension_name": "\u7d2f\u8ba1\u6d88\u8d39\u91d1\u989d",
+      "field_code": "total_spend",
+      "field_variant": null,
+      "condition_expression": "\u2264 3\u4e07\u5143",
+      "condition_operator": "lte",
+      "condition_value": "3\u4e07\u5143",
+      "data_source": "\u6d88\u8d39\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 66,
+      "source_row": 67
+    },
+    {
+      "segment_code": "F2",
+      "dimension_name": "\u8ddd\u4e0a\u6b21\u98de\u884c",
+      "field_code": "days_since_last_flight",
+      "field_variant": null,
+      "condition_expression": "\u2265 365\u5929",
+      "condition_operator": "gte",
+      "condition_value": "365\u5929",
+      "data_source": "\u822a\u73ed\u8bb0\u5f55",
+      "field_registered": true,
+      "rule_order": 67,
+      "source_row": 68
+    },
+    {
+      "segment_code": "F2",
+      "dimension_name": "\u5f53\u524d\u610f\u5411",
+      "field_code": "current_intent",
+      "field_variant": null,
+      "condition_expression": "=\u65e0\u660e\u786e\u51fa\u884c\u610f\u56fe",
+      "condition_operator": "expression",
+      "condition_value": "\u65e0\u660e\u786e\u51fa\u884c\u610f\u56fe",
+      "data_source": "\u5b9e\u65f6\u884c\u4e3a",
+      "field_registered": true,
+      "rule_order": 68,
+      "source_row": 69
+    }
+  ]
+}

@@ -41,7 +41,7 @@ from .models import (
 )
 from .ontology import build_campaign_graph, graph_stats, semantic_model, semantic_status
 from .security import SecretCipher
-from .seed import seed_database, seed_tenant_data
+from .seed import seed_database, seed_persona_catalog, seed_tenant_data
 
 settings = get_settings()
 
@@ -71,6 +71,8 @@ async def lifespan(_app: FastAPI):
         enforce_postgres_tenant_constraints(engine)
         with SessionLocal() as session:
             seed_tenant_data(session, tenant_id)
+        with SessionLocal() as session:
+            seed_persona_catalog(session, tenant_id)
     yield
 
 

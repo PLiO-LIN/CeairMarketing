@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -12,10 +13,16 @@ from .db_models import (
     ModelProviderRecord,
     OntologyEntityRecord,
     OntologyRelationRecord,
+    PersonaDimensionDefinitionRecord,
+    PersonaSegmentRecord,
+    PersonaSegmentRuleRecord,
     TenantMembershipRecord,
     TenantRecord,
     UserRecord,
 )
+
+
+PERSONA_CATALOG_PATH = Path(__file__).with_name("persona_catalog_seed.json")
 
 
 def seed_database(session: Session) -> int:
@@ -75,6 +82,75 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
     session.commit()
     _seed_graph(session, headquarters_id)
     seed_marketing_lifecycle(session, headquarters_id)
+
+
+def seed_persona_catalog(session: Session, tenant_id: int) -> None:
+    if session.scalar(select(PersonaSegmentRecord.id).where(PersonaSegmentRecord.tenant_id == tenant_id).limit(1)) is not None:
+        return
+    catalog = json.loads(PERSONA_CATALOG_PATH.read_text(encoding="utf-8"))
+    source_file = catalog["source_file"]
+    source_version = catalog["catalog_version"]
+
+    for item in catalog["dimensions"]:
+        session.add(
+            PersonaDimensionDefinitionRecord(
+                tenant_id=tenant_id,
+                module_key=item["module_key"],
+                module_name=item["module_name"],
+                field_name=item["field_name"],
+                field_code=item["field_code"],
+                data_type=item["data_type"],
+                source_data_type=item["source_data_type"],
+                collection_method=item["collection_method"],
+                required_mode=item["required_mode"],
+                allowed_values=item["allowed_values"],
+                update_frequency=item["update_frequency"],
+                applicable_personas_json=json.dumps(item["applicable_personas"], ensure_ascii=False),
+                is_supplemental=bool(item.get("is_supplemental", False)),
+                source_file=source_file,
+                source_version=source_version,
+                source_row=item["source_row"],
+            )
+        )
+    session.flush()
+
+    segments: dict[str, PersonaSegmentRecord] = {}
+    for item in catalog["segments"]:
+        record = PersonaSegmentRecord(
+            tenant_id=tenant_id,
+            segment_code=item["segment_code"],
+            primary_persona_code=item["primary_persona_code"],
+            primary_persona_name=item["primary_persona_name"],
+            segment_name=item["segment_name"],
+            belongs_to=item["belongs_to"],
+            within_persona_share=item["within_persona_share"],
+            recommended_products=item["recommended_products"],
+            recommended_channels=item["recommended_channels"],
+            source_file=source_file,
+            source_version=source_version,
+            source_row=item["source_row"],
+        )
+        session.add(record)
+        session.flush()
+        segments[item["segment_code"]] = record
+
+    for item in catalog["rules"]:
+        session.add(
+            PersonaSegmentRuleRecord(
+                segment_id=segments[item["segment_code"]].id,
+                dimension_name=item["dimension_name"],
+                field_code=item["field_code"],
+                field_variant=item["field_variant"],
+                condition_expression=item["condition_expression"],
+                condition_operator=item["condition_operator"],
+                condition_value=item["condition_value"],
+                data_source=item["data_source"],
+                field_registered=bool(item["field_registered"]),
+                rule_order=item["rule_order"],
+                source_row=item["source_row"],
+            )
+        )
+    session.commit()
 
 
 def _seed_graph(session: Session, tenant_id: int) -> None:

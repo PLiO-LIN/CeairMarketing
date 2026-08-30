@@ -156,3 +156,67 @@ class OntologyRelationRecord(Base):
     confidence: Mapped[float] = mapped_column(Float, default=1.0)
     import_job_id: Mapped[str | None] = mapped_column(ForeignKey("import_jobs.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class PersonaDimensionDefinitionRecord(Base):
+    __tablename__ = "persona_dimension_definitions"
+    __table_args__ = (UniqueConstraint("tenant_id", "field_code", name="uq_persona_dimension_tenant_code"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    module_key: Mapped[str] = mapped_column(String(64), index=True)
+    module_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    field_name: Mapped[str] = mapped_column(String(120))
+    field_code: Mapped[str] = mapped_column(String(120), index=True)
+    data_type: Mapped[str] = mapped_column(String(32))
+    source_data_type: Mapped[str] = mapped_column(String(40))
+    collection_method: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    required_mode: Mapped[str] = mapped_column(String(32))
+    allowed_values: Mapped[str | None] = mapped_column(Text, nullable=True)
+    update_frequency: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    applicable_personas_json: Mapped[str] = mapped_column(Text, default="[]")
+    is_supplemental: Mapped[bool] = mapped_column(Boolean, default=False)
+    source_file: Mapped[str] = mapped_column(String(200))
+    source_version: Mapped[str] = mapped_column(String(32))
+    source_row: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class PersonaSegmentRecord(Base):
+    __tablename__ = "persona_segments"
+    __table_args__ = (UniqueConstraint("tenant_id", "segment_code", name="uq_persona_segment_tenant_code"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    segment_code: Mapped[str] = mapped_column(String(24), index=True)
+    primary_persona_code: Mapped[str] = mapped_column(String(8), index=True)
+    primary_persona_name: Mapped[str] = mapped_column(String(80))
+    segment_name: Mapped[str] = mapped_column(String(120))
+    belongs_to: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    within_persona_share: Mapped[float | None] = mapped_column(Float, nullable=True)
+    recommended_products: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommended_channels: Mapped[str | None] = mapped_column(Text, nullable=True)
+    source_file: Mapped[str] = mapped_column(String(200))
+    source_version: Mapped[str] = mapped_column(String(32))
+    source_row: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    rules: Mapped[list["PersonaSegmentRuleRecord"]] = relationship(cascade="all, delete-orphan", back_populates="segment")
+
+
+class PersonaSegmentRuleRecord(Base):
+    __tablename__ = "persona_segment_rules"
+    __table_args__ = (UniqueConstraint("segment_id", "source_row", name="uq_persona_segment_rule_source_row"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    segment_id: Mapped[int] = mapped_column(ForeignKey("persona_segments.id", ondelete="CASCADE"), index=True)
+    dimension_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    field_code: Mapped[str] = mapped_column(String(120), index=True)
+    field_variant: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    condition_expression: Mapped[str | None] = mapped_column(Text, nullable=True)
+    condition_operator: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    condition_value: Mapped[str | None] = mapped_column(Text, nullable=True)
+    data_source: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    field_registered: Mapped[bool] = mapped_column(Boolean, default=True)
+    rule_order: Mapped[int] = mapped_column(Integer)
+    source_row: Mapped[int] = mapped_column(Integer)
+    segment: Mapped[PersonaSegmentRecord] = relationship(back_populates="rules")
