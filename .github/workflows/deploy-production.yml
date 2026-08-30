@@ -88,16 +88,19 @@ jobs:
               exit 1
             fi
             cd "$RELEASE_DIR"
+            PUBLIC_PORT_VALUE=$(grep -E '^PUBLIC_PORT=' .env | tail -n 1 | cut -d= -f2- || true)
+            PUBLIC_PORT_VALUE=${PUBLIC_PORT_VALUE:-80}
             sudo docker compose build
             sudo docker compose up -d --remove-orphans
             for i in $(seq 1 30); do
               if sudo docker compose ps --status running | grep -q 'ceair-marketing-web'; then
-                if curl -fsS http://127.0.0.1:8088/health >/dev/null; then break; fi
+                if curl -fsS "http://127.0.0.1:${PUBLIC_PORT_VALUE}/health" >/dev/null; then break; fi
               fi
               sleep 5
             done
-            curl -fsS http://127.0.0.1:8088/health >/dev/null
+            curl -fsS "http://127.0.0.1:${PUBLIC_PORT_VALUE}/health" >/dev/null
             ln -sfn "$RELEASE_DIR" "$APP_ROOT/current"
             find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -name "$RELEASE_SHA" -printf '%T@ %p\n' | sort -nr | tail -n +6 | cut -d' ' -f2- | xargs -r sudo rm -rf
             rm -f "$ARCHIVE"
             echo "Deployed $RELEASE_SHA ($RELEASE_TAG)"
+

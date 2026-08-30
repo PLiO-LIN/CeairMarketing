@@ -45,7 +45,10 @@
   };
   const search = () => openDrawer('全局业务搜索','检索机会、客群、产品包、内容和活动',section('搜索条件','<div class="drawer-form"><label>关键字<input value="三亚"></label><label>对象类型<select><option>全部业务对象</option><option>营销活动</option><option>客群</option><option>产品包</option><option>内容</option></select></label></div>') + section('相关对象','<div class="drawer-list"><button data-open="campaign"><span>上海—三亚国庆早鸟</span><b>营销活动 ›</b></button><button data-nav="audiences"><span>三亚高意向未购</span><b>动态客群 ›</b></button><button data-open="product"><span>三亚国庆早鸟产品包</span><b>产品包 ›</b></button></div>'),'<button class="btn primary" data-drawer="search">查询</button>');
 
-  $$('.menu-toggle').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); b.closest('.menu-group').classList.toggle('open'); }));
+  document.querySelectorAll('.menu-toggle').forEach(b => {
+    const group = b.closest('.menu-group');
+    b.setAttribute('aria-expanded', group?.classList.contains('open') ? 'true' : 'false');
+  });
   drawer.addEventListener('click', e => { if (e.target === drawer) closeDrawer(); });
   $$('.selection-box,.content-option').forEach(e => e.addEventListener('click', () => e.classList.toggle('selected')));
 
@@ -54,7 +57,7 @@
     if (nav) { closeDrawer(); activate(nav.dataset.nav); return; }
     const d = e.target.closest('[data-drawer]')?.dataset.drawer;
     if (d) {
-      if (d === 'workspace') { closeDrawer(); toast('工作空间已切换，数据权限已刷新'); return; }
+      if (d === 'tenant') { closeDrawer(); toast('租户已切换，数据权限已刷新'); return; }
       if (d === 'close') closeDrawer();
       if (d === 'createCampaign' || d === 'useProduct' || d === 'duplicate') { closeDrawer(); document.querySelector('[data-action="createCampaign"]')?.click(); }
       if (d === 'saveDraft') { closeDrawer(); toast('草稿已保存，可从对应工作台继续编辑'); }
@@ -80,7 +83,7 @@
     if (['viewProduct','useProduct'].includes(action)) product();
     if (['reviewContent','viewContent'].includes(action)) content();
     if (['viewVersion','compareVersion','rollbackVersion'].includes(action)) campaign();
-    if (action === 'switchWorkspace') openDrawer('切换工作空间','根据岗位切换数据和功能权限',section('工作空间','<div class="drawer-list"><button data-drawer="workspace"><span>华东区域营销运营</span><b>当前</b></button><button data-drawer="workspace"><span>全国会员营销</span><b>可切换</b></button><button><span>国际航线营销</span><b>需申请</b></button></div>'));
+    if (action === 'switchTenant') openDrawer('切换租户','切换租户后将按成员角色刷新数据和功能权限',section('租户','<div class="drawer-list"><button data-drawer="tenant"><span>华东区域营销运营</span><b>当前</b></button><button data-drawer="tenant"><span>全国会员营销</span><b>可切换</b></button><button><span>国际航线营销</span><b>需申请</b></button></div>'));
     const plain = e.target.closest('button');
     if (plain && !action && !plain.dataset.view && !plain.dataset.menu && !plain.dataset.approval && !plain.dataset.role && !plain.dataset.decision && !plain.dataset.graphFilter && !plain.dataset.close && !plain.id) {
       const label = plain.textContent.trim();

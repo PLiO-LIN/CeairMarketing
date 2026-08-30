@@ -1,4 +1,22 @@
-﻿# Version History
+# Version History
+## v2.7 - 2026-08-27
+
+- Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.
+- Added checkpointed processing events for parsing, knowledge persistence, Harness/model execution, semantic validation, review and ontology update.
+- Added a marketing Copilot API with authorized knowledge search, ontology query, campaign inspection and product lookup tools through the shared Harness.
+- Added unified Marketing Knowledge workspace combining the ontology graph and traceable knowledge search.
+- Added drag-and-drop pipeline monitoring with live polling, candidate object preview and confirm/reject controls.
+- Added provider workspace with model discovery, connection status and tenant-scoped usage distribution.
+- Fixed repository-root environment loading so local development and tests do not depend on the process working directory.
+
+## v2.6 - 2026-08-27
+
+- Expanded the airline marketing ontology from operational lifecycle objects to a complete objective, need, value proposition, strategy, touchpoint, attribution, and learning chain.
+- Mapped marketing planning, segmentation, value proposition, integrated communication, channel management, loyalty, lifetime value, and performance control concepts to executable China Eastern business objects.
+- Extended all six intelligent-domain contracts so agents share governed marketing context while retaining human approval boundaries.
+- Added a richer Shanghai-Sanya lifecycle graph covering measurable objectives, customer needs, product value, strategy, touchpoint planning, and multi-dimensional attribution.
+- Updated the data processing agent to extract the extended marketing semantic objects and removed duplicate knowledge-document persistence.
+- Added model discovery and tenant-scoped token usage accounting for OpenAI-compatible providers.
 
 ## v2.4 - 2026-08-26
 
@@ -10,6 +28,13 @@
 - Added ontology context events to agent runs so every run records the objects and functions it used.
 - Added registered relation endpoint validation while retaining tenant-defined extension relations.
 - Expanded the idempotent lifecycle instance with ticket, ancillary, coupon, channel and complete campaign spine objects.
+
+## v2.5 - 2026-08-27
+
+- Added the data processing pipeline for text, structured files, and MinerU-supported documents.
+- Added a shared provider-neutral Harness used by the data processing agent and the six marketing intelligent domains.
+- Added the knowledge base layer for versioned documents and traceable knowledge chunks linked to ontology objects.
+- Added administrator-managed MinerU integration configuration and tenant-scoped pipeline and knowledge search APIs.
 
 ## v2.3 - 2026-08-26
 
