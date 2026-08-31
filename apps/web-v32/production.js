@@ -5,7 +5,7 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
-  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], documents: [] };
+  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], documents: [], approvals: [] };
   const pipelineFiles = new Map();
   const roleLabels = { admin: '租户管理员', manager: '营销经理', analyst: '营销分析师', viewer: '只读用户' };
   let pipelinePollTimer = null;
@@ -309,12 +309,29 @@
     });
   }
 
-  function showCampaignDetail(item){
+  async function showCampaignDetail(item){
     if(!item)return;
     let layer=q('#campaignDetailLayer');
     if(!layer){layer=document.createElement('div');layer.id='campaignDetailLayer';layer.className='production-modal';document.body.appendChild(layer);}
-    layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.id)} · 活动详情与版本</small></div><button class="btn" data-campaign-detail-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>当前节点</b>${escapeHtml(item.stage)}</span><span><b>当前版本</b>${escapeHtml(item.version)}</span><span><b>负责人</b>${escapeHtml(item.owner)}</span><span><b>状态</b>${escapeHtml(item.status)}</span></div><div class="campaign-detail-grid"><section><h3>活动配置</h3><dl><dt>活动目标</dt><dd>围绕航线、客群和产品包完成精准触达</dd><dt>关联客群</dt><dd>${Number(item.audience_size||0).toLocaleString('zh-CN')} 人</dd><dt>关联产品</dt><dd>活动产品包 · 资格与库存动态校验</dd><dt>执行渠道</dt><dd>东航 App、短信、微信及合作渠道</dd></dl></section><section><h3>版本记录</h3><div class="campaign-version-list"><div class="current"><b>${escapeHtml(item.version||'V1')}</b><span>当前版本 · ${escapeHtml(item.owner||'营销运营')}</span><small>活动配置、客群、产品和内容状态已汇总</small><button class="btn" data-campaign-version-view>查看版本</button></div><div><b>V2</b><span>历史版本 · 审批与频控调整</span><small>保留变更记录，可追溯审批意见与执行结果</small><button class="btn">对比</button></div><div><b>V1</b><span>初始版本 · 活动创建</span><small>保存活动创建时的基础配置</small><button class="btn">查看</button></div></div></section></div></div></div>`;
     layer.hidden=false; layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-campaign-detail-close]'))layer.hidden=true;},{once:true});
+    layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.id)} · 加载真实营销生命周期</small></div><button class="btn" data-campaign-detail-close>关闭</button></div><div class="production-modal-body"><div class="production-status">正在读取活动版本、审批、执行、反馈和审计时间线...</div></div></div>`;
+    try{
+      const lifecycle=await request('/api/campaigns/'+encodeURIComponent(item.id)+'/lifecycle');
+      const campaign=lifecycle.campaign, pending=(lifecycle.approvals||[]).find(task=>task.status==='待处理'), latestBatch=(lifecycle.batches||[])[0], review=lifecycle.review;
+      let actionHtml='';
+      if(['草稿','退回修改'].includes(campaign.status)) actionHtml=`<button class="btn primary" data-lifecycle-submit="${escapeHtml(campaign.id)}">提交审批</button>`;
+      else if(pending) actionHtml=`<button class="btn primary" data-lifecycle-approve="${escapeHtml(pending.id)}">通过${escapeHtml(pending.step_name)}</button><button class="btn danger" data-lifecycle-reject="${escapeHtml(pending.id)}">退回修改</button>`;
+      else if(campaign.status==='已批准') actionHtml=`<button class="btn primary" data-lifecycle-create-batch="${escapeHtml(campaign.id)}">创建执行批次</button>`;
+      else if(latestBatch?.status==='待执行') actionHtml=`<button class="btn primary" data-lifecycle-start-batch="${escapeHtml(latestBatch.id)}">启动执行批次</button>`;
+      else if(latestBatch?.status==='运行中') actionHtml=`<button class="btn primary" data-lifecycle-feedback-import="${escapeHtml(latestBatch.id)}">导入执行反馈</button>`;
+      else if(campaign.status==='待复盘') actionHtml=`<button class="btn primary" data-lifecycle-create-review="${escapeHtml(campaign.id)}">生成效果复盘</button>`;
+      const versionRows=(lifecycle.versions||[]).length?lifecycle.versions.map(version=>`<div class="${version.status==='已批准'?'current':''}"><b>V${version.version_number}</b><span>${escapeHtml(version.status)}</span><small>${new Date(version.created_at).toLocaleString('zh-CN')} · ${escapeHtml((version.configuration.channels||[]).join(' + ')||'待配置渠道')}</small></div>`).join(''):'<div><b>尚未提交版本</b><small>完善活动配置后提交审批，系统会自动冻结客群、产品、预算与渠道。</small></div>';
+      const approvalRows=(lifecycle.approvals||[]).length?lifecycle.approvals.map(task=>`<tr><td>${task.sequence}</td><td>${escapeHtml(task.step_name)}</td><td>${escapeHtml(task.assigned_role)}</td><td><span class="status ${statusClass(task.status)}">${escapeHtml(task.status)}</span></td></tr>`).join(''):'<tr><td colspan="4">尚无审批任务</td></tr>';
+      const batchRows=(lifecycle.batches||[]).length?lifecycle.batches.map(batch=>`<tr><td>${escapeHtml(batch.id)}</td><td>${escapeHtml(batch.channel_summary)}</td><td>${Number(batch.target_audience_size).toLocaleString('zh-CN')}</td><td><span class="status ${statusClass(batch.status)}">${escapeHtml(batch.status)}</span></td></tr>`).join(''):'<tr><td colspan="4">尚无执行批次</td></tr>';
+      const timelineRows=(lifecycle.timeline||[]).slice(0,8).map(event=>`<tr><td>${new Date(event.created_at).toLocaleString('zh-CN')}</td><td>${escapeHtml(event.action)}</td><td>${escapeHtml(event.previous_status||'—')} → ${escapeHtml(event.next_status||'—')}</td></tr>`).join('')||'<tr><td colspan="3">尚无业务事件</td></tr>';
+      const reviewHtml=review?`<div class="ai-result"><b>复盘结果</b><p>送达 ${Number(review.result.delivered_count||0).toLocaleString('zh-CN')} 人，出票 ${Number(review.result.booking_count||0).toLocaleString('zh-CN')} 单，增量收入 ¥${Number(review.result.incremental_revenue_yuan||0).toLocaleString('zh-CN')}，ROI ${review.result.roi ?? '待补充成本'}。</p></div>`:'';
+      layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(campaign.name)}</b><small>${escapeHtml(campaign.id)} · 真实活动生命周期</small></div><button class="btn" data-campaign-detail-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>当前节点</b>${escapeHtml(campaign.stage)}</span><span><b>当前版本</b>${escapeHtml(campaign.version)}</span><span><b>负责人</b>${escapeHtml(campaign.owner)}</span><span><b>状态</b>${escapeHtml(campaign.status)}</span></div><div class="business-actions">${actionHtml||'<span class="muted">当前状态无需人工操作</span>'}</div><div class="campaign-detail-grid"><section><h3>活动配置</h3><dl><dt>关联客群</dt><dd>${Number(campaign.audience_size||0).toLocaleString('zh-CN')} 人</dd><dt>关联产品</dt><dd>${escapeHtml(campaign.product_package)}</dd><dt>预算 / ROI目标</dt><dd>¥${Number(campaign.budget_yuan||0).toLocaleString('zh-CN')} / ${campaign.roi_target || '待设置'}</dd></dl></section><section><h3>版本记录</h3><div class="campaign-version-list">${versionRows}</div></section></div><section class="panel"><div class="panel-head"><h2>审批链路</h2><span>真实状态</span></div><div class="panel-body"><table class="table"><tr><th>顺序</th><th>节点</th><th>角色</th><th>状态</th></tr>${approvalRows}</table></div></section><section class="panel"><div class="panel-head"><h2>执行批次</h2><span>受控投放</span></div><div class="panel-body"><table class="table"><tr><th>批次</th><th>渠道</th><th>目标人数</th><th>状态</th></tr>${batchRows}</table></div></section>${reviewHtml}<section class="panel"><div class="panel-head"><h2>审计时间线</h2><span>可回放</span></div><div class="panel-body"><table class="table"><tr><th>时间</th><th>操作</th><th>状态变化</th></tr>${timelineRows}</table></div></section></div></div>`;
+    }catch(cause){layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><b>活动生命周期</b><button class="btn" data-campaign-detail-close>关闭</button></div><div class="production-modal-body"><div class="production-status">${escapeHtml(cause.message||'读取活动状态失败')}</div></div></div>`;}
   }
 
   function renderDynamicGraph() {
@@ -439,7 +456,46 @@
 
   function bindProductionActions() {
     document.addEventListener('click', async event => {
+      const button=event.target.closest('button'); if(!button||button.id!=='wizardNext'||button.textContent.trim()!=='提交审批') return;
+      if(!canWrite()){event.preventDefault();event.stopImmediatePropagation();toast('当前角色没有创建和提交活动的权限');return;}
+      event.preventDefault();event.stopImmediatePropagation();
+      const name=q('#campaignName')?.value?.trim();
+      if(!name||name.length<2){toast('活动名称至少需要2个字符');return;}
+      button.disabled=true;
+      try{
+        const created=await request('/api/campaigns',{method:'POST',body:JSON.stringify({name,owner:session.display_name,audience_size:36420,product_package:'三亚国庆早鸟包',budget_yuan:320000,roi_target:4.0})});
+        await request('/api/campaigns/'+encodeURIComponent(created.id)+'/submit',{method:'POST',body:JSON.stringify({note:'由营销工作台提交',channels:['东航App','短信']})});
+        if(typeof window.closeLayer==='function')window.closeLayer('campaignModal');
+        if(typeof window.activate==='function')window.activate('campaigns');
+        await loadTenantData();
+        toast('活动已创建并提交产品确认，审批链路已写入系统');
+      }catch(cause){toast(cause.message||'活动提交失败');}
+      finally{button.disabled=false;}
+    }, true);
+
+    document.addEventListener('click', async event => {
       const button=event.target.closest('button'); if(!button) return;
+      const refreshLifecycle=async campaignId=>{await loadTenantData();const item=(tenantData.campaigns||[]).find(value=>value.id===campaignId);if(item)await showCampaignDetail(item);};
+      if(button.dataset.lifecycleSubmit){
+        try{await request('/api/campaigns/'+encodeURIComponent(button.dataset.lifecycleSubmit)+'/submit',{method:'POST',body:JSON.stringify({note:'从活动详情提交审批',channels:['东航App','短信']})});toast('活动已提交审批');await refreshLifecycle(button.dataset.lifecycleSubmit);}catch(cause){toast(cause.message||'提交审批失败');}return;
+      }
+      if(button.dataset.lifecycleApprove||button.dataset.lifecycleReject){
+        const approvalId=button.dataset.lifecycleApprove||button.dataset.lifecycleReject, decision=button.dataset.lifecycleApprove?'approve':'reject', comment=decision==='approve'?'已完成当前审批节点校验。':'退回补充活动依据后重新提交。';
+        try{const task=await request('/api/approvals/'+encodeURIComponent(approvalId)+'/decisions',{method:'POST',body:JSON.stringify({decision,comment})});toast(decision==='approve'?'审批通过，已推进下一节点':'活动已退回修改');await refreshLifecycle(task.campaign_id);}catch(cause){toast(cause.message||'审批处理失败');}return;
+      }
+      if(button.dataset.lifecycleCreateBatch){
+        const campaignId=button.dataset.lifecycleCreateBatch;
+        try{await request('/api/execution-batches',{method:'POST',body:JSON.stringify({campaign_id:campaignId,channels:['东航App','短信'],target_audience_size:null})});toast('已创建执行批次，等待人工启动');await refreshLifecycle(campaignId);}catch(cause){toast(cause.message||'创建执行批次失败');}return;
+      }
+      if(button.dataset.lifecycleStartBatch){
+        try{const batch=await request('/api/execution-batches/'+encodeURIComponent(button.dataset.lifecycleStartBatch)+'/start',{method:'POST'});toast('执行批次已启动');await refreshLifecycle(batch.campaign_id);}catch(cause){toast(cause.message||'启动执行批次失败');}return;
+      }
+      if(button.dataset.lifecycleFeedbackImport){
+        try{const metric=await request('/api/feedback',{method:'POST',body:JSON.stringify({execution_batch_id:button.dataset.lifecycleFeedbackImport,channel:'东航App + 短信',delivered_count:35910,clicked_count:4096,booking_count:3572,revenue_yuan:1580000,baseline_revenue_yuan:620000,cost_yuan:320000})});toast('已导入反馈数据，等待生成复盘');await refreshLifecycle(metric.campaign_id);}catch(cause){toast(cause.message||'导入反馈失败');}return;
+      }
+      if(button.dataset.lifecycleCreateReview){
+        try{await request('/api/campaigns/'+encodeURIComponent(button.dataset.lifecycleCreateReview)+'/reviews',{method:'POST'});toast('已生成可追溯的效果复盘和下一轮建议');await refreshLifecycle(button.dataset.lifecycleCreateReview);}catch(cause){toast(cause.message||'生成复盘失败');}return;
+      }
        if(button.dataset.productionCampaignView){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignView);if(item){showCampaignDetail(item);toast('已打开活动详情：'+item.name);}return;}
       if(button.dataset.productionCampaignDelete){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignDelete);if(!item||!canWrite()||!window.confirm('确认删除活动“'+item.name+'”？删除后不可恢复。'))return;try{await request('/api/campaigns/'+encodeURIComponent(item.id),{method:'DELETE'});toast('活动“'+item.name+'”已删除');await loadTenantData();}catch(cause){toast(cause.message||'活动删除失败');}return;}
        if(button.dataset.productionCampaignEdit){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignEdit);if(!item||!canWrite())return;const name=window.prompt('活动名称',item.name);if(name===null)return;const next=name.trim();if(next.length<2){toast('活动名称至少需要2个字符');return;}try{await request('/api/campaigns/'+encodeURIComponent(item.id),{method:'PUT',body:JSON.stringify({name:next})});toast('活动“'+next+'”已更新');await loadTenantData();}catch(cause){toast(cause.message||'活动更新失败');}return;}
@@ -591,7 +647,7 @@ function mountMarketingAssistantV2(){
     restoreLayout();if(window.lucide)lucide.createIcons();
   }
 
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,documents]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,documents,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/knowledge/documents','/api/approvals'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,documents,approvals]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,documents,approvals,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function initializeSession(){
     try{mountMarketingAssistantV2();}catch(cause){console.error('营销助手挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}

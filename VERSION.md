@@ -1,4 +1,12 @@
 # Version History
+## v2.8 - 2026-08-31
+
+- Added a persisted marketing lifecycle vertical slice: campaign creation, version freeze, three-stage approval, execution batches, feedback import, review, and an auditable business timeline.
+- Added guarded lifecycle APIs so AI suggestions remain separate from business actions; only authorized users can submit, approve, start execution, import feedback, or complete a review.
+- Added deterministic review metrics for delivered, click, booking, revenue, baseline revenue, incremental revenue, and ROI, with explicit no-cost handling.
+- Updated the production workbench activity detail to show and operate on real lifecycle records instead of only browser-side workflow messages.
+- Isolated the API test bootstrap credentials from local `.env` values and added end-to-end lifecycle coverage.
+
 ## v2.7 - 2026-08-27
 
 - Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.

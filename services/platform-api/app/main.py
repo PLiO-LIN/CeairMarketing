@@ -18,7 +18,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalDecisionRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceTagRecord, BusinessActionEventRecord, CampaignRecord, CampaignReviewRecord, CampaignVersionRecord, DataPipelineJobRecord, ExecutionBatchRecord, FeedbackMetricRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
@@ -35,8 +35,21 @@ from .models import (
     AgentChatRequest,
     AgentChatResponse,
     Campaign,
+    CampaignCreate,
+    CampaignLifecycle,
+    CampaignReview,
+    CampaignSubmission,
     CampaignUpdate,
+    CampaignVersion,
     CurrentUser,
+    ApprovalDecision,
+    ApprovalDecisionCreate,
+    ApprovalTask,
+    BusinessActionEvent,
+    ExecutionBatch,
+    ExecutionBatchCreate,
+    FeedbackImport,
+    FeedbackMetric,
     GraphStats,
     ImportJob,
     LoginRequest,
@@ -148,6 +161,91 @@ def clear_default(session: Session, tenant_id: int, excluding_id: int | None = N
     session.execute(statement)
 
 
+APPROVAL_STEPS = (("产品确认", "manager"), ("营销审批", "manager"), ("合规复核", "admin"))
+
+
+def campaign_for_context(session: Session, context: TenantContext, campaign_id: str) -> CampaignRecord:
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="活动不存在")
+    return campaign
+
+
+def action_event(
+    session: Session,
+    context: TenantContext,
+    campaign_id: str,
+    action: str,
+    resource_type: str,
+    resource_id: str,
+    previous_status: str = "",
+    next_status: str = "",
+    detail: dict | None = None,
+) -> BusinessActionEventRecord:
+    record = BusinessActionEventRecord(
+        id=f"EVT-{uuid4().hex[:16].upper()}",
+        tenant_id=context.tenant_id,
+        campaign_id=campaign_id,
+        action=action,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        previous_status=previous_status,
+        next_status=next_status,
+        detail_json=json.dumps(detail or {}, ensure_ascii=False),
+        actor_id=context.user_id,
+    )
+    session.add(record)
+    return record
+
+
+def campaign_version_view(record: CampaignVersionRecord) -> CampaignVersion:
+    return CampaignVersion(
+        id=record.id,
+        campaign_id=record.campaign_id,
+        version_number=record.version_number,
+        status=record.status,
+        configuration=json.loads(record.configuration_json or "{}"),
+        created_at=record.created_at,
+    )
+
+
+def approval_task_view(record: ApprovalTaskRecord) -> ApprovalTask:
+    return ApprovalTask.model_validate(record)
+
+
+def execution_batch_view(record: ExecutionBatchRecord) -> ExecutionBatch:
+    return ExecutionBatch.model_validate(record)
+
+
+def feedback_metric_view(record: FeedbackMetricRecord) -> FeedbackMetric:
+    return FeedbackMetric.model_validate(record)
+
+
+def review_view(record: CampaignReviewRecord) -> CampaignReview:
+    return CampaignReview(
+        id=record.id,
+        campaign_id=record.campaign_id,
+        status=record.status,
+        result=json.loads(record.result_json or "{}"),
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+def business_event_view(record: BusinessActionEventRecord) -> BusinessActionEvent:
+    return BusinessActionEvent(
+        id=record.id,
+        campaign_id=record.campaign_id,
+        action=record.action,
+        resource_type=record.resource_type,
+        resource_id=record.resource_id,
+        previous_status=record.previous_status,
+        next_status=record.next_status,
+        detail=json.loads(record.detail_json or "{}"),
+        created_at=record.created_at,
+    )
+
+
 @app.get("/health/live")
 def health_live() -> dict[str, str]:
     return {"status": "ok", "service": "ceair-marketing-platform-api"}
@@ -252,21 +350,197 @@ def list_campaigns(context: TenantContext = Depends(get_tenant_context), session
 
 @app.get("/api/campaigns/{campaign_id}", response_model=Campaign)
 def get_campaign(campaign_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
-    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
-    if campaign is None:
-        raise HTTPException(status_code=404, detail="活动不存在")
+    return campaign_for_context(session, context, campaign_id)
+
+
+@app.post("/api/campaigns", response_model=Campaign, status_code=status.HTTP_201_CREATED)
+def create_campaign(payload: CampaignCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = CampaignRecord(
+        tenant_id=context.tenant_id,
+        id=f"ACT-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}",
+        name=payload.name,
+        stage="草稿",
+        status="草稿",
+        version="V0",
+        owner=payload.owner or context.display_name,
+        audience_size=payload.audience_size,
+        product_package=payload.product_package,
+        budget_yuan=payload.budget_yuan,
+        roi_target=payload.roi_target,
+    )
+    session.add(campaign)
+    action_event(session, context, campaign.id, "创建活动", "campaign", campaign.id, next_status=campaign.status, detail={"name": campaign.name})
+    session.commit()
     return campaign
 
 
 @app.put("/api/campaigns/{campaign_id}", response_model=Campaign)
 def update_campaign(campaign_id: str, payload: CampaignUpdate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
-    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
-    if campaign is None:
-        raise HTTPException(status_code=404, detail="活动不存在")
+    campaign = campaign_for_context(session, context, campaign_id)
+    previous_name = campaign.name
     campaign.name = payload.name
     campaign.version = campaign.version or "V1"
+    action_event(session, context, campaign.id, "更新活动", "campaign", campaign.id, detail={"previous_name": previous_name, "name": campaign.name})
     session.commit()
     return campaign
+
+
+@app.post("/api/campaigns/{campaign_id}/submit", response_model=CampaignVersion)
+def submit_campaign(campaign_id: str, payload: CampaignSubmission, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = campaign_for_context(session, context, campaign_id)
+    pending = session.scalar(select(ApprovalTaskRecord.id).where(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_id == campaign_id, ApprovalTaskRecord.status == "待处理"))
+    if pending is not None:
+        raise HTTPException(status_code=409, detail="活动已有待处理审批，不能重复提交")
+    versions = list(session.scalars(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.campaign_id == campaign_id)))
+    existing_numbers = [item.version_number for item in versions]
+    current_number = int(campaign.version[1:]) if campaign.version.startswith("V") and campaign.version[1:].isdigit() else 0
+    version_number = max(existing_numbers + [current_number]) + 1
+    version = CampaignVersionRecord(
+        id=f"CV-{uuid4().hex[:16].upper()}", tenant_id=context.tenant_id, campaign_id=campaign_id,
+        version_number=version_number, status="审批中", created_by=context.user_id,
+        configuration_json=json.dumps({"audience_size": campaign.audience_size, "product_package": campaign.product_package, "budget_yuan": campaign.budget_yuan, "roi_target": campaign.roi_target, "channels": payload.channels, "note": payload.note}, ensure_ascii=False),
+    )
+    session.add(version)
+    for sequence, (step_name, assigned_role) in enumerate(APPROVAL_STEPS, start=1):
+        session.add(ApprovalTaskRecord(
+            id=f"APR-{uuid4().hex[:16].upper()}", tenant_id=context.tenant_id, campaign_id=campaign_id,
+            campaign_version_id=version.id, sequence=sequence, step_name=step_name, assigned_role=assigned_role,
+            status="待处理" if sequence == 1 else "未开始",
+        ))
+    previous_status = campaign.status
+    campaign.stage, campaign.status, campaign.version = "审批", "待产品确认", f"V{version_number}"
+    action_event(session, context, campaign_id, "提交审批", "campaign_version", version.id, previous_status, campaign.status, {"version": campaign.version, "channels": payload.channels})
+    session.commit()
+    return campaign_version_view(version)
+
+
+@app.get("/api/approvals", response_model=list[ApprovalTask])
+def list_approvals(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    return [approval_task_view(item) for item in session.scalars(select(ApprovalTaskRecord).where(ApprovalTaskRecord.tenant_id == context.tenant_id).order_by(ApprovalTaskRecord.created_at.desc()))]
+
+
+@app.post("/api/approvals/{approval_id}/decisions", response_model=ApprovalTask)
+def decide_approval(approval_id: str, payload: ApprovalDecisionCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    if context.role not in {"admin", "manager"}:
+        raise HTTPException(status_code=403, detail="仅营销经理或租户管理员可处理审批")
+    task = session.scalar(select(ApprovalTaskRecord).where(ApprovalTaskRecord.id == approval_id, ApprovalTaskRecord.tenant_id == context.tenant_id))
+    if task is None:
+        raise HTTPException(status_code=404, detail="审批任务不存在")
+    if task.status != "待处理":
+        raise HTTPException(status_code=409, detail="审批任务不是待处理状态")
+    if task.assigned_role == "admin" and context.role != "admin":
+        raise HTTPException(status_code=403, detail="该合规审批仅租户管理员可处理")
+    task.status = "已通过" if payload.decision == "approve" else "已退回"
+    task.decided_at = datetime.now(timezone.utc)
+    session.add(ApprovalDecisionRecord(id=f"APD-{uuid4().hex[:16].upper()}", tenant_id=context.tenant_id, approval_task_id=task.id, decision=payload.decision, comment=payload.comment, decided_by=context.user_id))
+    campaign = campaign_for_context(session, context, task.campaign_id)
+    previous_status = campaign.status
+    version = session.get(CampaignVersionRecord, task.campaign_version_id)
+    if payload.decision == "reject":
+        campaign.stage, campaign.status = "草稿", "退回修改"
+        if version is not None:
+            version.status = "已退回"
+    else:
+        next_task = session.scalar(select(ApprovalTaskRecord).where(ApprovalTaskRecord.campaign_version_id == task.campaign_version_id, ApprovalTaskRecord.sequence == task.sequence + 1))
+        if next_task is None:
+            campaign.stage, campaign.status = "待执行", "已批准"
+            if version is not None:
+                version.status = "已批准"
+        else:
+            next_task.status = "待处理"
+            campaign.stage, campaign.status = "审批", f"待{next_task.step_name}"
+    action_event(session, context, campaign.id, "审批通过" if payload.decision == "approve" else "审批退回", "approval_task", task.id, previous_status, campaign.status, {"step": task.step_name, "comment": payload.comment})
+    session.commit()
+    return approval_task_view(task)
+
+
+@app.post("/api/execution-batches", response_model=ExecutionBatch, status_code=status.HTTP_201_CREATED)
+def create_execution_batch(payload: ExecutionBatchCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = campaign_for_context(session, context, payload.campaign_id)
+    if campaign.status != "已批准":
+        raise HTTPException(status_code=409, detail="活动通过全部审批后才能创建执行批次")
+    version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.campaign_id == campaign.id, CampaignVersionRecord.status == "已批准").order_by(CampaignVersionRecord.version_number.desc()))
+    if version is None:
+        raise HTTPException(status_code=409, detail="活动没有已批准的版本")
+    batch = ExecutionBatchRecord(id=f"BAT-{uuid4().hex[:16].upper()}", tenant_id=context.tenant_id, campaign_id=campaign.id, campaign_version_id=version.id, channel_summary=" + ".join(payload.channels), target_audience_size=payload.target_audience_size if payload.target_audience_size is not None else campaign.audience_size, created_by=context.user_id)
+    session.add(batch)
+    action_event(session, context, campaign.id, "创建执行批次", "execution_batch", batch.id, next_status=batch.status, detail={"channels": payload.channels, "target_audience_size": batch.target_audience_size})
+    session.commit()
+    return execution_batch_view(batch)
+
+
+@app.post("/api/execution-batches/{batch_id}/start", response_model=ExecutionBatch)
+def start_execution_batch(batch_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    batch = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="执行批次不存在")
+    if batch.status != "待执行":
+        raise HTTPException(status_code=409, detail="只有待执行批次可以启动")
+    batch.status, batch.started_at = "运行中", datetime.now(timezone.utc)
+    campaign = campaign_for_context(session, context, batch.campaign_id)
+    previous_status = campaign.status
+    campaign.stage, campaign.status = "执行", "运行中"
+    action_event(session, context, campaign.id, "启动执行批次", "execution_batch", batch.id, previous_status, campaign.status)
+    session.commit()
+    return execution_batch_view(batch)
+
+
+@app.post("/api/feedback", response_model=FeedbackMetric, status_code=status.HTTP_201_CREATED)
+def import_feedback(payload: FeedbackImport, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    batch = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == payload.execution_batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="执行批次不存在")
+    if batch.status not in {"运行中", "已暂停"}:
+        raise HTTPException(status_code=409, detail="只有运行中或已暂停批次可以导入反馈")
+    if payload.clicked_count > payload.delivered_count or payload.booking_count > payload.delivered_count:
+        raise HTTPException(status_code=422, detail="点击或出票数量不能超过送达数量")
+    metric = FeedbackMetricRecord(id=f"FBK-{uuid4().hex[:16].upper()}", tenant_id=context.tenant_id, campaign_id=batch.campaign_id, execution_batch_id=batch.id, channel=payload.channel, delivered_count=payload.delivered_count, clicked_count=payload.clicked_count, booking_count=payload.booking_count, revenue_yuan=payload.revenue_yuan, baseline_revenue_yuan=payload.baseline_revenue_yuan, cost_yuan=payload.cost_yuan, created_by=context.user_id)
+    session.add(metric)
+    batch.status, batch.completed_at = "已完成", datetime.now(timezone.utc)
+    campaign = campaign_for_context(session, context, batch.campaign_id)
+    previous_status = campaign.status
+    campaign.stage, campaign.status = "复盘", "待复盘"
+    action_event(session, context, campaign.id, "导入效果反馈", "feedback_metric", metric.id, previous_status, campaign.status, {"delivered": payload.delivered_count, "bookings": payload.booking_count, "revenue_yuan": payload.revenue_yuan})
+    session.commit()
+    return feedback_metric_view(metric)
+
+
+@app.post("/api/campaigns/{campaign_id}/reviews", response_model=CampaignReview)
+def create_campaign_review(campaign_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = campaign_for_context(session, context, campaign_id)
+    metrics = list(session.scalars(select(FeedbackMetricRecord).where(FeedbackMetricRecord.tenant_id == context.tenant_id, FeedbackMetricRecord.campaign_id == campaign_id)))
+    if not metrics:
+        raise HTTPException(status_code=409, detail="请先导入至少一条执行反馈")
+    delivered = sum(item.delivered_count for item in metrics)
+    clicked = sum(item.clicked_count for item in metrics)
+    bookings = sum(item.booking_count for item in metrics)
+    revenue = sum(item.revenue_yuan for item in metrics)
+    baseline = sum(item.baseline_revenue_yuan for item in metrics)
+    cost = sum(item.cost_yuan for item in metrics)
+    incremental_revenue = revenue - baseline
+    result = {"delivered_count": delivered, "clicked_count": clicked, "booking_count": bookings, "revenue_yuan": revenue, "baseline_revenue_yuan": baseline, "cost_yuan": cost, "incremental_revenue_yuan": incremental_revenue, "click_rate": round(clicked / delivered, 4) if delivered else None, "booking_conversion_rate": round(bookings / delivered, 4) if delivered else None, "roi": round(incremental_revenue / cost, 4) if cost else None, "recommendations": ["保留高转化渠道和内容版本，下一轮优先扩大相似客群。", "对低点击渠道执行频控与内容版本复核。", "继续通过对照组口径验证增量收入和 ROI。"]}
+    review = session.scalar(select(CampaignReviewRecord).where(CampaignReviewRecord.tenant_id == context.tenant_id, CampaignReviewRecord.campaign_id == campaign_id))
+    if review is None:
+        review = CampaignReviewRecord(id=f"REV-{uuid4().hex[:16].upper()}", tenant_id=context.tenant_id, campaign_id=campaign_id, created_by=context.user_id)
+        session.add(review)
+    review.status, review.result_json = "已完成", json.dumps(result, ensure_ascii=False)
+    previous_status = campaign.status
+    campaign.stage, campaign.status = "复盘", "已复盘"
+    action_event(session, context, campaign.id, "生成活动复盘", "campaign_review", review.id, previous_status, campaign.status, result)
+    session.commit()
+    return review_view(review)
+
+
+@app.get("/api/campaigns/{campaign_id}/lifecycle", response_model=CampaignLifecycle)
+def campaign_lifecycle(campaign_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    campaign = campaign_for_context(session, context, campaign_id)
+    versions = list(session.scalars(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.campaign_id == campaign_id).order_by(CampaignVersionRecord.version_number.desc())))
+    approvals = list(session.scalars(select(ApprovalTaskRecord).where(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_id == campaign_id).order_by(ApprovalTaskRecord.created_at.desc(), ApprovalTaskRecord.sequence)))
+    batches = list(session.scalars(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_id == campaign_id).order_by(ExecutionBatchRecord.created_at.desc())))
+    feedback = list(session.scalars(select(FeedbackMetricRecord).where(FeedbackMetricRecord.tenant_id == context.tenant_id, FeedbackMetricRecord.campaign_id == campaign_id).order_by(FeedbackMetricRecord.reported_at.desc())))
+    review = session.scalar(select(CampaignReviewRecord).where(CampaignReviewRecord.tenant_id == context.tenant_id, CampaignReviewRecord.campaign_id == campaign_id))
+    timeline = list(session.scalars(select(BusinessActionEventRecord).where(BusinessActionEventRecord.tenant_id == context.tenant_id, BusinessActionEventRecord.campaign_id == campaign_id).order_by(BusinessActionEventRecord.created_at.desc())))
+    return CampaignLifecycle(campaign=Campaign.model_validate(campaign), versions=[campaign_version_view(item) for item in versions], approvals=[approval_task_view(item) for item in approvals], batches=[execution_batch_view(item) for item in batches], feedback=[feedback_metric_view(item) for item in feedback], review=review_view(review) if review else None, timeline=[business_event_view(item) for item in timeline])
 
 
 @app.delete("/api/campaigns/{campaign_id}", status_code=status.HTTP_204_NO_CONTENT)

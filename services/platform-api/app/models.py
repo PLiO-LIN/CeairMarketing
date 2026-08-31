@@ -80,6 +80,135 @@ class CampaignUpdate(BaseModel):
     name: str = Field(min_length=2, max_length=160)
 
 
+class CampaignCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    owner: str = Field(default="", max_length=64)
+    audience_size: int = Field(default=0, ge=0)
+    product_package: str = Field(default="待配置产品包", max_length=160)
+    budget_yuan: int = Field(default=0, ge=0)
+    roi_target: float = Field(default=0, ge=0)
+
+
+class CampaignSubmission(BaseModel):
+    note: str = Field(default="", max_length=500)
+    channels: list[str] = Field(default_factory=lambda: ["东航App", "短信"], min_length=1, max_length=8)
+
+
+class CampaignVersion(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    campaign_id: str
+    version_number: int
+    status: str
+    configuration: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+
+
+class ApprovalTask(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    campaign_id: str
+    campaign_version_id: str
+    sequence: int
+    step_name: str
+    assigned_role: str
+    status: str
+    created_at: datetime
+    decided_at: datetime | None = None
+
+
+class ApprovalDecisionCreate(BaseModel):
+    decision: Literal["approve", "reject"]
+    comment: str = Field(default="", max_length=1000)
+
+
+class ApprovalDecision(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    approval_task_id: str
+    decision: str
+    comment: str
+    created_at: datetime
+
+
+class ExecutionBatchCreate(BaseModel):
+    campaign_id: str = Field(min_length=1, max_length=32)
+    channels: list[str] = Field(min_length=1, max_length=8)
+    target_audience_size: int | None = Field(default=None, ge=0)
+
+
+class ExecutionBatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    campaign_id: str
+    campaign_version_id: str
+    channel_summary: str
+    target_audience_size: int
+    status: str
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    created_at: datetime
+
+
+class FeedbackImport(BaseModel):
+    execution_batch_id: str = Field(min_length=1, max_length=40)
+    channel: str = Field(default="全部渠道", max_length=80)
+    delivered_count: int = Field(default=0, ge=0)
+    clicked_count: int = Field(default=0, ge=0)
+    booking_count: int = Field(default=0, ge=0)
+    revenue_yuan: int = Field(default=0, ge=0)
+    baseline_revenue_yuan: int = Field(default=0, ge=0)
+    cost_yuan: int = Field(default=0, ge=0)
+
+
+class FeedbackMetric(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    campaign_id: str
+    execution_batch_id: str
+    channel: str
+    delivered_count: int
+    clicked_count: int
+    booking_count: int
+    revenue_yuan: int
+    baseline_revenue_yuan: int
+    cost_yuan: int
+    reported_at: datetime
+
+
+class CampaignReview(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    campaign_id: str
+    status: str
+    result: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+
+
+class BusinessActionEvent(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    campaign_id: str
+    action: str
+    resource_type: str
+    resource_id: str
+    previous_status: str
+    next_status: str
+    detail: dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+
+
+class CampaignLifecycle(BaseModel):
+    campaign: Campaign
+    versions: list[CampaignVersion]
+    approvals: list[ApprovalTask]
+    batches: list[ExecutionBatch]
+    feedback: list[FeedbackMetric]
+    review: CampaignReview | None = None
+    timeline: list[BusinessActionEvent] = Field(default_factory=list)
+
+
 class OpportunityBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     market_scope: str = Field(default="\u8349\u7a3f", max_length=40)

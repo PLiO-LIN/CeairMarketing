@@ -319,3 +319,83 @@ def test_marketing_copilot_uses_tools_and_sources() -> None:
         assert "harness/tool-started" in event_types
         assert isinstance(payload["sources"], list)
 
+
+def test_campaign_lifecycle_is_persisted_and_auditable() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        request_headers = headers(auth, hq["id"])
+
+        created = client.post(
+            "/api/campaigns",
+            headers=request_headers,
+            json={
+                "name": "测试营销闭环活动",
+                "audience_size": 1000,
+                "product_package": "测试早鸟产品包",
+                "budget_yuan": 20000,
+                "roi_target": 2.0,
+            },
+        )
+        assert created.status_code == 201
+        campaign_id = created.json()["id"]
+
+        submitted = client.post(
+            f"/api/campaigns/{campaign_id}/submit",
+            headers=request_headers,
+            json={"note": "提交测试审批", "channels": ["东航App", "短信"]},
+        )
+        assert submitted.status_code == 200
+        assert submitted.json()["status"] == "审批中"
+
+        approvals = client.get("/api/approvals", headers=request_headers).json()
+        tasks = sorted([item for item in approvals if item["campaign_id"] == campaign_id], key=lambda item: item["sequence"])
+        assert [item["status"] for item in tasks] == ["待处理", "未开始", "未开始"]
+        for task in tasks:
+            decision = client.post(
+                f"/api/approvals/{task['id']}/decisions",
+                headers=request_headers,
+                json={"decision": "approve", "comment": "测试通过"},
+            )
+            assert decision.status_code == 200
+
+        batch = client.post(
+            "/api/execution-batches",
+            headers=request_headers,
+            json={"campaign_id": campaign_id, "channels": ["东航App", "短信"], "target_audience_size": 1000},
+        )
+        assert batch.status_code == 201
+        started = client.post(f"/api/execution-batches/{batch.json()['id']}/start", headers=request_headers)
+        assert started.status_code == 200
+        assert started.json()["status"] == "运行中"
+
+        feedback = client.post(
+            "/api/feedback",
+            headers=request_headers,
+            json={
+                "execution_batch_id": batch.json()["id"],
+                "delivered_count": 900,
+                "clicked_count": 120,
+                "booking_count": 50,
+                "revenue_yuan": 80000,
+                "baseline_revenue_yuan": 30000,
+                "cost_yuan": 20000,
+            },
+        )
+        assert feedback.status_code == 201
+
+        review = client.post(f"/api/campaigns/{campaign_id}/reviews", headers=request_headers)
+        assert review.status_code == 200
+        assert review.json()["result"]["incremental_revenue_yuan"] == 50000
+        assert review.json()["result"]["roi"] == 2.5
+
+        lifecycle = client.get(f"/api/campaigns/{campaign_id}/lifecycle", headers=request_headers)
+        assert lifecycle.status_code == 200
+        payload = lifecycle.json()
+        assert payload["campaign"]["status"] == "已复盘"
+        assert len(payload["versions"]) == 1
+        assert len(payload["approvals"]) == 3
+        assert len(payload["batches"]) == 1
+        assert len(payload["feedback"]) == 1
+        assert payload["review"]["result"]["booking_conversion_rate"] == pytest.approx(round(50 / 900, 4))
+        assert {item["action"] for item in payload["timeline"]} >= {"创建活动", "提交审批", "审批通过", "创建执行批次", "启动执行批次", "导入效果反馈", "生成活动复盘"}

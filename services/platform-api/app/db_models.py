@@ -63,6 +63,112 @@ class CampaignRecord(Base):
     roi_target: Mapped[float] = mapped_column(Float)
 
 
+class CampaignVersionRecord(Base):
+    __tablename__ = "campaign_versions"
+    __table_args__ = (UniqueConstraint("tenant_id", "campaign_id", "version_number", name="uq_campaign_version_number"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    version_number: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(32), default="草稿")
+    configuration_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class ApprovalTaskRecord(Base):
+    __tablename__ = "approval_tasks"
+    __table_args__ = (UniqueConstraint("campaign_version_id", "sequence", name="uq_approval_task_version_sequence"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    campaign_version_id: Mapped[str] = mapped_column(ForeignKey("campaign_versions.id", ondelete="CASCADE"), index=True)
+    sequence: Mapped[int] = mapped_column(Integer)
+    step_name: Mapped[str] = mapped_column(String(40))
+    assigned_role: Mapped[str] = mapped_column(String(24))
+    status: Mapped[str] = mapped_column(String(24), default="待处理")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ApprovalDecisionRecord(Base):
+    __tablename__ = "approval_decisions"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    approval_task_id: Mapped[str] = mapped_column(ForeignKey("approval_tasks.id", ondelete="CASCADE"), index=True)
+    decision: Mapped[str] = mapped_column(String(16))
+    comment: Mapped[str] = mapped_column(Text, default="")
+    decided_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class ExecutionBatchRecord(Base):
+    __tablename__ = "execution_batches"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    campaign_version_id: Mapped[str] = mapped_column(ForeignKey("campaign_versions.id", ondelete="RESTRICT"), index=True)
+    channel_summary: Mapped[str] = mapped_column(String(240))
+    target_audience_size: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(24), default="待执行")
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class FeedbackMetricRecord(Base):
+    __tablename__ = "feedback_metrics"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    execution_batch_id: Mapped[str] = mapped_column(ForeignKey("execution_batches.id", ondelete="CASCADE"), index=True)
+    channel: Mapped[str] = mapped_column(String(80), default="全部渠道")
+    delivered_count: Mapped[int] = mapped_column(Integer, default=0)
+    clicked_count: Mapped[int] = mapped_column(Integer, default=0)
+    booking_count: Mapped[int] = mapped_column(Integer, default=0)
+    revenue_yuan: Mapped[int] = mapped_column(Integer, default=0)
+    baseline_revenue_yuan: Mapped[int] = mapped_column(Integer, default=0)
+    cost_yuan: Mapped[int] = mapped_column(Integer, default=0)
+    reported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+
+class CampaignReviewRecord(Base):
+    __tablename__ = "campaign_reviews"
+    __table_args__ = (UniqueConstraint("tenant_id", "campaign_id", name="uq_campaign_review"),)
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    status: Mapped[str] = mapped_column(String(24), default="已完成")
+    result_json: Mapped[str] = mapped_column(Text, default="{}")
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class BusinessActionEventRecord(Base):
+    __tablename__ = "business_action_events"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    action: Mapped[str] = mapped_column(String(64), index=True)
+    resource_type: Mapped[str] = mapped_column(String(40))
+    resource_id: Mapped[str] = mapped_column(String(40))
+    previous_status: Mapped[str] = mapped_column(String(32), default="")
+    next_status: Mapped[str] = mapped_column(String(32), default="")
+    detail_json: Mapped[str] = mapped_column(Text, default="{}")
+    actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class OpportunityRecord(Base):
     __tablename__ = "marketing_opportunities"
     __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_opportunity_tenant_business_id"),)
