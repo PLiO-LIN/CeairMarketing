@@ -1,4 +1,11 @@
 # Version History
+
+## v2.8 - 2026-08-31
+
+- Added tenant-scoped activity product package persistence and CRUD APIs.
+- Replaced static product package rows in the production workbench with live API data.
+- Added product package creation, detail, rename and deletion flows with campaign reference protection.
+- Added regression coverage for persistence and tenant isolation.
 ## v2.7 - 2026-08-27
 
 - Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.

@@ -18,7 +18,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
@@ -72,6 +72,8 @@ from .models import (
     MembershipCreate,
     PlatformUserCreate,
     PlatformUserSummary,
+    ProductPackage,
+    ProductPackageBase,
     TenantCreate,
     TenantSummary,
 )
@@ -276,6 +278,81 @@ def delete_campaign(campaign_id: str, context: TenantContext = Depends(require_w
         raise HTTPException(status_code=404, detail="活动不存在")
     session.delete(campaign)
     session.commit()
+
+
+@app.get("/api/product-packages", response_model=list[ProductPackage])
+def list_product_packages(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    return session.scalars(
+        select(ProductPackageRecord)
+        .where(ProductPackageRecord.tenant_id == context.tenant_id)
+        .order_by(ProductPackageRecord.updated_at.desc())
+    ).all()
+
+
+@app.post("/api/product-packages", response_model=ProductPackage, status_code=status.HTTP_201_CREATED)
+def create_product_package(payload: ProductPackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = ProductPackageRecord(
+        tenant_id=context.tenant_id,
+        external_id=f"PKG-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}",
+        created_by=context.user_id,
+        **payload.model_dump(),
+    )
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return record
+
+
+@app.put("/api/product-packages/{package_id}", response_model=ProductPackage)
+def update_product_package(package_id: int, payload: ProductPackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(
+        select(ProductPackageRecord).where(
+            ProductPackageRecord.id == package_id,
+            ProductPackageRecord.tenant_id == context.tenant_id,
+        )
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="产品包不存在")
+    previous_name = record.name
+    for key, value in payload.model_dump().items():
+        setattr(record, key, value)
+    if previous_name != payload.name:
+        session.execute(
+            update(CampaignRecord)
+            .where(
+                CampaignRecord.tenant_id == context.tenant_id,
+                CampaignRecord.product_package == previous_name,
+            )
+            .values(product_package=payload.name)
+        )
+    session.commit()
+    session.refresh(record)
+    return record
+
+
+@app.delete("/api/product-packages/{package_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product_package(package_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(
+        select(ProductPackageRecord).where(
+            ProductPackageRecord.id == package_id,
+            ProductPackageRecord.tenant_id == context.tenant_id,
+        )
+    )
+    if record is None:
+        raise HTTPException(status_code=404, detail="产品包不存在")
+    referenced = session.scalar(
+        select(func.count())
+        .select_from(CampaignRecord)
+        .where(
+            CampaignRecord.tenant_id == context.tenant_id,
+            CampaignRecord.product_package == record.name,
+        )
+    )
+    if referenced:
+        raise HTTPException(status_code=409, detail=f"产品包已被 {referenced} 个活动引用，请先解除引用")
+    session.delete(record)
+    session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 def audience_package_view(record: AudiencePackageRecord) -> AudiencePackage:

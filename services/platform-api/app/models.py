@@ -80,6 +80,24 @@ class CampaignUpdate(BaseModel):
     name: str = Field(min_length=2, max_length=160)
 
 
+class ProductPackageBase(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    product_type: str = Field(default="组合产品", max_length=64)
+    description: str = Field(default="", max_length=2000)
+    eligibility: str = Field(default="", max_length=1000)
+    version: str = Field(default="V1", max_length=16)
+    status: str = Field(default="草稿", max_length=32)
+    valid_from: datetime | None = None
+    valid_to: datetime | None = None
+
+
+class ProductPackage(ProductPackageBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    external_id: str
+    created_at: datetime
+    updated_at: datetime
+
 class OpportunityBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     market_scope: str = Field(default="\u8349\u7a3f", max_length=40)

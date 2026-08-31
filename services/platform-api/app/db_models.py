@@ -63,6 +63,25 @@ class CampaignRecord(Base):
     roi_target: Mapped[float] = mapped_column(Float)
 
 
+class ProductPackageRecord(Base):
+    __tablename__ = "product_packages"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_product_package_tenant_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(64), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    product_type: Mapped[str] = mapped_column(String(64), default="组合产品")
+    description: Mapped[str] = mapped_column(Text, default="")
+    eligibility: Mapped[str] = mapped_column(Text, default="")
+    version: Mapped[str] = mapped_column(String(16), default="V1")
+    status: Mapped[str] = mapped_column(String(32), default="草稿")
+    valid_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    valid_to: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
 class OpportunityRecord(Base):
     __tablename__ = "marketing_opportunities"
     __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_opportunity_tenant_business_id"),)

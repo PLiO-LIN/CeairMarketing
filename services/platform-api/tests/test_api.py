@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database import SessionLocal
-from app.db_models import KnowledgeDocumentRecord, ModelProviderRecord, OntologyEntityRecord
+from app.db_models import KnowledgeDocumentRecord, ModelProviderRecord, OntologyEntityRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from app.ontology import validate_relation_endpoints
 from app.ontology.bootstrap import LIFECYCLE_ENTITIES, LIFECYCLE_RELATIONS
 
@@ -39,6 +39,53 @@ def login(client: TestClient) -> tuple[dict[str, str], list[dict]]:
 
 def headers(auth: dict[str, str], tenant_id: int) -> dict[str, str]:
     return {**auth, "X-Tenant-ID": str(tenant_id)}
+
+
+def test_product_packages_are_persistent_and_tenant_scoped() -> None:
+    with SessionLocal() as session:
+        admin = session.query(UserRecord).filter(UserRecord.username == "admin").one()
+        isolated = TenantRecord(code="CEA-PKG-TEST", name="产品包隔离测试租户")
+        session.add(isolated)
+        session.flush()
+        session.add(TenantMembershipRecord(tenant_id=isolated.id, user_id=admin.id, role="admin"))
+        session.commit()
+
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        east = next(item for item in tenants if item["code"] == "CEA-PKG-TEST")
+        payload = {
+            "name": "测试活动产品包",
+            "product_type": "辅营组合",
+            "description": "机票 + 行李 + 优选座位",
+            "eligibility": "指定航线可售且满足活动运价规则",
+            "version": "V1",
+            "status": "草稿",
+            "valid_from": None,
+            "valid_to": None,
+        }
+
+        created = client.post("/api/product-packages", headers=headers(auth, hq["id"]), json=payload)
+        assert created.status_code == 201
+        product = created.json()
+        assert product["external_id"].startswith("PKG-")
+
+        hq_products = client.get("/api/product-packages", headers=headers(auth, hq["id"])).json()
+        assert any(item["id"] == product["id"] for item in hq_products)
+        east_products = client.get("/api/product-packages", headers=headers(auth, east["id"])).json()
+        assert all(item["id"] != product["id"] for item in east_products)
+
+        payload["name"] = "测试活动产品包 V2"
+        payload["version"] = "V2"
+        updated = client.put(f"/api/product-packages/{product['id']}", headers=headers(auth, hq["id"]), json=payload)
+        assert updated.status_code == 200
+        assert updated.json()["name"] == "测试活动产品包 V2"
+
+        hidden = client.put(f"/api/product-packages/{product['id']}", headers=headers(auth, east["id"]), json=payload)
+        assert hidden.status_code == 404
+        deleted = client.delete(f"/api/product-packages/{product['id']}", headers=headers(auth, hq["id"]))
+        assert deleted.status_code == 204
+        assert all(item["id"] != product["id"] for item in client.get("/api/product-packages", headers=headers(auth, hq["id"])).json())
 
 
 def test_tenant_isolation_and_agent_runtime() -> None:
@@ -318,4 +365,3 @@ def test_marketing_copilot_uses_tools_and_sources() -> None:
         assert "harness/context-loaded" in event_types
         assert "harness/tool-started" in event_types
         assert isinstance(payload["sources"], list)
-
