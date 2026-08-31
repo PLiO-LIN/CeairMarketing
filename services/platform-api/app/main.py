@@ -19,7 +19,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, PersonaDimensionDefinitionRecord, PersonaSegmentRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot, synthetic_hotspot_rows
@@ -767,6 +767,28 @@ def delete_opportunity(opportunity_id: str, context: TenantContext = Depends(req
         raise HTTPException(status_code=404, detail="Request failed")
     session.delete(record); session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/persona-dimensions")
+def list_persona_dimensions(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(PersonaDimensionDefinitionRecord).where(PersonaDimensionDefinitionRecord.tenant_id == context.tenant_id).order_by(PersonaDimensionDefinitionRecord.module_name, PersonaDimensionDefinitionRecord.id)).all()
+    return [{"id": item.id, "module_key": item.module_key, "module_name": item.module_name, "field_name": item.field_name, "field_code": item.field_code, "data_type": item.data_type, "source_data_type": item.source_data_type, "collection_method": item.collection_method, "required_mode": item.required_mode, "allowed_values": item.allowed_values, "update_frequency": item.update_frequency, "applicable_personas": json.loads(item.applicable_personas_json or "[]"), "is_supplemental": item.is_supplemental, "source_file": item.source_file} for item in records]
+
+
+def _json_list(value: str | None) -> list:
+    if not value:
+        return []
+    try:
+        parsed = json.loads(value)
+        return parsed if isinstance(parsed, list) else [parsed]
+    except (TypeError, json.JSONDecodeError):
+        return [part.strip() for part in value.replace("?", ",").split(",") if part.strip()]
+
+
+@app.get("/api/persona-segments")
+def list_persona_segments(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(PersonaSegmentRecord).where(PersonaSegmentRecord.tenant_id == context.tenant_id).order_by(PersonaSegmentRecord.primary_persona_code, PersonaSegmentRecord.id)).all()
+    return [{"id": item.id, "segment_code": item.segment_code, "primary_persona_code": item.primary_persona_code, "primary_persona_name": item.primary_persona_name, "segment_name": item.segment_name, "belongs_to": item.belongs_to, "within_persona_share": item.within_persona_share, "recommended_products": _json_list(item.recommended_products), "recommended_channels": _json_list(item.recommended_channels), "rules": [{"id": rule.id, "dimension_name": rule.dimension_name, "field_code": rule.field_code, "field_variant": rule.field_variant, "condition_expression": rule.condition_expression, "condition_operator": rule.condition_operator, "condition_value": rule.condition_value, "data_source": rule.data_source, "rule_order": rule.rule_order} for rule in item.rules]} for item in records]
 
 
 @app.get("/api/audience-tags", response_model=list[AudienceTag])
