@@ -588,3 +588,49 @@ def test_marketing_copilot_uses_tools_and_sources() -> None:
         assert "harness/context-loaded" in event_types
         assert "harness/tool-started" in event_types
         assert isinstance(payload["sources"], list)
+
+
+def test_ndc_mock_air_shopping_returns_documented_241_shape() -> None:
+    from app.ndc_mock import air_shopping_payload
+    payload = air_shopping_payload("SHA", "SYX", "2026-09-14")
+    assert payload["versionNumber"] == "24.1"
+    assert payload["trxID"]
+    assert payload["echoTokenText"] == payload["trxID"]
+    assert payload["salesChannel"] == "10000"
+    assert len(payload["data"]["flightItems"]) >= 2
+
+
+def test_ndc_mock_best_pricing_and_order_list_are_synthetic() -> None:
+    from app.ndc_mock import best_pricing_payload, order_list_payload
+    best = best_pricing_payload("SHA", "SYX", "2026-09-14")
+    assert best["data"]["bestOffer"]["totalPrice"] == 680
+    assert best["data"]["flightItems"][0]["cabinInfoDescs"]
+    orders = order_list_payload()["data"]["orders"]
+    assert len(orders) == 2
+    assert all(item["orderId"] in {"8533377", "8533388"} for item in orders)
+
+
+def test_ndc_mock_sync_enters_human_confirmation() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        response = client.post("/api/ndc/mock/sync-flight-products", headers=headers(auth, hq["id"]), json={"origin": "SHA", "destination": "SYX", "departure_date": "2026-09-14"})
+        assert response.status_code == 202
+        body = response.json()
+        assert body["job"]["status"] == "awaiting_confirmation"
+        assert body["job"]["total_entities"] >= 20
+        assert body["job"]["total_relations"] >= 30
+        assert body["job"]["result"]["ontology_gate"]["review_required"] is True
+        with SessionLocal() as session:
+            assert session.query(OntologyEntityRecord).filter(OntologyEntityRecord.source == f"data-pipeline:{body['job']['id']}").count() == 0
+
+
+def test_ndc_mock_tenant_isolation() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        isolated = next(item for item in tenants if item["code"] != "CEA-HQ")
+        created = client.post("/api/ndc/mock/sync-flight-products", headers=headers(auth, hq["id"]), json={"origin": "SHA", "destination": "SYX"})
+        assert created.status_code == 202
+        job_id = created.json()["job"]["id"]
+        assert client.get(f"/api/data-pipelines/{job_id}", headers=headers(auth, isolated["id"])).status_code == 404

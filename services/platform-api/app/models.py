@@ -380,6 +380,16 @@ class FlightProductPipelineRequest(BaseModel):
     payload: dict[str, Any] = Field(default_factory=dict)
     require_confirmation: bool = True
 
+
+class NdcAirShoppingRequest(BaseModel):
+    origin: str = Field(default="SHA", min_length=3, max_length=3, pattern=r"^[A-Za-z]{3}$")
+    destination: str = Field(default="SYX", min_length=3, max_length=3, pattern=r"^[A-Za-z]{3}$")
+    departure_date: str | None = Field(default=None, max_length=10)
+    sales_channel: str = Field(default="10000", min_length=1, max_length=20)
+
+
+class NdcOrderListRequest(BaseModel):
+    sales_channel: str = Field(default="10000", min_length=1, max_length=20)
 class AgentDomain(BaseModel):
     id: str
     name: str

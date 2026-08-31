@@ -21,6 +21,7 @@ from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
 from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
+from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
@@ -74,6 +75,8 @@ from .models import (
     DataSourceConfigBase,
     InterfacePipelineRequest,
     FlightProductPipelineRequest,
+    NdcAirShoppingRequest,
+    NdcOrderListRequest,
     KnowledgeDocument,
     KnowledgeDocumentUpdate,
     KnowledgeSearchResult,
@@ -1233,6 +1236,52 @@ def test_data_source(source_id: str, context: TenantContext = Depends(require_ad
     if not record.endpoint and record.source_type not in {"file", "hotspot"}:
         raise HTTPException(status_code=422, detail="接口或数据库数据源必须配置连接地址")
     return {"source_id": record.source_id, "status": "ready", "message": "数据源配置校验通过，可进入同步任务", "checked_at": datetime.now(timezone.utc)}
+
+@app.post("/api/ndc/mock/air-shopping")
+def ndc_mock_air_shopping(payload: NdcAirShoppingRequest):
+    return air_shopping_payload(payload.origin, payload.destination, payload.departure_date, payload.sales_channel)
+
+
+@app.post("/api/ndc/mock/best-pricing")
+def ndc_mock_best_pricing(payload: NdcAirShoppingRequest):
+    return best_pricing_payload(payload.origin, payload.destination, payload.departure_date, payload.sales_channel)
+
+
+@app.post("/api/ndc/mock/order-list")
+def ndc_mock_order_list(payload: NdcOrderListRequest):
+    return order_list_payload(payload.sales_channel)
+
+
+@app.post("/api/ndc/mock/sync-flight-products", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
+def sync_ndc_mock_flight_products(payload: NdcAirShoppingRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    source_id = "ndc24-flight-shopping-mock"
+    source = session.scalar(select(DataSourceConfigRecord).where(DataSourceConfigRecord.tenant_id == context.tenant_id, DataSourceConfigRecord.source_id == source_id))
+    if source is None:
+        source = DataSourceConfigRecord(tenant_id=context.tenant_id, source_id=source_id, display_name="NDC24.1模拟航班产品接口", source_type="product", endpoint="/api/ndc/mock/air-shopping", mapping_json=json.dumps({"protocol": "NDC", "version": "24.1", "synthetic": True}, ensure_ascii=False), schedule="manual", enabled=True)
+        session.add(source)
+        session.flush()
+    response = air_shopping_payload(payload.origin, payload.destination, payload.departure_date, payload.sales_channel)
+    filename = f"NDC24.1-{payload.origin.upper()}-{payload.destination.upper()}-{response['data']['query']['departureDate']}.json"
+    job = DataPipelineJobRecord(id=f"DP-{uuid4().hex[:12].upper()}", tenant_id=context.tenant_id, created_by=context.user_id, file_name=filename, file_format="json", source_type="product", status="running", current_stage="queued")
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+    agent = DataProcessingAgent(session, context, job)
+    try:
+        job.started_at = datetime.now(timezone.utc)
+        stages = agent.process_structured(response["data"], "NDC 24.1模拟航班产品接口")
+        source.last_sync_at = datetime.now(timezone.utc)
+        session.commit()
+    except Exception as exc:
+        session.rollback()
+        job = session.get(DataPipelineJobRecord, job.id)
+        job.status = "failed"
+        job.current_stage = "failed"
+        job.error_message = str(exc)[:1000]
+        job.completed_at = datetime.now(timezone.utc)
+        session.commit()
+        raise HTTPException(status_code=502, detail=f"NDC模拟数据处理失败：{exc}") from exc
+    return DataPipelineCreateResult(job=pipeline_view(job), stages=stages)
 
 @app.post("/api/data-pipelines/interface", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
 def create_interface_pipeline(payload: InterfacePipelineRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):

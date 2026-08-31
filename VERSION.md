@@ -1,3 +1,10 @@
+## v3.7 - 2026-08-31
+
+- Added synthetic NDC 24.1 AirShopping, best-pricing and order-list endpoints for safe airline integration testing.
+- Connected NDC flight/product snapshots to the governed data-processing agent and human ontology confirmation flow.
+- Added a production workbench action to synchronize the NDC 24.1 synthetic flight-product snapshot.
+- Added regression tests and integration documentation for NDC 24.1 field compatibility.
+
 ## v3.5 - 2026-08-31
 
 - Added tenant-scoped data source configuration for file, API, database, hotspot, profile and product sources.

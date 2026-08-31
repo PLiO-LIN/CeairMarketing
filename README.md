@@ -239,3 +239,8 @@ Tenant isolation, role-based access, protected customer data, audit records and 
 ## 内部使用说明
 
 本仓库用于经授权的东方航空项目开发与内部评估。接入生产数据源或发布营销活动前，请完成相应的业务、数据安全和部署审批。
+
+
+## NDC 24.1 联调
+
+仓库内置安全的虚构 NDC 24.1 航班、运价、订单和辅营产品接口，用于联调数据处理智能体与本体人工确认流程。详见 docs/ndc24-integration-simulation-v1.0.md。
