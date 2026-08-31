@@ -1,4 +1,4 @@
-﻿"""Market hotspot ingestion, agent processing, ontology gating and opportunity discovery."""
+"""Market hotspot ingestion, agent processing, ontology gating and opportunity discovery."""
 from __future__ import annotations
 import hashlib
 import html
@@ -165,6 +165,13 @@ def create_opportunity_from_hotspot(session,context,record,owner="",estimated_au
 def hotspot_view(record):
     payload=json.loads(record.decision_json or "{}"); return {"id":record.id,"source_name":record.source_name,"source_type":record.source_type,"source_url":record.source_url,"external_id":record.external_id,"canonical_url":record.canonical_url,"title":record.title,"content":record.content,"summary":record.summary,"published_at":record.published_at,"collected_at":record.collected_at,"language":record.language,"region":record.region,"topics":json.loads(record.topics_json or "[]"),"keywords":json.loads(record.keywords_json or "[]"),"entities":json.loads(record.entities_json or "[]"),"decision":payload,"trace":json.loads(record.trace_json or "[]"),"relevance_score":record.relevance_score,"trend_score":record.trend_score,"sentiment":record.sentiment,"status":record.status,"ontology_status":record.ontology_status,"agent_run_id":record.agent_run_id,"created_at":record.created_at,"updated_at":record.updated_at}
 
+def synthetic_hotspot_rows() -> list[dict[str, Any]]:
+    """Return clearly labelled fallback signals when external feeds are unavailable."""
+    today = utc_now().date().isoformat()
+    return [
+        {"source_name": "东航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-route-{today}", "title": "上海—三亚航线提前预订需求上升，适合开展早鸟产品营销", "content": "系统演示信号：基于航线经营与产品销售样例生成，仅用于验证机会洞察流程，不代表实时市场统计。", "published_at": today, "region": "国内"},
+        {"source_name": "东航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-ancillary-{today}", "title": "亲子旅客对行李与优选座位组合服务的关注度提升", "content": "系统演示信号：用于验证机票与辅营产品组合的营销机会识别，不代表实时市场统计。", "published_at": today, "region": "国内"},
+    ]
 def collect_source(name,url,source_type,max_items=30):
     items=fetch_feed(name,url,source_type)[:max_items]; return items,[{"name":name,"url":url,"status":"healthy","item_count":len(items),"checked_at":utc_now().isoformat()}]
 

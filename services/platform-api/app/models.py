@@ -300,6 +300,7 @@ class MarketHotspotBatchResult(BaseModel):
     failed: int = 0
     hotspots: list[MarketHotspot] = Field(default_factory=list)
     source_health: list[dict[str, Any]] = Field(default_factory=list)
+    processing_stages: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class AudienceTagBase(BaseModel):

@@ -1,3 +1,9 @@
+## v3.8 - 2026-08-31
+
+- Switched market hotspot collection to domestic RSS sources with explicit source health, processing stages and clearly labelled demo fallback signals.
+- Added idempotent import of the passenger persona dimensions, persona segments and segmentation rules from the v1.0 Excel catalog.
+- Synchronized imported persona dimensions and segment types into tenant-scoped audience tags without importing passenger personal records.
+
 ## v3.7 - 2026-08-31
 
 - Added synthetic NDC 24.1 AirShopping, best-pricing and order-list endpoints for safe airline integration testing.

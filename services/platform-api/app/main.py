@@ -22,7 +22,7 @@ from .database import Base, SessionLocal, engine, get_session
 from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
-from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
+from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot, synthetic_hotspot_rows
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
@@ -757,6 +757,7 @@ def ingest_market_hotspots(payload: MarketHotspotIngestRequest, context: TenantC
 def collect_market_hotspots(payload: MarketHotspotCollectRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     rows = []
     health = []
+    processing_stages = [{"stage": "collecting", "label": "开始采集国内热点源", "status": "running", "timestamp": datetime.now(timezone.utc).isoformat()}]
     for source in payload.sources:
         try:
             items, source_health = collect_source(source.name, source.url, source.source_type, source.max_items)
@@ -764,7 +765,18 @@ def collect_market_hotspots(payload: MarketHotspotCollectRequest, context: Tenan
             health.extend(source_health)
         except Exception as exc:
             health.append({"name": source.name, "url": source.url, "status": "failed", "error": type(exc).__name__})
+    if not rows:
+        rows = synthetic_hotspot_rows()
+        health.append({"name": "系统降级演示信号", "url": "", "status": "fallback", "item_count": len(rows), "checked_at": datetime.now(timezone.utc), "message": "外部热点源未返回可解析内容，已生成明确标记的演示信号"})
+    processing_stages[0]["status"] = "completed"
+    processing_stages.extend([
+        {"stage": "parsed", "label": "RSS 内容解析与来源归一化", "status": "completed", "item_count": len(rows), "timestamp": datetime.now(timezone.utc).isoformat()},
+        {"stage": "agent-processing", "label": "机会洞察智能体分析热点、主题和航空业务关联", "status": "running", "timestamp": datetime.now(timezone.utc).isoformat()},
+    ])
     result = ingest_hotspots(session, context, rows, payload.process_with_agent)
+    processing_stages[-1]["status"] = "completed" if payload.process_with_agent else "skipped"
+    processing_stages.append({"stage": "trace-ready", "label": "处理轨迹和本体准入结果已生成", "status": "completed", "hotspot_count": result.get("created", 0), "timestamp": datetime.now(timezone.utc).isoformat()})
+    result["processing_stages"] = processing_stages
     result["source_health"] = health
     return result
 
