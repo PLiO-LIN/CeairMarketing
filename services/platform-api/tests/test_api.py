@@ -239,14 +239,25 @@ def test_channel_tasks_are_created_and_feedback_is_aggregated() -> None:
         assert invalid.status_code == 422
         overflow = client.post(f"/api/channel-tasks/{app_task['id']}/feedback", headers=request_headers, json={"delivered_count": 101})
         assert overflow.status_code == 422
+        summary = client.get("/api/campaigns/ACT-2026-0921/effect-summary", headers=request_headers)
+        assert summary.status_code == 200
+        assert summary.json()["target_count"] == 100
+        assert summary.json()["delivered_count"] == 28
+        assert summary.json()["clicked_count"] == 12
+        assert summary.json()["converted_count"] == 4
+        assert len(summary.json()["channels"]) == 3
+        hidden_summary = client.get("/api/campaigns/ACT-2026-0921/effect-summary", headers=headers(auth, isolated["id"]))
+        assert hidden_summary.status_code == 404
 
 
 def test_tenant_isolation_and_agent_runtime() -> None:
     with TestClient(app) as client:
         assert client.get("/api/campaigns").status_code == 401
         auth, tenants = login(client)
-        hq = next(item for item in tenants if item["code"] == "CEA-HQ")        campaigns = client.get("/api/campaigns", headers=headers(auth, hq["id"]))
-        assert any(item["id"] == "ACT-2026-0921" for item in campaigns.json())        response = client.post("/api/agent-runs", headers=headers(auth, hq["id"]), json={"campaign_id": "ACT-2026-0921", "domain_id": "product-match"})
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        campaigns = client.get("/api/campaigns", headers=headers(auth, hq["id"]))
+        assert any(item["id"] == "ACT-2026-0921" for item in campaigns.json())
+        response = client.post("/api/agent-runs", headers=headers(auth, hq["id"]), json={"campaign_id": "ACT-2026-0921", "domain_id": "product-match"})
         assert response.status_code == 200
         event_types = [event["event_type"] for event in response.json()["events"]]
         assert "model/provider-selected" in event_types
@@ -275,7 +286,8 @@ def test_import_builds_dynamic_graph() -> None:
 def test_model_providers_are_tenant_scoped() -> None:
     with TestClient(app) as client:
         auth, tenants = login(client)
-        hq = next(item for item in tenants if item["code"] == "CEA-HQ")        providers = client.get("/api/model-providers", headers=headers(auth, hq["id"])).json()
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        providers = client.get("/api/model-providers", headers=headers(auth, hq["id"])).json()
         assert providers
         assert all("api_key" not in provider and "encrypted_api_key" not in provider for provider in providers)
         provider = next(item for item in providers if item["provider_type"] == "mock")

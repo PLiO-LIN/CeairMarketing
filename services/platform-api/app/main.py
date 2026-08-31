@@ -473,6 +473,46 @@ def update_channel_feedback(task_id: int, payload: dict[str, int | str], context
     return task
 
 
+@app.get("/api/campaigns/{campaign_id}/effect-summary")
+def campaign_effect_summary(campaign_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="营销活动不存在")
+    batches = session.scalars(select(ExecutionBatchRecord).where(ExecutionBatchRecord.campaign_id == campaign_id, ExecutionBatchRecord.tenant_id == context.tenant_id).order_by(ExecutionBatchRecord.created_at.desc())).all()
+    batch_ids = [batches[0].id] if batches else []
+    tasks = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.campaign_id == campaign_id, ChannelTaskRecord.tenant_id == context.tenant_id, ChannelTaskRecord.batch_id.in_(batch_ids))).all() if batch_ids else []
+    target = sum(item.target_count for item in tasks)
+    sent = sum(item.sent_count for item in tasks)
+    delivered = sum(item.delivered_count for item in tasks)
+    clicked = sum(item.clicked_count for item in tasks)
+    converted = sum(item.converted_count for item in tasks)
+    failed = sum(item.failed_count for item in tasks)
+    return {
+        "campaign_id": campaign_id,
+        "batch_count": len(batches),
+        "target_count": target,
+        "sent_count": sent,
+        "delivered_count": delivered,
+        "clicked_count": clicked,
+        "converted_count": converted,
+        "failed_count": failed,
+        "delivery_rate": round(delivered / target * 100, 2) if target else 0,
+        "click_rate": round(clicked / delivered * 100, 2) if delivered else 0,
+        "conversion_rate": round(converted / clicked * 100, 2) if clicked else 0,
+        "channels": [{
+            "channel": item.channel,
+            "target_count": item.target_count,
+            "sent_count": item.sent_count,
+            "delivered_count": item.delivered_count,
+            "clicked_count": item.clicked_count,
+            "converted_count": item.converted_count,
+            "failed_count": item.failed_count,
+            "status": item.status,
+            "last_feedback_at": item.last_feedback_at,
+        } for item in tasks],
+        "learning_inputs": ["渠道回执", "点击行为", "转化结果", "失败原因"],
+    }
+
 @app.get("/api/product-packages", response_model=list[ProductPackage])
 def list_product_packages(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     return session.scalars(

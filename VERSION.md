@@ -1,3 +1,10 @@
+## v3.4 - 2026-08-31
+
+- Added tenant-scoped campaign effect summary aggregation for the latest execution batch.
+- Connected the effect review workbench to live delivery, click, conversion and failure metrics.
+- Added channel-level review context and learning inputs for the effect-analysis intelligent domain.
+- Added regression coverage for effect summary aggregation and tenant isolation.
+
 ## v3.3 - 2026-08-31
 
 - Added tenant-scoped channel delivery tasks automatically created from approved campaign version channels.
