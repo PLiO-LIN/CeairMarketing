@@ -18,7 +18,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
@@ -69,6 +69,8 @@ from .models import (
     DataPipelineReviewRequest,
     IntegrationConfig,
     IntegrationConfigUpdate,
+    DataSourceConfig,
+    DataSourceConfigBase,
     InterfacePipelineRequest,
     FlightProductPipelineRequest,
     KnowledgeDocument,
@@ -957,6 +959,32 @@ def ontology_semantic_model(_context: TenantContext = Depends(get_tenant_context
     return semantic_model()
 
 
+@app.get("/api/agent-evaluations/summary")
+def agent_evaluation_summary(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    runs = session.scalars(select(AgentRunRecord).where(AgentRunRecord.tenant_id == context.tenant_id)).all()
+    usage = session.scalars(select(ModelUsageRecord).where(ModelUsageRecord.tenant_id == context.tenant_id)).all()
+    by_domain: dict[str, dict[str, int | float]] = {}
+    for run in runs:
+        item = by_domain.setdefault(run.domain_id, {"run_count": 0, "completed": 0, "needs_confirmation": 0, "failed": 0, "success_rate": 0.0})
+        item["run_count"] += 1
+        if run.status in {"completed", "needs_approval"}:
+            item["completed"] += 1
+        if run.status in {"needs_approval", "needs_confirmation"}:
+            item["needs_confirmation"] += 1
+        if run.status == "failed":
+            item["failed"] += 1
+    for item in by_domain.values():
+        item["success_rate"] = round(item["completed"] / item["run_count"] * 100, 2) if item["run_count"] else 0
+    return {"run_count": len(runs), "completed_count": sum(item.status in {"completed", "needs_approval"} for item in runs), "failed_count": sum(item.status == "failed" for item in runs), "human_confirmation_count": sum(item.status in {"needs_approval", "needs_confirmation"} for item in runs), "total_tokens": sum(item.total_tokens for item in usage), "by_domain": [{"domain_id": domain_id, **metrics} for domain_id, metrics in sorted(by_domain.items())], "quality_dimensions": ["任务完成率", "人工确认率", "工具调用成功率", "Token用量", "结果可追溯性"]}
+
+@app.get("/api/ontology/governance-summary")
+def ontology_governance_summary(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    pipelines = session.scalars(select(DataPipelineJobRecord).where(DataPipelineJobRecord.tenant_id == context.tenant_id)).all()
+    documents = session.scalars(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == context.tenant_id)).all()
+    entity_count = session.scalar(select(func.count(OntologyEntityRecord.id)).where(OntologyEntityRecord.tenant_id == context.tenant_id)) or 0
+    relation_count = session.scalar(select(func.count(OntologyRelationRecord.id)).where(OntologyRelationRecord.tenant_id == context.tenant_id)) or 0
+    return {"knowledge_documents": len(documents), "ontology_entities": entity_count, "ontology_relations": relation_count, "awaiting_confirmation": sum(item.status == "awaiting_confirmation" for item in pipelines), "failed_jobs": sum(item.status == "failed" for item in pipelines), "completed_jobs": sum(item.status == "completed" for item in pipelines), "governance_rules": ["知识与本体分流判断", "候选对象人工确认", "来源证据保留", "租户隔离", "删除来源同步清理"]}
+
 @app.get("/api/ontology/status", response_model=OntologySemanticStatus)
 def ontology_status(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     return semantic_status(session, context.tenant_id)
@@ -1139,6 +1167,58 @@ def update_mineru_integration(payload: IntegrationConfigUpdate, context: TenantC
     session.commit(); session.refresh(record)
     return integration_view(record)
 
+
+def data_source_view(record: DataSourceConfigRecord) -> DataSourceConfig:
+    return DataSourceConfig(
+        id=record.id,
+        source_id=record.source_id,
+        display_name=record.display_name,
+        source_type=record.source_type,
+        endpoint=record.endpoint,
+        credential_ref=record.credential_ref,
+        mapping=json.loads(record.mapping_json or "{}"),
+        schedule=record.schedule,
+        enabled=record.enabled,
+        last_sync_at=record.last_sync_at,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+@app.get("/api/data-sources", response_model=list[DataSourceConfig])
+def list_data_sources(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(DataSourceConfigRecord).where(DataSourceConfigRecord.tenant_id == context.tenant_id).order_by(DataSourceConfigRecord.updated_at.desc())).all()
+    return [data_source_view(record) for record in records]
+
+
+@app.post("/api/data-sources", response_model=DataSourceConfig, status_code=status.HTTP_201_CREATED)
+def create_data_source(payload: DataSourceConfigBase, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    existing = session.scalar(select(DataSourceConfigRecord).where(DataSourceConfigRecord.tenant_id == context.tenant_id, DataSourceConfigRecord.source_id == payload.source_id))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="数据源编号已存在")
+    record = DataSourceConfigRecord(tenant_id=context.tenant_id, source_id=payload.source_id, display_name=payload.display_name, source_type=payload.source_type, endpoint=payload.endpoint, credential_ref=payload.credential_ref, mapping_json=json.dumps(payload.mapping, ensure_ascii=False), schedule=payload.schedule, enabled=payload.enabled)
+    session.add(record); session.commit(); session.refresh(record)
+    return data_source_view(record)
+
+
+@app.put("/api/data-sources/{source_id}", response_model=DataSourceConfig)
+def update_data_source(source_id: str, payload: DataSourceConfigBase, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    record = session.scalar(select(DataSourceConfigRecord).where(DataSourceConfigRecord.tenant_id == context.tenant_id, DataSourceConfigRecord.source_id == source_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="数据源不存在")
+    record.display_name = payload.display_name; record.source_type = payload.source_type; record.endpoint = payload.endpoint; record.credential_ref = payload.credential_ref; record.mapping_json = json.dumps(payload.mapping, ensure_ascii=False); record.schedule = payload.schedule; record.enabled = payload.enabled
+    session.commit(); session.refresh(record)
+    return data_source_view(record)
+
+
+@app.post("/api/data-sources/{source_id}/test")
+def test_data_source(source_id: str, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    record = session.scalar(select(DataSourceConfigRecord).where(DataSourceConfigRecord.tenant_id == context.tenant_id, DataSourceConfigRecord.source_id == source_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="数据源不存在")
+    if not record.endpoint and record.source_type not in {"file", "hotspot"}:
+        raise HTTPException(status_code=422, detail="接口或数据库数据源必须配置连接地址")
+    return {"source_id": record.source_id, "status": "ready", "message": "数据源配置校验通过，可进入同步任务", "checked_at": datetime.now(timezone.utc)}
 
 @app.post("/api/data-pipelines/interface", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
 def create_interface_pipeline(payload: InterfacePipelineRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):

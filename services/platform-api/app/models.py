@@ -521,6 +521,24 @@ class IntegrationConfig(BaseModel):
     updated_at: datetime
 
 
+class DataSourceConfigBase(BaseModel):
+    source_id: str = Field(min_length=2, max_length=80)
+    display_name: str = Field(min_length=2, max_length=120)
+    source_type: Literal["file", "api", "database", "hotspot", "profile", "product"]
+    endpoint: str = Field(default="", max_length=400)
+    credential_ref: str = Field(default="", max_length=120)
+    mapping: dict[str, Any] = Field(default_factory=dict)
+    schedule: str = Field(default="manual", max_length=80)
+    enabled: bool = False
+
+
+class DataSourceConfig(DataSourceConfigBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    last_sync_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
 class DataPipelineJob(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str

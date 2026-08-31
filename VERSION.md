@@ -1,3 +1,11 @@
+## v3.5 - 2026-08-31
+
+- Added tenant-scoped data source configuration for file, API, database, hotspot, profile and product sources.
+- Added administrator-governed source mapping, schedule metadata, credential references and connection validation.
+- Added ontology governance summary for knowledge documents, ontology objects, relations, pipeline confirmations and failures.
+- Added agent evaluation summary for domain run completion, human confirmation, failures and token usage.
+- Added regression coverage for data source isolation and governance summaries.
+
 ## v3.4 - 2026-08-31
 
 - Added tenant-scoped campaign effect summary aggregation for the latest execution batch.

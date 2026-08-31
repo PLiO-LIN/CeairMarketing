@@ -283,6 +283,44 @@ def test_import_builds_dynamic_graph() -> None:
         assert any(item["relation"] == "prefers" for item in graph["edges"])
 
 
+def test_governance_and_agent_evaluation_summaries_are_tenant_scoped() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        isolated = next(item for item in tenants if item["code"] != "CEA-HQ")
+        hq_headers = headers(auth, hq["id"])
+        isolated_headers = headers(auth, isolated["id"])
+        ontology = client.get("/api/ontology/governance-summary", headers=hq_headers)
+        assert ontology.status_code == 200
+        assert {"knowledge_documents", "ontology_entities", "ontology_relations", "governance_rules"}.issubset(ontology.json())
+        agent = client.get("/api/agent-evaluations/summary", headers=hq_headers)
+        assert agent.status_code == 200
+        assert {"run_count", "completed_count", "failed_count", "total_tokens", "by_domain"}.issubset(agent.json())
+        isolated_ontology = client.get("/api/ontology/governance-summary", headers=isolated_headers)
+        isolated_agent = client.get("/api/agent-evaluations/summary", headers=isolated_headers)
+        assert isolated_ontology.status_code == 200
+        assert isolated_agent.status_code == 200
+        assert isolated_ontology.json()["ontology_entities"] <= ontology.json()["ontology_entities"]
+        assert isolated_agent.json()["total_tokens"] <= agent.json()["total_tokens"]
+
+def test_data_source_configs_are_governed_and_tenant_scoped() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        isolated = next(item for item in tenants if item["code"] != "CEA-HQ")
+        hq_headers = headers(auth, hq["id"])
+        isolated_headers = headers(auth, isolated["id"])
+        payload = {"source_id": "flight-operations-api", "display_name": "航班运行数据接口", "source_type": "api", "endpoint": "https://internal.example/flight/operations", "credential_ref": "secret/flight-operations", "mapping": {"客座率": "load_factor", "正常率": "on_time_rate"}, "schedule": "0 */2 * * *", "enabled": True}
+        created = client.post("/api/data-sources", headers=hq_headers, json=payload)
+        assert created.status_code == 201
+        assert created.json()["mapping"]["客座率"] == "load_factor"
+        assert client.get("/api/data-sources", headers=isolated_headers).json() == []
+        assert client.post("/api/data-sources/flight-operations-api/test", headers=hq_headers).status_code == 200
+        assert client.post("/api/data-sources", headers=hq_headers, json=payload).status_code == 409
+        profile_payload = {**payload, "source_id": "profile-api", "display_name": "用户画像接口", "source_type": "profile", "endpoint": ""}
+        assert client.post("/api/data-sources", headers=hq_headers, json=profile_payload).status_code == 201
+        assert client.post("/api/data-sources/profile-api/test", headers=hq_headers).status_code == 422
+
 def test_model_providers_are_tenant_scoped() -> None:
     with TestClient(app) as client:
         auth, tenants = login(client)

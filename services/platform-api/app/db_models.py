@@ -288,6 +288,25 @@ class IntegrationConfigRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
 
+class DataSourceConfigRecord(Base):
+    __tablename__ = "data_source_configs"
+    __table_args__ = (UniqueConstraint("tenant_id", "source_id", name="uq_data_source_tenant_source"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    source_id: Mapped[str] = mapped_column(String(80))
+    display_name: Mapped[str] = mapped_column(String(120))
+    source_type: Mapped[str] = mapped_column(String(32))
+    endpoint: Mapped[str] = mapped_column(String(400), default="")
+    credential_ref: Mapped[str] = mapped_column(String(120), default="")
+    mapping_json: Mapped[str] = mapped_column(Text, default="{}")
+    schedule: Mapped[str] = mapped_column(String(80), default="manual")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class ModelUsageRecord(Base):
     __tablename__ = "model_usage"
 
