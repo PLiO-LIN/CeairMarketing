@@ -18,7 +18,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ContentAssetRecord, DataPipelineJobRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
@@ -32,6 +32,7 @@ from .models import (
     ApprovalDecision,
     ApprovalTask,
     ExecutionBatch,
+    ChannelTask,
     AudienceTag,
     AudienceTagBase,
     AgentRunListItem,
@@ -381,7 +382,14 @@ def decide_approval(approval_id: int, payload: ApprovalDecision, context: Tenant
         existing = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_version_id == version.id))
         if existing is None:
             snapshot_size = session.scalar(select(AudienceSnapshotRecord.estimated_size).where(AudienceSnapshotRecord.id == version.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id)) or 0
-            session.add(ExecutionBatchRecord(tenant_id=context.tenant_id, campaign_id=record.campaign_id, campaign_version_id=version.id, external_id=f"BATCH-{record.campaign_id}-{version.version}", channels_json=version.channels_json, target_size=snapshot_size, status="待执行", created_by=context.user_id))
+            batch = ExecutionBatchRecord(tenant_id=context.tenant_id, campaign_id=record.campaign_id, campaign_version_id=version.id, external_id=f"BATCH-{record.campaign_id}-{version.version}", channels_json=version.channels_json, target_size=snapshot_size, status="待执行", created_by=context.user_id)
+            session.add(batch)
+            session.flush()
+            channels = json.loads(version.channels_json or "[]") or ["App"]
+            share = snapshot_size // len(channels) if channels else snapshot_size
+            for index, channel in enumerate(channels):
+                target = share + (snapshot_size - share * len(channels) if index == 0 else 0)
+                session.add(ChannelTaskRecord(tenant_id=context.tenant_id, batch_id=batch.id, campaign_id=record.campaign_id, channel=channel, external_id=f"TASK-{record.campaign_id}-{version.version}-{index + 1}", target_count=target, status="待执行"))
     session.commit()
     session.refresh(record)
     return approval_view(record)
@@ -419,6 +427,9 @@ def update_execution_batch_status(batch_id: int, payload: dict[str, str], contex
     if next_status not in {"待执行", "执行中", "已暂停", "已完成", "失败"}:
         raise HTTPException(status_code=422, detail="不支持的执行状态")
     record.status = next_status
+    tasks = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.batch_id == record.id, ChannelTaskRecord.tenant_id == context.tenant_id)).all()
+    for task in tasks:
+        task.status = next_status
     if next_status == "执行中":
         record.delivered_count = max(record.delivered_count, min(record.target_size, max(1, int(record.target_size * 0.35))))
     if next_status == "已完成":
@@ -427,6 +438,39 @@ def update_execution_batch_status(batch_id: int, payload: dict[str, str], contex
     session.commit()
     session.refresh(record)
     return execution_batch_view(record)
+
+
+@app.get("/api/channel-tasks", response_model=list[ChannelTask])
+def list_channel_tasks(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.tenant_id == context.tenant_id).order_by(ChannelTaskRecord.created_at.desc())).all()
+    return records
+
+
+@app.post("/api/channel-tasks/{task_id}/feedback", response_model=ChannelTask)
+def update_channel_feedback(task_id: int, payload: dict[str, int | str], context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    task = session.scalar(select(ChannelTaskRecord).where(ChannelTaskRecord.id == task_id, ChannelTaskRecord.tenant_id == context.tenant_id))
+    if task is None:
+        raise HTTPException(status_code=404, detail="渠道任务不存在")
+    for field in ("sent_count", "delivered_count", "clicked_count", "converted_count", "failed_count"):
+        if field in payload:
+            value = int(payload[field])
+            if value < 0 or value > task.target_count:
+                raise HTTPException(status_code=422, detail=f"{field} 超出渠道任务范围")
+            setattr(task, field, value)
+    next_status = str(payload.get("status", task.status))
+    if next_status not in {"待执行", "执行中", "已暂停", "已完成", "失败"}:
+        raise HTTPException(status_code=422, detail="不支持的渠道任务状态")
+    task.last_feedback_at = datetime.now(timezone.utc)
+    task.status = next_status
+    batch = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == task.batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    if batch:
+        siblings = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.batch_id == batch.id, ChannelTaskRecord.tenant_id == context.tenant_id)).all()
+        batch.delivered_count = sum(item.delivered_count for item in siblings)
+        batch.feedback_count = sum(item.clicked_count + item.converted_count for item in siblings)
+        batch.failed_count = sum(item.failed_count for item in siblings)
+    session.commit()
+    session.refresh(task)
+    return task
 
 
 @app.get("/api/product-packages", response_model=list[ProductPackage])

@@ -193,6 +193,54 @@ def test_campaign_version_approval_flow() -> None:
         assert completed.json()["delivered_count"] == completed.json()["target_size"]
 
 
+def test_channel_tasks_are_created_and_feedback_is_aggregated() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        isolated = next(item for item in tenants if item["code"] != "CEA-HQ")
+        request_headers = headers(auth, hq["id"])
+        audience = client.post(
+            "/api/audience-packages",
+            headers=request_headers,
+            json={"name": "渠道回执客群", "selection_mode": "ai-selection", "tag_ids": [], "expression": {"route": "SHA-PEK"}, "estimated_size": 100, "status": "可用"},
+        ).json()
+        snapshot = client.post(f"/api/audience-packages/{audience['id']}/snapshots", headers=request_headers).json()
+        version = client.post(
+            "/api/campaigns/ACT-2026-0921/versions",
+            headers=request_headers,
+            json={"audience_snapshot_id": snapshot["id"], "channels": ["东航App", "短信", "微信"], "budget_yuan": 80000, "status": "草稿"},
+        ).json()
+        approval = client.post(f"/api/campaigns/ACT-2026-0921/versions/{version['id']}/approval", headers=request_headers).json()
+        decision = client.post(f"/api/approvals/{approval['id']}/decision", headers=request_headers, json={"decision": "approve"})
+        assert decision.status_code == 200
+
+        tasks = client.get("/api/channel-tasks", headers=request_headers)
+        assert tasks.status_code == 200
+        batch = next(item for item in client.get("/api/execution-batches", headers=request_headers).json() if item["campaign_version_id"] == version["id"])
+        created = [item for item in tasks.json() if item["batch_id"] == batch["id"]]
+        assert {item["channel"] for item in created} >= {"东航App", "短信", "微信"}
+        assert sum(item["target_count"] for item in created) == 100
+
+        app_task = next(item for item in created if item["channel"] == "东航App")
+        feedback = client.post(
+            f"/api/channel-tasks/{app_task['id']}/feedback",
+            headers=request_headers,
+            json={"sent_count": 30, "delivered_count": 28, "clicked_count": 12, "converted_count": 4, "failed_count": 2, "status": "执行中"},
+        )
+        assert feedback.status_code == 200
+        assert feedback.json()["converted_count"] == 4
+        batch = next(item for item in client.get("/api/execution-batches", headers=request_headers).json() if item["campaign_version_id"] == version["id"])
+        assert batch["delivered_count"] == 28
+        assert batch["feedback_count"] == 16
+        assert batch["failed_count"] == 2
+
+        assert all(item["campaign_id"] != "ACT-2026-0921" for item in client.get("/api/channel-tasks", headers=headers(auth, isolated["id"])).json())
+        invalid = client.post(f"/api/channel-tasks/{app_task['id']}/feedback", headers=request_headers, json={"status": "未知状态"})
+        assert invalid.status_code == 422
+        overflow = client.post(f"/api/channel-tasks/{app_task['id']}/feedback", headers=request_headers, json={"delivered_count": 101})
+        assert overflow.status_code == 422
+
+
 def test_tenant_isolation_and_agent_runtime() -> None:
     with TestClient(app) as client:
         assert client.get("/api/campaigns").status_code == 401

@@ -133,6 +133,25 @@ class ExecutionBatch(BaseModel):
     updated_at: datetime
 
 
+class ChannelTask(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    batch_id: int
+    campaign_id: str
+    channel: str
+    external_id: str
+    target_count: int
+    sent_count: int
+    delivered_count: int
+    clicked_count: int
+    converted_count: int
+    failed_count: int
+    status: str
+    last_feedback_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class ProductPackageBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     product_type: str = Field(default="组合产品", max_length=64)

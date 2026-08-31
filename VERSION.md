@@ -1,3 +1,11 @@
+## v3.3 - 2026-08-31
+
+- Added tenant-scoped channel delivery tasks automatically created from approved campaign version channels.
+- Added channel feedback ingestion for sent, delivered, clicked, converted and failed outcomes.
+- Aggregated channel delivery feedback back to execution-batch monitoring KPIs.
+- Replaced static execution channel rows with live channel tasks and feedback entry in the production workbench.
+- Added regression coverage for channel task creation, tenant isolation, feedback aggregation and validation.
+
 # Version History
 
 ## v2.8 - 2026-08-31

@@ -119,6 +119,28 @@ class ExecutionBatchRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
 
+class ChannelTaskRecord(Base):
+    __tablename__ = "channel_tasks"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_channel_task_tenant_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    batch_id: Mapped[int] = mapped_column(ForeignKey("execution_batches.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    channel: Mapped[str] = mapped_column(String(40))
+    external_id: Mapped[str] = mapped_column(String(80), index=True)
+    target_count: Mapped[int] = mapped_column(Integer, default=0)
+    sent_count: Mapped[int] = mapped_column(Integer, default=0)
+    delivered_count: Mapped[int] = mapped_column(Integer, default=0)
+    clicked_count: Mapped[int] = mapped_column(Integer, default=0)
+    converted_count: Mapped[int] = mapped_column(Integer, default=0)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(32), default="待执行")
+    last_feedback_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class ProductPackageRecord(Base):
     __tablename__ = "product_packages"
     __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_product_package_tenant_external_id"),)
