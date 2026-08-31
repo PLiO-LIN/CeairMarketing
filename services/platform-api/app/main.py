@@ -43,6 +43,7 @@ from .models import (
     AgentChatRequest,
     AgentChatResponse,
     Campaign,
+    CampaignCreate,
     CampaignUpdate,
     CurrentUser,
     GraphStats,
@@ -274,6 +275,16 @@ def add_membership(user_id: int, payload: MembershipCreate, _admin: UserRecord =
         membership.role = payload.role
     session.commit()
     return user_summary(session, user)
+
+
+@app.post("/api/campaigns", response_model=Campaign, status_code=status.HTTP_201_CREATED)
+def create_campaign(payload: CampaignCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign_id = f"ACT-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}"
+    record = CampaignRecord(tenant_id=context.tenant_id, id=campaign_id, name=payload.name, stage=payload.stage, status="草稿", version="V1", owner=context.display_name, audience_size=payload.audience_size, product_package=payload.product_package, budget_yuan=payload.budget_yuan, roi_target=payload.roi_target)
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return record
 
 
 @app.get("/api/campaigns", response_model=list[Campaign])

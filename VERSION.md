@@ -1,3 +1,9 @@
+## v3.11 - 2026-08-31
+
+- Added a tenant-scoped campaign creation API that persists new marketing activity drafts with a business ID, owner, lifecycle stage and budget targets.
+- Connected the production campaign wizard submission to the API so new activities are no longer frontend-only demo rows.
+- Added regression coverage for campaign creation and returned draft records.
+
 ## v3.10 - 2026-08-31
 
 - Added authenticated, tenant-scoped mock business APIs for flight operations, profile summaries, market signals, product catalog and channel delivery.

@@ -76,6 +76,15 @@ class Campaign(BaseModel):
     roi_target: float
 
 
+class CampaignCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    stage: str = Field(default="机会", max_length=32)
+    audience_size: int = Field(default=0, ge=0)
+    product_package: str = Field(default="", max_length=160)
+    budget_yuan: int = Field(default=0, ge=0)
+    roi_target: float = Field(default=0, ge=0)
+
+
 class CampaignUpdate(BaseModel):
     name: str = Field(min_length=2, max_length=160)
 
