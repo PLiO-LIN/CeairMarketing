@@ -1,3 +1,8 @@
+## v3.9 - 2026-08-31
+
+- Added idempotent import of 19 airline marketing product packages from `docs/klg.xlsx`, including Wi-Fi, mileage, baggage, lounge, C919, low-carbon, agricultural support and group travel products.
+- Preserved product benefits, eligibility, usage and refund restrictions for product matching, content generation and compliance review.
+
 ## v3.8 - 2026-08-31
 
 - Switched market hotspot collection to domestic RSS sources with explicit source health, processing stages and clearly labelled demo fallback signals.
