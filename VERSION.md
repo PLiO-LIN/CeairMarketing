@@ -6,6 +6,14 @@
 - Replaced static product package rows in the production workbench with live API data.
 - Added product package creation, detail, rename and deletion flows with campaign reference protection.
 - Added regression coverage for persistence and tenant isolation.
+
+## v2.9 - 2026-08-31
+
+- Added tenant-scoped content asset persistence for campaign channel content.
+- Added content asset CRUD APIs with campaign reference validation.
+- Replaced static content rows in the production workbench with live content data.
+- Persisted AI-generated content drafts for review and added content detail, edit and delete flows.
+- Added regression coverage for content persistence and tenant isolation.
 ## v2.7 - 2026-08-27
 
 - Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.

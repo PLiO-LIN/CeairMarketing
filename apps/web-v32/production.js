@@ -5,7 +5,7 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
-  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], productPackages: [], documents: [] };
+  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], productPackages: [], contentAssets: [], documents: [] };
   const pipelineFiles = new Map();
   const roleLabels = { admin: '租户管理员', manager: '营销经理', analyst: '营销分析师', viewer: '只读用户' };
   let pipelinePollTimer = null;
@@ -313,6 +313,17 @@
     table.innerHTML=`<tr><th>产品包</th><th>组合产品</th><th>资格条件</th><th>版本</th><th>状态</th><th>引用活动</th><th>操作</th></tr>${rows||'<tr><td colspan="7"><div class="empty-action">暂无活动产品包。可从产品管理平台同步，或新建活动产品包。</div></td></tr>'}`;
   }
 
+  function renderContents(){
+    const table=q('#contents .table'); if(!table)return;
+    const assets=tenantData.contentAssets||[];
+    const rows=assets.map(item=>`<tr><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.title||'')}</small></td><td>${escapeHtml(item.campaign_id||'未关联活动')}</td><td>${escapeHtml(item.channel)}</td><td>${escapeHtml(item.version)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td class="production-actions"><button class="btn" data-content-view="${item.id}">查看</button><button class="btn" data-content-edit="${item.id}">编辑</button><button class="btn danger" data-content-delete="${item.id}">删除</button></td></tr>`).join('');
+    table.innerHTML=`<tr><th>内容名称</th><th>活动</th><th>渠道</th><th>版本</th><th>状态</th><th>操作</th></tr>${rows||'<tr><td colspan="6"><div class="empty-action">暂无内容资产。可以新建内容，或使用 AI 生成多渠道版本。</div></td></tr>'}`;
+    const latest=assets[0]; if(latest){const hero=q('.phone-hero'),copy=q('.phone-body b'),desc=q('.phone-body p');if(hero)hero.textContent=latest.title||latest.name;if(copy)copy.textContent=latest.body||'暂无正文';if(desc)desc.textContent=`${latest.channel} · ${latest.version} · ${latest.status}`;}
+  }
+
+  function showContentDetail(item){
+    const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.channel)} · ${escapeHtml(item.version)}</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>活动</b>${escapeHtml(item.campaign_id||'未关联活动')}</span><span><b>状态</b>${escapeHtml(item.status)}</span><span><b>生成方式</b>${escapeHtml(item.generated_by||'manual')}</span></div><section><h3>${escapeHtml(item.title||'内容正文')}</h3><p>${escapeHtml(item.body||'暂无正文')}</p></section></div></div>`;document.body.appendChild(layer);layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();});
+  }
   function showProductDetail(item){
     const layer=document.createElement('div');layer.className='production-modal';
     const validPeriod=item.valid_from||item.valid_to?`${item.valid_from?new Date(item.valid_from).toLocaleDateString('zh-CN'):'不限'} 至 ${item.valid_to?new Date(item.valid_to).toLocaleDateString('zh-CN'):'不限'}`:'长期有效';
@@ -461,7 +472,9 @@
         const description=window.prompt('组合产品内容，例如：机票 + 行李 + 优选座位','')||'';
         const eligibility=window.prompt('资格条件，例如：指定航线可售且满足活动运价规则','')||'';
         try{await request('/api/product-packages',{method:'POST',body:JSON.stringify({name:name.trim(),product_type:'活动产品包',description,eligibility,version:'V1',status:'草稿',valid_from:null,valid_to:null})});toast('产品包“'+name.trim()+'”已创建');await loadTenantData();}catch(cause){toast(cause.message||'产品包创建失败');}return;
-      }      if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
+      }      if(button.dataset.contentView){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentView));if(item)showContentDetail(item);return;}
+      if(button.dataset.contentEdit){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentEdit));if(!item||!canWrite())return;const title=window.prompt('内容标题',item.title||item.name);if(title===null)return;const body=window.prompt('内容正文',item.body||'');if(body===null)return;try{await request(`/api/content-assets/${item.id}`,{method:'PUT',body:JSON.stringify({campaign_id:item.campaign_id||null,name:item.name,channel:item.channel,version:item.version,title:title.trim()||item.title,body,status:item.status,generated_by:item.generated_by||'manual'})});toast('内容已更新');await loadTenantData();}catch(cause){toast(cause.message||'内容更新失败');}return;}
+      if(button.dataset.contentDelete){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentDelete));if(!item||!canWrite()||!window.confirm('确认删除内容“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/content-assets/${item.id}`,{method:'DELETE'});toast('内容已删除');await loadTenantData();}catch(cause){toast(cause.message||'内容删除失败');}return;}      if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
       if(button.dataset.opportunityDelete){
         if(!canWrite()||!window.confirm('删除后该机会及其关联引用将不再出现在当前租户，确定继续吗？')) return;
         try{await request(`/api/opportunities/${encodeURIComponent(button.dataset.opportunityDelete)}`,{method:'DELETE'});toast('机会已删除');await loadTenantData();}catch(cause){toast(cause.message||'机会删除失败');}return;
@@ -485,7 +498,7 @@
       if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
       if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('默认模型已更新');await loadTenantData();renderModels();}
        const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateContent:'content-generation',generateReview:'effect-analysis'};
-       if(button.dataset.action==='generateContent'){const hero=q('.phone-hero'),copy=q('.phone-body b');if(hero)hero.textContent='三亚国庆早鸟内容已生成';if(copy)copy.textContent='带孩子去看海，机票、行李和优选座位一次安排';toast('内容生成完成：已生成 App、短信和微信版本');}
+       if(button.dataset.action==='generateContent'){if(!canWrite())return;const campaign=tenantData.campaigns?.[0];try{await request('/api/content-assets',{method:'POST',body:JSON.stringify({campaign_id:campaign?.id||null,name:(campaign?.name||'营销活动')+'·AI内容版本',channel:'App',version:'V1',title:'内容已生成',body:'结合目标客群与活动产品包，为您生成了可审核的东航营销内容。',status:'待审核',generated_by:'content-generation'})});toast('内容生成完成：已写入内容资产并进入审核');await loadTenantData();}catch(cause){toast(cause.message||'内容生成失败');}}
       const domain=agentMap[button.dataset.action]; if(domain&&tenantData.campaigns[0]) request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})}).then(result=>{toast(result.summary);showAgentTrace(result);}).catch(cause=>toast(cause.message));
     });
     const dropzone=q('#pipelineDropzone'),fileInput=q('#pipelineFiles');
@@ -606,7 +619,7 @@ function mountMarketingAssistantV2(){
     restoreLayout();if(window.lucide)lucide.createIcons();
   }
 
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/product-packages','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,documents]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,documents,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderProducts();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/product-packages','/api/content-assets','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,contentAssets,documents]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,contentAssets,documents,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderProducts();renderContents();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function initializeSession(){
     try{mountMarketingAssistantV2();}catch(cause){console.error('营销助手挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}

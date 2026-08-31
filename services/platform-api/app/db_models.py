@@ -82,6 +82,27 @@ class ProductPackageRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
+
+class ContentAssetRecord(Base):
+    __tablename__ = "content_assets"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_content_asset_tenant_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(64), index=True)
+    campaign_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    channel: Mapped[str] = mapped_column(String(40), default="App")
+    version: Mapped[str] = mapped_column(String(16), default="V1")
+    title: Mapped[str] = mapped_column(String(240), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="草稿")
+    generated_by: Mapped[str] = mapped_column(String(40), default="manual")
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class OpportunityRecord(Base):
     __tablename__ = "marketing_opportunities"
     __table_args__ = (UniqueConstraint("tenant_id", "id", name="uq_opportunity_tenant_business_id"),)

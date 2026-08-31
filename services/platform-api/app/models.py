@@ -98,6 +98,25 @@ class ProductPackage(ProductPackageBase):
     created_at: datetime
     updated_at: datetime
 
+
+class ContentAssetBase(BaseModel):
+    campaign_id: str | None = Field(default=None, max_length=32)
+    name: str = Field(min_length=2, max_length=160)
+    channel: str = Field(default="App", max_length=40)
+    version: str = Field(default="V1", max_length=16)
+    title: str = Field(default="", max_length=240)
+    body: str = Field(default="", max_length=12000)
+    status: str = Field(default="草稿", max_length=32)
+    generated_by: str = Field(default="manual", max_length=40)
+
+
+class ContentAsset(ContentAssetBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    external_id: str
+    created_at: datetime
+    updated_at: datetime
+
 class OpportunityBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     market_scope: str = Field(default="\u8349\u7a3f", max_length=40)

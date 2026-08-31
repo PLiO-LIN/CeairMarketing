@@ -88,6 +88,42 @@ def test_product_packages_are_persistent_and_tenant_scoped() -> None:
         assert all(item["id"] != product["id"] for item in client.get("/api/product-packages", headers=headers(auth, hq["id"])).json())
 
 
+def test_content_assets_are_persistent_and_tenant_scoped() -> None:
+    with SessionLocal() as session:
+        admin = session.query(UserRecord).filter(UserRecord.username == "admin").one()
+        isolated = TenantRecord(code="CEA-CNT-TEST", name="内容隔离测试租户")
+        session.add(isolated)
+        session.flush()
+        session.add(TenantMembershipRecord(tenant_id=isolated.id, user_id=admin.id, role="admin"))
+        session.commit()
+
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        isolated = next(item for item in tenants if item["code"] == "CEA-CNT-TEST")
+        payload = {
+            "campaign_id": "ACT-2026-0921",
+            "name": "三亚早鸟·家庭出游版",
+            "channel": "App",
+            "version": "V1",
+            "title": "国庆去三亚，早鸟产品已上线",
+            "body": "机票、行李和优选座位一次安排。",
+            "status": "待审核",
+            "generated_by": "content-generation",
+        }
+        created = client.post("/api/content-assets", headers=headers(auth, hq["id"]), json=payload)
+        assert created.status_code == 201
+        asset = created.json()
+        assert asset["external_id"].startswith("CNT-")
+        assert any(item["id"] == asset["id"] for item in client.get("/api/content-assets", headers=headers(auth, hq["id"])).json())
+        assert all(item["id"] != asset["id"] for item in client.get("/api/content-assets", headers=headers(auth, isolated["id"])).json())
+        payload["title"] = "国庆三亚家庭出游内容 V2"
+        updated = client.put(f"/api/content-assets/{asset['id']}", headers=headers(auth, hq["id"]), json=payload)
+        assert updated.status_code == 200
+        assert updated.json()["title"].endswith("V2")
+        assert client.delete(f"/api/content-assets/{asset['id']}", headers=headers(auth, hq["id"])).status_code == 204
+
+
 def test_tenant_isolation_and_agent_runtime() -> None:
     with TestClient(app) as client:
         assert client.get("/api/campaigns").status_code == 401
