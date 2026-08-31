@@ -1360,6 +1360,11 @@ def mock_product_catalog(_context: TenantContext = Depends(get_tenant_context)):
     return product_catalog()
 
 
+@app.get("/api/product-catalog")
+def product_catalog_view(_context: TenantContext = Depends(get_tenant_context)):
+    """Expose the product-management catalog through the production-facing contract."""
+    return product_catalog()
+
 @app.post("/api/mock/channels/{channel}/deliver")
 def mock_channel_deliver(channel: str, audience_size: int = 0, campaign_id: str = "MOCK-CAMPAIGN", _context: TenantContext = Depends(require_write)):
     return channel_delivery(channel, audience_size, campaign_id)
