@@ -124,6 +124,35 @@ def test_content_assets_are_persistent_and_tenant_scoped() -> None:
         assert client.delete(f"/api/content-assets/{asset['id']}", headers=headers(auth, hq["id"])).status_code == 204
 
 
+def test_audience_package_snapshot_is_versioned_and_tenant_scoped() -> None:
+    with SessionLocal() as session:
+        admin = session.query(UserRecord).filter(UserRecord.username == "admin").one()
+        isolated = TenantRecord(code="CEA-AUD-TEST", name="客群快照测试租户")
+        session.add(isolated)
+        session.flush()
+        session.add(TenantMembershipRecord(tenant_id=isolated.id, user_id=admin.id, role="admin"))
+        session.commit()
+
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        isolated = next(item for item in tenants if item["code"] == "CEA-AUD-TEST")
+        created = client.post(
+            "/api/audience-packages",
+            headers=headers(auth, hq["id"]),
+            json={"name": "三亚高意向测试客群", "selection_mode": "tag-combination", "tag_ids": [], "expression": {"destination": "三亚"}, "estimated_size": 1200, "status": "可用"},
+        )
+        assert created.status_code == 201
+        package_id = created.json()["id"]
+        first = client.post(f"/api/audience-packages/{package_id}/snapshots", headers=headers(auth, hq["id"]))
+        second = client.post(f"/api/audience-packages/{package_id}/snapshots", headers=headers(auth, hq["id"]))
+        assert first.status_code == 201
+        assert second.status_code == 201
+        assert first.json()["version"] == "V1"
+        assert second.json()["version"] == "V2"
+        assert all(item["package_id"] != package_id for item in client.get("/api/audience-snapshots", headers=headers(auth, isolated["id"])).json())
+
+
 def test_tenant_isolation_and_agent_runtime() -> None:
     with TestClient(app) as client:
         assert client.get("/api/campaigns").status_code == 401

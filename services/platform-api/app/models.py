@@ -262,6 +262,20 @@ class AudiencePackage(AudiencePackageBase):
     updated_at: datetime
 
 
+class AudienceSnapshot(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    package_id: int
+    external_id: str
+    version: str
+    estimated_size: int
+    tag_ids: list[int] = Field(default_factory=list)
+    expression: dict[str, Any] = Field(default_factory=dict)
+    source: str
+    status: str
+    created_at: datetime
+
+
 class KnowledgeDocument(BaseModel):
     id: int
     external_id: str

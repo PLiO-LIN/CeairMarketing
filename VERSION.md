@@ -14,6 +14,13 @@
 - Replaced static content rows in the production workbench with live content data.
 - Persisted AI-generated content drafts for review and added content detail, edit and delete flows.
 - Added regression coverage for content persistence and tenant isolation.
+
+## v3.0 - 2026-08-31
+
+- Added tenant-scoped audience snapshot persistence derived from audience packages.
+- Added versioned audience snapshot API for freezing campaign audience scope before execution.
+- Added audience workbench snapshot action and snapshot status display.
+- Added regression coverage for snapshot versioning and tenant isolation.
 ## v2.7 - 2026-08-27
 
 - Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.

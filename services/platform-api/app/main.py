@@ -18,7 +18,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceTagRecord, CampaignRecord, ContentAssetRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, ContentAssetRecord, DataPipelineJobRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
@@ -28,6 +28,7 @@ from .models import (
     AgentRun,
     AudiencePackage,
     AudiencePackageBase,
+    AudienceSnapshot,
     AudienceTag,
     AudienceTagBase,
     AgentRunListItem,
@@ -593,6 +594,51 @@ def delete_audience_package(package_id: int, context: TenantContext = Depends(re
     record = session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == package_id, AudiencePackageRecord.tenant_id == context.tenant_id))
     if record is None: raise HTTPException(status_code=404, detail="Request failed")
     session.delete(record); session.commit(); return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def audience_snapshot_view(record: AudienceSnapshotRecord) -> AudienceSnapshot:
+    return AudienceSnapshot(
+        id=record.id,
+        package_id=record.package_id,
+        external_id=record.external_id,
+        version=record.version,
+        estimated_size=record.estimated_size,
+        tag_ids=json.loads(record.tag_ids_json or "[]"),
+        expression=json.loads(record.expression_json or "{}"),
+        source=record.source,
+        status=record.status,
+        created_at=record.created_at,
+    )
+
+
+@app.get("/api/audience-snapshots", response_model=list[AudienceSnapshot])
+def list_audience_snapshots(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(AudienceSnapshotRecord).where(AudienceSnapshotRecord.tenant_id == context.tenant_id).order_by(AudienceSnapshotRecord.created_at.desc())).all()
+    return [audience_snapshot_view(record) for record in records]
+
+
+@app.post("/api/audience-packages/{package_id}/snapshots", response_model=AudienceSnapshot, status_code=status.HTTP_201_CREATED)
+def create_audience_snapshot(package_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    package = session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == package_id, AudiencePackageRecord.tenant_id == context.tenant_id))
+    if package is None:
+        raise HTTPException(status_code=404, detail="客群包不存在")
+    latest = session.scalar(select(AudienceSnapshotRecord).where(AudienceSnapshotRecord.package_id == package.id, AudienceSnapshotRecord.tenant_id == context.tenant_id).order_by(AudienceSnapshotRecord.id.desc()))
+    version = f"V{(int(latest.version[1:]) + 1) if latest and latest.version[1:].isdigit() else 1}"
+    record = AudienceSnapshotRecord(
+        tenant_id=context.tenant_id,
+        package_id=package.id,
+        external_id=f"AUD-SNAP-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}",
+        version=version,
+        estimated_size=package.estimated_size,
+        tag_ids_json=package.tag_ids_json,
+        expression_json=package.expression_json,
+        source="用户画像平台 + 客群规则",
+        created_by=context.user_id,
+    )
+    session.add(record)
+    session.commit()
+    session.refresh(record)
+    return audience_snapshot_view(record)
 
 
 @app.get("/api/agent-domains")
