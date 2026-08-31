@@ -83,6 +83,10 @@ class CampaignCreate(BaseModel):
     product_package: str = Field(default="", max_length=160)
     budget_yuan: int = Field(default=0, ge=0)
     roi_target: float = Field(default=0, ge=0)
+    audience_snapshot_id: int | None = None
+    product_package_id: int | None = None
+    content_asset_ids: list[int] = Field(default_factory=list)
+    channels: list[str] = Field(default_factory=list)
 
 
 class CampaignUpdate(BaseModel):

@@ -1,3 +1,9 @@
+## v3.12 - 2026-08-31
+
+- Extended campaign creation to persist the first campaign version with tenant-scoped audience snapshots, product packages, content assets and channels.
+- Added a Mock-first execution endpoint that runs approved channel tasks and persists sent, delivered, clicked, converted and failed metrics.
+- Completed the campaign lifecycle path from draft to approval, execution and review summary with regression coverage.
+
 ## v3.11 - 2026-08-31
 
 - Added a tenant-scoped campaign creation API that persists new marketing activity drafts with a business ID, owner, lifecycle stage and budget targets.

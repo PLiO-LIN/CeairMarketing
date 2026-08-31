@@ -279,13 +279,28 @@ def add_membership(user_id: int, payload: MembershipCreate, _admin: UserRecord =
 
 @app.post("/api/campaigns", response_model=Campaign, status_code=status.HTTP_201_CREATED)
 def create_campaign(payload: CampaignCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    snapshot = None
+    if payload.audience_snapshot_id is not None:
+        snapshot = session.scalar(select(AudienceSnapshotRecord).where(AudienceSnapshotRecord.id == payload.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id))
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="客群快照不存在")
+    product = None
+    if payload.product_package_id is not None:
+        product = session.scalar(select(ProductPackageRecord).where(ProductPackageRecord.id == payload.product_package_id, ProductPackageRecord.tenant_id == context.tenant_id))
+        if product is None:
+            raise HTTPException(status_code=404, detail="产品包不存在")
+    if payload.content_asset_ids:
+        count = session.scalar(select(func.count()).select_from(ContentAssetRecord).where(ContentAssetRecord.tenant_id == context.tenant_id, ContentAssetRecord.id.in_(payload.content_asset_ids)))
+        if count != len(set(payload.content_asset_ids)):
+            raise HTTPException(status_code=404, detail="内容资产不存在或不属于当前租户")
     campaign_id = f"ACT-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}"
-    record = CampaignRecord(tenant_id=context.tenant_id, id=campaign_id, name=payload.name, stage=payload.stage, status="草稿", version="V1", owner=context.display_name, audience_size=payload.audience_size, product_package=payload.product_package, budget_yuan=payload.budget_yuan, roi_target=payload.roi_target)
+    record = CampaignRecord(tenant_id=context.tenant_id, id=campaign_id, name=payload.name, stage=payload.stage, status="草稿", version="V1", owner=context.display_name, audience_size=snapshot.estimated_size if snapshot else payload.audience_size, product_package=product.name if product else payload.product_package, budget_yuan=payload.budget_yuan, roi_target=payload.roi_target)
     session.add(record)
+    session.flush()
+    session.add(CampaignVersionRecord(tenant_id=context.tenant_id, campaign_id=campaign_id, external_id=f"{campaign_id}-V1", version="V1", audience_snapshot_id=payload.audience_snapshot_id, product_package_id=payload.product_package_id, content_asset_ids_json=json.dumps(payload.content_asset_ids), budget_yuan=payload.budget_yuan, channels_json=json.dumps(payload.channels, ensure_ascii=False), status="草稿", created_by=context.user_id))
     session.commit()
     session.refresh(record)
     return record
-
 
 @app.get("/api/campaigns", response_model=list[Campaign])
 def list_campaigns(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
@@ -412,7 +427,8 @@ def decide_approval(approval_id: int, payload: ApprovalDecision, context: Tenant
     if payload.decision == "approve" and version:
         existing = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_version_id == version.id))
         if existing is None:
-            snapshot_size = session.scalar(select(AudienceSnapshotRecord.estimated_size).where(AudienceSnapshotRecord.id == version.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id)) or 0
+            snapshot_size = session.scalar(select(AudienceSnapshotRecord.estimated_size).where(AudienceSnapshotRecord.id == version.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id)) if version.audience_snapshot_id else 0
+            snapshot_size = snapshot_size or (campaign.audience_size if campaign else 0)
             batch = ExecutionBatchRecord(tenant_id=context.tenant_id, campaign_id=record.campaign_id, campaign_version_id=version.id, external_id=f"BATCH-{record.campaign_id}-{version.version}", channels_json=version.channels_json, target_size=snapshot_size, status="待执行", created_by=context.user_id)
             session.add(batch)
             session.flush()
@@ -470,6 +486,41 @@ def update_execution_batch_status(batch_id: int, payload: dict[str, str], contex
     session.refresh(record)
     return execution_batch_view(record)
 
+
+@app.post("/api/execution-batches/{batch_id}/run", response_model=ExecutionBatch)
+def run_execution_batch(batch_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    """Run deterministic Mock channel delivery and persist feedback metrics."""
+    pending, paused, running, done = "待执行", "已暂停", "执行中", "已完成"
+    batch = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    if batch is None:
+        raise HTTPException(status_code=404, detail="Execution batch not found")
+    if batch.status not in {pending, paused}:
+        raise HTTPException(status_code=409, detail="Current batch status cannot be executed")
+    tasks = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.batch_id == batch.id, ChannelTaskRecord.tenant_id == context.tenant_id)).all()
+    if not tasks:
+        raise HTTPException(status_code=409, detail="Execution batch has no channel tasks")
+    batch.status = running
+    session.flush()
+    for task in tasks:
+        metrics = channel_delivery(task.channel, task.target_count, batch.campaign_id)["metrics"]
+        task.sent_count = metrics["target"]
+        task.delivered_count = metrics["delivered"]
+        task.clicked_count = metrics["estimated_clicks"]
+        task.converted_count = metrics["estimated_conversions"]
+        task.failed_count = metrics["failed"]
+        task.status = done
+        task.last_feedback_at = datetime.now(timezone.utc)
+    batch.delivered_count = sum(item.delivered_count for item in tasks)
+    batch.feedback_count = sum(item.clicked_count + item.converted_count for item in tasks)
+    batch.failed_count = sum(item.failed_count for item in tasks)
+    batch.status = done
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == batch.campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign:
+        campaign.stage = "复盘"
+        campaign.status = done
+    session.commit()
+    session.refresh(batch)
+    return execution_batch_view(batch)
 
 @app.get("/api/channel-tasks", response_model=list[ChannelTask])
 def list_channel_tasks(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
