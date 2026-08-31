@@ -1,3 +1,8 @@
+## v3.10 - 2026-08-31
+
+- Added authenticated, tenant-scoped mock business APIs for flight operations, profile summaries, market signals, product catalog and channel delivery.
+- Added deterministic mock integration tests so the marketing workflow can be developed without connecting real airline systems.
+
 ## v3.9 - 2026-08-31
 
 - Added idempotent import of 19 airline marketing product packages from `docs/klg.xlsx`, including Wi-Fi, mileage, baggage, lounge, C919, low-carbon, agricultural support and group travel products.

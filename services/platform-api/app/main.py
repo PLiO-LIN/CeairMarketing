@@ -23,6 +23,7 @@ from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot, synthetic_hotspot_rows
+from .mock_business import channel_delivery, flight_operations, market_signals, product_catalog, profile_summary
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
@@ -1248,6 +1249,31 @@ def test_data_source(source_id: str, context: TenantContext = Depends(require_ad
     if not record.endpoint and record.source_type not in {"file", "hotspot"}:
         raise HTTPException(status_code=422, detail="接口或数据库数据源必须配置连接地址")
     return {"source_id": record.source_id, "status": "ready", "message": "数据源配置校验通过，可进入同步任务", "checked_at": datetime.now(timezone.utc)}
+
+@app.get("/api/mock/flight-operations")
+def mock_flight_operations(origin: str = "SHA", destination: str = "SYX", _context: TenantContext = Depends(get_tenant_context)):
+    return flight_operations(origin, destination)
+
+
+@app.get("/api/mock/profile-summary")
+def mock_profile_summary(_context: TenantContext = Depends(get_tenant_context)):
+    return profile_summary()
+
+
+@app.get("/api/mock/market-signals")
+def mock_market_signals(_context: TenantContext = Depends(get_tenant_context)):
+    return market_signals()
+
+
+@app.get("/api/mock/product-catalog")
+def mock_product_catalog(_context: TenantContext = Depends(get_tenant_context)):
+    return product_catalog()
+
+
+@app.post("/api/mock/channels/{channel}/deliver")
+def mock_channel_deliver(channel: str, audience_size: int = 0, campaign_id: str = "MOCK-CAMPAIGN", _context: TenantContext = Depends(require_write)):
+    return channel_delivery(channel, audience_size, campaign_id)
+
 
 @app.post("/api/ndc/mock/air-shopping")
 def ndc_mock_air_shopping(payload: NdcAirShoppingRequest):
