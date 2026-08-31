@@ -83,7 +83,6 @@
     if (['viewProduct','useProduct'].includes(action)) product();
     if (['reviewContent','viewContent'].includes(action)) content();
     if (['viewVersion','compareVersion','rollbackVersion'].includes(action)) campaign();
-    if (action === 'switchTenant') openDrawer('切换租户','切换租户后将按成员角色刷新数据和功能权限',section('租户','<div class="drawer-list"><button data-drawer="tenant"><span>华东区域营销运营</span><b>当前</b></button><button data-drawer="tenant"><span>全国会员营销</span><b>可切换</b></button><button><span>国际航线营销</span><b>需申请</b></button></div>'));
     const plain = e.target.closest('button');
     if (plain && !action && !plain.dataset.view && !plain.dataset.menu && !plain.dataset.approval && !plain.dataset.role && !plain.dataset.decision && !plain.dataset.graphFilter && !plain.dataset.close && !plain.id) {
       const label = plain.textContent.trim();

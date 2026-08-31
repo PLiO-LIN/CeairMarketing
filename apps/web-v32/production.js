@@ -2,7 +2,6 @@
   'use strict';
   const mount = location.pathname.startsWith('/ceair-marketing') ? '/ceair-marketing' : '';
   const sessionKey = 'ceair-production-session';
-  const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
   let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], productPackages: [], contentAssets: [], audienceSnapshots: [], approvals: [], executionBatches: [], documents: [] };
@@ -63,14 +62,14 @@
         const body = Object.fromEntries(new FormData(event.currentTarget));
         const response = await fetch(`${mount}/api/auth/login`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
         const value = await response.json(); if (!response.ok) throw new Error(value.detail || '登录失败');
-        session = value; tenantId = Number(localStorage.getItem(tenantKey)) || value.tenants[0]?.id;
+        session = value; tenantId = value.tenants?.[0]?.id || null; localStorage.removeItem(tenantKey);
         localStorage.setItem(sessionKey, JSON.stringify(value)); layer.remove(); q('.app').style.visibility = 'visible'; await initializeSession();
       } catch (cause) { error.textContent = cause.message || '登录失败'; error.hidden = false; }
       finally { button.disabled = false; button.textContent = '登录平台'; }
     });
   }
 
-  function logout() { localStorage.removeItem(sessionKey); localStorage.removeItem(tenantKey); location.reload(); }
+  function logout() { localStorage.removeItem(sessionKey); location.reload(); }
   function injectNavigation() {
     if (typeof titles !== 'undefined') Object.assign(titles, { imports: '\u6570\u636e\u63a5\u5165', models: '\u6a21\u578b\u914d\u7f6e', tenants: '\u79df\u6237\u4e0e\u7528\u6237' });
     const governance = qa('.menu-group').find(group => q('[data-menu="governance"]', group));
@@ -203,18 +202,10 @@
     if (!session.tenants.some(item => item.id === tenantId)) tenantId = session.tenants[0]?.id;
     const tenant = activeTenant(); const user = q('.user');
     q('b', user).textContent = tenant?.name || '未选择租户';
-    q('span', user).textContent = `当前用户：${session.display_name} · ${roleLabels[tenant?.role] || tenant?.role || '未授权'}`;
-    const switchButton = q('.user-switch');
-    if (switchButton) switchButton.innerHTML = '<i data-lucide="repeat-2"></i>切换租户';
+    q('span', user).textContent = `${session.display_name} · 当前角色：${roleLabels[tenant?.role] || tenant?.role || '未授权'}`;
     document.body.classList.toggle('platform-admin', !!session.is_platform_admin);
     document.body.classList.toggle('tenant-admin', isTenantAdmin());
     document.body.classList.toggle('tenant-readonly', !canWrite());
-    const actions = q('.top-actions');
-    let select = q('.production-tenant', actions);
-    if (!select) { select=document.createElement('select'); select.className='production-tenant'; actions.prepend(select); select.addEventListener('change', async () => { tenantId=Number(select.value); localStorage.setItem(tenantKey,String(tenantId)); await loadTenantData(); }); }
-    select.title = '切换当前租户';
-    select.setAttribute('aria-label', '切换当前租户');
-    select.innerHTML = session.tenants.map(item => `<option value="${item.id}" ${item.id===tenant.id?'selected':''}>${escapeHtml(item.name)} · ${escapeHtml(roleLabels[item.role] || item.role)}</option>`).join('');
     qa('[data-action="createCampaign"], [data-action="aiOrchestrate"]').forEach(button => {
       button.disabled = !canWrite();
       button.title = canWrite() ? '' : '当前为只读权限，不能创建或修改活动';
@@ -551,26 +542,10 @@
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
     q('#refreshPipelines').addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
     q('#syncNdcMock').addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcMock');button.disabled=true;try{const result=await request('/api/ndc/mock/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
-    q('.user-switch').addEventListener('click',event=>{event.stopImmediatePropagation();showTenantSwitcher();},true);
     q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
     q('#mineruForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
     q('#tenantForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
-
-  function showTenantSwitcher(){const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card">
-<div class="production-modal-head">
-<b>切换租户</b>
-<button class="btn" data-close>关闭</button>
-</div>
-<div class="production-modal-body">${session.tenants.map(item=>`<button class="tenant-option ${item.id===activeTenant().id?'active':''}" data-tenant="${item.id}">
-<span>
-<b>${escapeHtml(item.name)}</b>
-<small>${escapeHtml(item.code)} · ${escapeHtml(roleLabels[item.role] || item.role)}</small>
-</span>
-<em>${item.id===activeTenant().id?'当前':'切换'}</em>
-</button>`).join('')}<button class="btn" data-logout>退出登录</button>
-</div>
-</div>`;document.body.appendChild(layer);layer.addEventListener('click',async event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();const option=event.target.closest('[data-tenant]');if(option){tenantId=Number(option.dataset.tenant);localStorage.setItem(tenantKey,String(tenantId));layer.remove();await loadTenantData();}if(event.target.closest('[data-logout]'))logout();});}
 
   function mountMarketingAssistantLegacy(){
     if(q('#marketingAssistant'))return; const root=document.createElement('div');root.id='marketingAssistant';root.innerHTML='<button class="assistant-fab" title="\u003f\u003f\u003f\u003f\u003f\u003f"><i data-lucide="bot"></i><span>\u003f\u003f\u003f\u003f</span></button><section class="assistant-panel" hidden><header><b>\u003f\u003f\u003f\u003f\u003f\u003f</b><button class="icon-btn" data-assistant-close aria-label="\u003f\u003f"><i data-lucide="x"></i></button></header><div class="assistant-messages"><div class="assistant-message assistant">\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f</div></div><form><input name="message" placeholder="\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f" autocomplete="off"><button class="btn primary">\u003f\u003f</button></form></section>';document.body.appendChild(root);const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),messages=q('.assistant-messages',root);fab.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)q('input',root).focus();});q('[data-assistant-close]',root).addEventListener('click',()=>panel.hidden=true);q('form',root).addEventListener('submit',async e=>{e.preventDefault();const input=q('input',root),message=input.value.trim();if(!message)return;messages.insertAdjacentHTML('beforeend','<div class="assistant-message user">'+escapeHtml(message)+'</div>');input.value='';messages.insertAdjacentHTML('beforeend','<div class="assistant-message assistant pending">\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u002e\u002e\u002e</div>');const pending=messages.lastElementChild;try{const result=await request('/api/agent-chat',{method:'POST',body:JSON.stringify({message,domain_id:'marketing-copilot',history:[]})});pending.classList.remove('pending');pending.innerHTML=escapeHtml(cleanText(result.answer,'\u0041\u0067\u0065\u006e\u0074\u003f\u003f\u003f\u003f\u003f\u003f\u003f'))+(result.trace?.length?'<details><summary>\u003f\u003f\u003f\u003f\u003f\u003f</summary><pre>'+escapeHtml(JSON.stringify(result.trace,null,2))+'</pre></details>':'');}catch(err){pending.classList.remove('pending');pending.textContent='\u003f\u003f\u003f\u003f\u003f'+(err.message||'\u003f\u003f\u003f\u003f\u003f\u003f\u003f');}});if(window.lucide)lucide.createIcons();
@@ -669,6 +644,6 @@ function mountMarketingAssistantV2(){
     try{await loadTenantData();}catch(cause){console.error('租户数据加载失败',cause);toast(cause.message||'租户数据加载失败，请稍后重试');}
     if(window.lucide)lucide.createIcons();
   }
-  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=Number(localStorage.getItem(tenantKey))||session.tenants?.[0]?.id;q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
+  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=session.tenants?.[0]?.id || null; localStorage.removeItem(tenantKey);q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
