@@ -1,6 +1,15 @@
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
+CURRENT_SCHEMA_VERSION = "20260831.1"
+
+
+def record_schema_version(engine: Engine) -> None:
+    """Record the application schema version for deployment health checks."""
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE IF NOT EXISTS schema_versions (version VARCHAR(40) PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)"))
+        connection.execute(text("INSERT INTO schema_versions(version) VALUES (:version) ON CONFLICT(version) DO NOTHING"), {"version": CURRENT_SCHEMA_VERSION})
+
 
 def migrate_legacy_schema(engine: Engine) -> None:
     inspector = inspect(engine)

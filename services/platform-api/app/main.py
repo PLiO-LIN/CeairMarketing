@@ -1,12 +1,13 @@
 import json
 import queue
 import threading
+import uuid
 from datetime import datetime, timezone
 from uuid import uuid4
 from contextlib import asynccontextmanager
 from contextlib import contextmanager
 
-from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import delete, func, or_, select, text, update
@@ -23,7 +24,7 @@ from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_v
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
-from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema
+from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
 from .models import (
     AgentRun,
     AudiencePackage,
@@ -111,9 +112,11 @@ def database_initialization_lock():
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    settings.validate_production()
     with database_initialization_lock():
         Base.metadata.create_all(bind=engine)
         migrate_legacy_schema(engine)
+        record_schema_version(engine)
         with SessionLocal() as session:
             tenant_id = seed_database(session)
         assign_legacy_records(engine, tenant_id)
@@ -133,6 +136,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_context_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
 runtime = AgentRuntime()
 copilot = MarketingCopilot()
 cipher = SecretCipher()
@@ -169,7 +180,10 @@ def health_live() -> dict[str, str]:
 @app.get("/health/ready")
 def health_ready(session: Session = Depends(get_session)) -> dict[str, str]:
     session.execute(text("SELECT 1"))
-    return {"status": "ready", "database": "connected"}
+    version = session.execute(text("SELECT version FROM schema_versions ORDER BY applied_at DESC LIMIT 1")).scalar_one_or_none()
+    if version != CURRENT_SCHEMA_VERSION:
+        raise HTTPException(status_code=503, detail="数据库 schema 版本不匹配")
+    return {"status": "ready", "database": "connected", "schema_version": version}
 
 
 @app.get("/health")
@@ -1266,6 +1280,21 @@ def get_data_pipeline(job_id: str, context: TenantContext = Depends(get_tenant_c
     record = session.scalar(select(DataPipelineJobRecord).where(DataPipelineJobRecord.id == job_id, DataPipelineJobRecord.tenant_id == context.tenant_id))
     if record is None:
         raise HTTPException(status_code=404, detail="数据处理任务不存在")
+    return pipeline_view(record)
+
+
+@app.post("/api/data-pipelines/{job_id}/cancel", response_model=DataPipelineJob)
+def cancel_data_pipeline(job_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(DataPipelineJobRecord).where(DataPipelineJobRecord.id == job_id, DataPipelineJobRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="数据处理任务不存在")
+    if record.status not in {"queued", "running"}:
+        raise HTTPException(status_code=409, detail="只有排队中或处理中的任务可以取消")
+    record.status = "cancelled"
+    record.current_stage = "cancelled"
+    record.error_message = "由用户取消"
+    record.completed_at = datetime.now(timezone.utc)
+    session.commit(); session.refresh(record)
     return pipeline_view(record)
 
 

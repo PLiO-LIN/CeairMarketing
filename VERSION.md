@@ -6,6 +6,14 @@
 - Added agent evaluation summary for domain run completion, human confirmation, failures and token usage.
 - Added regression coverage for data source isolation and governance summaries.
 
+## v3.6 - 2026-08-31
+
+- Added production configuration validation for PostgreSQL, secrets, administrator password and explicit CORS origins.
+- Added request ID propagation and schema version readiness checks.
+- Added governed data pipeline cancellation semantics without claiming unsupported retry behavior.
+- Added production release order and external integration readiness documentation.
+- Added regression coverage for health readiness and insecure production configuration rejection.
+
 ## v3.4 - 2026-08-31
 
 - Added tenant-scoped campaign effect summary aggregation for the latest execution batch.

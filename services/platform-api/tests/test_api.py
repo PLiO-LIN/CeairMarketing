@@ -30,6 +30,26 @@ def restore_model_provider_state():
         session.commit()
 
 
+def test_health_endpoints_expose_request_and_schema_context() -> None:
+    with TestClient(app) as client:
+        live = client.get("/health/live", headers={"X-Request-ID": "health-test-001"})
+        assert live.status_code == 200
+        assert live.headers["X-Request-ID"] == "health-test-001"
+        ready = client.get("/health/ready")
+        assert ready.status_code == 200
+        assert ready.json()["schema_version"]
+
+
+def test_production_settings_reject_insecure_defaults() -> None:
+    from app.config import Settings
+    settings = Settings(environment="production", database_url="sqlite:///./unsafe.db", token_secret="development-only-change-me", encryption_key="", initial_admin_password="Admin@12345", cors_origins="*")
+    try:
+        settings.validate_production()
+    except RuntimeError as exc:
+        assert "PostgreSQL" in str(exc)
+    else:
+        raise AssertionError("生产安全配置校验未拒绝不安全默认值")
+
 def login(client: TestClient) -> tuple[dict[str, str], list[dict]]:
     response = client.post("/api/auth/login", json={"username": "admin", "password": "Admin@12345"})
     assert response.status_code == 200

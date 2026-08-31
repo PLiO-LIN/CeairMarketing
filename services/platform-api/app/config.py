@@ -39,6 +39,20 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return [item.strip() for item in self.cors_origins.split(",") if item.strip()]
 
+    def validate_production(self) -> None:
+        if self.environment.lower() not in {"production", "prod"}:
+            return
+        if self.database_url.startswith("sqlite"):
+            raise RuntimeError("生产环境必须使用 PostgreSQL，不允许使用 SQLite")
+        if len(self.token_secret) < 32 or self.token_secret == "development-only-change-me":
+            raise RuntimeError("生产环境必须配置长度不少于 32 位的 TOKEN_SECRET")
+        if len(self.encryption_key) < 32:
+            raise RuntimeError("生产环境必须配置 ENCRYPTION_KEY")
+        if self.initial_admin_password in {"", "Admin@12345", "replace-with-a-long-random-password"}:
+            raise RuntimeError("生产环境必须配置 INITIAL_ADMIN_PASSWORD")
+        if self.cors_origins.strip() in {"", "*"}:
+            raise RuntimeError("生产环境必须配置明确的 CORS_ORIGINS")
+
 
 @lru_cache
 def get_settings() -> Settings:
