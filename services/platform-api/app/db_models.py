@@ -99,6 +99,26 @@ class ApprovalTaskRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class ExecutionBatchRecord(Base):
+    __tablename__ = "execution_batches"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_execution_batch_tenant_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    campaign_version_id: Mapped[int] = mapped_column(ForeignKey("campaign_versions.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(64), index=True)
+    channels_json: Mapped[str] = mapped_column(Text, default="[]")
+    target_size: Mapped[int] = mapped_column(Integer, default=0)
+    delivered_count: Mapped[int] = mapped_column(Integer, default=0)
+    feedback_count: Mapped[int] = mapped_column(Integer, default=0)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(32), default="待执行")
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
 class ProductPackageRecord(Base):
     __tablename__ = "product_packages"
     __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_product_package_tenant_external_id"),)

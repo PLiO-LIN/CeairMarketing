@@ -117,6 +117,22 @@ class ApprovalDecision(BaseModel):
     comment: str = Field(default="", max_length=1000)
 
 
+class ExecutionBatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    campaign_id: str
+    campaign_version_id: int
+    external_id: str
+    channels: list[str] = Field(default_factory=list)
+    target_size: int
+    delivered_count: int
+    feedback_count: int
+    failed_count: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class ProductPackageBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     product_type: str = Field(default="组合产品", max_length=64)

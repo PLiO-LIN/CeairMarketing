@@ -181,6 +181,16 @@ def test_campaign_version_approval_flow() -> None:
         campaign = client.get("/api/campaigns/ACT-2026-0921", headers=request_headers)
         assert campaign.json()["stage"] == "执行"
         assert campaign.json()["status"] == "待执行"
+        batches = client.get("/api/execution-batches", headers=request_headers)
+        assert batches.status_code == 200
+        batch = next(item for item in batches.json() if item["campaign_version_id"] == version.json()["id"])
+        assert batch["status"] == "待执行"
+        running = client.post(f"/api/execution-batches/{batch['id']}/status", headers=request_headers, json={"status": "执行中"})
+        assert running.status_code == 200
+        assert running.json()["delivered_count"] > 0
+        completed = client.post(f"/api/execution-batches/{batch['id']}/status", headers=request_headers, json={"status": "已完成"})
+        assert completed.status_code == 200
+        assert completed.json()["delivered_count"] == completed.json()["target_size"]
 
 
 def test_tenant_isolation_and_agent_runtime() -> None:

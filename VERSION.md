@@ -29,6 +29,14 @@
 - Protected campaigns with versions from direct deletion to avoid orphaned lifecycle records.
 - Connected the production workbench to live approval task data.
 - Added end-to-end regression coverage for campaign version approval flow.
+
+## v3.2 - 2026-08-31
+
+- Added execution batch persistence generated automatically after campaign approval.
+- Added execution batch listing and governed status transitions for pending, running, paused, completed and failed states.
+- Connected execution monitoring KPIs to live batch data.
+- Added delivery and feedback counters for execution progress tracking.
+- Extended campaign approval regression coverage through execution completion.
 ## v2.7 - 2026-08-27
 
 - Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.

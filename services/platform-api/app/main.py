@@ -18,7 +18,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ContentAssetRecord, ImportJobRecord, DataPipelineJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ContentAssetRecord, DataPipelineJobRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot
 from .imports import import_file
@@ -31,6 +31,7 @@ from .models import (
     AudienceSnapshot,
     ApprovalDecision,
     ApprovalTask,
+    ExecutionBatch,
     AudienceTag,
     AudienceTagBase,
     AgentRunListItem,
@@ -376,9 +377,56 @@ def decide_approval(approval_id: int, payload: ApprovalDecision, context: Tenant
     if campaign:
         campaign.stage = "执行" if payload.decision == "approve" else "内容"
         campaign.status = "待执行" if payload.decision == "approve" else "待修改"
+    if payload.decision == "approve" and version:
+        existing = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_version_id == version.id))
+        if existing is None:
+            snapshot_size = session.scalar(select(AudienceSnapshotRecord.estimated_size).where(AudienceSnapshotRecord.id == version.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id)) or 0
+            session.add(ExecutionBatchRecord(tenant_id=context.tenant_id, campaign_id=record.campaign_id, campaign_version_id=version.id, external_id=f"BATCH-{record.campaign_id}-{version.version}", channels_json=version.channels_json, target_size=snapshot_size, status="待执行", created_by=context.user_id))
     session.commit()
     session.refresh(record)
     return approval_view(record)
+
+
+def execution_batch_view(record: ExecutionBatchRecord) -> ExecutionBatch:
+    return ExecutionBatch(
+        id=record.id,
+        campaign_id=record.campaign_id,
+        campaign_version_id=record.campaign_version_id,
+        external_id=record.external_id,
+        channels=json.loads(record.channels_json or "[]"),
+        target_size=record.target_size,
+        delivered_count=record.delivered_count,
+        feedback_count=record.feedback_count,
+        failed_count=record.failed_count,
+        status=record.status,
+        created_at=record.created_at,
+        updated_at=record.updated_at,
+    )
+
+
+@app.get("/api/execution-batches", response_model=list[ExecutionBatch])
+def list_execution_batches(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id).order_by(ExecutionBatchRecord.created_at.desc())).all()
+    return [execution_batch_view(record) for record in records]
+
+
+@app.post("/api/execution-batches/{batch_id}/status", response_model=ExecutionBatch)
+def update_execution_batch_status(batch_id: int, payload: dict[str, str], context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="执行批次不存在")
+    next_status = payload.get("status", "")
+    if next_status not in {"待执行", "执行中", "已暂停", "已完成", "失败"}:
+        raise HTTPException(status_code=422, detail="不支持的执行状态")
+    record.status = next_status
+    if next_status == "执行中":
+        record.delivered_count = max(record.delivered_count, min(record.target_size, max(1, int(record.target_size * 0.35))))
+    if next_status == "已完成":
+        record.delivered_count = record.target_size
+        record.feedback_count = max(record.feedback_count, record.delivered_count)
+    session.commit()
+    session.refresh(record)
+    return execution_batch_view(record)
 
 
 @app.get("/api/product-packages", response_model=list[ProductPackage])
