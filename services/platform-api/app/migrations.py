@@ -32,16 +32,23 @@ def assign_legacy_records(engine: Engine, tenant_id: int) -> None:
 def enforce_postgres_tenant_constraints(engine: Engine) -> None:
     if engine.dialect.name != "postgresql":
         return
+    inspector = inspect(engine)
+    campaign_primary_key = inspector.get_pk_constraint("campaigns")
+    primary_key_columns = campaign_primary_key.get("constrained_columns") or []
     statements = [
         "ALTER TABLE agent_runs DROP CONSTRAINT IF EXISTS agent_runs_campaign_id_fkey",
         "ALTER TABLE campaigns ALTER COLUMN tenant_id SET NOT NULL",
-        "ALTER TABLE campaigns DROP CONSTRAINT IF EXISTS campaigns_pkey",
-        "ALTER TABLE campaigns ADD CONSTRAINT campaigns_pkey PRIMARY KEY (tenant_id, id)",
         "ALTER TABLE model_providers ALTER COLUMN tenant_id SET NOT NULL",
         "ALTER TABLE model_providers DROP CONSTRAINT IF EXISTS model_providers_display_name_key",
         "CREATE UNIQUE INDEX IF NOT EXISTS uq_model_provider_tenant_name ON model_providers (tenant_id, display_name)",
         "CREATE INDEX IF NOT EXISTS ix_campaigns_tenant_id ON campaigns (tenant_id)",
     ]
     with engine.begin() as connection:
+        if primary_key_columns != ["tenant_id", "id"]:
+            primary_key_name = campaign_primary_key.get("name")
+            if primary_key_name:
+                quoted_name = connection.dialect.identifier_preparer.quote(primary_key_name)
+                connection.execute(text(f"ALTER TABLE campaigns DROP CONSTRAINT {quoted_name}"))
+            connection.execute(text("ALTER TABLE campaigns ADD CONSTRAINT campaigns_pkey PRIMARY KEY (tenant_id, id)"))
         for statement in statements:
             connection.execute(text(statement))
