@@ -1352,6 +1352,7 @@ def ndc_mock_order_list(payload: NdcOrderListRequest):
     return order_list_payload(payload.sales_channel)
 
 
+@app.post("/api/ndc/sync-flight-products", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
 @app.post("/api/ndc/mock/sync-flight-products", response_model=DataPipelineCreateResult, status_code=status.HTTP_202_ACCEPTED)
 def sync_ndc_mock_flight_products(payload: NdcAirShoppingRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     source_id = "ndc24-flight-shopping-mock"

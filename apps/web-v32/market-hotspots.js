@@ -47,7 +47,7 @@ async function collect() {
     if (button) { button.disabled = true; button.innerHTML = '<i data-lucide="loader-circle"></i>采集中...'; if (window.lucide) window.lucide.createIcons(); }
     try {
       const result = await api('/api/market-hotspots/collect', {method:'POST', body:JSON.stringify({process_with_agent:true,sources:[{name:'中国新闻网·生活资讯',url:'https://www.chinanews.com.cn/rss/life.xml',source_type:'rss',max_items:20},{name:'中国新闻网·财经资讯',url:'https://www.chinanews.com.cn/rss/finance.xml',source_type:'rss',max_items:20},{name:'中国新闻网·滚动资讯',url:'https://www.chinanews.com.cn/rss/scroll-news.xml',source_type:'rss',max_items:20}]})});
-      const health = (result.source_health || []).map(x => `${x.name}: ${x.status === 'healthy' ? '已采集 ' + (x.item_count || 0) + ' 条' : x.status === 'fallback' ? '已使用演示信号' : '失败'}`).join('；');
+      const health = (result.source_health || []).map(x => `${x.name}: ${x.status === 'healthy' ? '已采集 ' + (x.item_count || 0) + ' 条' : x.status === 'fallback' ? '已使用系统补充信号' : '失败'}`).join('；');
       alert(`热点采集完成：新增 ${result.created || 0} 条。${health}`);
       await load();
       const first = (result.hotspots || [])[0];
