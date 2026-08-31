@@ -80,6 +80,43 @@ class CampaignUpdate(BaseModel):
     name: str = Field(min_length=2, max_length=160)
 
 
+class CampaignVersionBase(BaseModel):
+    audience_snapshot_id: int | None = None
+    product_package_id: int | None = None
+    content_asset_ids: list[int] = Field(default_factory=list)
+    budget_yuan: int = Field(default=0, ge=0)
+    channels: list[str] = Field(default_factory=list)
+    status: str = Field(default="草稿", max_length=32)
+
+
+class CampaignVersion(CampaignVersionBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    campaign_id: str
+    external_id: str
+    version: str
+    created_at: datetime
+
+
+class ApprovalTask(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    campaign_id: str
+    campaign_version_id: int
+    external_id: str
+    approver_role: str
+    status: str
+    comment: str
+    decided_by: int | None = None
+    decided_at: datetime | None = None
+    created_at: datetime
+
+
+class ApprovalDecision(BaseModel):
+    decision: Literal["approve", "reject"]
+    comment: str = Field(default="", max_length=1000)
+
+
 class ProductPackageBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     product_type: str = Field(default="组合产品", max_length=64)

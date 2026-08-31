@@ -153,6 +153,36 @@ def test_audience_package_snapshot_is_versioned_and_tenant_scoped() -> None:
         assert all(item["package_id"] != package_id for item in client.get("/api/audience-snapshots", headers=headers(auth, isolated["id"])).json())
 
 
+def test_campaign_version_approval_flow() -> None:
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        request_headers = headers(auth, hq["id"])
+        audience = client.post(
+            "/api/audience-packages",
+            headers=request_headers,
+            json={"name": "审批测试客群", "selection_mode": "ai-selection", "tag_ids": [], "expression": {"route": "SHA-SYX"}, "estimated_size": 500, "status": "可用"},
+        )
+        assert audience.status_code == 201
+        snapshot = client.post(f"/api/audience-packages/{audience.json()['id']}/snapshots", headers=request_headers)
+        assert snapshot.status_code == 201
+        version = client.post(
+            "/api/campaigns/ACT-2026-0921/versions",
+            headers=request_headers,
+            json={"audience_snapshot_id": snapshot.json()["id"], "channels": ["App", "短信"], "budget_yuan": 320000, "status": "草稿"},
+        )
+        assert version.status_code == 201
+        assert version.json()["version"] == "V1"
+        approval = client.post(f"/api/campaigns/ACT-2026-0921/versions/{version.json()['id']}/approval", headers=request_headers)
+        assert approval.status_code == 201
+        decision = client.post(f"/api/approvals/{approval.json()['id']}/decision", headers=request_headers, json={"decision": "approve", "comment": "预算与客群范围已确认"})
+        assert decision.status_code == 200
+        assert decision.json()["status"] == "已通过"
+        campaign = client.get("/api/campaigns/ACT-2026-0921", headers=request_headers)
+        assert campaign.json()["stage"] == "执行"
+        assert campaign.json()["status"] == "待执行"
+
+
 def test_tenant_isolation_and_agent_runtime() -> None:
     with TestClient(app) as client:
         assert client.get("/api/campaigns").status_code == 401

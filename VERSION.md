@@ -21,6 +21,14 @@
 - Added versioned audience snapshot API for freezing campaign audience scope before execution.
 - Added audience workbench snapshot action and snapshot status display.
 - Added regression coverage for snapshot versioning and tenant isolation.
+
+## v3.1 - 2026-08-31
+
+- Added persistent campaign versions with audience snapshot, product package, content, budget and channel references.
+- Added approval task creation and approve/reject decision APIs with campaign state transitions.
+- Protected campaigns with versions from direct deletion to avoid orphaned lifecycle records.
+- Connected the production workbench to live approval task data.
+- Added end-to-end regression coverage for campaign version approval flow.
 ## v2.7 - 2026-08-27
 
 - Changed file processing to persist source knowledge first and hold extracted ontology objects and relations as candidates until human confirmation.

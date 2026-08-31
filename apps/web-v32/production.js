@@ -5,7 +5,7 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
-  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], productPackages: [], contentAssets: [], audienceSnapshots: [], documents: [] };
+  let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], productPackages: [], contentAssets: [], audienceSnapshots: [], approvals: [], documents: [] };
   const pipelineFiles = new Map();
   const roleLabels = { admin: '租户管理员', manager: '营销经理', analyst: '营销分析师', viewer: '只读用户' };
   let pipelinePollTimer = null;
@@ -322,6 +322,14 @@
     const latest=assets[0]; if(latest){const hero=q('.phone-hero'),copy=q('.phone-body b'),desc=q('.phone-body p');if(hero)hero.textContent=latest.title||latest.name;if(copy)copy.textContent=latest.body||'暂无正文';if(desc)desc.textContent=`${latest.channel} · ${latest.version} · ${latest.status}`;}
   }
 
+  function renderApprovals(){
+    const list=q('#approvals .approval-list'); if(!list)return;
+    const approvals=tenantData.approvals||[];
+    if(!approvals.length){list.innerHTML='<div class="empty-action">暂无待处理审批。活动版本提交审批后会出现在这里。</div>';return;}
+    list.innerHTML=approvals.map(item=>`<button class="approval-item ${item.status==='待审批'?'active':''}" data-approval="${item.id}"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><span><b>${escapeHtml(item.campaign_id)}</b><small>${escapeHtml(item.approver_role)} · ${escapeHtml(item.external_id)}</small></span><em class="pill ${item.status==='待审批'?'red':'blue'}">${escapeHtml(item.status)}</em></button>`).join('');
+    if(window.lucide)lucide.createIcons();
+  }
+
   function showContentDetail(item){
     const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(item.name)}</b><small>${escapeHtml(item.channel)} · ${escapeHtml(item.version)}</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>活动</b>${escapeHtml(item.campaign_id||'未关联活动')}</span><span><b>状态</b>${escapeHtml(item.status)}</span><span><b>生成方式</b>${escapeHtml(item.generated_by||'manual')}</span></div><section><h3>${escapeHtml(item.title||'内容正文')}</h3><p>${escapeHtml(item.body||'暂无正文')}</p></section></div></div>`;document.body.appendChild(layer);layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();});
   }
@@ -620,7 +628,7 @@ function mountMarketingAssistantV2(){
     restoreLayout();if(window.lucide)lucide.createIcons();
   }
 
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/product-packages','/api/content-assets','/api/audience-snapshots','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,contentAssets,audienceSnapshots,documents]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,contentAssets,audienceSnapshots,documents,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderProducts();renderContents();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/audience-tags','/api/audience-packages','/api/product-packages','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,contentAssets,audienceSnapshots,approvals,documents]=values;tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,audienceTags,audiencePackages,productPackages,contentAssets,audienceSnapshots,approvals,documents,mineru};renderOpportunities();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderProducts();renderContents();renderApprovals();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function initializeSession(){
     try{mountMarketingAssistantV2();}catch(cause){console.error('营销助手挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}

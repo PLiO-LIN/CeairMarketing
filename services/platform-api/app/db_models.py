@@ -63,6 +63,42 @@ class CampaignRecord(Base):
     roi_target: Mapped[float] = mapped_column(Float)
 
 
+class CampaignVersionRecord(Base):
+    __tablename__ = "campaign_versions"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_campaign_version_tenant_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    external_id: Mapped[str] = mapped_column(String(64), index=True)
+    version: Mapped[str] = mapped_column(String(16), default="V1")
+    audience_snapshot_id: Mapped[int | None] = mapped_column(ForeignKey("audience_snapshots.id", ondelete="SET NULL"), nullable=True)
+    product_package_id: Mapped[int | None] = mapped_column(ForeignKey("product_packages.id", ondelete="SET NULL"), nullable=True)
+    content_asset_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+    budget_yuan: Mapped[int] = mapped_column(Integer, default=0)
+    channels_json: Mapped[str] = mapped_column(Text, default="[]")
+    status: Mapped[str] = mapped_column(String(32), default="草稿")
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class ApprovalTaskRecord(Base):
+    __tablename__ = "approval_tasks"
+    __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_approval_task_tenant_external_id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    campaign_id: Mapped[str] = mapped_column(String(32), index=True)
+    campaign_version_id: Mapped[int] = mapped_column(ForeignKey("campaign_versions.id", ondelete="CASCADE"), index=True)
+    external_id: Mapped[str] = mapped_column(String(64), index=True)
+    approver_role: Mapped[str] = mapped_column(String(40), default="营销经理")
+    status: Mapped[str] = mapped_column(String(32), default="待审批")
+    comment: Mapped[str] = mapped_column(Text, default="")
+    decided_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class ProductPackageRecord(Base):
     __tablename__ = "product_packages"
     __table_args__ = (UniqueConstraint("tenant_id", "external_id", name="uq_product_package_tenant_external_id"),)
