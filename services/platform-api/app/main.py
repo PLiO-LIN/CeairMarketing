@@ -1,4 +1,5 @@
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import queue
 import threading
 import uuid
@@ -842,25 +843,30 @@ def ingest_market_hotspots(payload: MarketHotspotIngestRequest, context: TenantC
 def collect_market_hotspots(payload: MarketHotspotCollectRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     rows = []
     health = []
-    processing_stages = [{"stage": "collecting", "label": "开始采集国内热点源", "status": "running", "timestamp": datetime.now(timezone.utc).isoformat()}]
-    for source in payload.sources:
-        try:
-            items, source_health = collect_source(source.name, source.url, source.source_type, source.max_items)
-            rows.extend(items)
-            health.extend(source_health)
-        except Exception as exc:
-            health.append({"name": source.name, "url": source.url, "status": "failed", "error": type(exc).__name__})
+    processing_stages = [{"stage": "collecting", "label": "?????????", "status": "running", "timestamp": datetime.now(timezone.utc).isoformat()}]
+    def collect_one(source):
+        return source, collect_source(source.name, source.url, source.source_type, source.max_items, timeout=6)
+    with ThreadPoolExecutor(max_workers=min(4, len(payload.sources))) as executor:
+        futures = [executor.submit(collect_one, source) for source in payload.sources]
+        for future in as_completed(futures):
+            source = None
+            try:
+                source, (items, source_health) = future.result(timeout=8)
+                rows.extend(items)
+                health.extend(source_health)
+            except Exception as exc:
+                health.append({"name": source.name if source else "???", "url": source.url if source else "", "status": "failed", "error": type(exc).__name__})
     if not rows:
         rows = synthetic_hotspot_rows()
-        health.append({"name": "系统降级演示信号", "url": "", "status": "fallback", "item_count": len(rows), "checked_at": datetime.now(timezone.utc), "message": "外部热点源未返回可解析内容，已生成明确标记的演示信号"})
+        health.append({"name": "????????", "url": "", "status": "fallback", "item_count": len(rows), "checked_at": datetime.now(timezone.utc).isoformat(), "message": "???????????????????????"})
     processing_stages[0]["status"] = "completed"
     processing_stages.extend([
-        {"stage": "parsed", "label": "RSS 内容解析与来源归一化", "status": "completed", "item_count": len(rows), "timestamp": datetime.now(timezone.utc).isoformat()},
-        {"stage": "agent-processing", "label": "机会洞察智能体分析热点、主题和航空业务关联", "status": "running", "timestamp": datetime.now(timezone.utc).isoformat()},
+        {"stage": "parsed", "label": "RSS ??????????", "status": "completed", "item_count": len(rows), "timestamp": datetime.now(timezone.utc).isoformat()},
+        {"stage": "agent-processing", "label": "?????????????????????", "status": "running", "timestamp": datetime.now(timezone.utc).isoformat()},
     ])
     result = ingest_hotspots(session, context, rows, payload.process_with_agent)
     processing_stages[-1]["status"] = "completed" if payload.process_with_agent else "skipped"
-    processing_stages.append({"stage": "trace-ready", "label": "处理轨迹和本体准入结果已生成", "status": "completed", "hotspot_count": result.get("created", 0), "timestamp": datetime.now(timezone.utc).isoformat()})
+    processing_stages.append({"stage": "trace-ready", "label": "??????????????", "status": "completed", "hotspot_count": result.get("created", 0), "timestamp": datetime.now(timezone.utc).isoformat()})
     result["processing_stages"] = processing_stages
     result["source_health"] = health
     return result

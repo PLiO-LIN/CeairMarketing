@@ -1,3 +1,8 @@
+## v3.14 - 2026-08-31
+
+- Fixed market hotspot collection timeout risk by collecting configured domestic sources in parallel with bounded six-second source requests.
+- Added deterministic fallback and stage trace output so external source failures return a usable result instead of a gateway timeout.
+
 ## v3.12 - 2026-08-31
 
 - Extended campaign creation to persist the first campaign version with tenant-scoped audience snapshots, product packages, content assets and channels.

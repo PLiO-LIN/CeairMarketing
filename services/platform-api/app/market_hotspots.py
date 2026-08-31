@@ -172,8 +172,8 @@ def synthetic_hotspot_rows() -> list[dict[str, Any]]:
         {"source_name": "东航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-route-{today}", "title": "上海—三亚航线提前预订需求上升，适合开展早鸟产品营销", "content": "系统演示信号：基于航线经营与产品销售样例生成，仅用于验证机会洞察流程，不代表实时市场统计。", "published_at": today, "region": "国内"},
         {"source_name": "东航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-ancillary-{today}", "title": "亲子旅客对行李与优选座位组合服务的关注度提升", "content": "系统演示信号：用于验证机票与辅营产品组合的营销机会识别，不代表实时市场统计。", "published_at": today, "region": "国内"},
     ]
-def collect_source(name,url,source_type,max_items=30):
-    items=fetch_feed(name,url,source_type)[:max_items]; return items,[{"name":name,"url":url,"status":"healthy","item_count":len(items),"checked_at":utc_now().isoformat()}]
+def collect_source(name,url,source_type,max_items=30,timeout=6):
+    items=fetch_feed(name,url,source_type,timeout=timeout)[:max_items]; return items,[{"name":name,"url":url,"status":"healthy","item_count":len(items),"checked_at":utc_now().isoformat()}]
 
 def ingest_hotspots(session,context,rows,process_with_agent=True):
     created=[]; duplicates=failed=0
