@@ -390,8 +390,32 @@
     layer.hidden=false; layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-campaign-detail-close]'))layer.hidden=true;},{once:true});
   }
 
+  function renderOntologySchema() {
+    const host=q('#ontologySchema'); if(!host) return;
+    const types=[
+      ['opportunity','\u8425\u9500\u673a\u4f1a','\u5e02\u573a\u3001\u822a\u7ebf\u4e0e\u7ecf\u8425\u4fe1\u53f7\u5f62\u6210\u7684\u53ef\u8fd0\u8425\u673a\u4f1a'],
+      ['audience','\u5ba2\u7fa4\u5305','\u7531\u753b\u50cf\u6807\u7b7e\u7ec4\u5408\u6216 AI \u5708\u9009\u5f62\u6210\u7684\u53ef\u89e6\u8fbe\u5ba2\u7fa4'],
+      ['product','\u6d3b\u52a8\u4ea7\u54c1\u5305','\u673a\u7968\u3001\u5361\u5238\u3001\u8f85\u8425\u670d\u52a1\u4e0e\u4f1a\u5458\u6743\u76ca\u7684\u8425\u9500\u7ec4\u5408'],
+      ['content','\u5185\u5bb9\u8d44\u4ea7','\u9762\u5411\u4e0d\u540c\u5ba2\u7fa4\u4e0e\u6e20\u9053\u7684\u8425\u9500\u5185\u5bb9\u7248\u672c'],
+      ['campaign','\u8425\u9500\u6d3b\u52a8','\u8d2f\u7a7f\u673a\u4f1a\u3001\u5ba2\u7fa4\u3001\u4ea7\u54c1\u3001\u5ba1\u6279\u4e0e\u6267\u884c\u7684\u4e1a\u52a1\u4e3b\u7ebf'],
+      ['approval','\u5ba1\u6279\u4efb\u52a1','\u9884\u7b97\u3001\u4ea7\u54c1\u3001\u5408\u89c4\u4e0e\u53d1\u5e03\u7684\u4eba\u5de5\u786e\u8ba4\u8282\u70b9'],
+      ['result','\u8425\u9500\u7ed3\u679c','\u89e6\u8fbe\u3001\u70b9\u51fb\u3001\u51fa\u7968\u3001\u9886\u5238\u3001\u6838\u9500\u4e0e\u8f85\u8425\u8d2d\u4e70\u7ed3\u679c']
+    ];
+    const relations=['\u673a\u4f1a \u2192 \u8bc6\u522b\u5ba2\u7fa4','\u5ba2\u7fa4\u5305 \u2192 \u9002\u914d\u4ea7\u54c1\u5305','\u4ea7\u54c1\u5305 \u2192 \u652f\u6491\u6d3b\u52a8','\u6d3b\u52a8 \u2192 \u751f\u6210\u5185\u5bb9','\u6d3b\u52a8 \u2192 \u53d1\u8d77\u5ba1\u6279','\u5ba1\u6279 \u2192 \u5141\u8bb8\u6267\u884c','\u6d3b\u52a8 \u2192 \u4ea7\u751f\u7ed3\u679c','\u7ed3\u679c \u2192 \u53cd\u54fa\u673a\u4f1a'];
+    host.innerHTML='<div class="ontology-schema-summary"><b>\u672c\u4f53\u7ed3\u6784</b><span>\u5b9a\u4e49\u4e1a\u52a1\u5bf9\u8c61\u3001\u5c5e\u6027\u4e0e\u5173\u7cfb\uff0c\u4e0d\u5c55\u793a\u5177\u4f53\u5b9e\u4f8b</span><em>'+types.length+' \u7c7b\u5bf9\u8c61 \u00b7 '+relations.length+' \u6761\u6838\u5fc3\u5173\u7cfb</em></div><div class="ontology-schema-grid">'+types.map(item=>'<button type="button" class="ontology-type-card '+item[0]+'" data-schema-type="'+item[0]+'"><strong>'+item[1]+'</strong><span>'+item[2]+'</span><small>\u70b9\u51fb\u67e5\u770b\u7c7b\u578b\u5b9a\u4e49</small></button>').join('')+'</div><div class="ontology-relation-strip">'+relations.map((item,index)=>'<span><i>'+String(index+1).padStart(2,'0')+'</i>'+item+'</span>').join('')+'</div>';
+    qa('[data-schema-type]').forEach(button=>button.addEventListener('click',()=>{const item=types.find(value=>value[0]===button.dataset.schemaType);const detail=q('#entityDetail');if(item&&detail)detail.innerHTML='<div class="entity-title"><b>'+item[1]+'</b><span>\u672c\u4f53\u7c7b\u578b\u5b9a\u4e49</span></div><dl><dt>\u4e1a\u52a1\u5b9a\u4f4d</dt><dd>'+item[2]+'</dd><dt>\u6570\u636e\u6765\u6e90</dt><dd>\u672c\u4f53\u6a21\u578b\u914d\u7f6e\u4e0e\u79df\u6237\u6570\u636e\u52a8\u6001\u66f4\u65b0</dd></dl><div class="ai-result"><b>\u5173\u7cfb\u4f7f\u7528</b><p>\u53ef\u4e0e\u5176\u4ed6\u8425\u9500\u4e1a\u52a1\u5bf9\u8c61\u5efa\u7acb\u53ef\u8ffd\u6eaf\u5173\u8054</p></div>'; }));
+  }
+  function setupKnowledgeViews(){
+    const canvas=q('#graphCanvas'); if(!canvas) return; const body=canvas.closest('.panel-body'); if(!body||q('#knowledgeViewTabs',body)) return;
+    const tabs=document.createElement('div'); tabs.id='knowledgeViewTabs'; tabs.className='knowledge-view-tabs'; tabs.innerHTML='<button type="button" class="knowledge-view-tab active" data-knowledge-view="schema">\u672c\u4f53\u7ed3\u6784</button><button type="button" class="knowledge-view-tab" data-knowledge-view="instances">\u672c\u4f53\u5b9e\u4f8b</button>'; body.prepend(tabs);
+    const schema=document.createElement('div'); schema.id='ontologySchema'; schema.className='ontology-schema-view'; body.insertBefore(schema,canvas);
+    const toolbar=body.querySelector('.graph-toolbar'); if(toolbar) { toolbar.dataset.instanceToolbar='true'; toolbar.hidden=true; } canvas.hidden=true; schema.hidden=false;
+    qa('[data-knowledge-view]').forEach(button=>button.addEventListener('click',()=>{const mode=button.dataset.knowledgeView;qa('[data-knowledge-view]').forEach(item=>item.classList.toggle('active',item===button));schema.hidden=mode!=='schema';canvas.hidden=mode!=='instances';const bar=q('[data-instance-toolbar]');if(bar)bar.hidden=mode!=='instances';if(mode==='instances')renderDynamicGraph();})); renderOntologySchema();
+  }
+
   function renderDynamicGraph() {
-    const canvas=q('#graphCanvas'); if (!canvas || !window.d3) return; canvas.innerHTML='';
+    setupKnowledgeViews();
+    const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return; canvas.innerHTML='';
     const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
     const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
     const typeLabels={opportunity:'营销机会',audience:'客群',customer:'客户',product:'产品包',product_package:'产品包',content:'内容',campaign:'营销活动',channel:'渠道',flight:'航班',flight_segment:'航段',airport:'机场',route:'航线',fare:'运价',cabin:'舱位',result:'营销结果',entity:'业务对象'};
@@ -573,11 +597,11 @@
     ['dragenter','dragover'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.add('is-dragging');}));
     ['dragleave','drop'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.remove('is-dragging');}));
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
-    q('#refreshPipelines').addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
-    q('#syncNdcFlight').addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcFlight');button.disabled=true;try{const result=await request('/api/ndc/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
-    q('#modelForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
-    q('#mineruForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
-    q('#tenantForm').addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
+    q('#refreshPipelines')?.addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
+    q('#syncNdcFlight')?.addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcFlight');button.disabled=true;try{const result=await request('/api/ndc/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
+    q('#modelForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
+    q('#mineruForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
+    q('#tenantForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
 
   function mountMarketingAssistantLegacy(){
