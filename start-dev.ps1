@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $api = Join-Path $root "services\platform-api"
-$web = Join-Path $root "apps\web"
+$web = Join-Path $root "apps\web-v32"
 
 if (-not (Get-NetTCPConnection -LocalPort 8800 -ErrorAction SilentlyContinue)) {
   Start-Process -FilePath "python" `

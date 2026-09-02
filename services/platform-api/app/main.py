@@ -332,9 +332,15 @@ def delete_campaign(campaign_id: str, context: TenantContext = Depends(require_w
     campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
     if campaign is None:
         raise HTTPException(status_code=404, detail="活动不存在")
-    version_count = session.scalar(select(func.count()).select_from(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.campaign_id == campaign_id))
-    if version_count:
-        raise HTTPException(status_code=409, detail=f"活动已有 {version_count} 个版本，请先归档后删除")
+    versions = session.scalars(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.campaign_id == campaign_id)).all()
+    batches = session.scalars(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_id == campaign_id)).all()
+    # Drafts and activities returned for correction can be removed when they have no execution batch.
+    # Once execution has started, preserve the audit chain and require archive/retention handling.
+    if batches or campaign.status not in {"草稿", "待修改"}:
+        raise HTTPException(status_code=409, detail="活动已进入执行或留痕阶段，请先归档后删除")
+    for version in versions:
+        session.delete(version)
+    session.flush()
     session.delete(campaign)
     session.commit()
 
