@@ -91,6 +91,15 @@ class CampaignCreate(BaseModel):
 
 class CampaignUpdate(BaseModel):
     name: str = Field(min_length=2, max_length=160)
+    stage: str = Field(default="", max_length=32)
+    audience_size: int | None = Field(default=None, ge=0)
+    product_package: str | None = Field(default=None, max_length=160)
+    budget_yuan: int | None = Field(default=None, ge=0)
+    roi_target: float | None = Field(default=None, ge=0)
+    audience_snapshot_id: int | None = None
+    product_package_id: int | None = None
+    content_asset_ids: list[int] | None = None
+    channels: list[str] | None = None
 
 
 class CampaignVersionBase(BaseModel):

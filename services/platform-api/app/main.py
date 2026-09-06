@@ -20,7 +20,7 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, PersonaDimensionDefinitionRecord, PersonaSegmentRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, PersonaDimensionDefinitionRecord, PersonaSegmentRecord, RuntimeEventRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot, synthetic_hotspot_rows
@@ -278,8 +278,32 @@ def add_membership(user_id: int, payload: MembershipCreate, _admin: UserRecord =
     return user_summary(session, user)
 
 
+CAMPAIGN_STAGES = ("机会", "创建", "内容", "审批", "执行", "复盘", "归档")
+CAMPAIGN_STAGE_TRANSITIONS = {
+    "机会": {"机会", "创建"},
+    "创建": {"创建", "内容", "审批"},
+    "内容": {"内容", "审批", "创建"},
+    "审批": {"审批", "执行", "内容"},
+    "执行": {"执行", "复盘", "归档"},
+    "复盘": {"复盘", "归档"},
+    "归档": {"归档"},
+}
+
+
+def validate_campaign_stage(current: str, requested: str) -> None:
+    if requested not in CAMPAIGN_STAGES:
+        raise HTTPException(status_code=422, detail=f"不支持的活动节点：{requested}")
+    if requested not in CAMPAIGN_STAGE_TRANSITIONS.get(current, {current}):
+        raise HTTPException(status_code=409, detail=f"活动不能从“{current}”直接流转到“{requested}”，请按生命周期顺序推进")
+
+
 @app.post("/api/campaigns", response_model=Campaign, status_code=status.HTTP_201_CREATED)
 def create_campaign(payload: CampaignCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    normalized_name = " ".join(payload.name.split())
+    validate_campaign_stage(payload.stage, payload.stage)
+    duplicate = session.scalar(select(CampaignRecord).where(CampaignRecord.tenant_id == context.tenant_id, CampaignRecord.name == normalized_name))
+    if duplicate is not None:
+        raise HTTPException(status_code=409, detail=f"活动名称已存在：{normalized_name}，请使用其他名称")
     snapshot = None
     if payload.audience_snapshot_id is not None:
         snapshot = session.scalar(select(AudienceSnapshotRecord).where(AudienceSnapshotRecord.id == payload.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id))
@@ -295,7 +319,7 @@ def create_campaign(payload: CampaignCreate, context: TenantContext = Depends(re
         if count != len(set(payload.content_asset_ids)):
             raise HTTPException(status_code=404, detail="内容资产不存在或不属于当前租户")
     campaign_id = f"ACT-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}"
-    record = CampaignRecord(tenant_id=context.tenant_id, id=campaign_id, name=payload.name, stage=payload.stage, status="草稿", version="V1", owner=context.display_name, audience_size=snapshot.estimated_size if snapshot else payload.audience_size, product_package=product.name if product else payload.product_package, budget_yuan=payload.budget_yuan, roi_target=payload.roi_target)
+    record = CampaignRecord(tenant_id=context.tenant_id, id=campaign_id, name=normalized_name, stage=payload.stage, status="草稿", version="V1", owner=context.display_name, audience_size=snapshot.estimated_size if snapshot else payload.audience_size, product_package=product.name if product else payload.product_package, budget_yuan=payload.budget_yuan, roi_target=payload.roi_target)
     session.add(record)
     session.flush()
     session.add(CampaignVersionRecord(tenant_id=context.tenant_id, campaign_id=campaign_id, external_id=f"{campaign_id}-V1", version="V1", audience_snapshot_id=payload.audience_snapshot_id, product_package_id=payload.product_package_id, content_asset_ids_json=json.dumps(payload.content_asset_ids), budget_yuan=payload.budget_yuan, channels_json=json.dumps(payload.channels, ensure_ascii=False), status="草稿", created_by=context.user_id))
@@ -321,9 +345,73 @@ def update_campaign(campaign_id: str, payload: CampaignUpdate, context: TenantCo
     campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
     if campaign is None:
         raise HTTPException(status_code=404, detail="活动不存在")
-    campaign.name = payload.name
+    if campaign.status == "已归档":
+        raise HTTPException(status_code=409, detail="已归档活动不可编辑，请基于当前活动创建新版本")
+    if campaign.status not in {"草稿", "待修改"}:
+        raise HTTPException(status_code=409, detail="活动已进入审批或执行阶段，不能直接修改；请创建新版本")
+    normalized_name = " ".join(payload.name.split())
+    duplicate = session.scalar(select(CampaignRecord).where(CampaignRecord.tenant_id == context.tenant_id, CampaignRecord.name == normalized_name, CampaignRecord.id != campaign_id))
+    if duplicate is not None:
+        raise HTTPException(status_code=409, detail=f"活动名称已存在：{normalized_name}，请使用其他名称")
+    campaign.name = normalized_name
+    if payload.stage:
+        validate_campaign_stage(campaign.stage, payload.stage)
+        campaign.stage = payload.stage
+    fields = payload.model_fields_set
+    if "audience_snapshot_id" in fields and payload.audience_snapshot_id is not None:
+        snapshot = session.scalar(select(AudienceSnapshotRecord).where(AudienceSnapshotRecord.id == payload.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id))
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="客群快照不存在")
+    if "product_package_id" in fields and payload.product_package_id is not None:
+        product = session.scalar(select(ProductPackageRecord).where(ProductPackageRecord.id == payload.product_package_id, ProductPackageRecord.tenant_id == context.tenant_id))
+        if product is None:
+            raise HTTPException(status_code=404, detail="产品包不存在")
+    if "content_asset_ids" in fields and payload.content_asset_ids is not None:
+        count = session.scalar(select(func.count()).select_from(ContentAssetRecord).where(ContentAssetRecord.tenant_id == context.tenant_id, ContentAssetRecord.id.in_(payload.content_asset_ids)))
+        if count != len(set(payload.content_asset_ids)):
+            raise HTTPException(status_code=404, detail="内容资产不存在或不属于当前租户")
+    if payload.audience_size is not None:
+        campaign.audience_size = payload.audience_size
+    if payload.product_package is not None:
+        campaign.product_package = payload.product_package
+    if payload.product_package_id is not None:
+        product = session.scalar(select(ProductPackageRecord).where(ProductPackageRecord.id == payload.product_package_id, ProductPackageRecord.tenant_id == context.tenant_id))
+        if product is None:
+            raise HTTPException(status_code=404, detail="产品包不存在")
+        campaign.product_package = product.name
+    if payload.budget_yuan is not None:
+        campaign.budget_yuan = payload.budget_yuan
+    if payload.roi_target is not None:
+        campaign.roi_target = payload.roi_target
     campaign.version = campaign.version or "V1"
+    latest_version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.campaign_id == campaign_id, CampaignVersionRecord.tenant_id == context.tenant_id).order_by(CampaignVersionRecord.id.desc()))
+    if latest_version is not None and latest_version.status in {"草稿", "已退回"}:
+        if "audience_snapshot_id" in fields:
+            latest_version.audience_snapshot_id = payload.audience_snapshot_id
+        if "product_package_id" in fields:
+            latest_version.product_package_id = payload.product_package_id
+        if "content_asset_ids" in fields:
+            latest_version.content_asset_ids_json = json.dumps(payload.content_asset_ids or [], ensure_ascii=False)
+        if "budget_yuan" in fields and payload.budget_yuan is not None:
+            latest_version.budget_yuan = payload.budget_yuan
+        if "channels" in fields and payload.channels is not None:
+            latest_version.channels_json = json.dumps(payload.channels, ensure_ascii=False)
     session.commit()
+    session.refresh(campaign)
+    return campaign
+
+
+@app.post("/api/campaigns/{campaign_id}/archive", response_model=Campaign)
+def archive_campaign(campaign_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="活动不存在")
+    if campaign.status == "已归档":
+        return campaign
+    campaign.status = "已归档"
+    campaign.stage = "归档"
+    session.commit()
+    session.refresh(campaign)
     return campaign
 
 
@@ -336,8 +424,16 @@ def delete_campaign(campaign_id: str, context: TenantContext = Depends(require_w
     batches = session.scalars(select(ExecutionBatchRecord).where(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_id == campaign_id)).all()
     # Drafts and activities returned for correction can be removed when they have no execution batch.
     # Once execution has started, preserve the audit chain and require archive/retention handling.
-    if batches or campaign.status not in {"草稿", "待修改"}:
+    if campaign.status != "已归档" and (batches or campaign.status not in {"草稿", "待修改"}):
         raise HTTPException(status_code=409, detail="活动已进入执行或留痕阶段，请先归档后删除")
+    if campaign.status == "已归档":
+        session.query(ChannelTaskRecord).filter(ChannelTaskRecord.tenant_id == context.tenant_id, ChannelTaskRecord.campaign_id == campaign_id).delete(synchronize_session=False)
+        session.query(ExecutionBatchRecord).filter(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_id == campaign_id).delete(synchronize_session=False)
+        session.query(ApprovalTaskRecord).filter(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_id == campaign_id).delete(synchronize_session=False)
+        agent_runs = session.scalars(select(AgentRunRecord.id).where(AgentRunRecord.tenant_id == context.tenant_id, AgentRunRecord.campaign_id == campaign_id)).all()
+        if agent_runs:
+            session.query(RuntimeEventRecord).filter(RuntimeEventRecord.run_id.in_(agent_runs)).delete(synchronize_session=False)
+            session.query(AgentRunRecord).filter(AgentRunRecord.id.in_(agent_runs)).delete(synchronize_session=False)
     for version in versions:
         session.delete(version)
     session.flush()
@@ -374,6 +470,10 @@ def create_campaign_version(campaign_id: str, payload: CampaignVersionBase, cont
     campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
     if campaign is None:
         raise HTTPException(status_code=404, detail="活动不存在")
+    if campaign.status == "已归档" or campaign.stage == "归档":
+        raise HTTPException(status_code=409, detail="已归档活动不能创建新版本")
+    if payload.status not in {"草稿", "已退回"}:
+        raise HTTPException(status_code=422, detail="新版本只能以草稿或已退回状态创建")
     if payload.audience_snapshot_id and session.scalar(select(AudienceSnapshotRecord).where(AudienceSnapshotRecord.id == payload.audience_snapshot_id, AudienceSnapshotRecord.tenant_id == context.tenant_id)) is None:
         raise HTTPException(status_code=404, detail="客群快照不存在")
     if payload.product_package_id and session.scalar(select(ProductPackageRecord).where(ProductPackageRecord.id == payload.product_package_id, ProductPackageRecord.tenant_id == context.tenant_id)) is None:
@@ -402,12 +502,26 @@ def list_approval_tasks(context: TenantContext = Depends(get_tenant_context), se
 
 @app.post("/api/campaigns/{campaign_id}/versions/{version_id}/approval", response_model=ApprovalTask, status_code=status.HTTP_201_CREATED)
 def create_approval_task(campaign_id: str, version_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None:
+        raise HTTPException(status_code=404, detail="活动不存在")
+    if campaign.status == "已归档" or campaign.stage == "归档":
+        raise HTTPException(status_code=409, detail="已归档活动不能发起审批")
     version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.id == version_id, CampaignVersionRecord.campaign_id == campaign_id, CampaignVersionRecord.tenant_id == context.tenant_id))
     if version is None:
         raise HTTPException(status_code=404, detail="活动版本不存在")
-    record = ApprovalTaskRecord(tenant_id=context.tenant_id, campaign_id=campaign_id, campaign_version_id=version.id, external_id=f"APR-{campaign_id}-{version.version}", approver_role="营销经理")
+    if version.status not in {"草稿", "已退回"}:
+        raise HTTPException(status_code=409, detail="当前版本不在可提交审批状态")
+    existing = session.scalar(select(ApprovalTaskRecord).where(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_version_id == version.id, ApprovalTaskRecord.status == "待审批"))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="该版本已有待审批任务，请勿重复提交")
+    attempts = session.scalar(select(func.count()).select_from(ApprovalTaskRecord).where(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_version_id == version.id)) or 0
+    approval_external_id = f"APR-{campaign_id}-{version.version}" if attempts == 0 else f"APR-{campaign_id}-{version.version}-R{attempts + 1}"
+    record = ApprovalTaskRecord(tenant_id=context.tenant_id, campaign_id=campaign_id, campaign_version_id=version.id, external_id=approval_external_id, approver_role="营销经理")
     session.add(record)
     version.status = "待审批"
+    campaign.stage = "审批"
+    campaign.status = "审批中"
     session.commit()
     session.refresh(record)
     return approval_view(record)
@@ -424,7 +538,7 @@ def decide_approval(approval_id: int, payload: ApprovalDecision, context: Tenant
     record.comment = payload.comment
     record.decided_by = context.user_id
     record.decided_at = datetime.now(timezone.utc)
-    version = session.get(CampaignVersionRecord, record.campaign_version_id)
+    version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.id == record.campaign_version_id, CampaignVersionRecord.tenant_id == context.tenant_id))
     if version:
         version.status = "已通过" if payload.decision == "approve" else "已退回"
     campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == record.campaign_id, CampaignRecord.tenant_id == context.tenant_id))
