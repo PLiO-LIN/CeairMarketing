@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -14,6 +15,7 @@ from ..llm import LLMConfig
 from ..models import AgentChatRequest, AgentChatResponse, AgentRunRequest
 from ..security import SecretCipher
 from .harness import HarnessContext, UnifiedHarness
+from .agentscope_runtime import AgentScopeRuntime, make_tool, text_tool_result
 from .runtime import AgentRuntime
 
 
@@ -85,13 +87,61 @@ class MarketingCopilot:
             "inspect_data_pipeline": lambda args: self._inspect_pipeline(session, context.tenant_id, str(args.get("job_id") or ""), sources),
             "run_marketing_domain": lambda args: self._run_domain(session, context, args, sources),
         }
-        if provider.provider_type == "mock":
+        async def run_marketing_domain_tool(domain_id: str, campaign_id: str = ""):
+            """Run one governed marketing domain after the agent has enough context."""
+            result = await asyncio.to_thread(
+                self._run_domain,
+                session,
+                context,
+                {"domain_id": domain_id, "campaign_id": campaign_id},
+                sources,
+            )
+            return text_tool_result(result)
+
+        runtime = AgentScopeRuntime(
+            emit=emit,
+            source_sink=sources.append,
+            record_usage=lambda result: session.add(ModelUsageRecord(
+                tenant_id=context.tenant_id,
+                provider_id=provider.id,
+                run_id=run_id,
+                agent_id=request.domain_id,
+                request_type="agent-chat",
+                model_name=result.model_name or provider.model_name,
+                prompt_tokens=result.prompt_tokens,
+                completion_tokens=result.completion_tokens,
+                total_tokens=result.total_tokens,
+            )),
+        )
+        history = [{"role": item.role, "content": item.content} for item in request.history[-12:]]
+        system_prompt = (
+            "你是东方航空智能营销平台的营销协同智能体。必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务，再回答问题。"
+            "当前可调用六大智能域：opportunity-insight、audience-insight、product-match、activity-orchestration、content-generation、effect-analysis。"
+            "调用智能域必须提供活动 ID，活动编排和内容生成结果必须保留人工审核。不得杜撰旅客个人信息、库存、价格、权益和活动结果。"
+        )
+        user_prompt = json.dumps({"question": request.message, "history": history}, ensure_ascii=False)
+        answer = runtime.run_sync(
+            profile_id="marketing-copilot",
+            tenant_id=context.tenant_id,
+            run_id=run_id,
+            config=config,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            token_sink=token_sink,
+            python_tools=[make_tool(
+                run_marketing_domain_tool,
+                name="run_marketing_domain",
+                description="调用受治理的东航营销智能域",
+                read_only=False,
+            )],
+            use_mcp=True,
+        )
+        if provider.provider_type == "mock" and not answer.strip():
+            emit("agentscope/mock-fallback", {"reason": "empty-final-reply"})
             observations = self._mock_observations(harness, tools, request.message)
             answer = self._mock_answer(request.message, observations)
             if token_sink:
                 token_sink(answer)
-        else:
-            answer = self._agent_loop(harness, config, request, tools, token_sink)
         session.commit()
         return AgentChatResponse(
             conversation_id=request.conversation_id or f"CONV-{uuid4().hex[:10].upper()}",

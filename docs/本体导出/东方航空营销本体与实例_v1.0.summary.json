@@ -1,0 +1,381 @@
+{
+  "export_version": "v1.0",
+  "semantic_model_version": "ceair-marketing-ontology-v1.1",
+  "exported_at": "2026-09-22T11:20:37+08:00",
+  "database_path": "services/platform-api/ceair-marketing.db",
+  "tenant_count": 1,
+  "tenants": [
+    {
+      "id": 1,
+      "name": "东航营销运营中心"
+    }
+  ],
+  "registered_class_count": 41,
+  "registered_relation_count": 44,
+  "registered_attribute_count": 209,
+  "owl_named_class_count": 41,
+  "owl_object_property_count": 44,
+  "owl_data_property_count": 265,
+  "entity_count": 11,
+  "relation_row_count": 13,
+  "asserted_relation_row_count": 13,
+  "distinct_relation_assertion_count": 13,
+  "unasserted_relation_row_count": 0,
+  "null_attribute_values_in_raw_json": 18,
+  "json_encoded_attribute_values": 6,
+  "triple_count": 3384,
+  "action_count": 14,
+  "function_count": 13,
+  "agent_contract_count": 6,
+  "instance_type_counts": {
+    "Airport": 2,
+    "AncillaryProduct": 1,
+    "Cabin": 1,
+    "Fare": 1,
+    "Flight": 1,
+    "FlightSegment": 1,
+    "Product": 1,
+    "ProductGroup": 1,
+    "ProductLabel": 1,
+    "Route": 1
+  },
+  "observed_attribute_extensions": [
+    {
+      "entity_type": "ProductLabel",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "ProductLabel",
+      "attribute": "source_id"
+    },
+    {
+      "entity_type": "ProductLabel",
+      "attribute": "notice"
+    },
+    {
+      "entity_type": "ProductLabel",
+      "attribute": "description"
+    },
+    {
+      "entity_type": "ProductLabel",
+      "attribute": "sub_labels"
+    },
+    {
+      "entity_type": "ProductGroup",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "ProductGroup",
+      "attribute": "source_id"
+    },
+    {
+      "entity_type": "ProductGroup",
+      "attribute": "product_codes"
+    },
+    {
+      "entity_type": "ProductGroup",
+      "attribute": "process"
+    },
+    {
+      "entity_type": "Product",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "Product",
+      "attribute": "promotion_code"
+    },
+    {
+      "entity_type": "Product",
+      "attribute": "beneficiary"
+    },
+    {
+      "entity_type": "Product",
+      "attribute": "buy_ticket_member"
+    },
+    {
+      "entity_type": "Product",
+      "attribute": "take_type"
+    },
+    {
+      "entity_type": "Product",
+      "attribute": "raw"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "resource_code"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "account_price"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "sale_price"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "product_value"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "type"
+    },
+    {
+      "entity_type": "AncillaryProduct",
+      "attribute": "raw"
+    },
+    {
+      "entity_type": "Airport",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "Route",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "Route",
+      "attribute": "origin_code"
+    },
+    {
+      "entity_type": "Route",
+      "attribute": "destination_code"
+    },
+    {
+      "entity_type": "Flight",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "Flight",
+      "attribute": "flight_info_id"
+    },
+    {
+      "entity_type": "Flight",
+      "attribute": "airline_code"
+    },
+    {
+      "entity_type": "Flight",
+      "attribute": "origin_code"
+    },
+    {
+      "entity_type": "Flight",
+      "attribute": "destination_code"
+    },
+    {
+      "entity_type": "Flight",
+      "attribute": "raw"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "flight_info_id"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "airline_code"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "origin_code"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "destination_code"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "origin_name"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "destination_name"
+    },
+    {
+      "entity_type": "FlightSegment",
+      "attribute": "raw"
+    },
+    {
+      "entity_type": "Cabin",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "Cabin",
+      "attribute": "flight_id"
+    },
+    {
+      "entity_type": "Cabin",
+      "attribute": "code"
+    },
+    {
+      "entity_type": "Cabin",
+      "attribute": "type"
+    },
+    {
+      "entity_type": "Cabin",
+      "attribute": "mu_level"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "pipeline_status"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "cabin_id"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "pax_type"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "lprice"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "tax_price"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "total_price"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "reschedule_total_price"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "price_source"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "product_code"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "brand_level"
+    },
+    {
+      "entity_type": "Fare",
+      "attribute": "x_product_ids"
+    }
+  ],
+  "warnings": [],
+  "business_table_counts_not_directly_exported": {
+    "campaigns": 15,
+    "campaign_versions": 15,
+    "marketing_opportunities": 0,
+    "audience_packages": 0,
+    "audience_snapshots": 0,
+    "audience_tags": 113,
+    "product_packages": 20,
+    "content_assets": 0,
+    "approval_tasks": 5,
+    "execution_batches": 5,
+    "knowledge_documents": 0,
+    "knowledge_chunks": 0,
+    "market_hotspots": 16,
+    "data_pipeline_jobs": 2
+  },
+  "entity_inventory": [
+    {
+      "id": 1,
+      "tenant_id": 1,
+      "external_id": "product-label-L1",
+      "entity_type": "ProductLabel",
+      "label": "Early bird",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 2,
+      "tenant_id": 1,
+      "external_id": "product-group-G1",
+      "entity_type": "ProductGroup",
+      "label": "Fare bundle",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 3,
+      "tenant_id": 1,
+      "external_id": "product-P1",
+      "entity_type": "Product",
+      "label": "Early fare",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 4,
+      "tenant_id": 1,
+      "external_id": "ancillary-XB1",
+      "entity_type": "AncillaryProduct",
+      "label": "Extra baggage",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 5,
+      "tenant_id": 1,
+      "external_id": "airport-SHA",
+      "entity_type": "Airport",
+      "label": "Shanghai",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 6,
+      "tenant_id": 1,
+      "external_id": "airport-SZX",
+      "entity_type": "Airport",
+      "label": "Shenzhen",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 7,
+      "tenant_id": 1,
+      "external_id": "route-4f35d0c31e71062feb",
+      "entity_type": "Route",
+      "label": "Shanghai-Shenzhen",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 8,
+      "tenant_id": 1,
+      "external_id": "flight-deae2d4d75857c1081",
+      "entity_type": "Flight",
+      "label": "MU5101",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 9,
+      "tenant_id": 1,
+      "external_id": "segment-58f8e3f72e37381397",
+      "entity_type": "FlightSegment",
+      "label": "MU5101",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 10,
+      "tenant_id": 1,
+      "external_id": "cabin-b68bf567c4ef83e425",
+      "entity_type": "Cabin",
+      "label": "Economy",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    },
+    {
+      "id": 11,
+      "tenant_id": 1,
+      "external_id": "fare-00601e9d0ab9562801",
+      "entity_type": "Fare",
+      "label": "Y 680",
+      "source": "data-pipeline:DP-44C48F4D28C4"
+    }
+  ],
+  "validation": {
+    "rdf_xml_round_trip": "passed",
+    "graph_isomorphic": true,
+    "owl_dl_reasoner_run": false,
+    "shacl_run": false
+  }
+}

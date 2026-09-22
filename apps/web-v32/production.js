@@ -30,8 +30,222 @@
     });
     if (response.status === 401) { logout(); throw new Error('登录已失效，请重新登录'); }
     const body = response.status === 204 ? null : await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body?.detail || `请求失败（${response.status}）`);
+    if (!response.ok) {
+      const detail = body?.detail;
+      const message = Array.isArray(detail) ? detail.map(item => `${(item.loc || []).filter(part => part !== 'body').join('.')}: ${item.msg || '字段校验失败'}`).join('；') : detail;
+      throw new Error(message || `请求失败（${response.status}）`);
+    }
     return body;
+  }
+
+  async function refreshAfterBusinessSave() {
+    try { await loadTenantData(); }
+    catch { toast('修改已保存，但列表刷新失败，请刷新页面查看；无需重复保存'); }
+  }
+
+  function editorValue(value, type) {
+    if (type === 'json') {
+      if (value === null || value === undefined || value === '') return '';
+      if (typeof value === 'string') return value;
+      return JSON.stringify(value, null, 2);
+    }
+    if (type === 'datetime-local' && value) {
+      const date = new Date(value);
+      if (!Number.isNaN(date.getTime())) {
+        const offset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+      }
+    }
+    return value ?? '';
+  }
+
+  function openBusinessEditor({ title, subtitle, item, fields, save, width = 'business-editor-card' }) {
+    const layer = document.createElement('div');
+    layer.className = 'production-modal';
+    layer.innerHTML = `<div class="production-modal-card business-editor-card ${width}" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+      <div class="production-modal-head"><div><b>${escapeHtml(title)}</b><small>${escapeHtml(subtitle || '编辑后保存将立即同步到当前租户')}</small></div><button class="btn" type="button" data-close>关闭</button></div>
+      <form class="production-modal-body business-editor-form">
+        <div class="business-editor-grid">${fields.map(field => {
+          const value = editorValue(item?.[field.name], field.parseJson ? 'json' : field.type);
+          const required = field.required === false ? '' : ' required';
+          const label = `<span>${escapeHtml(field.label)}${field.required === false ? '' : '<em>*</em>'}</span>`;
+          if (field.type === 'textarea') return `<label class="business-editor-field full-field">${label}<textarea name="${escapeHtml(field.name)}" rows="${field.rows || 4}"${required} placeholder="${escapeHtml(field.placeholder || '')}">${escapeHtml(value)}</textarea>${field.help ? `<small>${escapeHtml(field.help)}</small>` : ''}</label>`;
+          if (field.type === 'select') { const options = [...(field.options || [])]; if (value !== '' && !options.some(option => String(typeof option === 'string' ? option : option.value) === String(value))) options.unshift({ value, label: `${value}（当前值）` }); return `<label class="business-editor-field">${label}<select name="${escapeHtml(field.name)}"${required}>${options.map(option => { const optionValue = typeof option === 'string' ? option : option.value; const optionLabel = typeof option === 'string' ? option : option.label; return `<option value="${escapeHtml(optionValue)}"${String(optionValue) === String(value) ? ' selected' : ''}>${escapeHtml(optionLabel)}</option>`; }).join('')}</select>${field.help ? `<small>${escapeHtml(field.help)}</small>` : ''}</label>`; }
+          if (field.type === 'multiselect') {
+            const selected = (Array.isArray(value) ? value : []).map(String);
+            const options = (field.options || []).map(option => typeof option === 'string' ? {value: option, label: option} : option);
+            selected.filter(id => !options.some(option => String(option.value) === id)).forEach(id => options.push({value: id, label: `已关联项目 #${id}（当前不可用）`}));
+            return `<fieldset class="business-editor-field full-field business-editor-choices"><legend>${label}</legend><div>${options.map(option => `<label><input type="checkbox" name="${escapeHtml(field.name)}" value="${escapeHtml(option.value)}"${selected.includes(String(option.value)) ? ' checked' : ''}><span>${escapeHtml(option.label)}</span></label>`).join('') || '<small>暂无可选项</small>'}</div>${field.help ? `<small>${escapeHtml(field.help)}</small>` : ''}</fieldset>`;
+          }
+          if (field.readOnly) return `<label class="business-editor-field">${label}<input name="${escapeHtml(field.name)}" value="${escapeHtml(field.displayValue || value)}" readonly></label>`;
+          if (field.type === 'checkbox') return `<label class="business-editor-field business-editor-check"><input type="checkbox" name="${escapeHtml(field.name)}"${value ? ' checked' : ''}><span>${escapeHtml(field.label)}</span>${field.help ? `<small>${escapeHtml(field.help)}</small>` : ''}</label>`;
+          return `<label class="business-editor-field">${label}<input name="${escapeHtml(field.name)}" type="${field.type || 'text'}" value="${escapeHtml(value)}"${required} min="${field.min ?? ''}" max="${field.max ?? ''}" step="${field.step ?? ''}" placeholder="${escapeHtml(field.placeholder || '')}">${field.help ? `<small>${escapeHtml(field.help)}</small>` : ''}</label>`;
+        }).join('')}</div>
+        <p class="business-editor-error" role="alert" hidden></p>
+        <div class="business-editor-foot"><span>带 <em>*</em> 为必填项</span><div><button type="button" class="btn" data-close>取消</button><button type="submit" class="btn primary">保存修改</button></div></div>
+      </form>
+    </div>`;
+    document.body.appendChild(layer);
+    const previousFocus = document.activeElement;
+    let saving = false;
+    const close = () => { if (saving) return; layer.remove(); previousFocus?.focus(); };
+    layer.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { event.preventDefault(); close(); }
+      if (event.key === 'Tab') {
+        const controls = qa('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)', layer);
+        const first = controls[0], last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    });
+    layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('[data-close]')) close(); });
+    q('form', layer).addEventListener('submit', async event => {
+      event.preventDefault();
+      if (saving) return;
+      const form = event.currentTarget;
+      if (!form.reportValidity()) return;
+      const error = q('.business-editor-error', layer);
+      error.hidden = true;
+      const button = q('button[type="submit"]', form);
+      const formData = new FormData(form);
+      const raw = Object.fromEntries(formData);
+      const values = {};
+      let invalidJson = false;
+      fields.forEach(field => {
+        const control = form.elements[field.name];
+        if (field.readOnly) return;
+        if (field.type === 'checkbox') values[field.name] = !!control.checked;
+        else if (field.type === 'multiselect') values[field.name] = formData.getAll(field.name).map(value => Number.isNaN(Number(value)) ? value : Number(value));
+        else if (field.type === 'number') values[field.name] = raw[field.name] === '' ? 0 : Number(raw[field.name]);
+        else if (field.parseJson || field.type === 'json') {
+          try {
+            values[field.name] = raw[field.name] ? JSON.parse(raw[field.name]) : {};
+            if (!values[field.name] || Array.isArray(values[field.name]) || typeof values[field.name] !== 'object') throw new Error();
+          } catch { invalidJson = true; error.textContent = `${field.label}必须是有效的 JSON 对象`; error.hidden = false; control.focus(); }
+        } else if (field.type === 'datetime-local') values[field.name] = raw[field.name] ? (raw[field.name] === editorValue(item?.[field.name], field.type) ? item[field.name] : new Date(raw[field.name]).toISOString()) : null;
+        else values[field.name] = field.type === 'textarea' || field.type === 'password' ? (raw[field.name] ?? '') : String(raw[field.name] ?? '').trim();
+        if (field.required !== false && field.type !== 'checkbox' && typeof values[field.name] === 'string' && !values[field.name].trim()) { invalidJson = true; error.textContent = `请填写${field.label}`; error.hidden = false; control.focus(); }
+      });
+      if (invalidJson) return;
+      saving = true; button.disabled = true; button.textContent = '正在保存...';
+      try { await save(values); saving = false; close(); } catch (cause) { error.textContent = cause.message || '保存失败'; error.hidden = false; error.scrollIntoView({block:'nearest'}); } finally { saving = false; button.disabled = false; button.textContent = '保存修改'; }
+    });
+    if (window.lucide) lucide.createIcons();
+    q('input,select,textarea', layer)?.focus();
+  }
+
+  function showProductEditor(item) {
+    const creating = !item.id;
+    openBusinessEditor({
+      title: creating ? '新建活动产品包' : '编辑活动产品包', subtitle: item.external_id || '活动产品包', item,
+      fields: [
+        { name: 'name', label: '产品包名称', type: 'text' },
+        { name: 'product_type', label: '产品类型', type: 'select', options: ['机票组合', '辅营组合', '卡券权益', '会员权益', '空铁联运', '企业差旅'] },
+        { name: 'version', label: '产品版本', type: 'text' },
+        { name: 'status', label: '状态', type: 'select', options: ['草稿', '待审批', '可用', '停用'] },
+        { name: 'valid_from', label: '生效时间', type: 'datetime-local', required: false },
+        { name: 'valid_to', label: '失效时间', type: 'datetime-local', required: false },
+        { name: 'description', label: '产品组合与权益说明', type: 'textarea', rows: 4, required: false, placeholder: '例如：机票、预付费行李、优选座位、贵宾室或卡券权益的组合方式' },
+        { name: 'eligibility', label: '适用条件与限制', type: 'textarea', rows: 4, required: false, placeholder: '航线、舱位、库存、会员等级、渠道、出行日期等限制条件' },
+      ],
+      save: async values => { await request(creating ? '/api/product-packages' : `/api/product-packages/${item.id}`, { method: creating ? 'POST' : 'PUT', body: JSON.stringify(values) }); toast(`产品包“${values.name}”已${creating ? '创建' : '更新'}`); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showContentEditor(item) {
+    openBusinessEditor({
+      title: '编辑营销内容', subtitle: item.external_id || '内容资产', item,
+      fields: [
+        { name: 'name', label: '内容资产名称', type: 'text' },
+        { name: 'campaign_id', label: '关联活动', type: 'select', required: false, options: [{value:'',label:'未关联活动'}, ...(tenantData.campaigns || []).map(campaign => ({value:campaign.id,label:`${campaign.name} · ${campaign.id}`}))] },
+        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'东航 App'}, '东航App', '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
+        { name: 'version', label: '内容版本', type: 'text' },
+        { name: 'status', label: '内容状态', type: 'select', options: ['草稿', '待审核', '停用'], help: '已审核内容变更后需重新审核。' },
+        { name: 'generated_by', label: '生成来源', type: 'text', required: false, readOnly: true, displayValue: ({manual:'人工创建','content-generation':'内容生成智能域',template:'模板生成'})[item.generated_by] },
+        { name: 'title', label: '展示标题', type: 'text', required: false },
+        { name: 'body', label: '内容正文', type: 'textarea', rows: 8, required: false, placeholder: '填写短信、App 卡片、微信图文或客服话术的完整内容' },
+      ],
+      save: async values => { values.campaign_id = String(values.campaign_id || '').trim() || null; const result = await request(`/api/content-assets/${item.id}`, { method: 'PUT', body: JSON.stringify({...values, generated_by: item.generated_by}) }); toast(result.status !== values.status ? '营销内容已更新，状态已退回草稿，请重新审核' : '营销内容已完整更新'); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showOpportunityEditor(item) {
+    openBusinessEditor({
+      title: '编辑营销机会', subtitle: `${item.id} · 机会洞察完整信息`, item,
+      fields: [
+        { name: 'name', label: '机会名称', type: 'text' },
+        { name: 'market_scope', label: '市场范围', type: 'select', options: ['国内', '国际及地区', 'ToB 企业', '会员经营', '辅营服务'] },
+        { name: 'route', label: '关联航线/区域', type: 'text', required: false, placeholder: '例如：SHA-SYX、上海、东南亚' },
+        { name: 'status', label: '机会状态', type: 'select', options: ['待评估', '分析中', '已确认', '已转活动', '已关闭'] },
+        { name: 'score', label: '机会评分', type: 'number', min: 0, max: 100 },
+        { name: 'estimated_audience', label: '预计可触达客群', type: 'number', min: 0 },
+        { name: 'estimated_revenue_yuan', label: '预计增量收入（元）', type: 'number', min: 0 },
+        { name: 'owner', label: '负责人', type: 'text', required: false },
+        { name: 'signal_summary', label: '机会信号与判断依据', type: 'textarea', rows: 6, required: false, placeholder: '说明航班、客座率、价格、市场热点、用户行为或经营数据形成的机会判断' },
+      ],
+      save: async values => { await request(`/api/opportunities/${encodeURIComponent(item.id)}`, { method: 'PUT', body: JSON.stringify(values) }); toast('营销机会已完整更新'); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showAudiencePackageEditor(item) {
+    const tagOptions = (tenantData.audienceTags || []).filter(tag => tag.enabled || (item.tag_ids || []).includes(tag.id)).map(tag => ({ value: tag.id, label: `${tag.name} · ${tag.enabled ? (tag.category || '画像标签') : '已停用'}` }));
+    openBusinessEditor({
+      title: '编辑客群包', subtitle: `${item.external_id || '客群包'} · 画像组合与圈选条件`, item,
+      fields: [
+        { name: 'name', label: '客群包名称', type: 'text' },
+        { name: 'selection_mode', label: '圈选方式', type: 'select', options: [{ value: 'tag-combination', label: '画像标签组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }] },
+        { name: 'estimated_size', label: '预计客群规模', type: 'number', min: 0 },
+        { name: 'status', label: '客群包状态', type: 'select', options: ['草稿', '可用', '停用'] },
+        { name: 'tag_ids', label: '关联画像标签', type: 'multiselect', required: false, options: tagOptions, help: '可多选底层画像标签；历史快照不会被修改。' },
+        { name: 'expression', label: 'AI 圈选条件（JSON）', type: 'textarea', rows: 6, required: false, parseJson: true, placeholder: '{"route":"SHA-SYX","travel_intent":"high"}', help: '用于保存自然语言圈选后的结构化条件。' },
+      ],
+      save: async values => { await request(`/api/audience-packages/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast(`客群包“${values.name}”已更新`); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showAudienceTagEditor(item) {
+    openBusinessEditor({
+      title: '编辑画像标签', subtitle: `${item.code || '画像标签'} · 客群包可复用的底层条件`, item,
+      fields: [
+        { name: 'code', label: '标签编码', type: 'text' },
+        { name: 'name', label: '标签名称', type: 'text' },
+        { name: 'category', label: '标签分类', type: 'text', placeholder: '例如：出行行为、会员价值、渠道偏好' },
+        { name: 'source', label: '数据来源', type: 'text', placeholder: '例如：用户画像接口、携程、飞猪' },
+        { name: 'description', label: '标签说明', type: 'textarea', rows: 5, required: false, placeholder: '说明标签的业务含义、更新口径和可用于哪些客群包' },
+        { name: 'enabled', label: '启用标签', type: 'checkbox', required: false, help: '停用后不能用于新建或编辑客群包，历史快照不受影响。' },
+      ],
+      save: async values => { await request(`/api/audience-tags/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast(`画像标签“${values.name}”已更新`); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showKnowledgeDocumentEditor(item) {
+    openBusinessEditor({
+      title: '编辑知识文档', subtitle: `${item.external_id || '知识文档'} · 编辑元数据，不改动原始溯源`, item,
+      fields: [
+        { name: 'title', label: '文档标题', type: 'text' },
+        { name: 'classification', label: '知识分类', type: 'select', options: [{value:'internal',label:'内部知识'},{value:'product',label:'产品知识'},{value:'service',label:'服务知识'},{value:'marketing',label:'营销知识'},{value:'policy',label:'政策规则'},{value:'operation',label:'运营知识'},{value:'other',label:'其他'}] },
+      ],
+      save: async values => { await request(`/api/knowledge/documents/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast('知识文档元数据已更新'); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showProviderEditor(item) {
+    openBusinessEditor({
+      title: '编辑模型服务', subtitle: `${item.display_name} · API Key 留空表示保持原配置`, item,
+      fields: [
+        { name: 'display_name', label: '配置名称', type: 'text' },
+        { name: 'provider_type', label: '服务类型', type: 'select', options: [{ value: 'openai-compatible', label: 'OpenAI Compatible' }, { value: 'mock', label: 'Mock' }] },
+        { name: 'base_url', label: '服务地址', type: 'url', required: false, placeholder: 'https://.../v1' },
+        { name: 'model_name', label: '默认模型名称', type: 'text' },
+        { name: 'api_key', label: 'API Key', type: 'password', required: false, placeholder: '留空表示保持当前 Key' },
+        { name: 'timeout_seconds', label: '超时（秒）', type: 'number', min: 5, max: 300 },
+        { name: 'temperature', label: 'Temperature', type: 'number', min: 0, max: 2, step: 0.1 },
+        { name: 'max_tokens', label: '最大输出 Token', type: 'number', min: 128, max: 32768 },
+        { name: 'enabled', label: '启用模型服务', type: 'checkbox' },
+        { name: 'is_default', label: '设为默认模型', type: 'checkbox' },
+      ],
+      save: async values => { if (!values.api_key) delete values.api_key; await request(`/api/model-providers/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast('模型服务配置已更新'); await refreshAfterBusinessSave(); renderModels(); }
+    });
   }
 
   function createLogin() {
@@ -236,12 +450,14 @@
       <small>${escapeHtml(displayText(item.primary_persona_name,'客户画像'))} · ${escapeHtml(displayText(item.segment_code,'画像编码'))}</small>
       <div class="catalog-card-meta"><span>${item.rules?.length||0} 条画像条件</span><button class="btn" data-audience-persona="${escapeHtml(item.id)}">查看画像</button></div>
     </div>`).join('');
-    const packageRows=packages.map(item=>`<tr><td><strong>${escapeHtml(displayText(item.name,'未命名客群包'))}</strong><small>${escapeHtml(item.external_id||'')}</small></td><td>${Number(item.estimated_size||0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(item.selection_mode==='ai-selection'?'AI圈选':'画像组合')}</td><td>${escapeHtml(item.version||'V1')}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status||'可用')}</span></td><td class="production-actions"><button class="btn" data-audience-snapshot="${item.id}">冻结快照</button></td></tr>`).join('');
+    const packageRows=packages.map(item=>{const protectedPackage=['已冻结','已使用','执行中','已归档'].includes(item.status);return `<tr><td><strong>${escapeHtml(displayText(item.name,'未命名客群包'))}</strong><small>${escapeHtml(item.external_id||'')}</small></td><td>${Number(item.estimated_size||0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(item.selection_mode==='ai-selection'?'AI圈选':'画像组合')}</td><td>${escapeHtml(item.version||'V1')}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status||'可用')}</span></td><td class="production-actions"><button class="btn" data-audience-edit="${item.id}"${protectedPackage?' disabled title="已冻结或已投入执行的客群包不可直接编辑"':''}>编辑</button><button class="btn" data-audience-snapshot="${item.id}"${protectedPackage?' disabled':''}>冻结快照</button></td></tr>`;}).join('');
     panel.innerHTML=`<div class="catalog-summary"><div><b>客户画像</b><span>底层画像目录，可作为客群组合条件</span></div><div class="catalog-summary-stats"><strong>${segments.length}</strong><small>个可复用画像</small><button class="btn" data-action="refreshAudienceCatalog"><i data-lucide="refresh-cw"></i>同步画像</button></div></div>
       <div class="catalog-grid">${personaCards||'<div class="empty-action">暂无客户画像，可先同步画像平台数据</div>'}</div>
       <div class="catalog-section-head"><div><b>客群包</b><span>由多个画像、标签或 AI 圈选条件组合形成，可被营销活动直接引用</span></div><span class="catalog-count">${packages.length} 个</span></div>
       <table class="table compact-table"><tr><th>客群包</th><th>规模</th><th>组合方式</th><th>版本</th><th>状态</th><th>操作</th></tr>${packageRows||'<tr><td colspan="6" class="muted">暂无客群包，请通过新建客群完成画像组合</td></tr>'}</table>
-      <div class="catalog-foot"><span>可复用标签 ${tags.length} 个 · 已冻结快照 ${snapshots.length} 个</span><span>客群包是活动执行时的正式客群对象</span></div>`;
+      <details class="audience-tag-details"><summary>画像标签维护 · ${tags.length} 个</summary>
+      <div class="audience-tag-list">${tags.map(tag => `<div class="audience-tag-item"><div><strong>${escapeHtml(displayText(tag.name, '未命名标签'))}</strong><small>${escapeHtml(displayText(tag.code, 'TAG'))} · ${escapeHtml(displayText(tag.category, '基础属性'))} · ${escapeHtml(displayText(tag.source, '画像平台'))}</small></div><span class="status ${tag.enabled === false ? 'warn' : 'good'}">${tag.enabled === false ? '停用' : '启用'}</span><button class="btn" data-audience-tag-edit="${tag.id}">编辑</button></div>`).join('') || '<div class="empty-action">暂无画像标签，请先同步用户画像平台</div>'}</div>
+      </details><div class="catalog-foot"><span>可复用标签 ${tags.length} 个 · 已冻结快照 ${snapshots.length} 个</span><span>客群包是活动执行时的正式客群对象</span></div>`;
     if(window.lucide)lucide.createIcons();
   }  function renderKnowledgeDocuments(){
     const host=q('#graph .graph-layout'); if(!host)return; let panel=q('#knowledgeDocuments'); if(!panel){panel=document.createElement('div');panel.id='knowledgeDocuments';panel.className='panel knowledge-documents';host.appendChild(panel);} const docs=tenantData.documents||[];
@@ -401,14 +617,66 @@
     layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(campaignName)} · 版本对比</b><small>差异检查 · ${escapeHtml(left.version)} 对比 ${escapeHtml(right.version)}</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><table class="table"><tr><th>配置项</th><th>${escapeHtml(left.version)}</th><th>${escapeHtml(right.version)}</th></tr>${field('状态',left.status,right.status)}${field('预算',`¥${Number(left.budget_yuan||0).toLocaleString('zh-CN')}`,`¥${Number(right.budget_yuan||0).toLocaleString('zh-CN')}`)}${field('客群快照',left.audience_snapshot_id||'未配置',right.audience_snapshot_id||'未配置')}${field('产品包',left.product_package_id||'未配置',right.product_package_id||'未配置')}${field('内容资产数量',(left.content_asset_ids||[]).length,(right.content_asset_ids||[]).length)}${field('渠道',(left.channels||[]).join('、'),(right.channels||[]).join('、'))}</table></div></div>`;
     document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();});
   }
-  function showCampaignEditor(item){
-    const layer=document.createElement('div'); layer.className='production-modal';
-    const channels=(item.channels||[]).join('、');
-    layer.innerHTML=`<div class="production-modal-card campaign-editor-card"><div class="production-modal-head"><div><b>编辑营销活动</b><small>${escapeHtml(item.id)} · 完整活动配置</small></div><button class="btn" data-close>关闭</button></div><form class="production-modal-body campaign-editor-form"><div class="form-grid"><label>活动名称<input name="name" value="${escapeHtml(item.name)}" required minlength="2"></label><label>当前节点<select name="stage"><option ${item.stage==='机会'?'selected':''}>机会</option><option ${item.stage==='创建'?'selected':''}>创建</option><option ${item.stage==='审批'?'selected':''}>审批</option><option ${item.stage==='执行'?'selected':''}>执行</option><option ${item.stage==='复盘'?'selected':''}>复盘</option><option ${item.stage==='归档'?'selected':''}>归档</option></select></label><label>预计客群人数<input name="audience_size" type="number" min="0" value="${Number(item.audience_size||0)}"></label><label>活动预算（元）<input name="budget_yuan" type="number" min="0" value="${Number(item.budget_yuan||0)}"></label><label>目标 ROI<input name="roi_target" type="number" min="0" step="0.1" value="${Number(item.roi_target||0)}"></label><label>执行渠道<input name="channels" value="${escapeHtml(channels)}" placeholder="东航App、短信、微信"></label></div><label class="full-field">活动产品包<input name="product_package" value="${escapeHtml(item.product_package||'')}" placeholder="请输入活动产品包名称"></label><div class="editor-hint">活动已产生执行留痕时，建议通过新建版本调整配置；名称、节点、预算等主数据仍会同步保存。</div><div class="modal-foot"><button type="button" class="btn" data-close>取消</button><button class="btn primary" type="submit">保存活动</button></div></form></div>`;
-    document.body.appendChild(layer);
-    const close=()=>layer.remove();
-    layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))close();});
-    q('form',layer).addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));const name=String(values.name||'').trim();if(name.length<2){toast('活动名称至少需要2个字符');return;}try{await request('/api/campaigns/'+encodeURIComponent(item.id),{method:'PUT',body:JSON.stringify({name,stage:values.stage,audience_size:Number(values.audience_size||0),product_package:String(values.product_package||''),budget_yuan:Number(values.budget_yuan||0),roi_target:Number(values.roi_target||0),channels:String(values.channels||'').split(/[、,，]/).map(value=>value.trim()).filter(Boolean)})});close();toast('活动完整配置已更新');await loadTenantData();}catch(cause){toast(cause.message||'活动更新失败');}});
+  async function showCampaignEditor(item){
+    let versions=[];
+    try { versions = await request(`/api/campaigns/${encodeURIComponent(item.id)}/versions`); } catch (cause) { toast(cause.message || '活动版本加载失败'); return; }
+    const latest = versions[0] || {};
+    const productOptions = (tenantData.productPackages || []).map(value => ({ value: value.id, label: `${value.name} · ${value.version || 'V1'}` }));
+    const snapshotOptions = (tenantData.audienceSnapshots || []).map(value => ({ value: value.id, label: `${value.external_id || `快照 #${value.id}`} · ${Number(value.estimated_size || 0).toLocaleString('zh-CN')} 人` }));
+    const contentOptions = (tenantData.contentAssets || []).map(value => ({ value: value.id, label: `${value.name} · ${value.channel} · ${value.version || 'V1'}` }));
+    const currentProductId = latest.product_package_id ?? '';
+    const currentSnapshotId = latest.audience_snapshot_id ?? '';
+    const currentContentIds = latest.content_asset_ids || [];
+    openBusinessEditor({
+      title: '编辑营销活动', subtitle: `${item.id} · 活动主数据与当前版本配置`, item: {
+        ...item,
+        audience_snapshot_id: currentSnapshotId,
+        product_package_id: currentProductId,
+        content_asset_ids: currentContentIds,
+        channels: (latest.channels || item.channels || []).join('、'),
+        budget_yuan: latest.budget_yuan ?? item.budget_yuan,
+      }, width: 'campaign-editor-card',
+      fields: [
+        { name: 'name', label: '活动名称', type: 'text' },
+        { name: 'stage', label: '当前节点', type: 'select', options: ({'机会':['机会','创建'],'创建':['创建','内容','审批'],'内容':['内容','审批','创建'],'审批':['审批','内容'],'执行':['执行','复盘'],'复盘':['复盘'],'归档':['归档']})[item.stage] || [item.stage] },
+        { name: 'audience_size', label: '预计客群人数', type: 'number', min: 0 },
+        { name: 'budget_yuan', label: '活动预算（元）', type: 'number', min: 0 },
+        { name: 'roi_target', label: '目标 ROI', type: 'number', min: 0, step: 0.1 },
+        { name: 'channels', label: '执行渠道', type: 'text', required: false, placeholder: '东航App、短信、微信、OTA' },
+        { name: 'audience_snapshot_id', label: '客群快照', type: 'select', required: false, options: [{ value: '', label: '暂不绑定' }, ...snapshotOptions] },
+        { name: 'product_package_id', label: '活动产品包', type: 'select', required: false, options: [{ value: '', label: '暂不绑定' }, ...productOptions] },
+        { name: 'content_asset_ids', label: '内容资产', type: 'multiselect', required: false, options: contentOptions, help: '可多选短信、App 卡片、微信图文等已生成内容。' },
+      ],
+      save: async values => {
+        await request(`/api/campaigns/${encodeURIComponent(item.id)}`, { method: 'PUT', body: JSON.stringify({
+          name: String(values.name || '').trim(), stage: values.stage, audience_size: values.audience_size,
+          budget_yuan: values.budget_yuan, roi_target: values.roi_target,
+          channels: String(values.channels || '').split(/[、,，]/).map(value => value.trim()).filter(Boolean),
+          audience_snapshot_id: values.audience_snapshot_id ? Number(values.audience_snapshot_id) : null,
+          product_package_id: values.product_package_id ? Number(values.product_package_id) : null,
+          content_asset_ids: values.content_asset_ids || [],
+        }) });
+        toast('活动完整配置已更新'); await refreshAfterBusinessSave();
+      }
+    });
+  }
+
+  function showChannelFeedbackEditor(item) {
+    openBusinessEditor({
+      title: '编辑渠道回执', subtitle: `${item.external_id || item.channel} · 更新执行结果`, item,
+      fields: [
+        { name: 'sent_count', label: '已发送人数', type: 'number', min: 0, max: item.target_count },
+        { name: 'delivered_count', label: '已送达人数', type: 'number', min: 0 },
+        { name: 'clicked_count', label: '点击人数', type: 'number', min: 0 },
+        { name: 'converted_count', label: '转化人数', type: 'number', min: 0 },
+        { name: 'failed_count', label: '失败人数', type: 'number', min: 0 },
+        { name: 'status', label: '任务状态', type: 'select', options: ['待执行', '执行中', '已完成', '已暂停', '失败'] },
+      ],
+      save: async values => {
+        await request(`/api/channel-tasks/${item.id}/feedback`, { method: 'POST', body: JSON.stringify(values) });
+        toast(`${item.channel} 渠道回执已更新`); await refreshAfterBusinessSave();
+      }
+    });
   }
   async function showCampaignDetail(item){
     if(!item)return;
@@ -596,7 +864,7 @@
 <td>${item.is_default?'是':'否'}</td>
 <td>
 <div class="production-actions">
-<button class="btn" data-provider-test="${item.id}">测试</button><button class="btn" data-provider-models="${item.id}">可用模型</button><button class="btn" data-provider-usage="${item.id}">用量</button>${item.is_default?'':`<button class="btn" data-provider-default="${item.id}">设为默认</button>`}</div>
+<button class="btn" data-provider-edit="${item.id}">编辑</button><button class="btn" data-provider-test="${item.id}">测试</button><button class="btn" data-provider-models="${item.id}">可用模型</button><button class="btn" data-provider-usage="${item.id}">用量</button>${item.is_default?'':`<button class="btn" data-provider-default="${item.id}">设为默认</button>`}</div>
 </td>
 </tr>`).join('')}`; }
 
@@ -633,28 +901,20 @@
        if(button.dataset.productionCampaignView){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignView);if(item){showCampaignDetail(item);toast('已打开活动详情：'+item.name);}return;}
        if(button.dataset.productionCampaignArchive){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignArchive);if(!item||!canWrite()||!window.confirm('确认归档活动“'+item.name+'”？归档后将停止继续编辑，并保留执行与审批留痕。'))return;try{await request('/api/campaigns/'+encodeURIComponent(item.id)+'/archive',{method:'POST'});toast('活动“'+item.name+'”已归档，现在可以按审计要求删除');await loadTenantData();}catch(cause){toast(cause.message||'活动归档失败');}return;}
        if(button.dataset.productionCampaignDelete){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignDelete);if(!item||!canWrite())return;const prompt=item.status==='已归档'?'确认删除已归档活动“'+item.name+'”？相关版本、审批、执行记录将一并删除。':'确认删除草稿活动“'+item.name+'”？删除后不可恢复。';if(!window.confirm(prompt))return;try{await request('/api/campaigns/'+encodeURIComponent(item.id),{method:'DELETE'});toast('活动“'+item.name+'”已删除');await loadTenantData();}catch(cause){toast(cause.message||'活动删除失败');}return;}
-       if(button.dataset.productionCampaignEdit){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignEdit);if(!item||!canWrite())return;showCampaignEditor(item);return;}
+       if(button.dataset.productionCampaignEdit){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignEdit);if(!item||!canWrite())return;await showCampaignEditor(item);return;}
        if(button.dataset.productView){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productView));if(item)showProductDetail(item);return;}
        if(button.dataset.productCatalogView){const item=(tenantData.productCatalog?.products||[]).find(value=>String(value.code)===String(button.dataset.productCatalogView));if(item)showBaseProductDetail(item);return;}
        if(button.dataset.audiencePersona){const item=(tenantData.personaSegments||[]).find(value=>String(value.id)===String(button.dataset.audiencePersona));if(item)showPersonaDetail(item);return;}
-       if(button.dataset.productEdit){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productEdit));if(!item||!canWrite())return;const next=window.prompt('产品包名称',item.name);if(next===null)return;if(next.trim().length<2){toast('产品包名称至少需要2个字符');return;}try{await request(`/api/product-packages/${item.id}`,{method:'PUT',body:JSON.stringify({name:next.trim(),product_type:item.product_type,description:item.description||'',eligibility:item.eligibility||'',version:item.version||'V1',status:item.status||'草稿',valid_from:item.valid_from||null,valid_to:item.valid_to||null})});toast('产品包“'+next.trim()+'”已更新');await loadTenantData();}catch(cause){toast(cause.message||'产品包更新失败');}return;}
+       if(button.dataset.productEdit){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productEdit));if(!item||!canWrite())return;showProductEditor(item);return;}
        if(button.dataset.productDelete){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productDelete));if(!item||!canWrite()||!window.confirm('确认删除产品包“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/product-packages/${item.id}`,{method:'DELETE'});toast('产品包“'+item.name+'”已删除');await loadTenantData();}catch(cause){toast(cause.message||'产品包删除失败');}return;}      if(button.dataset.action==='newProduct'){
         if(!canWrite())return;
-        const name=window.prompt('产品包名称');if(name===null)return;if(name.trim().length<2){toast('产品包名称至少需要2个字符');return;}
-        const description=window.prompt('组合产品内容，例如：机票 + 行李 + 优选座位','')||'';
-        const eligibility=window.prompt('资格条件，例如：指定航线可售且满足活动运价规则','')||'';
-        try{await request('/api/product-packages',{method:'POST',body:JSON.stringify({name:name.trim(),product_type:'活动产品包',description,eligibility,version:'V1',status:'草稿',valid_from:null,valid_to:null})});toast('产品包“'+name.trim()+'”已创建');await loadTenantData();}catch(cause){toast(cause.message||'产品包创建失败');}return;
-      }      if(button.dataset.audienceSnapshot){if(!canWrite())return;try{const result=await request(`/api/audience-packages/${button.dataset.audienceSnapshot}/snapshots`,{method:'POST'});toast('客群快照 '+result.version+' 已冻结，可用于活动执行');await loadTenantData();}catch(cause){toast(cause.message||'客群快照生成失败');}return;}      if(button.dataset.contentView){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentView));if(item)showContentDetail(item);return;}
-      if(button.dataset.contentEdit){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentEdit));if(!item||!canWrite())return;const title=window.prompt('内容标题',item.title||item.name);if(title===null)return;const body=window.prompt('内容正文',item.body||'');if(body===null)return;try{await request(`/api/content-assets/${item.id}`,{method:'PUT',body:JSON.stringify({campaign_id:item.campaign_id||null,name:item.name,channel:item.channel,version:item.version,title:title.trim()||item.title,body,status:item.status,generated_by:item.generated_by||'manual'})});toast('内容已更新');await loadTenantData();}catch(cause){toast(cause.message||'内容更新失败');}return;}
-      if(button.dataset.channelFeedback){
-        if(!canWrite())return;
-        const item=(tenantData.channelTasks||[]).find(value=>String(value.id)===String(button.dataset.channelFeedback)); if(!item)return;
-        const delivered=window.prompt('已送达人数',String(item.delivered_count||0)); if(delivered===null)return;
-        const clicked=window.prompt('点击人数',String(item.clicked_count||0)); if(clicked===null)return;
-        const converted=window.prompt('转化人数（出票/领券/核销/辅营购买）',String(item.converted_count||0)); if(converted===null)return;
-        const failed=window.prompt('失败人数',String(item.failed_count||0)); if(failed===null)return;
-        try{await request(`/api/channel-tasks/${item.id}/feedback`,{method:'POST',body:JSON.stringify({delivered_count:Number(delivered),clicked_count:Number(clicked),converted_count:Number(converted),failed_count:Number(failed),status:'执行中'})});toast(`${item.channel} 渠道回执已更新`);await loadTenantData();}catch(cause){toast(cause.message||'渠道回执更新失败');}return;
+         showProductEditor({name:'',product_type:'机票组合',description:'',eligibility:'',version:'V1',status:'草稿',valid_from:null,valid_to:null});return;
       }
+      if(button.dataset.audienceEdit){const item=(tenantData.audiencePackages||[]).find(value=>String(value.id)===String(button.dataset.audienceEdit));if(!item||!canWrite()||button.disabled)return;showAudiencePackageEditor(item);return;}
+      if(button.dataset.audienceTagEdit){const item=(tenantData.audienceTags||[]).find(value=>String(value.id)===String(button.dataset.audienceTagEdit));if(!item||!canWrite())return;showAudienceTagEditor(item);return;}
+      if(button.dataset.audienceSnapshot){if(!canWrite()||button.disabled)return;try{const result=await request(`/api/audience-packages/${button.dataset.audienceSnapshot}/snapshots`,{method:'POST'});toast('客群快照 '+result.version+' 已冻结，可用于活动执行');await loadTenantData();}catch(cause){toast(cause.message||'客群快照生成失败');}return;}      if(button.dataset.contentView){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentView));if(item)showContentDetail(item);return;}
+      if(button.dataset.contentEdit){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentEdit));if(!item||!canWrite())return;showContentEditor(item);return;}
+       if(button.dataset.channelFeedback){const item=(tenantData.channelTasks||[]).find(value=>String(value.id)===String(button.dataset.channelFeedback));if(!item||!canWrite())return;showChannelFeedbackEditor(item);return;}
       if(button.dataset.contentDelete){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentDelete));if(!item||!canWrite()||!window.confirm('确认删除内容“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/content-assets/${item.id}`,{method:'DELETE'});toast('内容已删除');await loadTenantData();}catch(cause){toast(cause.message||'内容删除失败');}return;}      if(button.dataset.action==='refreshExecution'&&button.dataset.batchId){try{const result=await request(`/api/execution-batches/${button.dataset.batchId}/status`,{method:'POST',body:JSON.stringify({status:'执行中'})});toast('执行批次已启动：'+result.external_id);await loadTenantData();}catch(cause){toast(cause.message||'批次启动失败');}return;}
       if(button.dataset.action==='pauseCampaign'&&button.dataset.batchId){try{const result=await request(`/api/execution-batches/${button.dataset.batchId}/status`,{method:'POST',body:JSON.stringify({status:'已暂停'})});toast('执行批次已暂停：'+result.external_id);await loadTenantData();}catch(cause){toast(cause.message||'批次暂停失败');}return;}      if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
       if(button.dataset.opportunityDelete){
@@ -662,20 +922,19 @@
         try{await request(`/api/opportunities/${encodeURIComponent(button.dataset.opportunityDelete)}`,{method:'DELETE'});toast('机会已删除');await loadTenantData();}catch(cause){toast(cause.message||'机会删除失败');}return;
       }
       if(button.dataset.opportunityEdit){
-        const item=(tenantData.opportunities||[]).find(value=>value.id===button.dataset.opportunityEdit);if(!item)return;
-        const name=window.prompt('机会名称',item.name);if(name===null)return;const summary=window.prompt('信号摘要',item.signal_summary||'');if(summary===null)return;
-        try{await request(`/api/opportunities/${encodeURIComponent(item.id)}`,{method:'PUT',body:JSON.stringify({...item,name:name.trim()||item.name,signal_summary:summary})});toast('机会已更新');await loadTenantData();}catch(cause){toast(cause.message||'机会更新失败');}return;
+        const item=(tenantData.opportunities||[]).find(value=>value.id===button.dataset.opportunityEdit);if(!item||!canWrite())return;
+        showOpportunityEditor(item);return;
       }
       if(button.dataset.documentDelete){
         if(!canWrite()||!window.confirm('删除文档将同步删除知识切片、本体对象及关系，确定继续吗？'))return;
         try{await request(`/api/knowledge/documents/${button.dataset.documentDelete}`,{method:'DELETE'});toast('文档及关联知识、本体已删除');await loadTenantData();}catch(cause){toast(cause.message||'文档删除失败');}return;
       }
       if(button.dataset.documentEdit){
-        const item=(tenantData.documents||[]).find(value=>String(value.id)===String(button.dataset.documentEdit));if(!item)return;
-        const title=window.prompt('文档名称',item.title);if(title===null)return;const classification=window.prompt('知识分类',item.classification||'internal');if(classification===null)return;
-        try{await request(`/api/knowledge/documents/${item.id}`,{method:'PUT',body:JSON.stringify({title:title.trim()||item.title,classification})});toast('知识文档已更新');await loadTenantData();}catch(cause){toast(cause.message||'文档更新失败');}return;
+        const item=(tenantData.documents||[]).find(value=>String(value.id)===String(button.dataset.documentEdit));if(!item||!canWrite())return;
+        showKnowledgeDocumentEditor(item);return;
       }
       if(button.dataset.action==='refreshAudienceCatalog'){if(!canWrite())return;button.disabled=true;try{await loadTenantData();toast('\u753b\u50cf\u76ee\u5f55\u5df2\u540c\u6b65\uff1a'+(tenantData.personaDimensions||[]).length+'\u4e2a\u753b\u50cf\u7ef4\u5ea6');}catch(cause){toast(cause.message||'\u753b\u50cf\u540c\u6b65\u5931\u8d25');}finally{button.disabled=false;}return;}
+       if(button.dataset.providerEdit){const item=(tenantData.providers||[]).find(value=>Number(value.id)===Number(button.dataset.providerEdit));if(!item||!isTenantAdmin())return;showProviderEditor(item);return;}
        if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'模型连接正常');}
       if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
       if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}

@@ -372,6 +372,8 @@ def update_campaign(campaign_id: str, payload: CampaignUpdate, context: TenantCo
             raise HTTPException(status_code=404, detail="内容资产不存在或不属于当前租户")
     if payload.audience_size is not None:
         campaign.audience_size = payload.audience_size
+    if "audience_snapshot_id" in fields and payload.audience_snapshot_id is not None:
+        campaign.audience_size = snapshot.estimated_size
     if payload.product_package is not None:
         campaign.product_package = payload.product_package
     if payload.product_package_id is not None:
@@ -379,6 +381,8 @@ def update_campaign(campaign_id: str, payload: CampaignUpdate, context: TenantCo
         if product is None:
             raise HTTPException(status_code=404, detail="产品包不存在")
         campaign.product_package = product.name
+    elif "product_package_id" in fields:
+        campaign.product_package = ""
     if payload.budget_yuan is not None:
         campaign.budget_yuan = payload.budget_yuan
     if payload.roi_target is not None:
@@ -716,6 +720,14 @@ def campaign_effect_summary(campaign_id: str, context: TenantContext = Depends(g
         "learning_inputs": ["渠道回执", "点击行为", "转化结果", "失败原因"],
     }
 
+def validate_product_dates(payload: ProductPackageBase) -> None:
+    if payload.valid_from and payload.valid_to:
+        start = payload.valid_from.replace(tzinfo=payload.valid_from.tzinfo or timezone.utc)
+        end = payload.valid_to.replace(tzinfo=payload.valid_to.tzinfo or timezone.utc)
+        if end <= start:
+            raise HTTPException(status_code=422, detail="产品包失效时间必须晚于生效时间")
+
+
 @app.get("/api/product-packages", response_model=list[ProductPackage])
 def list_product_packages(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     return session.scalars(
@@ -727,6 +739,7 @@ def list_product_packages(context: TenantContext = Depends(get_tenant_context), 
 
 @app.post("/api/product-packages", response_model=ProductPackage, status_code=status.HTTP_201_CREATED)
 def create_product_package(payload: ProductPackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    validate_product_dates(payload)
     record = ProductPackageRecord(
         tenant_id=context.tenant_id,
         external_id=f"PKG-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}",
@@ -741,6 +754,7 @@ def create_product_package(payload: ProductPackageBase, context: TenantContext =
 
 @app.put("/api/product-packages/{package_id}", response_model=ProductPackage)
 def update_product_package(package_id: int, payload: ProductPackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    validate_product_dates(payload)
     record = session.scalar(
         select(ProductPackageRecord).where(
             ProductPackageRecord.id == package_id,
@@ -749,6 +763,13 @@ def update_product_package(package_id: int, payload: ProductPackageBase, context
     )
     if record is None:
         raise HTTPException(status_code=404, detail="产品包不存在")
+    locked_version = session.scalar(select(CampaignVersionRecord).where(
+        CampaignVersionRecord.tenant_id == context.tenant_id,
+        CampaignVersionRecord.product_package_id == package_id,
+        CampaignVersionRecord.status.notin_({"草稿", "已退回"}),
+    ))
+    if locked_version is not None:
+        raise HTTPException(status_code=409, detail="产品包已被审批或执行中的活动版本引用，请新建产品包后使用")
     previous_name = record.name
     for key, value in payload.model_dump().items():
         setattr(record, key, value)
@@ -823,7 +844,19 @@ def update_content_asset(asset_id: int, payload: ContentAssetBase, context: Tena
         raise HTTPException(status_code=404, detail="内容资产不存在")
     if payload.campaign_id and session.scalar(select(CampaignRecord).where(CampaignRecord.id == payload.campaign_id, CampaignRecord.tenant_id == context.tenant_id)) is None:
         raise HTTPException(status_code=404, detail="关联活动不存在")
-    for key, value in payload.model_dump().items():
+    versions = session.scalars(select(CampaignVersionRecord).where(
+        CampaignVersionRecord.tenant_id == context.tenant_id,
+        CampaignVersionRecord.status.notin_({"草稿", "已退回"}),
+    )).all()
+    if any(asset_id in json.loads(version.content_asset_ids_json or "[]") for version in versions):
+        raise HTTPException(status_code=409, detail="内容已被审批或执行中的活动版本引用，请新建内容版本后使用")
+    if payload.status not in {"草稿", "待审核", "停用", record.status}:
+        raise HTTPException(status_code=422, detail="内容审核及发布状态不能通过编辑直接设置")
+    values = payload.model_dump(exclude={"generated_by"})
+    material_change = any(values[key] != getattr(record, key) for key in ("campaign_id", "channel", "title", "body"))
+    if material_change and values["status"] not in {"草稿", "待审核", "停用"}:
+        values["status"] = "草稿"
+    for key, value in values.items():
         setattr(record, key, value)
     session.commit()
     session.refresh(record)
@@ -919,21 +952,35 @@ def list_audience_tags(context: TenantContext = Depends(get_tenant_context), ses
 
 @app.post("/api/audience-tags", response_model=AudienceTag, status_code=status.HTTP_201_CREATED)
 def create_audience_tag(payload: AudienceTagBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
-    record = AudienceTagRecord(tenant_id=context.tenant_id, **payload.model_dump())
+    values = payload.model_dump()
+    values["code"] = values["code"].strip()
+    values["name"] = " ".join(values["name"].split())
+    if len(values["name"]) < 2 or len(values["code"]) < 2:
+        raise HTTPException(status_code=422, detail="标签名称和编码至少需要两个非空字符")
+    record = AudienceTagRecord(tenant_id=context.tenant_id, **values)
     session.add(record)
     try:
         session.commit()
     except IntegrityError as exc:
-        session.rollback(); raise HTTPException(status_code=409, detail="Request failed") from exc
+        session.rollback(); raise HTTPException(status_code=409, detail="画像标签编码已存在，请使用其他编码") from exc
     session.refresh(record); return record
 
 
 @app.put("/api/audience-tags/{tag_id}", response_model=AudienceTag)
 def update_audience_tag(tag_id: int, payload: AudienceTagBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     record = session.scalar(select(AudienceTagRecord).where(AudienceTagRecord.id == tag_id, AudienceTagRecord.tenant_id == context.tenant_id))
-    if record is None: raise HTTPException(status_code=404, detail="Request failed")
-    for key, value in payload.model_dump().items(): setattr(record, key, value)
-    session.commit(); session.refresh(record); return record
+    if record is None: raise HTTPException(status_code=404, detail="画像标签不存在")
+    values = payload.model_dump()
+    values["code"] = values["code"].strip()
+    values["name"] = " ".join(values["name"].split())
+    if len(values["name"]) < 2 or len(values["code"]) < 2:
+        raise HTTPException(status_code=422, detail="标签名称和编码至少需要两个非空字符")
+    for key, value in values.items(): setattr(record, key, value)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback(); raise HTTPException(status_code=409, detail="画像标签编码已存在，请使用其他编码") from exc
+    session.refresh(record); return record
 
 
 def market_hotspot_view(record: MarketHotspotRecord) -> MarketHotspot:
@@ -1047,8 +1094,22 @@ def list_audience_packages(context: TenantContext = Depends(get_tenant_context),
     return [audience_package_view(record) for record in records]
 
 
+def validate_audience_selection(payload: AudiencePackageBase, context: TenantContext, session: Session, existing_ids: set[int] | None = None) -> None:
+    ids = set(payload.tag_ids)
+    tags = session.scalars(select(AudienceTagRecord).where(AudienceTagRecord.tenant_id == context.tenant_id, AudienceTagRecord.id.in_(ids))).all() if ids else []
+    if {tag.id for tag in tags} != ids:
+        raise HTTPException(status_code=400, detail="部分画像标签不存在或不属于当前租户")
+    if any(not tag.enabled and tag.id not in (existing_ids or set()) for tag in tags):
+        raise HTTPException(status_code=422, detail="不能新增已停用的画像标签，请选择启用的标签")
+    if payload.selection_mode == "ai-selection" and not payload.expression:
+        raise HTTPException(status_code=422, detail="AI 圈选模式必须提供圈选条件")
+    if payload.selection_mode == "tag-combination" and not payload.tag_ids and not payload.expression and payload.status != "草稿":
+        raise HTTPException(status_code=422, detail="可用客群包必须关联画像标签或画像组合条件")
+
+
 @app.post("/api/audience-packages", response_model=AudiencePackage, status_code=status.HTTP_201_CREATED)
 def create_audience_package(payload: AudiencePackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    validate_audience_selection(payload, context, session)
     record = AudiencePackageRecord(tenant_id=context.tenant_id, external_id=f"AUD-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}", name=payload.name, selection_mode=payload.selection_mode, tag_ids_json=json.dumps(payload.tag_ids), expression_json=json.dumps(payload.expression, ensure_ascii=False), estimated_size=payload.estimated_size, status=payload.status, created_by=context.user_id)
     session.add(record); session.commit(); session.refresh(record); return audience_package_view(record)
 
@@ -1056,7 +1117,10 @@ def create_audience_package(payload: AudiencePackageBase, context: TenantContext
 @app.put("/api/audience-packages/{package_id}", response_model=AudiencePackage)
 def update_audience_package(package_id: int, payload: AudiencePackageBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     record = session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == package_id, AudiencePackageRecord.tenant_id == context.tenant_id))
-    if record is None: raise HTTPException(status_code=404, detail="Request failed")
+    if record is None: raise HTTPException(status_code=404, detail="客群包不存在")
+    validate_audience_selection(payload, context, session, set(json.loads(record.tag_ids_json or "[]")))
+    if record.status in {"已冻结", "已使用", "执行中", "已归档"}:
+        raise HTTPException(status_code=409, detail="已冻结或已投入执行的客群包不可直接编辑，请新建客群包版本")
     record.name=payload.name; record.selection_mode=payload.selection_mode; record.tag_ids_json=json.dumps(payload.tag_ids); record.expression_json=json.dumps(payload.expression, ensure_ascii=False); record.estimated_size=payload.estimated_size; record.status=payload.status
     session.commit(); session.refresh(record); return audience_package_view(record)
 
@@ -1728,14 +1792,23 @@ def scoped_provider(session: Session, tenant_id: int, provider_id: int) -> Model
 def update_model_provider(provider_id: int, payload: ModelProviderUpdate, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
     record = scoped_provider(session, context.tenant_id, provider_id)
     changes = payload.model_dump(exclude_unset=True)
+    if any(value is None for value in changes.values()):
+        raise HTTPException(status_code=422, detail="模型配置字段不能设置为空值")
+    if changes.get("provider_type", record.provider_type) == "openai-compatible" and not str(changes.get("base_url", record.base_url)).strip():
+        raise HTTPException(status_code=422, detail="OpenAI 兼容模型必须配置服务地址")
     api_key = changes.pop("api_key", None)
-    if api_key is not None:
+    if api_key:
         record.encrypted_api_key = cipher.encrypt(api_key)
     if changes.get("is_default"):
         clear_default(session, context.tenant_id, excluding_id=provider_id)
     for key, value in changes.items():
         setattr(record, key, value)
-    session.commit(); session.refresh(record)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="模型配置名称已存在") from exc
+    session.refresh(record)
     return provider_view(record)
 
 

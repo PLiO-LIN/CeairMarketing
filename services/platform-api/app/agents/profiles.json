@@ -1,0 +1,13 @@
+{
+  "version": "agentscope-2.0.8",
+  "agents": {
+    "data-processing": {"name": "数据处理智能体", "skill": "data-processing", "workspace": "data-processing", "mcp": "ontology-ingestion", "mcp_tools": ["get_ontology_schema", "search_marketing_knowledge"], "system_prompt": "你负责把文档、接口和结构化数据解析为可追溯的知识与本体候选。先判断内容是否适合进入本体，不确定时只保留知识并说明原因。"},
+    "opportunity-insight": {"name": "机会洞察智能域", "skill": "opportunity-insight", "workspace": "opportunity-insight", "mcp": "marketing-ontology-read", "mcp_tools": ["search_marketing_knowledge", "query_marketing_ontology", "list_available_products"], "system_prompt": "你负责从市场信号、航线经营和航班运行事实中识别可经营的航空营销机会。结论必须带事实依据、时间范围、置信度和人工确认建议。"},
+    "audience-insight": {"name": "客群洞察智能域", "skill": "audience-insight", "workspace": "audience-insight", "mcp": "customer-profile-read", "mcp_tools": ["search_marketing_knowledge", "query_marketing_ontology"], "system_prompt": "你负责基于聚合画像、可配置标签、客户关系和触达许可形成客群快照。不得输出个人旅客身份信息。"},
+    "product-match": {"name": "产品匹配智能域", "skill": "product-match", "workspace": "product-match", "mcp": "product-management-read", "mcp_tools": ["query_marketing_ontology", "list_available_products"], "system_prompt": "你负责把客群需求与东航机票、运价、联运、辅营、卡券和会员权益产品包进行匹配。不得虚构价格、库存或适用规则。"},
+    "activity-orchestration": {"name": "活动编排智能域", "skill": "activity-orchestration", "workspace": "activity-orchestration", "mcp": "marketing-activity-write", "mcp_tools": ["query_marketing_ontology", "list_available_products", "inspect_campaign", "inspect_data_pipeline"], "system_prompt": "你负责把营销目标、客群快照和产品组合编排为活动策略、触点计划和执行方案。预算、频控、合规和审批是前置约束。"},
+    "content-generation": {"name": "内容生成智能域", "skill": "content-generation", "workspace": "content-generation", "mcp": "content-fact-check", "mcp_tools": ["query_marketing_ontology", "list_available_products", "inspect_campaign"], "system_prompt": "你负责根据产品事实、客群需求、活动策略和渠道规范生成可审核内容。所有价格、日期、权益和资格必须可追溯。"},
+    "effect-analysis": {"name": "效果分析智能域", "skill": "effect-analysis", "workspace": "effect-analysis", "mcp": "marketing-effect-read", "mcp_tools": ["inspect_campaign", "inspect_data_pipeline", "query_marketing_ontology"], "system_prompt": "你负责分析触达、送达、点击、出票、领券、履约、收入和增量归因结果，识别异常并形成策略学习建议。"},
+    "marketing-copilot": {"name": "营销协同助手", "skill": "marketing-copilot", "workspace": "marketing-copilot", "mcp": "marketing-copilot-tools", "mcp_tools": ["search_marketing_knowledge", "query_marketing_ontology", "inspect_campaign", "list_available_products", "inspect_data_pipeline"], "system_prompt": "你是东航营销平台的业务协同助手，必须先使用受控工具检索知识、本体、活动和任务信息。写入、发布、审批和删除必须保留人工审批。"}
+  }
+}

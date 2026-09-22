@@ -122,8 +122,11 @@ def process_hotspot(session, context, record):
         try:
             model=harness.generate_json(config,"你是东航市场热点处理智能体。只输出JSON；新闻是证据，不要把不能映射到航空业务对象的内容写入本体。",json.dumps({"hotspot":item,"heuristic":{"decision":decision,"candidates":candidates}},ensure_ascii=False)); md=model.get("hotspot_decision") if isinstance(model,dict) else None
             if isinstance(md,dict): decision.update({k:md[k] for k in ("is_relevant","reason","relevance_score","trend_score","risk_level","summary","topics","keywords") if k in md})
-            if isinstance(model.get("entities"),list): candidates["entities"]=sanitize_entities(model["entities"])
-            if isinstance(model.get("relations"),list): candidates["relations"]=sanitize_relations(model["relations"])
+            # Keep the deterministic aviation heuristic when a local/mock
+            # model returns an empty optional list. A real non-empty model
+            # result can still refine the candidates.
+            if isinstance(model.get("entities"),list) and model["entities"]: candidates["entities"]=sanitize_entities(model["entities"])
+            if isinstance(model.get("relations"),list) and model["relations"]: candidates["relations"]=sanitize_relations(model["relations"])
             if isinstance(model.get("opportunity_candidate"),dict): candidates["opportunity_candidate"]={k:model["opportunity_candidate"].get(k) for k in ("title","market_scope","route","reason","score")}
         except Exception as exc: harness.emit("hotspot/model-fallback",error_type=type(exc).__name__)
     decision["relevance_score"]=bounded_score(decision.get("relevance_score")); decision["trend_score"]=bounded_score(decision.get("trend_score")); decision["topics"]=[str(x)[:80] for x in decision.get("topics",[]) if x][:8]; decision["keywords"]=[str(x)[:80] for x in decision.get("keywords",[]) if x][:24]; decision["is_relevant"]=bool(decision.get("is_relevant")); gate=_admit_candidates(candidates,decision,record); result={"decision":decision,"candidates":candidates,"ontology_gate":gate}; record.agent_run_id=f"HOT-{record.id}"; record.summary=decision.get("summary",""); record.topics_json=json.dumps(decision.get("topics",[]),ensure_ascii=False); record.keywords_json=json.dumps(decision.get("keywords",[]),ensure_ascii=False); record.entities_json=json.dumps(candidates.get("entities",[]),ensure_ascii=False); record.decision_json=json.dumps(result,ensure_ascii=False); record.trace_json=json.dumps(trace,ensure_ascii=False); record.relevance_score=decision["relevance_score"]; record.trend_score=decision["trend_score"]; record.ontology_status="awaiting_confirmation" if gate["eligible"] else "knowledge_only"; record.status="processed"; return result

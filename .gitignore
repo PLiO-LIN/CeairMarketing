@@ -11,5 +11,7 @@ apps/web/dist/
 **/logs/
 **/uploads/
 *.log
+.agent_workspaces/
+services/platform-api/.agent_workspaces/
 .DS_Store
 Thumbs.db

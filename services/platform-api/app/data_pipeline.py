@@ -214,7 +214,13 @@ class DataProcessingAgent:
                 )
                 data = self.harness.generate_json(LLMConfig(provider.provider_type, provider.base_url, provider.model_name, SecretCipher().decrypt(provider.encrypted_api_key), provider.timeout_seconds, provider.temperature, min(provider.max_tokens, 4096)), system_prompt, json.dumps({"file": filename, "text": text[:50000], "allowed_types": sorted(object_type_ids())}, ensure_ascii=False))
                 if isinstance(data, dict) and isinstance(data.get("entities"), list):
-                    return data
+                    # The deterministic local provider is used for offline
+                    # demonstrations and must retain the aviation fallback
+                    # candidates. A real model may deliberately return an
+                    # empty list to keep the document knowledge-only.
+                    if provider.provider_type != "mock" or data.get("entities"):
+                        return data
+                    self.harness.emit("harness/mock-fallback", reason="empty-agent-candidate-list")
             except Exception as exc:
                 self.harness.emit("harness/model-fallback", reason=type(exc).__name__)
         return heuristic_candidates(text, filename)
