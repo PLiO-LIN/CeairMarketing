@@ -20,10 +20,11 @@ from .auth import TenantContext, create_token, get_current_user, get_tenant_cont
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
-from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityRecord, ProductPackageRecord, PersonaDimensionDefinitionRecord, PersonaSegmentRecord, RuntimeEventRecord, TenantMembershipRecord, TenantRecord, UserRecord
+from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityInsightRunRecord, OpportunityInsightSourceRecord, OpportunityRecord, ProductPackageRecord, PersonaDimensionDefinitionRecord, PersonaSegmentRecord, RuntimeEventRecord, TenantMembershipRecord, TenantRecord, UserRecord
 from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
 from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot, synthetic_hotspot_rows
+from .opportunity_insight import launch_opportunity_insight
 from .mock_business import channel_delivery, flight_operations, market_signals, product_catalog, profile_summary
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
@@ -56,6 +57,11 @@ from .models import (
     Opportunity,
     OpportunityCreate,
     OpportunityUpdate,
+    OpportunityInsightRun,
+    OpportunityInsightRunCreate,
+    OpportunityInsightRunSummary,
+    OpportunityInsightSource,
+    OpportunityInsightSourceBase,
     MarketHotspot,
     MarketHotspotIngestRequest,
     MarketHotspotReviewRequest,
@@ -97,7 +103,7 @@ from .models import (
 )
 from .ontology import build_campaign_graph, graph_stats, semantic_model, semantic_status
 from .security import SecretCipher
-from .seed import seed_database, seed_persona_catalog, seed_tenant_data
+from .seed import seed_database, seed_opportunity_insight_sources, seed_persona_catalog, seed_tenant_data
 
 settings = get_settings()
 
@@ -131,6 +137,8 @@ async def lifespan(_app: FastAPI):
             seed_tenant_data(session, tenant_id)
         with SessionLocal() as session:
             seed_persona_catalog(session, tenant_id)
+        with SessionLocal() as session:
+            seed_opportunity_insight_sources(session, tenant_id)
     yield
 
 
@@ -921,6 +929,88 @@ def delete_opportunity(opportunity_id: str, context: TenantContext = Depends(req
         raise HTTPException(status_code=404, detail="Request failed")
     session.delete(record); session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def opportunity_source_view(record: OpportunityInsightSourceRecord) -> OpportunityInsightSource:
+    return OpportunityInsightSource.model_validate(record)
+
+
+def opportunity_run_view(record: OpportunityInsightRunRecord, detailed: bool = False):
+    result = json.loads(record.result_json or "{}")
+    source_ids = json.loads(record.source_ids_json or "[]")
+    opportunity_ids = result.get("opportunity_ids", []) if isinstance(result, dict) else []
+    base = {"id": record.id, "operator": record.operator, "prompt": record.prompt, "status": record.status, "current_stage": record.current_stage, "source_ids": source_ids, "opportunity_ids": opportunity_ids, "step_count": len(json.loads(record.steps_json or "[]")), "created_at": record.created_at, "started_at": record.started_at, "completed_at": record.completed_at}
+    if not detailed:
+        return OpportunityInsightRunSummary.model_validate(base)
+    base.update({"steps": json.loads(record.steps_json or "[]"), "result": result, "error_message": record.error_message})
+    return OpportunityInsightRun.model_validate(base)
+
+
+@app.get("/api/opportunity-insight/sources", response_model=list[OpportunityInsightSource])
+def list_opportunity_insight_sources(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(OpportunityInsightSourceRecord).where(OpportunityInsightSourceRecord.tenant_id == context.tenant_id).order_by(OpportunityInsightSourceRecord.enabled.desc(), OpportunityInsightSourceRecord.name)).all()
+    return [opportunity_source_view(record) for record in records]
+
+
+@app.post("/api/opportunity-insight/sources", response_model=OpportunityInsightSource, status_code=status.HTTP_201_CREATED)
+def create_opportunity_insight_source(payload: OpportunityInsightSourceBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = OpportunityInsightSourceRecord(tenant_id=context.tenant_id, created_by=context.user_id, **payload.model_dump())
+    session.add(record)
+    try:
+        session.commit()
+    except IntegrityError as exc:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="洞察来源名称已存在") from exc
+    session.refresh(record)
+    return opportunity_source_view(record)
+
+
+@app.put("/api/opportunity-insight/sources/{source_id}", response_model=OpportunityInsightSource)
+def update_opportunity_insight_source(source_id: int, payload: OpportunityInsightSourceBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(OpportunityInsightSourceRecord).where(OpportunityInsightSourceRecord.id == source_id, OpportunityInsightSourceRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="洞察来源不存在")
+    for key, value in payload.model_dump().items():
+        setattr(record, key, value)
+    session.commit(); session.refresh(record)
+    return opportunity_source_view(record)
+
+
+@app.delete("/api/opportunity-insight/sources/{source_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_opportunity_insight_source(source_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(OpportunityInsightSourceRecord).where(OpportunityInsightSourceRecord.id == source_id, OpportunityInsightSourceRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="洞察来源不存在")
+    session.delete(record); session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/opportunity-insight/runs", response_model=list[OpportunityInsightRunSummary])
+def list_opportunity_insight_runs(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    records = session.scalars(select(OpportunityInsightRunRecord).where(OpportunityInsightRunRecord.tenant_id == context.tenant_id).order_by(OpportunityInsightRunRecord.created_at.desc()).limit(30)).all()
+    return [opportunity_run_view(record) for record in records]
+
+
+@app.get("/api/opportunity-insight/runs/{run_id}", response_model=OpportunityInsightRun)
+def get_opportunity_insight_run(run_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    record = session.scalar(select(OpportunityInsightRunRecord).where(OpportunityInsightRunRecord.id == run_id, OpportunityInsightRunRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="洞察任务不存在")
+    return opportunity_run_view(record, detailed=True)
+
+
+@app.post("/api/opportunity-insight/runs", response_model=OpportunityInsightRunSummary, status_code=status.HTTP_202_ACCEPTED)
+def create_opportunity_insight_run(payload: OpportunityInsightRunCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    source_ids = set(payload.source_ids)
+    if source_ids:
+        found = set(session.scalars(select(OpportunityInsightSourceRecord.id).where(OpportunityInsightSourceRecord.tenant_id == context.tenant_id, OpportunityInsightSourceRecord.id.in_(source_ids))).all())
+        if found != source_ids:
+            raise HTTPException(status_code=400, detail="部分洞察来源不存在或不属于当前租户")
+    run_id = f"INSIGHT-{datetime.now(timezone.utc):%Y%m%d%H%M%S}-{uuid4().hex[:6].upper()}"
+    record = OpportunityInsightRunRecord(tenant_id=context.tenant_id, id=run_id, operator=payload.operator or context.display_name, prompt=payload.prompt, source_ids_json=json.dumps(sorted(source_ids)), status="queued", current_stage="queued")
+    session.add(record); session.commit(); session.refresh(record)
+    launch_opportunity_insight(run_id, context.tenant_id)
+    return opportunity_run_view(record)
 
 
 @app.get("/api/persona-dimensions")

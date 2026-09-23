@@ -238,6 +238,49 @@ class Opportunity(OpportunityBase):
     updated_at: datetime
 
 
+class OpportunityInsightSourceBase(BaseModel):
+    name: str = Field(min_length=2, max_length=160)
+    source_type: str = Field(default="web", max_length=32)
+    source_url: str = Field(default="", max_length=500)
+    focus: str = Field(default="", max_length=2000)
+    schedule: str = Field(default="manual", max_length=40)
+    max_pages: int = Field(default=5, ge=1, le=20)
+    enabled: bool = True
+
+
+class OpportunityInsightSource(OpportunityInsightSourceBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class OpportunityInsightRunCreate(BaseModel):
+    prompt: str = Field(default="", max_length=4000)
+    source_ids: list[int] = Field(default_factory=list)
+    operator: str = Field(default="", max_length=80)
+
+
+class OpportunityInsightRunSummary(BaseModel):
+    id: str
+    operator: str
+    prompt: str
+    status: str
+    current_stage: str
+    source_ids: list[int] = Field(default_factory=list)
+    opportunity_ids: list[str] = Field(default_factory=list)
+    step_count: int = 0
+    created_at: datetime
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+
+
+class OpportunityInsightRun(OpportunityInsightRunSummary):
+    steps: list[dict[str, Any]] = Field(default_factory=list)
+    result: dict[str, Any] = Field(default_factory=dict)
+    error_message: str = ""
+
+
 class MarketHotspotInput(BaseModel):
     source_name: str = Field(min_length=2, max_length=160)
     source_type: Literal["rss", "atom", "opml", "api", "web", "social", "manual"] = "api"

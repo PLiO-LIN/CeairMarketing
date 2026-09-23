@@ -200,6 +200,42 @@ class OpportunityRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 
 
+class OpportunityInsightSourceRecord(Base):
+    __tablename__ = "opportunity_insight_sources"
+    __table_args__ = (UniqueConstraint("tenant_id", "name", name="uq_opportunity_insight_source_tenant_name"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    source_type: Mapped[str] = mapped_column(String(32), default="web")
+    source_url: Mapped[str] = mapped_column(String(500), default="")
+    focus: Mapped[str] = mapped_column(Text, default="")
+    schedule: Mapped[str] = mapped_column(String(40), default="manual")
+    max_pages: Mapped[int] = mapped_column(Integer, default=5)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+
+class OpportunityInsightRunRecord(Base):
+    __tablename__ = "opportunity_insight_runs"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    operator: Mapped[str] = mapped_column(String(80), default="")
+    prompt: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="queued")
+    current_stage: Mapped[str] = mapped_column(String(80), default="queued")
+    source_ids_json: Mapped[str] = mapped_column(Text, default="[]")
+    steps_json: Mapped[str] = mapped_column(Text, default="[]")
+    result_json: Mapped[str] = mapped_column(Text, default="{}")
+    error_message: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class AudienceTagRecord(Base):
     __tablename__ = "audience_tags"
     __table_args__ = (UniqueConstraint("tenant_id", "code", name="uq_audience_tag_tenant_code"),)

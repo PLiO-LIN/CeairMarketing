@@ -12,6 +12,7 @@ from .db_models import (
     PersonaDimensionDefinitionRecord,
     PersonaSegmentRecord,
     PersonaSegmentRuleRecord,
+    OpportunityInsightSourceRecord,
     TenantMembershipRecord,
     TenantRecord,
     UserRecord,
@@ -185,4 +186,17 @@ def seed_persona_catalog(session: Session, tenant_id: int) -> None:
                 source_row=item["source_row"],
             )
         )
+    session.commit()
+
+
+def seed_opportunity_insight_sources(session: Session, tenant_id: int) -> None:
+    if session.scalar(select(OpportunityInsightSourceRecord.id).where(OpportunityInsightSourceRecord.tenant_id == tenant_id).limit(1)) is not None:
+        return
+    defaults = [
+        {"name": "中国民航行业动态", "source_type": "web", "source_url": "https://www.caac.gov.cn/XWZX/HYDT/", "focus": "关注航线供需、航班运行、机场与民航政策变化", "schedule": "manual", "max_pages": 5},
+        {"name": "东航官方动态", "source_type": "web", "source_url": "https://www.ceair.com/", "focus": "关注东航航线、会员权益、产品服务和营销活动变化", "schedule": "manual", "max_pages": 3},
+        {"name": "文旅热点观察", "source_type": "web", "source_url": "https://www.gov.cn/lianbo/", "focus": "关注节假日、文旅目的地、消费趋势和区域客流信号", "schedule": "manual", "max_pages": 5},
+    ]
+    for item in defaults:
+        session.add(OpportunityInsightSourceRecord(tenant_id=tenant_id, **item))
     session.commit()
