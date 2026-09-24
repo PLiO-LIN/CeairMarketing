@@ -8,6 +8,7 @@ os.environ["DATABASE_URL"] = "sqlite:///./ceair-marketing-test.db"
 os.environ["INITIAL_ADMIN_USERNAME"] = "admin"
 os.environ["INITIAL_ADMIN_PASSWORD"] = "Admin@12345"
 os.environ["TOKEN_SECRET"] = "test-only-token-secret"
+os.environ["ENCRYPTION_KEY"] = "wrxE4kMm60hSu103lUo7KQdZrF4alZpqaJO1Y0gHg5s="
 
 from app.data import CAMPAIGNS
 from app.database import Base, SessionLocal, engine
