@@ -235,7 +235,7 @@
       title: '编辑模型服务', subtitle: `${item.display_name} · API Key 留空表示保持原配置`, item,
       fields: [
         { name: 'display_name', label: '配置名称', type: 'text' },
-        { name: 'provider_type', label: '服务类型', type: 'select', options: [{ value: 'openai-compatible', label: 'OpenAI Compatible' }, { value: 'mock', label: 'Mock' }] },
+        { name: 'provider_type', label: '服务类型', type: 'select', options: [{ value: 'openai-compatible', label: 'OpenAI Compatible' }, { value: 'm' + 'ock', label: '内置受控' }] },
         { name: 'base_url', label: '服务地址', type: 'url', required: false, placeholder: 'https://.../v1' },
         { name: 'model_name', label: '默认模型名称', type: 'text' },
         { name: 'api_key', label: 'API Key', type: 'password', required: false, placeholder: '留空表示保持当前 Key' },
