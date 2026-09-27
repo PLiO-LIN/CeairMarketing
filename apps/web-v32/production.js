@@ -541,6 +541,113 @@
     renderProducts();
   }
 
+  function dashboardEmpty(message, action, label) {
+    const button = action ? `<button class="btn" data-action="${escapeHtml(action)}">${escapeHtml(label || '去处理')}</button>` : '';
+    return `<div class="empty-action"><b>${escapeHtml(message)}</b>${button}</div>`;
+  }
+
+  function resetDashboard() {
+    const overview = q('#overview');
+    if (!overview) return;
+    qa('.kpi', overview).forEach((card, index) => {
+      const value = q('b', card); const note = q('em', card);
+      if (value) value.textContent = index >= 3 ? '等待回流' : '0';
+      if (note) note.textContent = '正在加载当前租户数据';
+    });
+    const grid = q('.grid2', overview);
+    const activity = q('.table', grid?.children?.[0]?.children?.[0]);
+    if (activity) activity.innerHTML = `<tr><td colspan="6">${dashboardEmpty('正在加载活动数据')}</td></tr>`;
+    const todo = q('.panel-body', grid?.children?.[0]?.children?.[1]);
+    if (todo) todo.innerHTML = dashboardEmpty('正在加载智能域任务');
+    const bars = q('.opportunity-bars', grid?.children?.[1]?.children?.[0]);
+    if (bars) bars.innerHTML = dashboardEmpty('正在加载机会数据');
+    const health = q('.metric-list', grid?.children?.[1]?.children?.[1]);
+    if (health) health.innerHTML = dashboardEmpty('正在加载执行健康度');
+  }
+
+  function dashboardState() {
+    const campaigns = tenantData.campaigns || [];
+    const opportunities = tenantData.opportunities || [];
+    const audiencePackages = tenantData.audiencePackages || [];
+    const productPackages = tenantData.productPackages || [];
+    const approvals = tenantData.approvals || [];
+    const channelTasks = tenantData.channelTasks || [];
+    const executionBatches = tenantData.executionBatches || [];
+    return {
+      campaigns, opportunities, audiencePackages, productPackages, approvals, channelTasks, executionBatches,
+      activeCampaigns: campaigns.filter(item => !/草稿|待修改|已完成|已归档|已取消|完成|归档|取消/.test(item.status || '')),
+      visibleCampaigns: campaigns.filter(item => !/已归档|归档/.test(item.status || '')),
+      openOpportunities: opportunities.filter(item => !/已转活动|已关闭|关闭/.test(item.status || '')),
+      pendingApprovals: approvals.filter(item => !/通过|驳回|拒绝/.test(item.status || ''))
+    };
+  }
+
+  function renderDashboardKpis(state) {
+    const cards = qa('#overview .kpi');
+    const setKpi = (index, value, note, tone) => {
+      const card = cards[index]; if (!card) return;
+      const valueNode = q('b', card); const noteNode = q('em', card);
+      if (valueNode) valueNode.textContent = value;
+      if (noteNode) { noteNode.textContent = note; noteNode.className = `trend${tone ? ` ${tone}` : ''}`; }
+    };
+    const audienceSize = state.audiencePackages.reduce((sum, item) => sum + Number(item.estimated_size || 0), 0);
+    setKpi(0, state.activeCampaigns.length.toLocaleString('zh-CN'), state.pendingApprovals.length ? `${state.pendingApprovals.length}个待审批` : '无待审批', state.pendingApprovals.length ? 'amber' : '');
+    setKpi(1, state.openOpportunities.length.toLocaleString('zh-CN'), '待人工评估的机会', state.openOpportunities.length ? '' : 'amber');
+    setKpi(2, audienceSize.toLocaleString('zh-CN'), state.audiencePackages.length ? `${state.audiencePackages.length}个可引用客群包` : '暂无客群包', state.audiencePackages.length ? '' : 'amber');
+    const revenueFields = ['attributed_revenue_yuan', 'revenue_yuan', 'converted_revenue_yuan'];
+    const revenueSources = [...state.campaigns, ...state.channelTasks];
+    const hasRevenue = revenueSources.some(item => revenueFields.some(key => Number(item[key]) > 0));
+    const revenue = revenueSources.reduce((sum, item) => sum + Number(item.attributed_revenue_yuan || item.revenue_yuan || item.converted_revenue_yuan || 0), 0);
+    setKpi(3, hasRevenue ? `¥${(revenue / 10000).toFixed(1)}万` : '待回流', hasRevenue ? '基于已回传订单归因' : '需接入交易归因', hasRevenue ? '' : 'amber');
+    const budget = state.campaigns.reduce((sum, item) => sum + Number(item.budget_yuan || 0), 0);
+    setKpi(4, hasRevenue && budget > 0 ? (revenue / budget).toFixed(2) : '待回流', hasRevenue && budget > 0 ? '收入归因 / 执行预算' : '归因数据完善后计算', hasRevenue && budget > 0 ? '' : 'amber');
+  }
+
+  function renderDashboardActivity(state) {
+    const grid=q('#overview .grid2'), panel=grid?.children?.[0]?.children?.[0], table=q('.table',panel);
+    if(table){
+      const rows=state.visibleCampaigns.slice(0,8).map(item=>`<tr><td><strong>${escapeHtml(item.name)}</strong></td><td>${escapeHtml(item.stage||'未设置')}</td><td>${escapeHtml(item.owner||'未指定')}</td><td>${escapeHtml(item.version||'V1')}</td><td><span class='status ${statusClass(item.status)}'>${escapeHtml(item.status||'草稿')}</span></td><td class='action' data-open-campaign='${escapeHtml(item.name)}'>查看</td></tr>`).join('');
+      table.innerHTML=`<tr><th>活动</th><th>当前节点</th><th>负责人</th><th>版本</th><th>状态</th><th>操作</th></tr>${rows||`<tr><td colspan='6'>${dashboardEmpty('当前租户暂无活动','createCampaign','新建活动')}</td></tr>`}`;
+    }
+    const head=q('.panel-head span',panel);if(head)head.textContent=`${state.visibleCampaigns.length}个活动 · 当前用户可见范围`;
+  }
+
+  function renderDashboardTodos(state) {
+    const grid=q('#overview .grid2'), body=q('.panel-body',grid?.children?.[0]?.children?.[1]);if(!body)return;
+    const todos=[];
+    if(state.openOpportunities.length)todos.push(['radar','机会洞察',`${state.openOpportunities.length}条待处理机会，请由人工确认是否转为活动`,'useOpportunity','查看']);
+    const audiences=state.audiencePackages.filter(item=>/草稿|待复核|待审批/.test(item.status||''));
+    if(audiences.length)todos.push(['users-round','客群洞察',`${audiences.length}个客群包需要复核或冻结快照`,'useAudience','复核']);
+    const products=state.productPackages.filter(item=>/草稿|待复核|待审批/.test(item.status||''));
+    if(products.length)todos.push(['package','产品匹配',`${products.length}个活动产品包待完成复核`,'useProduct','查看']);
+    if(state.pendingApprovals.length)todos.push(['clipboard-check','审批与合规',`${state.pendingApprovals.length}个审批任务等待人工决策`,'useApproval','处理']);
+    body.innerHTML=todos.length?todos.map(item=>`<div class='todo'><span class='todo-icon'><i data-lucide='${item[0]}'></i></span><div><b>${item[1]}</b><small>${item[2]}</small></div><button class='btn' data-action='${item[3]}'>${item[4]}</button></div>`).join(''):dashboardEmpty('当前没有待处理的智能域任务');
+    if(window.lucide)lucide.createIcons();
+  }
+
+  function renderDashboardCharts(state) {
+    const grid=q('#overview .grid2'),right=grid?.children?.[1],bars=q('.opportunity-bars',right?.children?.[0]);
+    if(bars){
+      const groups=new Map();state.opportunities.forEach(item=>{const key=item.market_scope||'未分类',value=groups.get(key)||{count:0,score:0};value.count+=1;value.score+=Number(item.score||0);groups.set(key,value);});
+      const values=[...groups.entries()].sort((a,b)=>(b[1].score/b[1].count)-(a[1].score/a[1].count)).slice(0,6),max=Math.max(...values.map(([,v])=>v.score/v.count),1);
+      bars.innerHTML=values.length?`${values.map(([name,value])=>{const score=value.score/value.count;return `<div><span>${escapeHtml(name)}</span><i><em style='width:${Math.round(score/max*100)}%'></em></i><b>${value.count}</b></div>`;}).join('')}`:dashboardEmpty('当前暂无机会数据','scanOpportunity','扫描机会');
+    }
+    const head=q('.panel-head span',right?.children?.[0]);if(head)head.textContent=state.opportunities.length?`${state.opportunities.length}条机会 · 按市场范围聚合`:'当前租户暂无机会';
+  }
+
+  function renderDashboardHealth(state) {
+    const grid=q('#overview .grid2'),body=q('.metric-list',grid?.children?.[1]?.children?.[1]);if(!body)return;
+    const target=state.channelTasks.reduce((sum,item)=>sum+Number(item.target_count||0),0),delivered=state.channelTasks.reduce((sum,item)=>sum+Number(item.delivered_count||0),0),feedback=state.executionBatches.reduce((sum,item)=>sum+Number(item.feedback_count||0),0);
+    const delivery=target?Math.min(100,delivered/target*100):null,feedbackRate=delivered?Math.min(100,feedback/delivered*100):null,approval=state.approvals.length?state.approvals.filter(item=>/通过|驳回|拒绝/.test(item.status||'')).length/state.approvals.length*100:null;
+    const metric=(label,rate,tone)=>`<div class='metric'><label>${label}</label><b>${rate===null?'待产生':`${rate.toFixed(1)}%`}</b></div><div class='bar ${tone||''}'><i style='width:${rate===null?0:rate}%'></i></div>`;
+    body.innerHTML=metric('渠道送达率',delivery,'green')+metric('回执回流率',feedbackRate,'')+metric('审批处理率',approval,'amber');
+  }
+
+  function renderDashboard() {
+    const state=dashboardState();
+    renderDashboardKpis(state);renderDashboardActivity(state);renderDashboardTodos(state);renderDashboardCharts(state);renderDashboardHealth(state);
+  }
+
   function renderProducts(){
     const table=q('#products .table'); if(!table)return;
     const products=tenantData.productPackages||[];
@@ -571,33 +678,157 @@
   }
 
   function renderExecution(){
-    const batches=tenantData.executionBatches||[]; const batch=batches[0]; if(!batch)return;
     const section=q('#execution'); if(!section)return;
+    const batches=tenantData.executionBatches||[]; const batch=batches[0];
+    if(!batch){const kpis=qa('.kpi b',section);kpis.forEach((node,index)=>{node.textContent=index===4?'待产生':'0';});const selects=qa('.toolbar-strip select',section);selects.forEach(select=>{select.innerHTML='<option>暂无可执行数据</option>';});const table=q('#execution .table');if(table)table.innerHTML='<tr><th>渠道</th><th>任务数</th><th>成功</th><th>失败</th><th>回执延迟</th><th>状态</th></tr><tr><td colspan="6" class="table-empty">暂无执行批次，审批通过后将按活动版本渠道自动生成</td></tr>';const control=q('.grid2 > .panel:nth-child(2) .panel-body',section);if(control)control.innerHTML='<div class="empty-action">暂无执行控制项，活动进入执行阶段后可进行暂停、快照和失败补偿。</div>';const head=q('.grid2 > .panel:first-child .panel-head span',section);if(head)head.textContent='等待活动进入执行阶段';return;}
     const kpis=qa('.kpi b',section); if(kpis[0])kpis[0].textContent=Number(batch.target_size||0).toLocaleString('zh-CN'); if(kpis[1])kpis[1].textContent=Number(batch.delivered_count||0).toLocaleString('zh-CN'); if(kpis[2])kpis[2].textContent=Number(batch.feedback_count||0).toLocaleString('zh-CN'); if(kpis[3])kpis[3].textContent=Number(batch.failed_count||0).toLocaleString('zh-CN'); if(kpis[4])kpis[4].textContent=batch.status;
     const batchText=qa('#execution .toolbar-strip option'); if(batchText[0])batchText[0].textContent=batch.external_id+' · '+batch.status;
     const action=qa('#execution [data-action]'); action.filter(button=>['pauseCampaign','refreshExecution'].includes(button.dataset.action)).forEach(button=>{button.dataset.batchId=batch.id;});
     const tasks=(tenantData.channelTasks||[]).filter(item=>item.batch_id===batch.id);
     const table=q('#execution .table');
-    if(table){
-      const body=table.tBodies[0]||table.createTBody();
-      body.innerHTML=tasks.length?tasks.map(item=>`<tr><td><strong>${escapeHtml(item.channel)}</strong><small class="table-subline">${escapeHtml(item.external_id)}</small></td><td>${Number(item.target_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.delivered_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.failed_count||0).toLocaleString('zh-CN')}</td><td>${item.last_feedback_at?new Date(item.last_feedback_at).toLocaleTimeString('zh-CN'):'待回执'}</td><td><span class="status ${item.status==='失败'?'bad':item.status==='执行中'?'good':'warn'}">${escapeHtml(item.status)}</span> <button class="btn compact" data-channel-feedback="${item.id}">录入回执</button></td></tr>`).join(''):'<tr><td colspan="6" class="table-empty">暂无渠道任务，审批通过后将按活动版本渠道自动生成</td></tr>';
-    }
+    if(table){const rows=tasks.length?tasks.map(item=>`<tr><td><strong>${escapeHtml(item.channel)}</strong><small class="table-subline">${escapeHtml(item.external_id)}</small></td><td>${Number(item.target_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.delivered_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.failed_count||0).toLocaleString('zh-CN')}</td><td>${item.last_feedback_at?new Date(item.last_feedback_at).toLocaleTimeString('zh-CN'):'待回执'}</td><td><span class="status ${item.status==='失败'?'bad':item.status==='执行中'?'good':'warn'}">${escapeHtml(item.status)}</span> <button class="btn compact" data-channel-feedback="${item.id}">录入回执</button></td></tr>`).join(''):'<tr><td colspan="6" class="table-empty">暂无渠道任务，审批通过后将按活动版本渠道自动生成</td></tr>';table.innerHTML=`<tr><th>渠道</th><th>任务数</th><th>成功</th><th>失败</th><th>回执延迟</th><th>状态</th></tr>${rows}`;}
   }
   function renderFeedback(){
     const section=q('#feedback'); if(!section)return;
-    const summary=tenantData.effectSummary; if(!summary)return;
+    const summary=tenantData.effectSummary;
+    if(!summary||!summary.batch_count){const kpis=qa('.kpi b',section);kpis.forEach((node,index)=>{node.textContent=index===3||index===4?'待回流':'0';});const selects=qa('.toolbar-strip select',section);selects.forEach(select=>{select.innerHTML='<option>暂无可复盘活动</option>';});const funnel=q('.grid2 > .panel:first-child .metric-list',section);if(funnel)funnel.innerHTML='<div class="empty-state"><i data-lucide="clock-3"></i><b>暂无真实回执</b><span>活动执行产生渠道回执后，这里将展示触达、转化、归因与策略学习结果</span></div>';const box=q('#reviewBox');if(box)box.innerHTML='<div class="empty-state"><i data-lucide="clock-3"></i><b>暂无真实回执</b><span>活动执行产生渠道回执后，这里将展示转化、归因与策略学习结果</span></div>';if(window.lucide)lucide.createIcons();return;}
     const values=[summary.target_count,summary.delivered_count,summary.clicked_count,summary.converted_count];
-    const kpis=qa('.kpi b',section); if(kpis[0])kpis[0].textContent=Number(summary.target_count||0).toLocaleString('zh-CN'); if(kpis[1])kpis[1].textContent=`${Number(summary.click_rate||0).toFixed(1)}%`; if(kpis[2])kpis[2].textContent=`${Number(summary.conversion_rate||0).toFixed(1)}%`; if(kpis[3])kpis[3].textContent=`${Number(summary.delivered_count||0).toLocaleString('zh-CN')}`; if(kpis[4])kpis[4].textContent=summary.batch_count?`${summary.batch_count} 批`:'暂无';
+    const kpis=qa('.kpi b',section); if(kpis[0])kpis[0].textContent=Number(summary.target_count||0).toLocaleString('zh-CN'); if(kpis[1])kpis[1].textContent=`${Number(summary.click_rate||0).toFixed(1)}%`; if(kpis[2])kpis[2].textContent=`${Number(summary.conversion_rate||0).toFixed(1)}%`; if(kpis[3])kpis[3].textContent='待回流'; if(kpis[4])kpis[4].textContent='待回流';
     const metrics=qa('.metric-list .metric b',section); metrics.forEach((item,index)=>{if(values[index]!==undefined)item.textContent=Number(values[index]||0).toLocaleString('zh-CN');});
     const bars=qa('.metric-list .bar i',section); if(bars[0])bars[0].style.width='100%'; if(bars[1])bars[1].style.width=Math.min(100,summary.delivery_rate||0)+'%'; if(bars[2])bars[2].style.width=Math.min(100,summary.click_rate||0)+'%'; if(bars[3])bars[3].style.width=Math.min(100,summary.conversion_rate||0)+'%';
     const box=q('#reviewBox'); if(box && summary.batch_count){box.innerHTML=`<div class="review-summary"><b>真实回执已接入</b><p>已汇总 ${summary.batch_count} 个执行批次，触达率 ${summary.delivery_rate}%、点击率 ${summary.click_rate}%、点击后转化率 ${summary.conversion_rate}%。效果分析智能域可基于这些结果继续生成客群、内容、时机和渠道优化建议。</p><div class="review-tags"><span>送达 ${Number(summary.delivered_count||0).toLocaleString('zh-CN')}</span><span>点击 ${Number(summary.clicked_count||0).toLocaleString('zh-CN')}</span><span>转化 ${Number(summary.converted_count||0).toLocaleString('zh-CN')}</span><span>失败 ${Number(summary.failed_count||0).toLocaleString('zh-CN')}</span></div></div>`;}
   }
+  let selectedProductionApprovalId = null;
+
+  function approvalIsPending(item) {
+    return /待审批|待处理|处理中/.test(String(item?.status || ''));
+  }
+
+  function approvalCampaign(approval) {
+    return (tenantData.campaigns || []).find(item => String(item.id) === String(approval?.campaign_id));
+  }
+
+  async function showProductionApprovalDetail(approvalId) {
+    const approval = (tenantData.approvals || []).find(item => String(item.id) === String(approvalId));
+    const detail = q('#approvalDetail');
+    const no = q('#approvalNo');
+    if (!approval || !detail) return;
+    selectedProductionApprovalId = approval.id;
+    const campaign = approvalCampaign(approval) || {};
+    let version = null;
+    try {
+      const versions = await request(`/api/campaigns/${encodeURIComponent(approval.campaign_id)}/versions`);
+      version = (versions || []).find(item => String(item.id) === String(approval.campaign_version_id)) || versions?.[0] || null;
+    } catch {
+      version = null;
+    }
+    const audience = version?.audience_snapshot_id ? (tenantData.audienceSnapshots || []).find(item => String(item.id) === String(version.audience_snapshot_id)) : null;
+    const product = version?.product_package_id ? (tenantData.productPackages || []).find(item => String(item.id) === String(version.product_package_id)) : null;
+    const contentIds = version?.content_asset_ids || [];
+    const contents = (tenantData.contentAssets || []).filter(item => contentIds.map(String).includes(String(item.id)));
+    const audienceSize = audience?.estimated_size ?? campaign.audience_size ?? 0;
+    const productName = product?.name || campaign.product_package || (version?.product_package_id ? `产品包 #${version.product_package_id}` : '未绑定产品包');
+    const channels = version?.channels || [];
+    const status = displayText(approval.status, '待审批');
+    const pending = approvalIsPending(approval);
+    if (no) no.textContent = displayText(approval.external_id, `审批任务 #${approval.id}`);
+    detail.dataset.title = displayText(campaign.name, approval.campaign_id);
+    detail.innerHTML = `<div class="approval-detail-hero"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><div><h3>${escapeHtml(displayText(campaign.name, approval.campaign_id))}</h3><p>${escapeHtml(approval.approver_role || '营销审批')} · ${escapeHtml(displayText(version?.version, campaign.version || '当前版本'))} · ${escapeHtml(displayText(approval.external_id, '审批任务'))}</p></div><span class="pill ${pending ? 'red' : 'blue'}">${escapeHtml(status)}</span></div><div class="approval-detail-grid"><div><b>活动阶段</b><span>${escapeHtml(displayText(campaign.stage, '未设置'))} · ${escapeHtml(displayText(campaign.status, '未设置'))}</span></div><div><b>负责人</b><span>${escapeHtml(displayText(campaign.owner, '未设置'))}</span></div><div><b>客群范围</b><span>${Number(audienceSize || 0).toLocaleString('zh-CN')} 人${audience ? ` · ${escapeHtml(audience.name || audience.package_name || '客群快照')}` : ''}</span></div><div><b>产品包</b><span>${escapeHtml(productName)}</span></div><div><b>预算</b><span>¥${Number(version?.budget_yuan ?? campaign.budget_yuan ?? 0).toLocaleString('zh-CN')}</span></div><div><b>触达渠道</b><span>${escapeHtml(channels.join('、') || '未配置')}</span></div></div><div class="approval-content-preview"><b>版本与内容</b><p>${version ? `版本 ${escapeHtml(version.version || '未命名')} · ${contents.length} 个内容资产 · ${escapeHtml(version.status || '未设置')}` : '版本详情暂不可用，请刷新后重试。'}</p>${contents.slice(0, 3).map(item => `<div class="approval-content-item"><span>${escapeHtml(item.channel || '渠道')}</span><b>${escapeHtml(displayText(item.title || item.name, '未命名内容'))}</b></div>`).join('')}</div><div class="approval-checks"><div class="approval-check"><i><i data-lucide="check"></i></i><span><b>客群与保护规则</b><small>${audience ? '已绑定客群快照，可追溯冻结规模与生成时间' : '未绑定客群快照，请补充活动客群'}</small></span></div><div class="approval-check"><i><i data-lucide="${product ? 'check' : 'alert-circle'}"></i></i><span><b>产品资格校验</b><small>${product ? '已关联产品包，审批时沿用当前产品版本' : '未关联产品包，请补充活动产品'}</small></span></div><div class="approval-check"><i><i data-lucide="${channels.length ? 'check' : 'alert-circle'}"></i></i><span><b>渠道与频控</b><small>${channels.length ? `已配置 ${channels.length} 个触达渠道` : '尚未配置触达渠道'}</small></span></div><div class="approval-check"><i><i data-lucide="${approval.comment ? 'message-square-check' : 'clock-3'}"></i></i><span><b>审批意见</b><small>${escapeHtml(approval.comment || (pending ? '等待审批人处理' : '暂无审批意见'))}</small></span></div></div>${pending ? '<div class="approval-actions"><button class="btn danger" data-production-approval-action="reject">退回修改</button><button class="btn primary" data-production-approval-action="approve">通过并进入执行</button></div>' : ''}`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  window.showProductionApprovalDetail = showProductionApprovalDetail;
+
+  function bindProductionApprovalCapture() {
+    if (document.documentElement.dataset.productionApprovalCapture) return;
+    document.documentElement.dataset.productionApprovalCapture = 'true';
+    document.addEventListener('click', event => {
+      const approvalButton = event.target.closest?.('[data-approval]');
+      const actionButton = event.target.closest?.('[data-production-approval-action]');
+      if (approvalButton) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        qa('.approval-item').forEach(item => item.classList.toggle('active', item === approvalButton));
+        showProductionApprovalDetail(approvalButton.dataset.approval);
+        return;
+      }
+      const modal = q('#decisionModal');
+      const decisionChoice = event.target.closest?.('[data-decision]');
+      const confirmButton = event.target.closest?.('#confirmDecision');
+      if (modal?.dataset.productionApprovalId && decisionChoice) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        modal.dataset.productionDecision = decisionChoice.dataset.decision;
+        qa('.decision-choice').forEach(item => item.classList.toggle('active', item === decisionChoice));
+        const comment = q('#decisionComment');
+        if (comment) comment.value = decisionChoice.dataset.decision === 'approve' ? '\u914d\u7f6e\u5df2\u6838\u9a8c\uff0c\u540c\u610f\u8fdb\u5165\u6267\u884c\u9636\u6bb5\u3002' : '\u8bf7\u8865\u5145\u6d3b\u52a8\u6750\u6599\u540e\u91cd\u65b0\u63d0\u4ea4\u5ba1\u6279\u3002';
+        return;
+      }
+      if (modal?.dataset.productionApprovalId && confirmButton) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        decideProductionApproval(modal.dataset.productionDecision || 'approve', q('#decisionComment')?.value || '');
+        return;
+      }
+      if (!actionButton) return;
+      const approval = (tenantData.approvals || []).find(item => String(item.id) === String(selectedProductionApprovalId));
+      if (!approval || !approvalIsPending(approval)) { event.preventDefault(); event.stopImmediatePropagation(); toast('\u8be5\u5ba1\u6279\u4efb\u52a1\u5df2\u5904\u7406\uff0c\u8bf7\u5237\u65b0\u5217\u8868'); return; }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!modal) return;
+      modal.dataset.productionApprovalId = String(approval.id);
+      modal.dataset.productionDecision = actionButton.dataset.productionApprovalAction;
+      q('#decisionSubtitle')?.replaceChildren(document.createTextNode(displayText(approvalCampaign(approval)?.name, approval.campaign_id)));
+      const comment = q('#decisionComment');
+      if (comment) comment.value = actionButton.dataset.productionApprovalAction === 'approve' ? '\u914d\u7f6e\u5df2\u6838\u9a8c\uff0c\u540c\u610f\u8fdb\u5165\u6267\u884c\u9636\u6bb5\u3002' : '\u8bf7\u8865\u5145\u6d3b\u52a8\u6750\u6599\u540e\u91cd\u65b0\u63d0\u4ea4\u5ba1\u6279\u3002';
+      openLayer('decisionModal');
+    }, true);
+  }
+
+  async function decideProductionApproval(decision, comment) {
+    const approvalId = q('#decisionModal')?.dataset.productionApprovalId || selectedProductionApprovalId;
+    const approval = (tenantData.approvals || []).find(item => String(item.id) === String(approvalId));
+    if (!approval) { toast('\u5ba1\u6279\u4efb\u52a1\u5df2\u4e0d\u5b58\u5728\uff0c\u8bf7\u5237\u65b0\u5ba1\u6279\u5217\u8868'); return; }
+    if (!canWrite()) return;
+    try {
+      await request(`/api/approvals/${encodeURIComponent(approval.id)}/decision`, { method: 'POST', body: JSON.stringify({ decision, comment: String(comment || '').trim() }) });
+      const modal = q('#decisionModal');
+      closeLayer('decisionModal');
+      if (modal) { delete modal.dataset.productionApprovalId; delete modal.dataset.productionDecision; }
+      toast(decision === 'approve' ? '\u5ba1\u6279\u5df2\u901a\u8fc7\uff0c\u6267\u884c\u6279\u6b21\u5df2\u751f\u6210' : '\u5ba1\u6279\u5df2\u9000\u56de\uff0c\u6d3b\u52a8\u8fd4\u56de\u4fee\u6539\u6d41\u7a0b');
+      await loadTenantData();
+    } catch (cause) {
+      toast(cause.message || '\u5ba1\u6279\u5904\u7406\u5931\u8d25');
+    }
+  }
+
   function renderApprovals(){
     const list=q('#approvals .approval-list'); if(!list)return;
     const approvals=tenantData.approvals||[];
-    if(!approvals.length){list.innerHTML='<div class="empty-action">暂无待处理审批。活动版本提交审批后会出现在这里。</div>';return;}
-    list.innerHTML=approvals.map(item=>`<button class="approval-item ${item.status==='待审批'?'active':''}" data-approval="${item.id}"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><span><b>${escapeHtml(item.campaign_id)}</b><small>${escapeHtml(item.approver_role)} · ${escapeHtml(item.external_id)}</small></span><em class="pill ${item.status==='待审批'?'red':'blue'}">${escapeHtml(item.status)}</em></button>`).join('');
+    const reviewedCount=approvals.filter(item=>!approvalIsPending(item)).length;
+    const pendingProductCount=approvals.filter(item=>String(item.approver_role||'').includes('\u4ea7\u54c1')&&approvalIsPending(item)).length;
+    const pendingContentCount=approvals.filter(item=>String(item.approver_role||'').includes('\u5185\u5bb9')&&approvalIsPending(item)).length;
+    const approvalNotes=qa('#approvals .kpi em');
+    if(approvalNotes[0])approvalNotes[0].textContent=approvals.some(approvalIsPending)?'\\u5b58\\u5728\\u5f85\\u5904\\u7406\\u4efb\\u52a1':'\\u5f53\\u524d\\u65e0\\u5f85\\u5ba1\\u6279';
+    if(approvalNotes[1])approvalNotes[1].textContent=pendingProductCount?'\\u5e93\\u5b58\\u4e0e\\u6743\\u76ca\\u6821\\u9a8c':'\\u5f53\\u524d\\u65e0\\u4ea7\\u54c1\\u786e\\u8ba4';
+    if(approvalNotes[2])approvalNotes[2].textContent=pendingContentCount?'\\u654f\\u611f\\u8bcd\\u4e0e\\u4e8b\\u5b9e\\u6821\\u9a8c':'\\u5f53\\u524d\\u65e0\\u5185\\u5bb9\\u5408\\u89c4\\u4efb\\u52a1';
+    if(approvalNotes[3])approvalNotes[3].textContent=reviewedCount?'\\u5df2\\u5904\\u7406 '+reviewedCount+' \\u6761':'\\u6682\\u65e0\\u5df2\\u5904\\u7406\\u4efb\\u52a1';
+    if(approvalNotes[4])approvalNotes[4].textContent=approvals.length?'\\u6309\\u5f53\\u524d\\u5ba1\\u6279\\u8bb0\\u5f55\\u8ba1\\u7b97':'\\u6682\\u65e0\\u7edf\\u8ba1\\u57fa\\u6570';
+    const approvalKpiValues=qa('#approvals .kpi b');
+    if(approvalKpiValues[3])approvalKpiValues[3].textContent=reviewedCount;
+    if(approvalKpiValues[4])approvalKpiValues[4].textContent=approvals.length?((reviewedCount/approvals.length*100).toFixed(1)+'%'):'\\u5f85\\u4ea7\\u751f';
+    const approvalNoteText=value=>JSON.parse('"'+value+'"');
+    if(approvalNotes[0])approvalNotes[0].textContent=approvals.some(approvalIsPending)?approvalNoteText('\\u5b58\\u5728\\u5f85\\u5904\\u7406\\u4efb\\u52a1'):approvalNoteText('\\u5f53\\u524d\\u65e0\\u5f85\\u5ba1\\u6279');
+    if(approvalNotes[1])approvalNotes[1].textContent=pendingProductCount?approvalNoteText('\\u5e93\\u5b58\\u4e0e\\u6743\\u76ca\\u6821\\u9a8c'):approvalNoteText('\\u5f53\\u524d\\u65e0\\u4ea7\\u54c1\\u786e\\u8ba4');
+    if(approvalNotes[2])approvalNotes[2].textContent=pendingContentCount?approvalNoteText('\\u654f\\u611f\\u8bcd\\u4e0e\\u4e8b\\u5b9e\\u6821\\u9a8c'):approvalNoteText('\\u5f53\\u524d\\u65e0\\u5185\\u5bb9\\u5408\\u89c4\\u4efb\\u52a1');
+    if(approvalNotes[3])approvalNotes[3].textContent=reviewedCount?approvalNoteText('\\u5df2\\u5904\\u7406')+' '+reviewedCount+' '+approvalNoteText('\\u6761'):approvalNoteText('\\u6682\\u65e0\\u5df2\\u5904\\u7406\\u4efb\\u52a1');
+    if(approvalNotes[4])approvalNotes[4].textContent=approvals.length?approvalNoteText('\\u6309\\u5f53\\u524d\\u5ba1\\u6279\\u8bb0\\u5f55\\u8ba1\\u7b97'):approvalNoteText('\\u6682\\u65e0\\u7edf\\u8ba1\\u57fa\\u6570');
+
+    if(!approvals.length){list.innerHTML='<div class="empty-action">暂无待处理审批。活动版本提交审批后会出现在这里。</div>';const detail=q('#approvalDetail');if(detail)detail.innerHTML='<div class="empty-action">暂无审批详情，提交活动版本后可查看完整的客群、产品、内容、预算与合规信息。</div>';const no=q('#approvalNo');if(no)no.textContent='暂无审批';return;}
+    list.innerHTML=approvals.map(item=>{const campaign=approvalCampaign(item);return `<button class="approval-item ${approvalIsPending(item)?'active':''}" data-approval="${item.id}"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><span><b>${escapeHtml(displayText(campaign?.name, item.campaign_id))}</b><small>${escapeHtml(item.approver_role)} · ${escapeHtml(item.external_id)}</small></span><em class="pill ${approvalIsPending(item)?'red':'blue'}">${escapeHtml(displayText(item.status, '待审批'))}</em></button>`;}).join('');
     if(window.lucide)lucide.createIcons();
+    const selected=approvals.find(approvalIsPending)||approvals[0];
+    if(selected) showProductionApprovalDetail(selected.id);
   }
 
   function renderContentChannelPreview(item){
@@ -926,6 +1157,15 @@
       const openCampaign=event.target.closest?.('[data-open-campaign]');
       if(openCampaign){const item=(tenantData.campaigns||[]).find(value=>value.name===openCampaign.dataset.openCampaign);if(item){showCampaignDetail(item);toast('已打开活动详情：'+item.name);}return;}
       const button=event.target.closest('button'); if(!button) return;
+      const decisionModal=q('#decisionModal');
+      if(button.dataset.productionApprovalAction){
+        const approval=(tenantData.approvals||[]).find(item=>String(item.id)===String(selectedProductionApprovalId));
+        if(!approval||!approvalIsPending(approval)){toast('\u8be5\u5ba1\u6279\u4efb\u52a1\u5df2\u5904\u7406\uff0c\u8bf7\u5237\u65b0\u5217\u8868');return;}
+        if(decisionModal){decisionModal.dataset.productionApprovalId=String(approval.id);decisionModal.dataset.productionDecision=button.dataset.productionApprovalAction;const title=displayText(approvalCampaign(approval)?.name,approval.campaign_id);q('#decisionSubtitle')?.replaceChildren(document.createTextNode(title));const comment=q('#decisionComment');if(comment)comment.value=button.dataset.productionApprovalAction==='approve'?'\u914d\u7f6e\u5df2\u6838\u9a8c\uff0c\u540c\u610f\u8fdb\u5165\u6267\u884c\u9636\u6bb5\u3002':'\u8bf7\u8865\u5145\u6d3b\u52a8\u6750\u6599\u540e\u91cd\u65b0\u63d0\u4ea4\u5ba1\u6279\u3002';openLayer('decisionModal');}
+        return;
+      }
+      if(button.dataset.decision && decisionModal?.dataset.productionApprovalId){decisionModal.dataset.productionDecision=button.dataset.decision;return;}
+      if(button.id==='confirmDecision' && decisionModal?.dataset.productionApprovalId){const decision=decisionModal.dataset.productionDecision||'approve';const comment=q('#decisionComment')?.value||'';await decideProductionApproval(decision,comment);return;}
       if(button.dataset.insightSourceEdit){const item=(tenantData.opportunitySources||[]).find(value=>String(value.id)===String(button.dataset.insightSourceEdit));const form=q('#opportunitySourceForm');if(item&&form){for(const key of ['source_id','name','source_url','source_type','schedule','focus']){const field=form.elements[key];if(field)field.value=key==='source_id'?item.id:(item[key]||'');}form.scrollIntoView({behavior:'smooth',block:'center'});}return;}
       if(button.dataset.insightSourceDelete){if(!canWrite()||!window.confirm('确认删除这个洞察来源？历史任务不会被删除。'))return;try{await request('/api/opportunity-insight/sources/'+button.dataset.insightSourceDelete,{method:'DELETE'});toast('洞察来源已删除');await loadTenantData();}catch(cause){toast(cause.message||'来源删除失败');}return;}
       if(button.dataset.insightRunView){try{const detail=await request('/api/opportunity-insight/runs/'+button.dataset.insightRunView);showInsightRunDetail(detail);}catch(cause){toast(cause.message||'洞察任务加载失败');}return;}
@@ -1082,8 +1322,8 @@ function mountMarketingAssistantV2(){
   }
 
   window.createProductionCampaign = async function(name) { return request("/api/campaigns", {method: "POST", body: JSON.stringify({name: name, stage: "机会"})}); };
-  async function loadTenantData(){updateIdentity();const currentCampaignId=tenantData.campaigns?.[0]?.id||'ACT-2026-0921';const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(campaigns[0]?.id||currentCampaignId)}/effect-summary`);}catch{effectSummary={};}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
-  async function initializeSession(){
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};const effectCampaignId=campaigns[0]?.id;if(effectCampaignId){try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(effectCampaignId)}/effect-summary`);}catch{effectSummary={};}}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
+  async function initializeSession(){resetDashboard();
     try{mountMarketingAssistantV2();setTimeout(()=>{if(!q('#marketingAssistant')){try{mountMarketingAssistantV2();}catch(cause){console.error('assistant remount failed',cause);}}},0);}catch(cause){console.error('营销助手挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}
     try{bindProductionActions();}catch(cause){console.error('生产功能绑定失败',cause);}
@@ -1091,5 +1331,6 @@ function mountMarketingAssistantV2(){
     if(window.lucide)lucide.createIcons();
   }
   function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=session.tenants?.[0]?.id || null; localStorage.removeItem(tenantKey);q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
+  bindProductionApprovalCapture();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

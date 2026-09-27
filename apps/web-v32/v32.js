@@ -113,6 +113,7 @@
   const reviewAction = action => {
     if (action === 'generateReview') {
       const box = $('#reviewBox');
+      if (box?.querySelector('.empty-state')) { notify('暂无真实回执，活动执行并完成结果回流后才能生成 AI 复盘'); return; }
       if (box) box.innerHTML = `<div class="drawer-ai"><b>效果分析智能域 · 已生成复盘</b><br>家庭同行子群出票率 12.4%，高于整体 9.8%；App内容版贡献 61% 转化，短信补触贡献 18%。建议下一轮扩大“行李偏好”子群，并把短信补触延后 6 小时。</div><div class="review-actions"><button class="btn primary" data-v32-action="applyLearning">生成下一轮策略</button></div>`;
       notify('AI复盘完成：已生成客群、内容、时机和渠道建议');
     }
