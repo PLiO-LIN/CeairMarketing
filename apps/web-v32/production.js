@@ -46,11 +46,35 @@
     const view=q('#'+viewId),definitions=businessSubviewDefinitions[viewId]; if(!view||!definitions)return;
     let nav=q(':scope > .business-subview-shell',view); if(!nav){nav=document.createElement('div');nav.className='business-subview-shell';nav.setAttribute('role','tablist');nav.setAttribute('aria-label',(q('.page-head h1',view)?.textContent||'业务')+'子页面');q(':scope > .page-head',view)?.insertAdjacentElement('afterend',nav);}
     nav.innerHTML=`<div class=business-subview-tabs>${definitions.map(item=>`<button type=button role=tab data-business-subview=${item[0]}><i data-lucide=${item[3]}></i><span>${item[1]}</span></button>`).join('')}</div><p data-subview-context></p>`;
-    activateBusinessSubview(viewId,businessSubviewState.get(viewId)||definitions[0][0],{silent:true}); if(window.lucide)lucide.createIcons();
+    activateBusinessSubview(viewId,businessSubviewState.get(viewId)||definitions[0][0],{silent:true});
+    if(viewId==='approvals')renderApprovalHistoryPanel();
+    if(viewId==='execution')renderExecutionBatchPanel();
+    if(window.lucide)lucide.createIcons();
   }
   function renderAgentRunPanel(hostId,domains,emptyText){
     const host=q('#'+hostId);if(!host)return;const runs=(tenantData.runs||[]).filter(item=>domains.includes(item.domain_id));
     host.innerHTML='<div class=panel-head><h2>智能域运行记录</h2><span>'+runs.length+' 次运行</span></div><div class=panel-body>'+(runs.length?'<div class=run-card-list>'+runs.map(item=>{const active=['queued','running','processing'].includes(String(item.status).toLowerCase());return '<article class="run-card '+(active?'is-running':'')+'"><span class="live-state '+(active?'is-active':'')+'"><i></i>'+(active?'正在输出':escapeHtml(displayText(item.status,'已完成')))+' </span><div><b>'+escapeHtml(displayText(item.summary,'智能域任务'))+'</b><small>'+escapeHtml(item.domain_id)+' · '+escapeHtml(item.campaign_id||'未关联活动')+'</small></div><time>'+(item.created_at?new Date(item.created_at).toLocaleString('zh-CN'):'刚刚')+'</time></article>';}).join('')+'</div>':'<div class=empty-action>'+escapeHtml(emptyText)+'</div>')+'</div>';
+  }
+
+  function renderApprovalHistoryPanel(){
+    const view=q('#approvals'); if(!view)return;
+    let panel=q('#approvalHistoryPanel');
+    if(!panel){panel=document.createElement('div');panel.id='approvalHistoryPanel';panel.className='panel';view.appendChild(panel);}
+    panel.dataset.subviewPanel='history';
+    const items=(tenantData.approvals||[]).filter(item=>!approvalIsPending(item));
+    const rows=items.map(item=>'<article><b>'+escapeHtml(item.external_id||item.id)+'</b><span>'+escapeHtml(item.approver_role||'审批节点')+' · '+escapeHtml(item.status||'未知')+'</span><time>'+escapeHtml(item.updated_at?new Date(item.updated_at).toLocaleString('zh-CN'):'暂无时间')+'</time></article>').join('');
+    panel.innerHTML='<div class=panel-head><h2>审批处理记录</h2><span>'+items.length+' 条已处理</span></div><div class=panel-body>'+(rows?'<div class=history-list>'+rows+'</div>':'<div class=empty-action>暂无审批历史。活动提交后，处理结果会在这里留痕。</div>')+'</div>';
+  }
+
+  function renderExecutionBatchPanel(){
+    const view=q('#execution'); if(!view)return;
+    let panel=q('#executionBatchPanel');
+    if(!panel){panel=document.createElement('div');panel.id='executionBatchPanel';panel.className='panel';const anchor=q('.toolbar-strip',view);if(anchor)anchor.insertAdjacentElement('afterend',panel);else view.appendChild(panel);}
+    panel.dataset.subviewPanel='batches';
+    const batch=(tenantData.executionBatches||[])[0];
+    const title=batch?(batch.external_id||batch.id):'等待审批通过';
+    const body=batch?'<div class=batch-summary><strong>'+escapeHtml(batch.external_id||batch.id)+'</strong><span>目标名单 '+Number(batch.target_size||0).toLocaleString('zh-CN')+' 人</span><span>成功触达 '+Number(batch.delivered_count||0).toLocaleString('zh-CN')+' 人</span><span>回执回流 '+Number(batch.feedback_count||0).toLocaleString('zh-CN')+' 人</span></div>':'<div class=empty-action>暂无执行批次。审批通过后，系统会按活动版本和渠道自动生成批次。</div>';
+    panel.innerHTML='<div class=panel-head><h2>执行批次概览</h2><span>'+escapeHtml(title)+'</span></div><div class=panel-body>'+body+'</div>';
   }
 
   function applyBusinessSubviewLayouts(){
@@ -59,7 +83,7 @@
     const insight=q('#opportunityInsightPanel'); if(insight){insight.dataset.subviewPanel='domain signals runs';const source=q('.insight-source-config',insight),run=q('.insight-run-config',insight),history=q('.insight-history',insight);if(source)source.dataset.subviewPanel='signals';if(run)run.dataset.subviewPanel='domain';if(history)history.dataset.subviewPanel='runs';}
     const insightTitle=q('#opportunityInsightPanel h2'); if(insightTitle)insightTitle.textContent='洞察智能域';
     qa('#opportunityInsightPanel .insight-history .status').forEach(node=>{if(/queued|running|处理|processing/i.test(node.textContent||''))node.classList.add('is-live');});
-    mark('#audiences > .toolbar-strip','personas packages selection'); mark('#audiences > .grid2','personas packages'); mark('#audiences > .panel:not(.grid2 .panel)','selection');
+    mark('#audiences > .toolbar-strip','personas packages selection'); mark('#audiences > .grid2','personas packages'); mark('#audiences > .panel:not(.grid2 .panel)','selection'); const audienceDetail=q('#audiences .grid2 .panel:nth-child(2)'); if(audienceDetail)audienceDetail.dataset.subviewPanel='personas';
     const audienceBody=q('#audiences .grid2 .panel:first-child .panel-body'); if(audienceBody){qa('.catalog-summary,.catalog-grid',audienceBody).forEach(item=>item.dataset.subviewPanel='personas');qa('.catalog-section-head,.catalog-section-head~.table',audienceBody).forEach(item=>item.dataset.subviewPanel='packages');qa('.audience-tag-details,.catalog-foot',audienceBody).forEach(item=>item.dataset.subviewPanel='packages');}
     mark('#products > .toolbar-strip','catalog packages services'); mark('#products > .panel','catalog packages'); mark('#products > .grid3','services'); mark('#productCatalog','catalog');
     const productTable=q('#products > .panel .table'); if(productTable)productTable.dataset.subviewPanel='packages';
