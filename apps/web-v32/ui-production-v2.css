@@ -233,6 +233,38 @@ html, body {
 .audience-tag-item small { margin-top: 4px; color: #7a92a1; font-size: 11px; }
 .audience-tag-item .btn { min-width: 52px; justify-content: center; }
 
+.business-subview-shell { margin: 0 0 16px; padding: 10px 12px 9px; border: 1px solid #d8e7ef; background: linear-gradient(180deg,#fff,#f8fbfd); box-shadow: 0 4px 14px rgba(18,66,96,.04); }
+.business-subview-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.business-subview-tabs button { min-height: 36px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; border-radius: 5px; padding: 0 13px; background: transparent; color: #5d7788; font-size: 12px; font-weight: 650; transition: background .16s ease, border-color .16s ease, color .16s ease, transform .16s ease; }
+.business-subview-tabs button:hover { color: #0b67b2; background: #eef7fb; transform: translateY(-1px); }
+.business-subview-tabs button.active { color: #0b67b2; border-color: #b9dcea; background: #eaf6fb; box-shadow: inset 0 -2px #0b83bd; }
+.business-subview-tabs button svg { width: 15px; height: 15px; }
+.business-subview-shell > p { margin: 7px 2px 0; color: #78909e; font-size: 11px; }
+.single-workbench-grid { grid-template-columns: minmax(0,1fr) !important; }
+[data-subview-panel][hidden] { display: none !important; }
+.run-card-list { display: grid; gap: 8px; }
+.run-card { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid #dce8ee; background: #fff; }
+.run-card > div { min-width: 0; }
+.run-card b, .run-card small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.run-card b { color: #28536e; font-size: 12px; }
+.run-card small, .run-card time { color: #8399a6; font-size: 10px; }
+.run-card time { white-space: nowrap; }
+.live-state { display: inline-flex; align-items: center; gap: 6px; min-width: 64px; color: #21805f; font-size: 10px; font-weight: 700; white-space: nowrap; }
+.live-state i { width: 7px; height: 7px; border-radius: 50%; background: #29a879; box-shadow: 0 0 0 3px #dff5eb; }
+.live-state.is-active i { background: #1593c2; box-shadow: 0 0 0 3px #d9f0f8; animation: production-pulse 1.35s ease-in-out infinite; }
+.insight-history .status.is-live { display: inline-flex; align-items: center; gap: 6px; }
+.insight-history .status.is-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #1593c2; box-shadow: 0 0 0 3px #d9f0f8; animation: production-pulse 1.35s ease-in-out infinite; }
+.run-card.is-running { border-color: #b7dfeb; background: linear-gradient(90deg,#fbfeff,#f2fbfd); }
+.run-card.is-running::after { content: none; grid-column: 1 / -1; height: 2px; background: linear-gradient(90deg,transparent,#39aaca,transparent); background-size: 220% 100%; animation: production-scan 1.8s linear infinite; }
+.insight-source-config, .insight-run-config, .insight-history { transition: opacity .18s ease, transform .18s ease; }
+.insight-run-actions .btn:disabled, .pipeline-task.is-running .pipeline-progress i { position: relative; overflow: hidden; }
+.pipeline-task:not(.is-failed) .pipeline-progress i { background-image: linear-gradient(100deg,rgba(255,255,255,0) 15%,rgba(255,255,255,.46) 50%,rgba(255,255,255,0) 85%); background-size: 220% 100%; }
+.pipeline-task:not(.is-failed) .pipeline-progress i[style*=width] { animation: production-shimmer 1.8s linear infinite; }
+@keyframes production-pulse { 0%,100% { transform: scale(.82); opacity: .64; } 50% { transform: scale(1.18); opacity: 1; } }
+@keyframes production-scan { from { background-position: 200% 0; } to { background-position: -20% 0; } }
+@keyframes production-shimmer { from { background-position: 200% 0; } to { background-position: -20% 0; } }
+@media (prefers-reduced-motion: reduce) { .business-subview-tabs button, .run-card, .live-state i, .run-card.is-running::after, .pipeline-task:not(.is-failed) .pipeline-progress i { animation: none !important; transition: none !important; } }
+
 @media (max-width: 680px) {
   .business-editor-grid { grid-template-columns: 1fr; }
   .business-editor-field.full-field { grid-column: auto; }

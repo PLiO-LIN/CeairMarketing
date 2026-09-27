@@ -16,6 +16,64 @@
   const displayText = (value, fallback) => /^\?+$/.test(String(value ?? '').trim()) ? fallback : String(value ?? fallback);
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
 
+  const businessSubviewState = new Map();
+  const businessSubviewDefinitions = {
+    opportunities: [['domain','洞察智能域','多个智能体协同规划、取证与归并','sparkles'],['list','机会清单','评估、编辑并转化可运营机会','list-filter'],['signals','洞察信号','配置网站、接口和人工关注点','radio-tower'],['runs','运行记录','查看每次洞察的步骤与溯源','history']],
+    audiences: [['personas','画像','复用内部画像并查看航空业务特征','contact-round'],['packages','客群包','组合画像、标签与 AI 圈选条件','users-round'],['selection','圈选记录','保存圈选条件与冻结快照','scan-search']],
+    products: [['catalog','基础产品','查看产品管理平台同步的可售对象','ticket'],['packages','活动产品包','组合机票、卡券、权益与辅营服务','package-open'],['services','服务与履约','校验资格并跟踪产品交付','badge-check']],
+    contents: [['assets','内容资产','管理可审核、可追溯的内容版本','files'],['tasks','生成任务','查看内容生成智能域运行过程','wand-sparkles'],['preview','渠道预览','按 App、短信和微信样式预览','smartphone']],
+    campaigns: [['list','活动清单','贯穿机会到复盘的营销主对象','list-checks'],['runs','编排运行','查看活动编排智能域执行记录','workflow']],
+    approvals: [['pending','待我审批','处理产品、预算、内容与合规节点','inbox'],['history','审批记录','查询已处理节点和审批留痕','history']],
+    execution: [['batches','执行批次','查看活动版本生成的执行批次','layers-3'],['channels','渠道任务','跟踪分发、送达和渠道状态','radio'],['receipts','回执与补偿','回流结果并处理失败任务','refresh-cw']],
+    feedback: [['overview','效果总览','查看触达、点击、转化与收入','chart-no-axes-combined'],['attribution','转化归因','分析活动、客群、产品与渠道贡献','git-branch'],['learning','策略学习','沉淀复盘建议并更新营销关系','brain-circuit']],
+    graph: [['schema','本体结构','查看类、属性和关系定义','network'],['instances','本体实例','查看租户真实业务对象与关系','waypoints'],['documents','知识文档','管理进入知识底座的来源文档','book-open-text']],
+    imports: [['upload','数据投递','拖入文档、表格和结构化文件','cloud-upload'],['queue','处理队列','查看解析、抽取、校验与入库进度','list-restart'],['history','处理记录','追溯历史批次和本体更新结果','history']],
+    permissions: [['roles','角色权限','维护角色、成员和数据范围','user-cog'],['audit','审计记录','追踪关键操作与权限变更','scroll-text']]
+  };
+
+  function subviewContains(element,key){return String(element?.dataset?.subviewPanel||'').split(/\s+/).includes(key);}
+  function activateBusinessSubview(viewId,key,options={}){
+    const view=q('#'+viewId),definitions=businessSubviewDefinitions[viewId]; if(!view||!definitions)return;
+    const selected=definitions.some(item=>item[0]===key)?key:definitions[0][0]; businessSubviewState.set(viewId,selected);
+    qa('[data-business-subview]',view).forEach(button=>{const active=button.dataset.businessSubview===selected;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
+    qa('[data-subview-panel]',view).forEach(element=>{element.hidden=!subviewContains(element,selected);}); view.dataset.activeSubview=selected;
+    const definition=definitions.find(item=>item[0]===selected),context=q('[data-subview-context]',view); if(context&&definition)context.textContent=definition[2];
+    if(viewId==='graph'&&(selected==='schema'||selected==='instances')){const target=q(`[data-knowledge-view=${selected}]`,view);if(target&&!target.classList.contains('active'))target.click();}
+    if(viewId==='graph'&&selected==='instances')requestAnimationFrame(()=>renderDynamicGraph());
+    if(!options.silent)q(`[data-business-subview=${selected}]`,view)?.focus({preventScroll:true});
+  }
+  function ensureBusinessSubviewNavigation(viewId){
+    const view=q('#'+viewId),definitions=businessSubviewDefinitions[viewId]; if(!view||!definitions)return;
+    let nav=q(':scope > .business-subview-shell',view); if(!nav){nav=document.createElement('div');nav.className='business-subview-shell';nav.setAttribute('role','tablist');nav.setAttribute('aria-label',(q('.page-head h1',view)?.textContent||'业务')+'子页面');q(':scope > .page-head',view)?.insertAdjacentElement('afterend',nav);}
+    nav.innerHTML=`<div class=business-subview-tabs>${definitions.map(item=>`<button type=button role=tab data-business-subview=${item[0]}><i data-lucide=${item[3]}></i><span>${item[1]}</span></button>`).join('')}</div><p data-subview-context></p>`;
+    activateBusinessSubview(viewId,businessSubviewState.get(viewId)||definitions[0][0],{silent:true}); if(window.lucide)lucide.createIcons();
+  }
+  function renderAgentRunPanel(hostId,domains,emptyText){
+    const host=q('#'+hostId);if(!host)return;const runs=(tenantData.runs||[]).filter(item=>domains.includes(item.domain_id));
+    host.innerHTML='<div class=panel-head><h2>智能域运行记录</h2><span>'+runs.length+' 次运行</span></div><div class=panel-body>'+(runs.length?'<div class=run-card-list>'+runs.map(item=>{const active=['queued','running','processing'].includes(String(item.status).toLowerCase());return '<article class="run-card '+(active?'is-running':'')+'"><span class="live-state '+(active?'is-active':'')+'"><i></i>'+(active?'正在输出':escapeHtml(displayText(item.status,'已完成')))+' </span><div><b>'+escapeHtml(displayText(item.summary,'智能域任务'))+'</b><small>'+escapeHtml(item.domain_id)+' · '+escapeHtml(item.campaign_id||'未关联活动')+'</small></div><time>'+(item.created_at?new Date(item.created_at).toLocaleString('zh-CN'):'刚刚')+'</time></article>';}).join('')+'</div>':'<div class=empty-action>'+escapeHtml(emptyText)+'</div>')+'</div>';
+  }
+
+  function applyBusinessSubviewLayouts(){
+    const mark=(selector,keys)=>{const element=q(selector);if(element)element.dataset.subviewPanel=keys;};
+    mark('#opportunities > .toolbar-strip','list'); mark('#opportunities > .grid2','list');
+    const insight=q('#opportunityInsightPanel'); if(insight){insight.dataset.subviewPanel='domain signals runs';const source=q('.insight-source-config',insight),run=q('.insight-run-config',insight),history=q('.insight-history',insight);if(source)source.dataset.subviewPanel='signals';if(run)run.dataset.subviewPanel='domain';if(history)history.dataset.subviewPanel='runs';}
+    const insightTitle=q('#opportunityInsightPanel h2'); if(insightTitle)insightTitle.textContent='洞察智能域';
+    qa('#opportunityInsightPanel .insight-history .status').forEach(node=>{if(/queued|running|处理|processing/i.test(node.textContent||''))node.classList.add('is-live');});
+    mark('#audiences > .toolbar-strip','personas packages selection'); mark('#audiences > .grid2','personas packages'); mark('#audiences > .panel:not(.grid2 .panel)','selection');
+    const audienceBody=q('#audiences .grid2 .panel:first-child .panel-body'); if(audienceBody){qa('.catalog-summary,.catalog-grid',audienceBody).forEach(item=>item.dataset.subviewPanel='personas');qa('.catalog-section-head,.catalog-section-head~.table',audienceBody).forEach(item=>item.dataset.subviewPanel='packages');qa('.audience-tag-details,.catalog-foot',audienceBody).forEach(item=>item.dataset.subviewPanel='packages');}
+    mark('#products > .toolbar-strip','catalog packages services'); mark('#products > .panel','catalog packages'); mark('#products > .grid3','services'); mark('#productCatalog','catalog');
+    const productTable=q('#products > .panel .table'); if(productTable)productTable.dataset.subviewPanel='packages';
+    mark('#contents > .toolbar-strip','assets tasks preview'); const contentPanels=qa('#contents > .grid2 > .panel'); if(contentPanels[0])contentPanels[0].dataset.subviewPanel='assets'; if(contentPanels[1])contentPanels[1].dataset.subviewPanel='preview'; q('#contents > .grid2')?.classList.add('single-workbench-grid'); let contentTasks=q('#contentGenerationPanel'); if(!contentTasks){contentTasks=document.createElement('div');contentTasks.id='contentGenerationPanel';contentTasks.className='panel';q('#contents')?.appendChild(contentTasks);} contentTasks.dataset.subviewPanel='tasks'; renderAgentRunPanel('contentGenerationPanel',['content-generation'],'暂无内容生成任务，点击“重新生成”后会在这里显示 Agent 过程。');
+    mark('#campaigns > .toolbar-strip','list runs'); const campaignPanel=q('#campaigns > .panel'); if(campaignPanel)campaignPanel.dataset.subviewPanel='list'; let campaignRuns=q('#campaignRunPanel'); if(!campaignRuns){campaignRuns=document.createElement('div');campaignRuns.id='campaignRunPanel';campaignRuns.className='panel';q('#campaigns')?.appendChild(campaignRuns);} campaignRuns.dataset.subviewPanel='runs'; renderAgentRunPanel('campaignRunPanel',['activity-orchestration'],'暂无活动编排运行记录，活动创建与编排后会在这里显示智能域过程。');
+    mark('#approvals > .kpis','pending history'); mark('#approvals > .approval-layout','pending');
+    mark('#execution > .toolbar-strip','batches channels receipts'); mark('#execution > .kpis','batches'); const executionPanels=qa('#execution > .grid2 > .panel'); if(executionPanels[0])executionPanels[0].dataset.subviewPanel='channels'; if(executionPanels[1])executionPanels[1].dataset.subviewPanel='receipts';
+    mark('#feedback > .toolbar-strip','overview attribution learning'); mark('#feedback > .kpis','overview'); const feedbackPanels=qa('#feedback > .grid2 > .panel'); if(feedbackPanels[0])feedbackPanels[0].dataset.subviewPanel='attribution'; if(feedbackPanels[1])feedbackPanels[1].dataset.subviewPanel='learning'; const feedbackFlow=q('#feedback > .panel'); if(feedbackFlow)feedbackFlow.dataset.subviewPanel='learning';
+    const graphPanel=q('#graph .graph-panel'); if(graphPanel)graphPanel.dataset.subviewPanel='schema instances'; const entity=q('#graph .entity'); if(entity)entity.dataset.subviewPanel='schema instances'; mark('#knowledgeDocuments','documents');
+    mark('#imports .ingestion-entry','upload'); mark('#imports .pipeline-queue-panel','queue'); mark('#imports .pipeline-history-panel','history');
+    qa('#permissions .panel').forEach((panel,index)=>{panel.dataset.subviewPanel=index===0?'roles':'audit';});
+    Object.keys(businessSubviewDefinitions).forEach(ensureBusinessSubviewNavigation);
+  }
+
   function activeTenant() { return session?.tenants?.find(item => item.id === tenantId) || session?.tenants?.[0]; }
   function canWrite() { return ['admin', 'manager', 'analyst'].includes(activeTenant()?.role); }
   function isTenantAdmin() { return activeTenant()?.role === 'admin'; }
@@ -1154,6 +1212,8 @@
 
   function bindProductionActions() {
     document.addEventListener('click', async event => {
+      const subviewButton=event.target.closest?.('[data-business-subview]');
+      if(subviewButton){const view=subviewButton.closest('.view');if(view)activateBusinessSubview(view.id,subviewButton.dataset.businessSubview);return;}
       const openCampaign=event.target.closest?.('[data-open-campaign]');
       if(openCampaign){const item=(tenantData.campaigns||[]).find(value=>value.name===openCampaign.dataset.openCampaign);if(item){showCampaignDetail(item);toast('已打开活动详情：'+item.name);}return;}
       const button=event.target.closest('button'); if(!button) return;
@@ -1322,7 +1382,7 @@ function mountMarketingAssistantV2(){
   }
 
   window.createProductionCampaign = async function(name) { return request("/api/campaigns", {method: "POST", body: JSON.stringify({name: name, stage: "机会"})}); };
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};const effectCampaignId=campaigns[0]?.id;if(effectCampaignId){try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(effectCampaignId)}/effect-summary`);}catch{effectSummary={};}}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};const effectCampaignId=campaigns[0]?.id;if(effectCampaignId){try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(effectCampaignId)}/effect-summary`);}catch{effectSummary={};}}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();applyBusinessSubviewLayouts();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
   async function initializeSession(){resetDashboard();
     try{mountMarketingAssistantV2();setTimeout(()=>{if(!q('#marketingAssistant')){try{mountMarketingAssistantV2();}catch(cause){console.error('assistant remount failed',cause);}}},0);}catch(cause){console.error('营销助手挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}
