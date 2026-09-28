@@ -67,6 +67,7 @@ body{background:var(--bg);font-size:14px}.app{grid-template-columns:248px 1fr}.s
 .toast{display:flex;align-items:center;opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .18s var(--ease-ui),transform .18s var(--ease-ui),visibility 0s linear .18s}
 .toast.show{display:flex;opacity:1;visibility:visible;transform:translateY(0);animation:none;transition:opacity .18s var(--ease-ui),transform .18s var(--ease-ui),visibility 0s linear 0s}
 .production-modal{animation:surface-in .2s var(--ease-ui)}
+.production-modal[hidden]{display:none!important}
 .production-modal-card{max-height:min(720px,90vh);display:flex;flex-direction:column;overflow:hidden;animation:modal-in .2s var(--ease-ui)}
 .production-modal-body{overflow:auto}
 .production-form input,.production-form select,.production-login-form input{border-radius:3px;transition:border-color .18s var(--ease-ui),box-shadow .18s var(--ease-ui)}

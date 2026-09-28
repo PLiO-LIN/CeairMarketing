@@ -75,7 +75,7 @@
     const opp = e.target.closest('[data-open-opportunity]');
     if (opp) { opportunity(opp.dataset.openOpportunity); return; }
     const camp = e.target.closest('[data-open-campaign]');
-    if (camp) { campaign(camp.dataset.openCampaign); return; }
+    if (camp) { if (!window.ceairProductionV32) campaign(camp.dataset.openCampaign); return; }
     const action = e.target.closest('[data-action]')?.dataset.action;
     if (action === 'newAudience') form('audience');
     if (action === 'newProduct') form('product');

@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  window.ceairProductionV32 = true;
   const mount = location.pathname.startsWith('/ceair-marketing') ? '/ceair-marketing' : '';
   const sessionKey = 'ceair-production-session';
   const tenantKey = 'ceair-production-tenant';
@@ -15,6 +16,61 @@
   let selectedPreviewChannel = 'App';
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
+  function bindProductionModal(layer, { closeSelector = '[data-close]' } = {}) {
+    if (!layer || layer.dataset.modalBound === 'true') return layer?.__closeProductionModal;
+    const previousFocus = document.activeElement;
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      layer.hidden = true;
+      layer.setAttribute('aria-hidden', 'true');
+      layer.remove();
+      if (previousFocus && typeof previousFocus.focus === 'function' && document.contains(previousFocus)) previousFocus.focus();
+    };
+    layer.dataset.modalBound = 'true';
+    layer.__closeProductionModal = close;
+    layer.setAttribute('role', 'dialog');
+    layer.setAttribute('aria-modal', 'true');
+    layer.setAttribute('aria-hidden', 'false');
+    layer.addEventListener('click', event => {
+      const closeButton = event.target.closest?.(closeSelector);
+      if (event.target === layer || closeButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+      }
+    }, true);
+    layer.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      }
+    });
+    requestAnimationFrame(() => {
+      if (!closed) q(closeSelector, layer)?.focus?.();
+    });
+    return close;
+  }
+  document.addEventListener('click', event => {
+    const layer = event.target.closest?.('.production-modal');
+    if (!layer || layer.querySelector('.business-editor-card')) return;
+    const closeButton = event.target.closest?.('[data-close],[data-campaign-detail-close]');
+    if (event.target !== layer && !closeButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof layer.__closeProductionModal === 'function') layer.__closeProductionModal();
+    else layer.remove();
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    const layers = qa('.production-modal:not([hidden])');
+    const layer = layers[layers.length - 1];
+    if (!layer || layer.querySelector('.business-editor-card')) return;
+    event.preventDefault();
+    if (typeof layer.__closeProductionModal === 'function') layer.__closeProductionModal();
+    else layer.remove();
+  });
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const displayText = (value, fallback) => /^\?+$/.test(String(value ?? '').trim()) ? fallback : String(value ?? fallback);
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
@@ -1052,7 +1108,7 @@
     const field=(label,a,b)=>`<tr><th>${label}</th><td>${escapeHtml(String(a??'未配置'))}</td><td>${escapeHtml(String(b??'未配置'))}</td></tr>`;
     const layer=document.createElement('div'); layer.className='production-modal';
     layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(campaignName)} · 版本对比</b><small>差异检查 · ${escapeHtml(left.version)} 对比 ${escapeHtml(right.version)}</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><table class="table"><tr><th>配置项</th><th>${escapeHtml(left.version)}</th><th>${escapeHtml(right.version)}</th></tr>${field('状态',left.status,right.status)}${field('预算',`¥${Number(left.budget_yuan||0).toLocaleString('zh-CN')}`,`¥${Number(right.budget_yuan||0).toLocaleString('zh-CN')}`)}${field('客群快照',left.audience_snapshot_id||'未配置',right.audience_snapshot_id||'未配置')}${field('产品包',left.product_package_id||'未配置',right.product_package_id||'未配置')}${field('内容资产数量',(left.content_asset_ids||[]).length,(right.content_asset_ids||[]).length)}${field('渠道',(left.channels||[]).join('、'),(right.channels||[]).join('、'))}</table></div></div>`;
-    document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();});
+    document.body.appendChild(layer); bindProductionModal(layer);
   }
   async function showCampaignEditor(item){
     let versions=[];
@@ -1121,7 +1177,7 @@
     if(!layer){layer=document.createElement('div');layer.id='campaignDetailLayer';layer.className='production-modal';document.body.appendChild(layer);}
     layer.innerHTML='<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>'+escapeHtml(item.name)+'</b><small>'+escapeHtml(item.id)+' · 活动详情与版本</small></div><button class="btn" data-campaign-detail-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>当前节点</b>'+escapeHtml(item.stage)+'</span><span><b>当前版本</b>'+escapeHtml(item.version)+'</span><span><b>负责人</b>'+escapeHtml(item.owner)+'</span><span><b>状态</b>'+escapeHtml(item.status)+'</span></div><div class="campaign-detail-grid"><section><h3>活动配置</h3><dl><dt>活动目标</dt><dd>围绕航线、客群和产品包完成精准触达</dd><dt>关联客群</dt><dd>'+Number(item.audience_size||0).toLocaleString('zh-CN')+' 人</dd><dt>关联产品</dt><dd>'+escapeHtml(item.product_package||'未绑定产品包')+'</dd><dt>活动预算</dt><dd>¥'+Number(item.budget_yuan||0).toLocaleString('zh-CN')+'</dd><dt>目标 ROI</dt><dd>'+Number(item.roi_target||0).toFixed(1)+'</dd></dl></section><section><h3>版本记录</h3><div class="campaign-version-list" data-version-list><div class="empty-action">正在加载真实版本记录…</div></div></section></div></div></div>';
     layer.hidden=false;
-    layer.onclick=event=>{if(event.target===layer||event.target.closest('[data-campaign-detail-close]'))layer.hidden=true;};
+    bindProductionModal(layer,{closeSelector:'[data-campaign-detail-close]'});
     try{
       const versions=await request('/api/campaigns/'+encodeURIComponent(item.id)+'/versions');
       const list=q('[data-version-list]',layer);
