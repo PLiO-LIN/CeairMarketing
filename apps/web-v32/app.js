@@ -1,9 +1,9 @@
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const titles={overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',graph:'知识中心',permissions:'权限与审计'};
+const titles={dongdong:'东东',overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',graph:'知识中心',permissions:'权限与审计'};
 let toastTimer=null,wizardStep=0,selectedDecision='approve',editingCampaignRow=null;const toastEl=$('#toast');
 function toast(t){if(!toastEl)return;toastEl.textContent=t;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2800)}
 function icons(){if(window.lucide)lucide.createIcons()}
-function activate(view){$$('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$$('.view').forEach(v=>v.classList.toggle('active',v.id===view));if($('#crumbTitle'))$('#crumbTitle').textContent=titles[view]||titles.overview;if($('#activeTab'))$('#activeTab').textContent=titles[view]||titles.overview;if(view==='graph')requestAnimationFrame(()=>{if(window.graph&&typeof window.graph.resize==='function')window.graph.resize();})}
+function activate(view){$$('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$$('.view').forEach(v=>v.classList.toggle('active',v.id===view));if($('#crumbTitle'))$('#crumbTitle').textContent=titles[view]||titles.overview;if($('#activeTab'))$('#activeTab').textContent=titles[view]||titles.overview;if(view==='graph')requestAnimationFrame(()=>{if(window.graph&&typeof window.graph.resize==='function')window.graph.resize();});if(window.dockDongdong)window.dockDongdong(view==='dongdong');syncDongdongChrome()}
 document.addEventListener('click',event=>{
   const toggle=event.target.closest('.menu-toggle');
   if(toggle){
@@ -16,7 +16,7 @@ document.addEventListener('click',event=>{
     return;
   }
   const nav=event.target.closest('.nav button[data-view]');
-  if(nav)activate(nav.dataset.view);
+  if(nav){activate(nav.dataset.view);$$('.topnav .menu-group').forEach(g=>g.classList.remove('open'));}
 });
 $$('[data-jump]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.jump)));
 function openLayer(id){const e=$(`#${id}`);if(e){e.classList.add('open');e.setAttribute('aria-hidden','false');document.body.classList.add('layer-open');icons()}}function closeLayer(id){const e=$(`#${id}`);if(e){e.classList.remove('open');e.setAttribute('aria-hidden','true')}if(!$('.modal-layer.open,.drawer-layer.open'))document.body.classList.remove('layer-open')}
@@ -74,3 +74,22 @@ $$('.role-item').forEach(item=>item.addEventListener('click',()=>{const d=roleDa
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.classList.contains('icon-btn')&&!b.dataset.close)toast('通知中心：当前无未读告警');if(b.classList.contains('action')&&!b.dataset.action&&!b.dataset.openCampaign&&!b.dataset.openOpportunity&&!b.dataset.audience)toast(`已打开${b.textContent.trim()}详情`);if(b.classList.contains('toolbar-strip')||b.closest('.toolbar-strip')&&b.textContent.trim()==='查询')toast('查询完成：已刷新当前列表');if(b.textContent.trim()==='查看产品')toast('产品详情已打开：机票、行李和选座权益可用')});
 
 
+
+/* 东东首页：实测顶部高度供主视觉对齐，并按滚动状态切换顶栏底色 */
+function syncDongdongChrome(){
+  const home=!!document.querySelector('#dongdong.active');
+  document.body.classList.toggle('dongdong-mode',home);
+  if(home){
+    const h=['.topnav','.topbar'].reduce((sum,sel)=>{const el=document.querySelector(sel);return sum+(el?el.offsetHeight:0)},0)-22;
+    document.documentElement.style.setProperty('--dd-head-h',Math.max(0,h)+'px');
+  }
+  document.body.classList.toggle('dongdong-scrolled',(window.scrollY||document.documentElement.scrollTop||0)>8);
+}
+window.addEventListener('scroll',syncDongdongChrome,{passive:true});
+window.addEventListener('resize',syncDongdongChrome);
+syncDongdongChrome();
+requestAnimationFrame(()=>{syncDongdongChrome();setTimeout(syncDongdongChrome,60)});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(syncDongdongChrome);
+
+/* 指针离开整个顶栏时收起所有下拉，避免点击态残留 */
+document.querySelector('.topnav')?.addEventListener('pointerleave',()=>{$$('.topnav .menu-group').forEach(g=>g.classList.remove('open'))});

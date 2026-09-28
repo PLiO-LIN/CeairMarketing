@@ -1791,20 +1791,18 @@ function mountMarketingAssistantV2(){
     if(q('#marketingAssistant')) q('#marketingAssistant').remove();
     const root=document.createElement('div');
     root.id='marketingAssistant';
-    root.innerHTML=`<button class="assistant-fab" title="打开营销助手" aria-label="打开营销助手"><i data-lucide="bot"></i><span>营销助手</span></button>
-      <section class="assistant-panel" hidden aria-label="AI营销助手对话框">
+    root.innerHTML=`<button class="assistant-fab" title="打开东东" aria-label="打开东东"><img class="assistant-fab-mark" src="./brand/dongdong-3d.png" alt=""><span>东东</span></button>
+      <section class="assistant-panel" hidden aria-label="东东对话框">
         <header class="assistant-drag-handle">
-          <div class="assistant-title"><div><b>AI营销助手</b><small>东航营销业务协同</small></div></div>
+          <div class="assistant-title"><div><b>东东</b><small>东航智慧营销智能体</small></div></div>
           <div class="assistant-header-actions">
             <span class="assistant-live"><i></i>在线</span>
             <button type="button" class="icon-btn" data-assistant-collapse aria-label="折叠对话框" title="折叠"><i data-lucide="minus"></i></button>
             <button type="button" class="icon-btn" data-assistant-close aria-label="关闭对话框" title="关闭"><i data-lucide="x"></i></button>
           </div>
         </header>
-        <div class="assistant-messages">
-          <div class="assistant-message assistant"><div><b>你好，我是东航 AI 营销助手</b><p>可以查询营销知识与本体关系，分析机会、客群和产品，并协助查看活动执行状态。</p><div class="assistant-suggestions"><button data-assistant-suggest="当前有哪些高价值营销机会？">高价值机会</button><button data-assistant-suggest="查询近期数据处理任务">流水线进度</button></div></div></div>
-        </div>
-        <form><textarea name="message" rows="1" placeholder="输入营销问题或操作指令" autocomplete="off"></textarea><button class="btn primary" aria-label="发送"><i data-lucide="arrow-up"></i></button></form>
+        <div class="assistant-messages"></div>
+        <form><textarea name="message" rows="1" placeholder="输入你的营销任务或目标，交给东东" autocomplete="off"></textarea><button class="btn primary" type="submit"><i data-lucide="arrow-up"></i><span>发送</span></button></form>
       </section>`;
     document.body.appendChild(root);
     const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),header=q('.assistant-drag-handle',root),messages=q('.assistant-messages',root),form=q('form',root),input=q('textarea',root),collapseButton=q('[data-assistant-collapse]',root);
@@ -1830,7 +1828,7 @@ function mountMarketingAssistantV2(){
     };
     const stateKey='ceair-marketing-assistant-layout-v2';
     const readLayout=()=>{try{return JSON.parse(localStorage.getItem(stateKey)||'{}')}catch{return {}}};
-    const saveLayout=()=>{const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();localStorage.setItem(stateKey,JSON.stringify({panel:{left:panelRect.left,top:panelRect.top,width:panelRect.width,height:panelRect.height},fab:{left:fabRect.left,top:fabRect.top},collapsed:panel.classList.contains('is-collapsed')}));};
+    const saveLayout=()=>{if(panel.classList.contains('is-docked'))return;const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();localStorage.setItem(stateKey,JSON.stringify({panel:{left:panelRect.left,top:panelRect.top,width:panelRect.width,height:panelRect.height},fab:{left:fabRect.left,top:fabRect.top},collapsed:panel.classList.contains('is-collapsed')}));};
     const clamp=(value,min,max)=>Math.min(Math.max(value,min),Math.max(min,max));
     const positionElement=(element,left,top)=>{const rect=element.getBoundingClientRect();element.style.right='auto';element.style.bottom='auto';element.style.left=clamp(left,8,window.innerWidth-rect.width-8)+'px';element.style.top=clamp(top,8,window.innerHeight-rect.height-8)+'px';};
     const restoreLayout=()=>{const state=readLayout();if(state.panel){panel.style.width=clamp(Number(state.panel.width)||410,340,Math.max(340,window.innerWidth-16))+'px';panel.style.height=clamp(Number(state.panel.height)||640,360,Math.max(360,window.innerHeight-16))+'px';positionElement(panel,Number(state.panel.left)||24,Number(state.panel.top)||24);}if(state.fab)positionElement(fab,Number(state.fab.left)||window.innerWidth-160,Number(state.fab.top)||window.innerHeight-72);if(state.collapsed)panel.classList.add('is-collapsed');};
@@ -1848,7 +1846,7 @@ function mountMarketingAssistantV2(){
       if(!message||form.dataset.busy)return;
       form.dataset.busy='1';input.disabled=true;conversation.push({role:'user',content:message});
       messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div>'+escapeHtml(message)+'</div></div>');
-      const wrap=document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在分析业务上下文</b></div><details class="assistant-trace-details" open><summary><b>执行过程</b><span>实时</span></summary><div class="assistant-trace-list"></div></details><p class="assistant-answer is-streaming"></p></div>';messages.appendChild(wrap);
+      const wrap=document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在分析业务上下文</b></div><details class="assistant-trace-details"><summary><b>执行过程</b><span>实时</span></summary><div class="assistant-trace-list"></div></details><p class="assistant-answer is-streaming"></p></div>';messages.appendChild(wrap);
       const traceList=q('.assistant-trace-list',wrap),answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap);messages.scrollTop=messages.scrollHeight;
       try{
         const response=await fetch(`${mount}/api/agent-chat/stream`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`,'X-Tenant-ID':String(activeTenant()?.id||'')},body:JSON.stringify({message,domain_id:'marketing-copilot',history:conversation.slice(-12,-1)})});
@@ -1870,12 +1868,85 @@ function mountMarketingAssistantV2(){
     if(window.ResizeObserver)new ResizeObserver(()=>{if(!panel.hidden&&!panel.classList.contains('is-dragging'))saveLayout();}).observe(panel);
     window.addEventListener('resize',()=>{const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();positionElement(panel,panelRect.left,panelRect.top);positionElement(fab,fabRect.left,fabRect.top);});
     restoreLayout();if(window.lucide)lucide.createIcons();
+    const dockHost=q('#dongdongDock');
+    const setDocked=docked=>{
+      if(!dockHost)return;
+      if(docked){
+        const placeholder=dockHost.querySelector('.dongdong-chat-placeholder');if(placeholder)placeholder.remove();
+        dockHost.appendChild(panel);panel.classList.add('is-docked');panel.hidden=false;
+      }else{
+        root.appendChild(panel);panel.classList.remove('is-docked');restoreLayout();
+      }
+    };
+    window.dockDongdong=docked=>setDocked(Boolean(docked));
+    window.dongdongAsk=send;
+    setDocked(Boolean(q('#dongdong.active')));
+  }
+
+  function renderDongdongCapabilities(){
+    const host=q('#dongdongCapabilityGrid');if(!host)return;
+    const domains=tenantData.domains||[];
+    const note=q('#dongdongCapabilityCount');
+    if(note)note.textContent=domains.length?`${domains.length} 个智能域 · 当前租户已启用`:'智能域按租户启用';
+    if(!domains.length){host.innerHTML='<div class="dongdong-cap-empty">当前租户尚未启用智能域，请先在模型配置中接入大模型服务</div>';return;}
+    host.innerHTML=domains.map(item=>`<div class="dongdong-cap"><b>${escapeHtml(displayText(item.name,'智能域'))}</b><p>${escapeHtml(displayText(item.responsibility,''))}</p>${item.module?`<small>${escapeHtml(item.module)}</small>`:''}</div>`).join('');
+  }
+  const dongdongModes={
+    opportunity:{placeholder:'想发现什么机会？例如：三亚航线国庆前的预售窗口',chips:[
+      {icon:'radar',label:'高价值机会清单',prompt:'当前有哪些高价值营销机会？按预期收入排序'},
+      {icon:'trending-up',label:'航线搜索趋势',prompt:'对比京沪快线与沪蓉航线近两周的搜索与出票趋势'},
+      {icon:'plane-takeoff',label:'中转辅营缺口',prompt:'哪些国际中转航段存在未开发的辅营机会？'}]},
+    audience:{placeholder:'描述目标客群，东东会转成画像条件并评估规模',chips:[
+      {icon:'users-round',label:'三亚高意向未购',prompt:'圈选三亚航线近14天搜索过但未出票的客群，并评估可触达规模'},
+      {icon:'user-round-search',label:'相似人群扩展',prompt:'找出与家庭出游客群相似的扩展人群，并说明扩展依据'},
+      {icon:'shield-check',label:'营销疲劳排查',prompt:'统计近30天被触达超过两次的客户，给出保护建议'}]},
+    persona:{placeholder:'想了解哪类旅客？东东按画像维度解释口径与规模',chips:[
+      {icon:'users-round',label:'画像维度总览',prompt:'当前同步了哪些旅客画像维度？分别说明口径和数据来源'},
+      {icon:'badge-check',label:'会员等级分布',prompt:'按会员等级统计旅客规模与近30天出行频次分布'},
+      {icon:'route',label:'航线偏好画像',prompt:'分析常飞京沪快线的商务旅客画像特征与辅营偏好'}]},
+    content:{placeholder:'说明活动与渠道，东东按产品事实生成可审核内容',chips:[
+      {icon:'file-pen-line',label:'双渠道内容',prompt:'为上海—三亚国庆早鸟活动生成 App 与短信两版内容'},
+      {icon:'message-square-text',label:'公众号改写',prompt:'把已通过审核的短信文案改写成微信公众号版本'},
+      {icon:'badge-check',label:'事实与敏感词',prompt:'检查现有内容里的敏感词与产品事实偏差'}]}
+  };
+  function renderDongdongChips(mode){
+    const host=q('#dongdongQuick');if(!host)return;
+    const config=dongdongModes[mode]||dongdongModes.opportunity;
+    host.innerHTML=config.chips.map(chip=>`<button class="dongdong-chip" type="button" data-dongdong-ask="${escapeHtml(chip.prompt)}"><i data-lucide="${chip.icon}"></i>${escapeHtml(chip.label)}</button>`).join('');
+    const input=q('#dongdongDock textarea[name=message]');if(input)input.placeholder=config.placeholder;
+    if(window.lucide)lucide.createIcons();
+  }
+  let dongdongChipsBound=false;
+  function bindDongdongChips(){
+    if(dongdongChipsBound)return;dongdongChipsBound=true;
+    q('#dongdongQuick')?.addEventListener('click',event=>{
+      const button=event.target.closest('[data-dongdong-ask]');if(!button)return;
+      activate('dongdong');
+      if(window.dongdongAsk)window.dongdongAsk(button.dataset.dongdongAsk);
+      else toast('东东正在准备，请稍候再试');
+    });
+    qa('.dongdong-tabs button[data-dongdong-mode]').forEach(tab=>tab.addEventListener('click',()=>{
+      qa('.dongdong-tabs button[data-dongdong-mode]').forEach(item=>item.classList.toggle('active',item===tab));
+      renderDongdongChips(tab.dataset.dongdongMode);
+    }));
+  }
+  function mountDongdongHero(){
+    qa('.dongdong-band[data-hero-src]').forEach(band=>{
+      if(band.dataset.heroState)return;band.dataset.heroState='loading';
+      const source=band.dataset.heroSrc;
+      if(!source){band.dataset.heroState='empty';return;}
+      const loader=new Image();
+      loader.onload=()=>{document.body.style.setProperty('--dd-hero',`url("${source}")`);document.body.classList.add('dongdong-hero-ready');band.dataset.heroState='loaded';};
+      loader.onerror=()=>{band.dataset.heroState='failed';};
+      loader.src=source;
+    });
   }
 
   window.createProductionCampaign = async function(name) { return request("/api/campaigns", {method: "POST", body: JSON.stringify({name: name, stage: "机会"})}); };
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};const effectCampaignId=campaigns[0]?.id;if(effectCampaignId){try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(effectCampaignId)}/effect-summary`);}catch{effectSummary={};}}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();applyBusinessSubviewLayouts();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
-  async function initializeSession(){resetDashboard();
+  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};const effectCampaignId=campaigns[0]?.id;if(effectCampaignId){try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(effectCampaignId)}/effect-summary`);}catch{effectSummary={};}}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderDongdongCapabilities();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();applyBusinessSubviewLayouts();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
+  async function initializeSession(){if(typeof syncDongdongChrome==='function')syncDongdongChrome();resetDashboard();
     try{mountMarketingAssistantV2();setTimeout(()=>{if(!q('#marketingAssistant')){try{mountMarketingAssistantV2();}catch(cause){console.error('assistant remount failed',cause);}}},0);}catch(cause){console.error('营销助手挂载失败',cause);}
+    try{bindDongdongChips();renderDongdongChips('opportunity');mountDongdongHero();renderDongdongCapabilities();}catch(cause){console.error('东东首页挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}
     try{bindProductionActions();}catch(cause){console.error('生产功能绑定失败',cause);}
     try{await loadTenantData();}catch(cause){console.error('租户数据加载失败',cause);toast(cause.message||'租户数据加载失败，请稍后重试');}
