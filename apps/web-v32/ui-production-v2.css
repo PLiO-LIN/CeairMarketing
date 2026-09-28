@@ -233,6 +233,10 @@ html, body {
 .business-editor-error { margin: 14px 0 0; padding: 10px 12px; background: #fff2f3; border: 1px solid #ebbac2; color: #a22c42; font-size: 13px; overflow-wrap: anywhere; }
 .business-editor-error[hidden] { display: none; }
 .production-modal-body section > p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.audience-selection-modal { width: min(780px, 94vw); }
+.audience-selection-modal .production-modal-body { padding: 16px; }
+.audience-selection-modal .query-builder { margin-bottom: 16px; }
+.audience-selection-modal .table { min-width: 680px; }
 .audience-tag-details { margin-top: 16px; border-top: 1px solid #e0ebf1; padding-top: 14px; }
 .audience-tag-details > summary { cursor: pointer; color: #28536e; font-size: 13px; font-weight: 650; }
 .audience-tag-list { display: grid; gap: 7px; margin-top: 9px; }

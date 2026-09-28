@@ -72,7 +72,21 @@
     else layer.remove();
   });
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const displayText = (value, fallback) => /^\?+$/.test(String(value ?? '').trim()) ? fallback : String(value ?? fallback);
+  const decodeEscapedText = value => {
+    let text = String(value ?? '');
+    for (let pass = 0; pass < 2; pass += 1) {
+      const next = text
+        .replace(/\\u([0-9a-fA-F]{4})/g, (_, code) => String.fromCharCode(parseInt(code, 16)))
+        .replace(/\\(n|r|t)/g, (_, code) => ({ n: '\n', r: '\r', t: '\t' }[code]));
+      if (next === text) break;
+      text = next;
+    }
+    return text;
+  };
+  const displayText = (value, fallback = '') => {
+    const text = decodeEscapedText(value);
+    return !text.trim() || /^\?+$/.test(text.trim()) ? fallback : text;
+  };
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
   const channelOptions = [['App', '东航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
   const domainLabels = { 'content-generation': '内容生成智能域', 'audience-insight': '客群洞察智能域', 'product-match': '产品匹配智能域', 'activity-orchestration': '活动编排智能域' };
@@ -99,6 +113,12 @@
     qa('[data-business-subview]',view).forEach(button=>{const active=button.dataset.businessSubview===selected;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
     qa('[data-subview-panel]',view).forEach(element=>{element.hidden=!subviewContains(element,selected);}); view.dataset.activeSubview=selected;
     const definition=definitions.find(item=>item[0]===selected),context=q('[data-subview-context]',view); if(context&&definition)context.textContent=definition[2];
+    if(viewId==='audiences'){
+      const heading=q('#audiences .grid2 .panel:first-child .panel-head h2');
+      const hint=q('#audiences .grid2 .panel:first-child .panel-head span');
+      if(heading)heading.textContent=selected==='packages'?'客群包':'画像字段';
+      if(hint)hint.textContent=selected==='packages'?'可直接用于营销活动的组合客群':'用户画像平台同步的底层画像条件';
+    }
     if(viewId==='graph'&&(selected==='schema'||selected==='instances')){const target=q(`[data-knowledge-view=${selected}]`,view);if(target&&!target.classList.contains('active'))target.click();}
     if(viewId==='graph'&&selected==='instances')requestAnimationFrame(()=>renderDynamicGraph());
     if(!options.silent)q(`[data-business-subview=${selected}]`,view)?.focus({preventScroll:true});
@@ -145,8 +165,7 @@
     const insight=q('#opportunityInsightPanel'); if(insight){insight.dataset.subviewPanel='domain signals runs';const source=q('.insight-source-config',insight),run=q('.insight-run-config',insight),history=q('.insight-history',insight);if(source)source.dataset.subviewPanel='signals';if(run)run.dataset.subviewPanel='domain';if(history)history.dataset.subviewPanel='runs';}
     const insightTitle=q('#opportunityInsightPanel h2'); if(insightTitle)insightTitle.textContent='洞察智能域';
     qa('#opportunityInsightPanel .insight-history .status').forEach(node=>{if(/queued|running|处理|processing/i.test(node.textContent||''))node.classList.add('is-live');});
-    mark('#audiences > .toolbar-strip','personas packages selection'); mark('#audiences > .grid2','personas packages'); mark('#audiences > .panel:not(.grid2 .panel)','selection'); const audienceDetail=q('#audiences .grid2 .panel:nth-child(2)'); if(audienceDetail)audienceDetail.dataset.subviewPanel='personas';
-    const audienceBody=q('#audiences .grid2 .panel:first-child .panel-body'); if(audienceBody){qa('.catalog-summary,.catalog-grid',audienceBody).forEach(item=>item.dataset.subviewPanel='personas');qa('.catalog-section-head,.catalog-section-head~.table',audienceBody).forEach(item=>item.dataset.subviewPanel='packages');qa('.audience-tag-details,.catalog-foot',audienceBody).forEach(item=>item.dataset.subviewPanel='packages');}
+    mark('#audiences > .toolbar-strip','personas packages'); mark('#audiences > .grid2','personas packages'); mark('#audiences > .panel:not(.grid2 .panel)','selection'); const audienceDetail=q('#audiences .grid2 .panel:nth-child(2)'); if(audienceDetail)audienceDetail.dataset.subviewPanel='personas';
     mark('#products > .toolbar-strip','catalog packages services'); mark('#products > .panel','catalog packages'); mark('#products > .grid3','services'); mark('#productCatalog','catalog');
     const productTable=q('#products > .panel .table'); if(productTable)productTable.dataset.subviewPanel='packages';
     mark('#contents > .toolbar-strip','assets tasks preview'); const contentPanels=qa('#contents > .grid2 > .panel'); if(contentPanels[0])contentPanels[0].dataset.subviewPanel='assets'; if(contentPanels[1])contentPanels[1].dataset.subviewPanel='preview'; q('#contents > .grid2')?.classList.add('single-workbench-grid'); let contentTasks=q('#contentGenerationPanel'); if(!contentTasks){contentTasks=document.createElement('div');contentTasks.id='contentGenerationPanel';contentTasks.className='panel';q('#contents')?.appendChild(contentTasks);} contentTasks.dataset.subviewPanel='tasks'; renderAgentRunPanel('contentGenerationPanel',['content-generation'],'暂无内容生成任务，点击“重新生成”后会在这里显示 Agent 过程。');
@@ -716,7 +735,10 @@
     }
   }
 
-  const cleanText = (value, fallback = '') => { const text = String(value ?? ''); return !text.trim() || (text.match(/\?/g)||[]).length > Math.max(2, text.length * .35) || text.includes('?') ? fallback : text; };
+  const cleanText = (value, fallback = '') => {
+    const text = decodeEscapedText(value).trim();
+    return !text || /\?{2,}|�/.test(text) ? fallback : text;
+  };
   const roleText = value => ({admin:'\u79df\u6237\u7ba1\u7406\u5458',manager:'\u8425\u9500\u7ecf\u7406',analyst:'\u8425\u9500\u5206\u6790\u5e08',viewer:'\u53ea\u8bfb\u7528\u6237'}[value] || cleanText(value, '\u672a\u6388\u6743'));
 
   function renderOpportunities(){
@@ -737,7 +759,7 @@
     panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2><span>按业务人员配置的网站与关注点，采用 wigolo 风格的规划、取证、并行洞察和商机合并流程</span></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">01 · 洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">02 · 业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕东航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button><span>选择来源后启动，任务会持续记录每一步进度</span></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">03 · 洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
     if(window.lucide)lucide.createIcons();
   }
-  function renderAudienceStructure() {
+  function renderAudienceStructureLegacy() {
     const panel = q('#audiences .grid2 .panel:first-child .panel-body'); if (!panel) return;
     const packages = tenantData.audiencePackages || [];
     const tags = tenantData.audienceTags || [];
@@ -773,6 +795,93 @@
     const host=q('#graph .graph-layout'); if(!host)return; let panel=q('#knowledgeDocuments'); if(!panel){panel=document.createElement('div');panel.id='knowledgeDocuments';panel.className='panel knowledge-documents';host.appendChild(panel);} const docs=tenantData.documents||[];
     panel.innerHTML='<div class="panel-head"><h2>\u77e5\u8bc6\u6587\u6863</h2><span>'+docs.length+' \u4e2a\u6587\u6863 · \u5220\u9664\u5c06\u540c\u6b65\u6e05\u7406\u672c\u4f53\u5bf9\u8c61</span></div><div class="panel-body">'+(docs.length?'<table class="table"><tr><th>\u6587\u6863</th><th>\u6765\u6e90</th><th>\u5207\u7247</th><th>\u672c\u4f53\u5bf9\u8c61</th><th>\u7248\u672c</th><th>\u64cd\u4f5c</th></tr>'+docs.map(d=>'<tr><td><strong>'+escapeHtml(cleanText(d.title,'\u672a\u547d\u540d\u6587\u6863'))+'</strong><small>'+escapeHtml(d.external_id)+'</small></td><td>'+escapeHtml(cleanText(d.source_name,d.source_type))+'</td><td>'+d.chunk_count+'</td><td>'+d.entity_count+'</td><td>V'+d.version+'</td><td class="production-actions"><button class="btn" data-document-edit="'+d.id+'">\u7f16\u8f91</button><button class="btn danger" data-document-delete="'+d.id+'">\u5220\u9664</button></td></tr>').join('')+'</table>':'<div class="empty-action">\u6682\u65e0\u77e5\u8bc6\u6587\u6863\u3002\u4e0a\u4f20\u6587\u4ef6\u540e\uff0c\u5904\u7406\u7ed3\u679c\u4f1a\u5728\u8fd9\u91cc\u5f62\u6210\u77e5\u8bc6\u4e0e\u672c\u4f53\u3002</div>')+'</div>';
   }
+  function renderAudienceStructure() {
+    const grid = q('#audiences .grid2');
+    if (!grid) return;
+    const listPanel = q('.panel:first-child', grid);
+    const detailPanel = q('.panel:nth-child(2)', grid);
+    const panel = q('.panel-body', listPanel);
+    if (!listPanel || !detailPanel || !panel) return;
+
+    const packages = tenantData.audiencePackages || [];
+    const tags = tenantData.audienceTags || [];
+    const snapshots = tenantData.audienceSnapshots || [];
+    const dimensions = tenantData.personaDimensions || [];
+    const segments = tenantData.personaSegments || [];
+    const moduleGroups = dimensions.reduce((groups, item) => {
+      const key = displayText(item.module_key, 'other');
+      (groups[key] ||= { key, name: displayText(item.module_name, '画像维度'), items: [] }).items.push(item);
+      return groups;
+    }, {});
+    const groupCards = Object.values(moduleGroups).map(group => `<article class="dimension-group-card">
+      <div class="dimension-group-head"><span class="catalog-icon"><i data-lucide="layers-3"></i></span><span class="status good">可组合</span></div>
+      <strong>${escapeHtml(group.name)}</strong><small>${group.items.length} 个底层画像字段</small>
+      <p>${escapeHtml(group.items.slice(0, 3).map(item => displayText(item.field_name, item.field_code)).join(' · '))}</p>
+      <button class="btn" data-audience-dimension-group="${escapeHtml(group.key)}">查看字段</button>
+    </article>`).join('');
+    const dimensionRows = dimensions.map(item => `<tr>
+      <td><strong>${escapeHtml(displayText(item.field_name, '未命名画像字段'))}</strong><small>${escapeHtml(displayText(item.field_code, 'FIELD'))}</small></td>
+      <td>${escapeHtml(displayText(item.module_name, '画像维度'))}</td>
+      <td>${escapeHtml(displayText(item.allowed_values, displayText(item.data_type, '按规则计算')))}</td>
+      <td>${escapeHtml(displayText(item.collection_method, '系统分析'))}</td>
+      <td>${escapeHtml(displayText(item.update_frequency, '按日更新'))}</td>
+      <td><button class="btn compact" data-audience-dimension="${escapeHtml(item.id)}">查看定义</button></td>
+    </tr>`).join('');
+    const packageRows = packages.map(item => {
+      const protectedPackage = ['已冻结', '已使用', '执行中', '已归档'].includes(item.status);
+      const dimensionCount = expressionDimensionIds(item).length;
+      const composition = [dimensionCount ? `${dimensionCount} 项画像` : '', (item.tag_ids || []).length ? `${item.tag_ids.length} 个标签` : '', item.selection_mode === 'ai-selection' ? 'AI 条件' : '规则组合'].filter(Boolean).join(' + ');
+      return `<tr>
+        <td><strong>${escapeHtml(displayText(item.name, '未命名客群包'))}</strong><small>${escapeHtml(displayText(item.external_id, 'PACKAGE'))}</small></td>
+        <td>${Number(item.estimated_size || 0).toLocaleString('zh-CN')} 人</td>
+        <td><span class="package-source-tag created">已创建</span></td>
+        <td>${escapeHtml(composition || '待配置画像')}</td>
+        <td><span class="status ${statusClass(item.status)}">${escapeHtml(displayText(item.status, '草稿'))}</span></td>
+        <td class="production-actions"><button class="btn" data-audience-edit="${item.id}"${protectedPackage ? ' disabled title="已冻结或已投入执行的客群包不可直接编辑"' : ''}>编辑</button><button class="btn" data-audience-snapshot="${item.id}"${protectedPackage ? ' disabled' : ''}>冻结快照</button></td>
+      </tr>`;
+    }).join('');
+    const presetRows = segments.map(item => `<tr>
+      <td><strong>${escapeHtml(displayText(item.segment_name, '预置客群包'))}</strong><small>${escapeHtml(displayText(item.segment_code, 'PRESET'))} · ${escapeHtml(displayText(item.primary_persona_name, '客户类型'))}</small></td>
+      <td>按规则计算</td><td><span class="package-source-tag preset">预置组合</span></td>
+      <td>${item.rules?.length || 0} 项画像条件 · ${escapeHtml(displayText((item.recommended_products || [])[0], '待匹配产品包'))}</td>
+      <td><span class="status good">可复用</span></td>
+      <td class="production-actions"><button class="btn" data-audience-persona="${escapeHtml(item.id)}">查看组合</button></td>
+    </tr>`).join('');
+    const tagsHtml = tags.map(tag => `<div class="audience-tag-item"><div><strong>${escapeHtml(displayText(tag.name, '未命名标签'))}</strong><small>${escapeHtml(displayText(tag.code, 'TAG'))} · ${escapeHtml(displayText(tag.category, '画像标签'))} · ${escapeHtml(displayText(tag.source, '画像平台'))}</small></div><span class="status ${tag.enabled === false ? 'warn' : 'good'}">${tag.enabled === false ? '停用' : '启用'}</span><button class="btn" data-audience-tag-edit="${tag.id}">编辑</button></div>`).join('');
+
+    listPanel.dataset.subviewPanel = 'personas packages';
+    detailPanel.dataset.subviewPanel = 'personas packages';
+    panel.innerHTML = `<div data-audience-pane="personas" data-subview-panel="personas">
+      <div class="catalog-summary"><div><b>底层画像字段</b><span>职业、性别、年龄、地域、订单特征、航线偏好等字段来自用户画像平台，可作为客群组合条件。</span></div><div class="catalog-summary-stats"><strong>${dimensions.length}</strong><small>个画像字段</small><button class="btn" data-action="refreshAudienceCatalog"><i data-lucide="refresh-cw"></i>同步画像</button></div></div>
+      <div class="dimension-group-grid">${groupCards || '<div class="empty-action">暂无画像维度分组，请检查用户画像接口。</div>'}</div>
+      <div class="catalog-section-head"><div><b>画像字段明细</b><span>画像字段是客群包的底层条件，不直接作为活动客群使用</span></div><span class="catalog-count">${dimensions.length} 个</span></div>
+      <div class="audience-dimension-table-wrap"><table class="table compact-table audience-dimension-table"><tr><th>画像字段</th><th>维度分类</th><th>取值 / 口径</th><th>采集来源</th><th>更新频率</th><th>操作</th></tr>${dimensionRows || '<tr><td colspan="6" class="muted">暂无画像字段</td></tr>'}</table></div>
+    </div>
+    <div data-audience-pane="packages" data-subview-panel="packages">
+      <div class="catalog-summary"><div><b>可执行客群包</b><span>由多个画像字段、画像标签或 AI 圈选条件组合形成，可被营销活动直接引用。</span></div><div class="catalog-summary-stats"><strong>${packages.length + segments.length}</strong><small>个客群包</small><button class="btn primary" data-action="newAudience"><i data-lucide="plus"></i>新建客群包</button></div></div>
+      <div class="catalog-section-head"><div><b>客群包清单</b><span>自定义客群包与系统预置组合统一管理</span></div><span class="catalog-count">${packages.length + segments.length} 个</span></div>
+      <table class="table compact-table audience-package-table"><tr><th>客群包</th><th>规模</th><th>来源</th><th>组合内容</th><th>状态</th><th>操作</th></tr>${packageRows}${presetRows || '<tr><td colspan="6" class="muted">暂无客群包，请先组合画像字段</td></tr>'}</table>
+      <details class="audience-tag-details"><summary>画像标签维护 · ${tags.length} 个</summary><div class="audience-tag-list">${tagsHtml || '<div class="empty-action">暂无画像标签；客群包可直接使用底层画像字段。</div>'}</div></details>
+      <div class="catalog-foot"><span>${dimensions.length} 个画像字段 · ${segments.length} 个预置客群包 · ${snapshots.length} 个已冻结快照</span><span>冻结快照后才能进入活动执行</span></div>
+    </div>`;
+    const detailHeading = q('.panel-head h2', detailPanel);
+    const detailSubheading = q('.panel-head span', detailPanel);
+    if (detailHeading) detailHeading.textContent = '选中对象详情';
+    if (detailSubheading) detailSubheading.textContent = '查看字段定义、组合条件与营销使用方式';
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function showAudienceSelectionModal() {
+    const snapshots = tenantData.audienceSnapshots || [];
+    const rows = snapshots.map(item => `<tr><td><strong>${escapeHtml(displayText(item.external_id, `快照 #${item.id}`))}</strong><small>${escapeHtml(displayText(item.selection_logic, '已保存的客群圈选条件'))}</small></td><td>${Number(item.estimated_size || item.population || 0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(displayText(item.status, '已冻结'))}</td><td>${escapeHtml(item.frozen_at ? new Date(item.frozen_at).toLocaleString('zh-CN') : '暂无时间')}</td><td>${escapeHtml(displayText(item.created_by, '系统'))}</td></tr>`).join('');
+    const layer = document.createElement('div');
+    layer.className = 'production-modal';
+    layer.innerHTML = `<div class="production-modal-card audience-selection-modal"><div class="production-modal-head"><div><b>圈选记录</b><small>查看已保存的圈选条件与冻结快照</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="query-builder"><span class="query-label">当前圈选示例</span><span class="query-chip">目的地意向 = 三亚</span><span class="query-chip">近14天搜索 ≥ 2次</span><span class="query-chip">出票状态 = 未出票</span><span class="query-chip">排除营销疲劳</span><button class="btn ai" data-action="calculateAudience">计算人数</button></div><div class="catalog-section-head"><div><b>已保存圈选快照</b><span>快照是活动执行时使用的客群版本</span></div><span class="catalog-count">${snapshots.length} 条</span></div>${rows ? `<table class="table compact-table"><tr><th>快照</th><th>人数</th><th>状态</th><th>冻结时间</th><th>创建人</th></tr>${rows}</table>` : '<div class="empty-action">暂无圈选快照，完成 AI 圈选并冻结客群包后会出现在这里。</div>'}</div></div>`;
+    document.body.appendChild(layer);
+    bindProductionModal(layer);
+    if (window.lucide) lucide.createIcons();
+  }
+
   function showAgentTrace(run){
     const events=run?.events||[]; const html='<div class="agent-trace"><div class="agent-trace-head"><i data-lucide="bot"></i><b>Agent\u6267\u884c\u8fc7\u7a0b</b><span>'+escapeHtml(cleanText(run?.status,'\u5df2\u5b8c\u6210'))+'</span></div><div class="agent-trace-list">'+(events.length?events.map((e,i)=>'<div class="agent-trace-item"><i>'+(i+1)+'</i><div><b>'+escapeHtml(cleanText(e.event_type,'\u5904\u7406\u6b65\u9aa4'))+'</b><small>'+new Date(e.timestamp).toLocaleString('zh-CN')+'</small><p>'+escapeHtml(JSON.stringify(e.payload||{}))+'</p></div></div>').join(''):'<div class="empty-action">\u672a\u8fd4\u56de\u6b65\u9aa4\u4e8b\u4ef6</div>')+'</div><div class="drawer-ai">'+escapeHtml(cleanText(run?.summary,'Agent\u5df2\u5b8c\u6210\u5904\u7406'))+'</div></div>';
     const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>\u667a\u80fd\u57df\u8fc7\u7a0b\u8ffd\u8e2a</b><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body">'+html+'</div></div>';document.body.appendChild(layer);layer.addEventListener('click',e=>{if(e.target===layer||e.target.closest('[data-close]'))layer.remove();});if(window.lucide)lucide.createIcons();
@@ -1171,7 +1280,7 @@
     }
   }
 
-  function renderApprovals(){
+  function renderApprovalsLegacy(){
     const list=q('#approvals .approval-list'); if(!list)return;
     const approvals=tenantData.approvals||[];
     const reviewedCount=approvals.filter(item=>!approvalIsPending(item)).length;
@@ -1198,6 +1307,47 @@
     if(window.lucide)lucide.createIcons();
     const selected=approvals.find(approvalIsPending)||approvals[0];
     if(selected) showProductionApprovalDetail(selected.id);
+  }
+
+  function renderApprovals(){
+    const list = q('#approvals .approval-list');
+    if (!list) return;
+    const approvals = tenantData.approvals || [];
+    const pending = approvals.filter(approvalIsPending);
+    const reviewed = approvals.filter(item => !approvalIsPending(item));
+    const pendingProductCount = pending.filter(item => displayText(item.approver_role, '').includes('产品')).length;
+    const pendingContentCount = pending.filter(item => displayText(item.approver_role, '').includes('内容')).length;
+    const approvalNotes = qa('#approvals .kpi em');
+    const noteValues = [
+      pending.length ? '存在待处理任务' : '当前无待审批',
+      pendingProductCount ? '库存与权益校验' : '当前无产品确认',
+      pendingContentCount ? '敏感词与事实校验' : '当前无内容合规任务',
+      reviewed.length ? `已处理 ${reviewed.length} 条` : '暂无已处理任务',
+      approvals.length ? '按当前审批记录计算' : '暂无统计数据'
+    ];
+    approvalNotes.forEach((node, index) => { node.textContent = noteValues[index] || ''; });
+    const approvalKpiValues = qa('#approvals .kpi b');
+    if (approvalKpiValues[0]) approvalKpiValues[0].textContent = pending.length;
+    if (approvalKpiValues[1]) approvalKpiValues[1].textContent = pendingProductCount;
+    if (approvalKpiValues[2]) approvalKpiValues[2].textContent = pendingContentCount;
+    if (approvalKpiValues[3]) approvalKpiValues[3].textContent = reviewed.length;
+    if (approvalKpiValues[4]) approvalKpiValues[4].textContent = approvals.length ? `${(reviewed.length / approvals.length * 100).toFixed(1)}%` : '暂无数据';
+    if (!approvals.length) {
+      list.innerHTML = '<div class="empty-action">暂无待处理审批。活动版本提交审批后会出现在这里。</div>';
+      const detail = q('#approvalDetail');
+      if (detail) detail.innerHTML = '<div class="empty-action">暂无审批详情，提交活动版本后可查看完整的客群、产品、内容、预算与合规信息。</div>';
+      const no = q('#approvalNo');
+      if (no) no.textContent = '暂无审批';
+      return;
+    }
+    list.innerHTML = approvals.map(item => {
+      const campaign = approvalCampaign(item);
+      const status = displayText(item.status, approvalIsPending(item) ? '待审批' : '已处理');
+      return `<button class="approval-item ${approvalIsPending(item) ? 'active' : ''}" data-approval="${item.id}"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><span><b>${escapeHtml(displayText(campaign?.name, item.campaign_id))}</b><small>${escapeHtml(displayText(item.approver_role, '审批节点'))} · ${escapeHtml(displayText(item.external_id, `审批 #${item.id}`))}</small></span><em class="pill ${approvalIsPending(item) ? 'red' : 'blue'}">${escapeHtml(status)}</em></button>`;
+    }).join('');
+    if (window.lucide) lucide.createIcons();
+    const selected = approvals.find(approvalIsPending) || approvals[0];
+    if (selected) showProductionApprovalDetail(selected.id);
   }
 
   function renderContentChannelPreview(item){
@@ -1542,7 +1692,7 @@
   function bindProductionActions() {
     document.addEventListener('click', async event => {
       const subviewButton=event.target.closest?.('[data-business-subview]');
-      if(subviewButton){const view=subviewButton.closest('.view');if(view)activateBusinessSubview(view.id,subviewButton.dataset.businessSubview);return;}
+      if(subviewButton){const view=subviewButton.closest('.view');if(view?.id==='audiences'&&subviewButton.dataset.businessSubview==='selection'){showAudienceSelectionModal();return;}if(view)activateBusinessSubview(view.id,subviewButton.dataset.businessSubview);return;}
       const openCampaign=event.target.closest?.('[data-open-campaign]');
       if(openCampaign){const item=(tenantData.campaigns||[]).find(value=>value.name===openCampaign.dataset.openCampaign);if(item){showCampaignDetail(item);toast('已打开活动详情：'+item.name);}return;}
       const button=event.target.closest('button'); if(!button) return;
