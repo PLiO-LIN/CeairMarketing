@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
@@ -169,6 +170,10 @@ class ContentAssetRecord(Base):
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
     external_id: Mapped[str] = mapped_column(String(64), index=True)
     campaign_id: Mapped[str | None] = mapped_column(String(32), nullable=True, index=True)
+    audience_package_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    product_package_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    generation_objective: Mapped[str] = mapped_column(String(160), default="提升转化")
+    generation_context_json: Mapped[str] = mapped_column(Text, default="{}")
     name: Mapped[str] = mapped_column(String(160))
     channel: Mapped[str] = mapped_column(String(40), default="App")
     version: Mapped[str] = mapped_column(String(16), default="V1")
@@ -179,6 +184,14 @@ class ContentAssetRecord(Base):
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
+
+    @property
+    def generation_context(self) -> dict:
+        try:
+            value = json.loads(self.generation_context_json or "{}")
+            return value if isinstance(value, dict) else {}
+        except (TypeError, json.JSONDecodeError):
+            return {}
 
 
 class OpportunityRecord(Base):

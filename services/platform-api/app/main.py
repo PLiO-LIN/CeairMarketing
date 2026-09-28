@@ -833,11 +833,17 @@ def list_content_assets(context: TenantContext = Depends(get_tenant_context), se
 def create_content_asset(payload: ContentAssetBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     if payload.campaign_id and session.scalar(select(CampaignRecord).where(CampaignRecord.id == payload.campaign_id, CampaignRecord.tenant_id == context.tenant_id)) is None:
         raise HTTPException(status_code=404, detail="关联活动不存在")
+    if payload.audience_package_id and session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == payload.audience_package_id, AudiencePackageRecord.tenant_id == context.tenant_id)) is None:
+        raise HTTPException(status_code=404, detail="关联客群包不存在")
+    if payload.product_package_id and session.scalar(select(ProductPackageRecord).where(ProductPackageRecord.id == payload.product_package_id, ProductPackageRecord.tenant_id == context.tenant_id)) is None:
+        raise HTTPException(status_code=404, detail="关联产品包不存在")
+    values = payload.model_dump(exclude={"generation_context"})
+    values["generation_context_json"] = json.dumps(payload.generation_context, ensure_ascii=False)
     record = ContentAssetRecord(
         tenant_id=context.tenant_id,
         external_id=f"CNT-{datetime.now(timezone.utc):%Y%m%d}-{uuid4().hex[:6].upper()}",
         created_by=context.user_id,
-        **payload.model_dump(),
+        **values,
     )
     session.add(record)
     session.commit()
@@ -852,6 +858,10 @@ def update_content_asset(asset_id: int, payload: ContentAssetBase, context: Tena
         raise HTTPException(status_code=404, detail="内容资产不存在")
     if payload.campaign_id and session.scalar(select(CampaignRecord).where(CampaignRecord.id == payload.campaign_id, CampaignRecord.tenant_id == context.tenant_id)) is None:
         raise HTTPException(status_code=404, detail="关联活动不存在")
+    if payload.audience_package_id and session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.id == payload.audience_package_id, AudiencePackageRecord.tenant_id == context.tenant_id)) is None:
+        raise HTTPException(status_code=404, detail="关联客群包不存在")
+    if payload.product_package_id and session.scalar(select(ProductPackageRecord).where(ProductPackageRecord.id == payload.product_package_id, ProductPackageRecord.tenant_id == context.tenant_id)) is None:
+        raise HTTPException(status_code=404, detail="关联产品包不存在")
     versions = session.scalars(select(CampaignVersionRecord).where(
         CampaignVersionRecord.tenant_id == context.tenant_id,
         CampaignVersionRecord.status.notin_({"草稿", "已退回"}),
@@ -860,8 +870,9 @@ def update_content_asset(asset_id: int, payload: ContentAssetBase, context: Tena
         raise HTTPException(status_code=409, detail="内容已被审批或执行中的活动版本引用，请新建内容版本后使用")
     if payload.status not in {"草稿", "待审核", "停用", record.status}:
         raise HTTPException(status_code=422, detail="内容审核及发布状态不能通过编辑直接设置")
-    values = payload.model_dump(exclude={"generated_by"})
-    material_change = any(values[key] != getattr(record, key) for key in ("campaign_id", "channel", "title", "body"))
+    values = payload.model_dump(exclude={"generated_by", "generation_context"})
+    values["generation_context_json"] = json.dumps(payload.generation_context, ensure_ascii=False)
+    material_change = any(values[key] != getattr(record, key) for key in ("campaign_id", "audience_package_id", "product_package_id", "channel", "title", "body"))
     if material_change and values["status"] not in {"草稿", "待审核", "停用"}:
         values["status"] = "草稿"
     for key, value in values.items():

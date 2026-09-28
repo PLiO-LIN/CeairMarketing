@@ -1,7 +1,7 @@
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
-CURRENT_SCHEMA_VERSION = "20260831.1"
+CURRENT_SCHEMA_VERSION = "20260927.2"
 
 
 def record_schema_version(engine: Engine) -> None:
@@ -25,6 +25,17 @@ def migrate_legacy_schema(engine: Engine) -> None:
             user_columns = {column["name"] for column in inspector.get_columns("users")}
             if "is_platform_admin" not in user_columns:
                 connection.execute(text("ALTER TABLE users ADD COLUMN is_platform_admin BOOLEAN DEFAULT FALSE"))
+        if "content_assets" in existing:
+            content_columns = {column["name"] for column in inspector.get_columns("content_assets")}
+            additions = {
+                "audience_package_id": "ALTER TABLE content_assets ADD COLUMN audience_package_id INTEGER",
+                "product_package_id": "ALTER TABLE content_assets ADD COLUMN product_package_id INTEGER",
+                "generation_objective": "ALTER TABLE content_assets ADD COLUMN generation_objective VARCHAR(160) DEFAULT '提升转化'",
+                "generation_context_json": "ALTER TABLE content_assets ADD COLUMN generation_context_json TEXT DEFAULT '{}'",
+            }
+            for column, statement in additions.items():
+                if column not in content_columns:
+                    connection.execute(text(statement))
 
 
 def assign_legacy_records(engine: Engine, tenant_id: int) -> None:

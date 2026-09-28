@@ -195,6 +195,10 @@ class ProductPackage(ProductPackageBase):
 
 class ContentAssetBase(BaseModel):
     campaign_id: str | None = Field(default=None, max_length=32)
+    audience_package_id: int | None = Field(default=None, ge=1)
+    product_package_id: int | None = Field(default=None, ge=1)
+    generation_objective: str = Field(default="提升转化", max_length=160)
+    generation_context: dict[str, Any] = Field(default_factory=dict)
     name: str = Field(min_length=2, max_length=160)
     channel: str = Field(default="App", max_length=40)
     version: str = Field(default="V1", max_length=16)
