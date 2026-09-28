@@ -80,7 +80,7 @@
   const businessSubviewState = new Map();
   const businessSubviewDefinitions = {
     opportunities: [['domain','洞察智能域','多个智能体协同规划、取证与归并','sparkles'],['list','机会清单','评估、编辑并转化可运营机会','list-filter'],['signals','洞察信号','配置网站、接口和人工关注点','radio-tower'],['runs','运行记录','查看每次洞察的步骤与溯源','history']],
-    audiences: [['personas','画像','复用内部画像并查看航空业务特征','contact-round'],['packages','客群包','组合画像、标签与 AI 圈选条件','users-round'],['selection','圈选记录','保存圈选条件与冻结快照','scan-search']],
+    audiences: [['personas','画像字段','职业、年龄、地域、订单与航线等底层画像','contact-round'],['packages','客群包','组合画像字段后形成可执行客群','users-round'],['selection','圈选记录','保存圈选条件与冻结快照','scan-search']],
     products: [['catalog','基础产品','查看产品管理平台同步的可售对象','ticket'],['packages','活动产品包','组合机票、卡券、权益与辅营服务','package-open'],['services','服务与履约','校验资格并跟踪产品交付','badge-check']],
     contents: [['assets','内容资产','管理可审核、可追溯的内容版本','files'],['tasks','生成任务','查看内容生成智能域运行过程','wand-sparkles'],['preview','渠道预览','按 App、短信和微信样式预览','smartphone']],
     campaigns: [['list','活动清单','贯穿机会到复盘的营销主对象','list-checks'],['runs','编排运行','查看活动编排智能域执行记录','workflow']],
@@ -335,22 +335,52 @@
     });
   }
 
-  function showAudiencePackageEditor(item) {
+  function audienceDimensionOptions() {
+    return (tenantData.personaDimensions || []).map(item => ({ value: item.id, label: `${displayText(item.module_name, '画像维度')} · ${displayText(item.field_name, '未命名字段')}` }));
+  }
+
+  function expressionDimensionIds(item) {
+    const ids = item?.expression?.dimension_ids;
+    return Array.isArray(ids) ? ids.map(Number).filter(Number.isFinite) : [];
+  }
+
+  function audiencePackageFields(item) {
     const tagOptions = (tenantData.audienceTags || []).filter(tag => tag.enabled || (item.tag_ids || []).includes(tag.id)).map(tag => ({ value: tag.id, label: `${tag.name} · ${tag.enabled ? (tag.category || '画像标签') : '已停用'}` }));
+    return [
+      { name: 'name', label: '客群包名称', type: 'text', placeholder: '例如：暑期亲子出行转化包' },
+      { name: 'selection_mode', label: '组合方式', type: 'select', options: [{ value: 'tag-combination', label: '画像条件组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }] },
+      { name: 'estimated_size', label: '预计客群规模', type: 'number', min: 0 },
+      { name: 'status', label: '客群包状态', type: 'select', options: ['草稿', '可用', '停用'] },
+      { name: 'dimension_ids', label: '组合画像字段', type: 'multiselect', required: false, options: audienceDimensionOptions(), help: '从职业、性别、年龄、地域、订单、航线等底层画像字段中选择组合条件。' },
+      { name: 'tag_ids', label: '关联画像标签', type: 'multiselect', required: false, options: tagOptions, help: '可选。画像标签是对底层字段的业务化封装，历史快照不会被修改。' },
+      { name: 'expression', label: 'AI 圈选条件（JSON）', type: 'textarea', rows: 5, required: false, parseJson: true, placeholder: '{"route":"SHA-SYX","age":{"gte":25,"lte":40}}', help: '用于保存自然语言圈选后的结构化条件；画像字段选择会同步写入组合关系。' },
+    ];
+  }
+
+  function audiencePackagePayload(values) {
+    const dimensionIds = (values.dimension_ids || []).map(value => Number(value)).filter(Number.isFinite);
+    const expression = { ...(values.expression || {}), dimension_ids: dimensionIds, dimension_logic: values.expression?.dimension_logic || 'AND' };
+    const next = { ...values, tag_ids: values.tag_ids || [], expression };
+    delete next.dimension_ids;
+    return next;
+  }
+
+  function showAudiencePackageEditor(item) {
     openBusinessEditor({
-      title: '编辑客群包', subtitle: `${item.external_id || '客群包'} · 画像组合与圈选条件`, item,
-      fields: [
-        { name: 'name', label: '客群包名称', type: 'text' },
-        { name: 'selection_mode', label: '圈选方式', type: 'select', options: [{ value: 'tag-combination', label: '画像标签组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }] },
-        { name: 'estimated_size', label: '预计客群规模', type: 'number', min: 0 },
-        { name: 'status', label: '客群包状态', type: 'select', options: ['草稿', '可用', '停用'] },
-        { name: 'tag_ids', label: '关联画像标签', type: 'multiselect', required: false, options: tagOptions, help: '可多选底层画像标签；历史快照不会被修改。' },
-        { name: 'expression', label: 'AI 圈选条件（JSON）', type: 'textarea', rows: 6, required: false, parseJson: true, placeholder: '{"route":"SHA-SYX","travel_intent":"high"}', help: '用于保存自然语言圈选后的结构化条件。' },
-      ],
-      save: async values => { await request(`/api/audience-packages/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast(`客群包“${values.name}”已更新`); await refreshAfterBusinessSave(); }
+      title: '编辑客群包', subtitle: `${item.external_id || '客群包'} · 由画像字段组合形成`, item: { ...item, dimension_ids: expressionDimensionIds(item) },
+      fields: audiencePackageFields(item),
+      save: async values => { const payload = audiencePackagePayload(values); await request(`/api/audience-packages/${item.id}`, { method: 'PUT', body: JSON.stringify(payload) }); toast(`客群包“${values.name}”已更新`); await refreshAfterBusinessSave(); }
     });
   }
 
+  function showAudiencePackageCreator() {
+    const item = { name: '', selection_mode: 'tag-combination', estimated_size: 0, status: '草稿', dimension_ids: [], tag_ids: [], expression: {} };
+    openBusinessEditor({
+      title: '新建客群包', subtitle: '先组合底层画像，再生成可供活动引用的客群对象', item,
+      fields: audiencePackageFields(item),
+      save: async values => { const payload = audiencePackagePayload(values); const result = await request('/api/audience-packages', { method: 'POST', body: JSON.stringify(payload) }); toast(`客群包“${result.name || values.name}”已创建`); await refreshAfterBusinessSave(); }
+    });
+  }
   function showAudienceTagEditor(item) {
     openBusinessEditor({
       title: '编辑画像标签', subtitle: `${item.code || '画像标签'} · 客群包可复用的底层条件`, item,
@@ -393,6 +423,49 @@
         { name: 'is_default', label: '设为默认模型', type: 'checkbox' },
       ],
       save: async values => { if (!values.api_key) delete values.api_key; await request(`/api/model-providers/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast('模型服务配置已更新'); await refreshAfterBusinessSave(); renderModels(); }
+    });
+  }
+
+  function showProviderCreateEditor() {
+    openBusinessEditor({
+      title: '新增模型服务', subtitle: 'OpenAI 兼容接口 · 保存后供当前租户智能域使用', item: { display_name: '', provider_type: 'openai-compatible', base_url: '', model_name: '', api_key: '', timeout_seconds: 60, temperature: 0.3, max_tokens: 2048, enabled: true, is_default: false },
+      fields: [
+        { name: 'display_name', label: '配置名称', type: 'text', placeholder: '例如：营销主模型' },
+        { name: 'provider_type', label: '服务类型', type: 'select', options: [{ value: 'openai-compatible', label: 'OpenAI Compatible' }, { value: 'mock', label: '内置受控' }] },
+        { name: 'base_url', label: '服务地址', type: 'url', required: false, placeholder: 'https://.../v1' },
+        { name: 'model_name', label: '默认模型名称', type: 'text', placeholder: '输入模型标识' },
+        { name: 'api_key', label: 'API Key', type: 'password', required: false, placeholder: '可留空，使用服务端预置密钥' },
+        { name: 'timeout_seconds', label: '超时（秒）', type: 'number', min: 5, max: 300 },
+        { name: 'temperature', label: 'Temperature', type: 'number', min: 0, max: 2, step: 0.1 },
+        { name: 'max_tokens', label: '最大输出 Token', type: 'number', min: 128, max: 32768 },
+        { name: 'enabled', label: '启用模型服务', type: 'checkbox' },
+        { name: 'is_default', label: '设为默认模型', type: 'checkbox' },
+      ],
+      save: async values => { await request('/api/model-providers', { method: 'POST', body: JSON.stringify(values) }); toast('模型服务已新增'); await refreshAfterBusinessSave(); renderModels(); }
+    });
+  }
+
+  function showMineruEditor() {
+    const item = tenantData.mineru || { base_url: 'https://mineru.net', api_key: '', enabled: false };
+    openBusinessEditor({
+      title: '配置 MinerU 文档解析', subtitle: '文档进入数据处理智能体前的解析服务', item,
+      fields: [
+        { name: 'base_url', label: '服务地址', type: 'url', placeholder: 'https://mineru.net' },
+        { name: 'api_key', label: 'API Key', type: 'password', required: false, placeholder: item.api_key_configured ? '留空表示保持当前 Key' : '请输入 MinerU API Key' },
+        { name: 'enabled', label: '启用文档解析', type: 'checkbox' },
+      ],
+      save: async values => { const payload = { display_name: 'MinerU 文档解析', base_url: values.base_url || 'https://mineru.net', enabled: !!values.enabled, config: { model_version: 'vlm', enable_table: true, is_ocr: false } }; if (values.api_key) payload.api_key = values.api_key; await request('/api/integrations/mineru', { method: 'PUT', body: JSON.stringify(payload) }); toast('MinerU 配置已保存'); await refreshAfterBusinessSave(); }
+    });
+  }
+
+  function showTenantCreateEditor() {
+    openBusinessEditor({
+      title: '新建运营租户', subtitle: '平台管理员 · 创建后可继续配置成员和数据权限', item: { code: '', name: '' },
+      fields: [
+        { name: 'code', label: '租户编码', type: 'text', placeholder: '例如：CEA-NORTH' },
+        { name: 'name', label: '租户名称', type: 'text', placeholder: '例如：华北营销中心' },
+      ],
+      save: async values => { values.code = String(values.code || '').toUpperCase(); await request('/api/platform/tenants', { method: 'POST', body: JSON.stringify(values) }); toast('租户已创建'); await loadPlatform(); }
     });
   }
 
@@ -556,7 +629,69 @@
 </div>
 </div>
 </section>`);
+    normalizeConfigurationEntries();
     qa('[data-view]').forEach(button => { if (button.dataset.productionBound) return; button.dataset.productionBound='1'; button.addEventListener('click', () => { if (typeof window.activate === 'function') window.activate(button.dataset.view); if (button.dataset.view === 'imports') renderImports(); if (button.dataset.view === 'models') renderModels(); if (button.dataset.view === 'tenants') loadPlatform(); }); });
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function normalizeConfigurationEntries() {
+    const modelForm = q('#modelForm');
+    if (modelForm && !modelForm.dataset.normalized) {
+      modelForm.dataset.normalized = 'true';
+      const panel = modelForm.closest('.panel');
+      if (panel) {
+        panel.classList.add('model-create-panel');
+        modelForm.hidden = true;
+        const head = q('.panel-head', panel);
+        if (head) { q('h2', head).textContent = '新增模型服务'; q('span', head).textContent = '按需配置'; }
+        const body = document.createElement('div');
+        body.className = 'config-entry-body';
+        const card = document.createElement('div');
+        card.className = 'config-entry-card';
+        card.innerHTML = '<div class=config-entry-icon><i data-lucide=plug-zap></i></div><div><b>接入 OpenAI 兼容模型</b><p>配置服务地址、模型标识和密钥后，即可供智能域和营销助手调用。</p><small>支持租户级默认模型、模型发现和调用用量统计</small></div>';
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'btn primary config-entry-button'; button.dataset.action = 'newProvider';
+        button.innerHTML = '<i data-lucide=plus></i>新增模型服务';
+        body.append(card, button);
+        panel.append(body);
+      }
+    }
+    const mineruForm = q('#mineruForm');
+    if (mineruForm && !mineruForm.dataset.normalized) {
+      mineruForm.dataset.normalized = 'true';
+      const mineruPanel = mineruForm.closest('.mineru-panel');
+      if (mineruPanel) {
+        mineruForm.hidden = true;
+        const mineruBody = document.createElement('div');
+        mineruBody.className = 'config-entry-body';
+        const mineruCard = document.createElement('div');
+        mineruCard.className = 'config-entry-card';
+        mineruCard.innerHTML = '<div class=config-entry-icon><i data-lucide=file-scan></i></div><div><b>文档解析服务</b><p id=mineruSummary>用于 PDF、Word、PPT 和扫描件的结构化解析。</p><small>解析结果进入数据处理智能体，再由人工确认是否更新本体</small></div>';
+        const mineruButton = document.createElement('button');
+        mineruButton.type = 'button'; mineruButton.className = 'btn config-entry-button'; mineruButton.dataset.action = 'editMineru';
+        mineruButton.innerHTML = '<i data-lucide=settings-2></i>配置 MinerU';
+        mineruBody.append(mineruCard, mineruButton);
+        mineruPanel.append(mineruBody);
+      }
+    }
+    const tenantForm = q('#tenantForm');
+    if (tenantForm && !tenantForm.dataset.normalized) {
+      tenantForm.dataset.normalized = 'true';
+      const tenantPanel = tenantForm.closest('.panel');
+      if (tenantPanel) {
+        tenantForm.hidden = true;
+        const tenantBody = document.createElement('div');
+        tenantBody.className = 'config-entry-body';
+        const tenantCard = document.createElement('div');
+        tenantCard.className = 'config-entry-card';
+        tenantCard.innerHTML = '<div class=config-entry-icon><i data-lucide=building-2></i></div><div><b>创建新的营销运营组织</b><p>租户创建后，再从用户与租户授权中配置成员、角色和数据范围。</p><small>租户之间的数据、模型和智能域运行记录相互隔离</small></div>';
+        const tenantButton = document.createElement('button');
+        tenantButton.type = 'button'; tenantButton.className = 'btn primary config-entry-button'; tenantButton.dataset.action = 'newTenant';
+        tenantButton.innerHTML = '<i data-lucide=plus></i>新建运营租户';
+        tenantBody.append(tenantCard, tenantButton);
+        tenantPanel.append(tenantBody);
+      }
+    }
     if (window.lucide) lucide.createIcons();
   }
 
@@ -602,36 +737,39 @@
     panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2><span>按业务人员配置的网站与关注点，采用 wigolo 风格的规划、取证、并行洞察和商机合并流程</span></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">01 · 洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">02 · 业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕东航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button><span>选择来源后启动，任务会持续记录每一步进度</span></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">03 · 洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
     if(window.lucide)lucide.createIcons();
   }
-  function renderAudienceStructure(){
-    const panel=q('#audiences .grid2 .panel:first-child .panel-body'); if(!panel)return;
-    const packages=tenantData.audiencePackages||[], tags=tenantData.audienceTags||[], snapshots=tenantData.audienceSnapshots||[];
-    const segments=tenantData.personaSegments||[], dimensions=tenantData.personaDimensions||[];
-    const moduleGroups=dimensions.reduce((groups,item)=>{const key=displayText(item.module_key,'other');(groups[key] ||= {name:displayText(item.module_name,'画像维度'),items:[]}).items.push(item);return groups;},{});
-    const personaCards=segments.map(item=>`<div class="catalog-card persona-card">
-      <div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="user-round"></i></span><span class="status good">可用于圈选</span></div>
-      <strong title="${escapeHtml(displayText(item.segment_name,'未命名画像'))}">${escapeHtml(displayText(item.segment_name,'未命名画像'))}</strong>
-      <small>${escapeHtml(displayText(item.primary_persona_name,'客户画像'))} · ${escapeHtml(displayText(item.segment_code,'画像编码'))} · ${escapeHtml(displayText(item.belongs_to,'ToC'))}</small>
-      <p class="persona-card-rule">${escapeHtml(displayText((item.recommended_products||[])[0],'可与产品包组合'))}</p>
-      <div class="catalog-card-meta"><span>${item.rules?.length||0} 条画像条件</span><button class="btn" data-audience-persona="${escapeHtml(item.id)}">查看画像</button></div>
-    </div>`).join('');
-    const fallbackCards=Object.values(moduleGroups).slice(0,8).map(group=>`<div class="catalog-card persona-card persona-dimension-card">
-      <div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="layers-3"></i></span><span class="status good">已同步</span></div>
-      <strong>${escapeHtml(group.name)}</strong><small>画像维度目录 · ${group.items.length} 个字段</small>
-      <p class="persona-card-rule">${escapeHtml(group.items.slice(0,3).map(item=>displayText(item.field_name,item.field_code)).join('、'))}</p>
-      <div class="catalog-card-meta"><span>可作为组合条件</span><button class="btn" data-audience-dimension="${escapeHtml(group.items[0]?.module_key||'')}">查看维度</button></div>
-    </div>`).join('');
-    const personaCardsHtml=personaCards||fallbackCards;
-    const packageRows=packages.map(item=>{const protectedPackage=['已冻结','已使用','执行中','已归档'].includes(item.status);return `<tr><td><strong>${escapeHtml(displayText(item.name,'未命名客群包'))}</strong><small>${escapeHtml(item.external_id||'')}</small></td><td>${Number(item.estimated_size||0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(item.selection_mode==='ai-selection'?'AI圈选':'画像组合')}</td><td>${escapeHtml(item.version||'V1')}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status||'可用')}</span></td><td class="production-actions"><button class="btn" data-audience-edit="${item.id}"${protectedPackage?' disabled title="已冻结或已投入执行的客群包不可直接编辑"':''}>编辑</button><button class="btn" data-audience-snapshot="${item.id}"${protectedPackage?' disabled':''}>冻结快照</button></td></tr>`;}).join('');
-    panel.innerHTML=`<div class="catalog-summary"><div><b>客户画像</b><span>底层画像目录来自用户画像平台，画像可被组合为客群包；没有客群包时也可以先查看和复用画像。</span></div><div class="catalog-summary-stats"><strong>${segments.length||Object.keys(moduleGroups).length}</strong><small>${segments.length?'个可复用画像':'个画像维度组'}</small><button class="btn" data-action="refreshAudienceCatalog"><i data-lucide="refresh-cw"></i>同步画像</button></div></div>
-      <div class="catalog-grid">${personaCardsHtml||'<div class="empty-action">暂无客户画像目录，请检查用户画像接口或上传画像目录。</div>'}</div>
-      <div class="catalog-section-head"><div><b>客群包</b><span>由多个画像、标签或 AI 圈选条件组合形成，可被营销活动直接引用</span></div><span class="catalog-count">${packages.length} 个</span></div>
-      <table class="table compact-table"><tr><th>客群包</th><th>规模</th><th>组合方式</th><th>版本</th><th>状态</th><th>操作</th></tr>${packageRows||'<tr><td colspan="6" class="muted">暂无客群包，请通过新建客群完成画像组合</td></tr>'}</table>
-      <details class="audience-tag-details"><summary>画像标签维护 · ${tags.length} 个</summary>
-      <div class="audience-tag-list">${tags.map(tag => `<div class="audience-tag-item"><div><strong>${escapeHtml(displayText(tag.name, '未命名标签'))}</strong><small>${escapeHtml(displayText(tag.code, 'TAG'))} · ${escapeHtml(displayText(tag.category, '基础属性'))} · ${escapeHtml(displayText(tag.source, '画像平台'))}</small></div><span class="status ${tag.enabled === false ? 'warn' : 'good'}">${tag.enabled === false ? '停用' : '启用'}</span><button class="btn" data-audience-tag-edit="${tag.id}">编辑</button></div>`).join('') || '<div class="empty-action">暂无画像标签，请先同步用户画像平台</div>'}</div>
-      </details><div class="catalog-foot"><span>可复用标签 ${tags.length} 个 · 已冻结快照 ${snapshots.length} 个 · 画像维度 ${dimensions.length} 个</span><span>客群包是活动执行时的正式客群对象</span></div>`;
-    if(window.lucide)lucide.createIcons();
-  }
-  function renderKnowledgeDocuments(){
+  function renderAudienceStructure() {
+    const panel = q('#audiences .grid2 .panel:first-child .panel-body'); if (!panel) return;
+    const packages = tenantData.audiencePackages || [];
+    const tags = tenantData.audienceTags || [];
+    const snapshots = tenantData.audienceSnapshots || [];
+    const dimensions = tenantData.personaDimensions || [];
+    const segments = tenantData.personaSegments || [];
+    const moduleGroups = dimensions.reduce((groups, item) => {
+      const key = displayText(item.module_key, 'other');
+      (groups[key] ||= { key, name: displayText(item.module_name, '画像维度'), items: [] }).items.push(item);
+      return groups;
+    }, {});
+    const groupCards = Object.values(moduleGroups).map(group => `<article class="dimension-group-card"><div class="dimension-group-head"><span class="catalog-icon"><i data-lucide="layers-3"></i></span><span class="status good">可组合</span></div><strong>${escapeHtml(group.name)}</strong><small>${group.items.length} 个底层画像字段</small><p>${escapeHtml(group.items.slice(0, 3).map(item => displayText(item.field_name, item.field_code)).join(' · '))}</p><button class="btn" data-audience-dimension-group="${escapeHtml(group.key)}">查看字段</button></article>`).join('');
+    const dimensionRows = dimensions.map(item => `<tr><td><strong>${escapeHtml(displayText(item.field_name, '未命名画像字段'))}</strong><small>${escapeHtml(displayText(item.field_code, 'FIELD'))}</small></td><td>${escapeHtml(displayText(item.module_name, '画像维度'))}</td><td>${escapeHtml(displayText(item.allowed_values, displayText(item.data_type, '按规则计算')))}</td><td>${escapeHtml(displayText(item.collection_method, '系统分析'))}</td><td>${escapeHtml(displayText(item.update_frequency, '按日更新'))}</td><td><button class="btn compact" data-audience-dimension="${escapeHtml(item.id)}">查看定义</button></td></tr>`).join('');
+    const packageRows = packages.map(item => {
+      const protectedPackage = ['已冻结', '已使用', '执行中', '已归档'].includes(item.status);
+      const dimensionCount = expressionDimensionIds(item).length;
+      const composition = [dimensionCount ? `${dimensionCount} 项画像` : '', (item.tag_ids || []).length ? `${item.tag_ids.length} 个标签` : '', item.selection_mode === 'ai-selection' ? 'AI 条件' : '规则组合'].filter(Boolean).join(' + ');
+      return `<tr><td><strong>${escapeHtml(displayText(item.name, '未命名客群包'))}</strong><small>${escapeHtml(item.external_id || '')}</small></td><td>${Number(item.estimated_size || 0).toLocaleString('zh-CN')} 人</td><td><span class="package-source-tag created">已创建</span></td><td>${escapeHtml(composition || '待配置画像')}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status || '草稿')}</span></td><td class="production-actions"><button class="btn" data-audience-edit="${item.id}"${protectedPackage ? ' disabled title="已冻结或已投入执行的客群包不可直接编辑"' : ''}>编辑</button><button class="btn" data-audience-snapshot="${item.id}"${protectedPackage ? ' disabled' : ''}>冻结快照</button></td></tr>`;
+    }).join('');
+    const presetRows = segments.map(item => `<tr><td><strong>${escapeHtml(displayText(item.segment_name, '预置客群包'))}</strong><small>${escapeHtml(displayText(item.segment_code, 'PRESET'))} · ${escapeHtml(displayText(item.primary_persona_name, '客户类型'))}</small></td><td>按规则计算</td><td><span class="package-source-tag preset">预置组合</span></td><td>${item.rules?.length || 0} 项画像条件 · ${escapeHtml(displayText((item.recommended_products || [])[0], '待匹配产品包'))}</td><td><span class="status good">可复用</span></td><td class="production-actions"><button class="btn" data-audience-persona="${escapeHtml(item.id)}">查看组合</button></td></tr>`).join('');
+    const detailPanel = q('#audiences .grid2 .panel:nth-child(2)');
+    if (detailPanel) { const heading = q('.panel-head h2', detailPanel); const subheading = q('.panel-head span', detailPanel); if (heading) heading.textContent = '画像 / 客群包详情'; if (subheading) subheading.textContent = '选择字段或组合查看定义'; }
+    const listHead = q('#audiences .grid2 .panel:first-child .panel-head h2'); if (listHead) listHead.textContent = '画像字段与客群包';
+    panel.innerHTML = `<div class="catalog-summary"><div><b>底层画像字段</b><span>将职业、性别、年龄、地域、订单特征、航线偏好等字段作为可组合条件；画像字段本身不是客群包。</span></div><div class="catalog-summary-stats"><strong>${dimensions.length}</strong><small>个画像字段</small><button class="btn" data-action="refreshAudienceCatalog"><i data-lucide="refresh-cw"></i>同步画像</button></div></div>
+      <div class="dimension-group-grid">${groupCards || '<div class="empty-action">暂无画像维度分组，请检查用户画像接口。</div>'}</div>
+      <div class="catalog-section-head"><div><b>画像字段明细</b><span>每个字段可作为客群包的组合条件，查看后可用于画像圈选</span></div><span class="catalog-count">${dimensions.length} 个</span></div>
+      <div class="audience-dimension-table-wrap"><table class="table compact-table audience-dimension-table"><tr><th>画像字段</th><th>维度分类</th><th>取值 / 口径</th><th>采集来源</th><th>更新频率</th><th>操作</th></tr>${dimensionRows || '<tr><td colspan="6" class="muted">暂无画像字段</td></tr>'}</table></div>
+      <div class="catalog-section-head"><div><b>客群包</b><span>由多个画像字段、画像标签或 AI 圈选条件组合形成，可被营销活动直接引用</span></div><span class="catalog-count">${packages.length + segments.length} 个</span></div>
+      <table class="table compact-table audience-package-table"><tr><th>客群包</th><th>规模</th><th>来源</th><th>组合内容</th><th>状态</th><th>操作</th></tr>${packageRows}${presetRows || '<tr><td colspan="6" class="muted">暂无客群包，请先组合画像字段</td></tr>'}</table>
+      <details class="audience-tag-details"><summary>画像标签维护 · ${tags.length} 个</summary><div class="audience-tag-list">${tags.map(tag => `<div class="audience-tag-item"><div><strong>${escapeHtml(displayText(tag.name, '未命名标签'))}</strong><small>${escapeHtml(displayText(tag.code, 'TAG'))} · ${escapeHtml(displayText(tag.category, '画像标签'))} · ${escapeHtml(displayText(tag.source, '画像平台'))}</small></div><span class="status ${tag.enabled === false ? 'warn' : 'good'}">${tag.enabled === false ? '停用' : '启用'}</span><button class="btn" data-audience-tag-edit="${tag.id}">编辑</button></div>`).join('') || '<div class="empty-action">暂无画像标签；客群包可直接使用底层画像字段。</div>'}</div></details><div class="catalog-foot"><span>${dimensions.length} 个画像字段 · ${segments.length} 个预置客群包 · ${snapshots.length} 个已冻结快照</span><span>客群包是活动执行时的正式客群对象</span></div>`;
+    if (window.lucide) lucide.createIcons();
+  }  function renderKnowledgeDocuments(){
     const host=q('#graph .graph-layout'); if(!host)return; let panel=q('#knowledgeDocuments'); if(!panel){panel=document.createElement('div');panel.id='knowledgeDocuments';panel.className='panel knowledge-documents';host.appendChild(panel);} const docs=tenantData.documents||[];
     panel.innerHTML='<div class="panel-head"><h2>\u77e5\u8bc6\u6587\u6863</h2><span>'+docs.length+' \u4e2a\u6587\u6863 · \u5220\u9664\u5c06\u540c\u6b65\u6e05\u7406\u672c\u4f53\u5bf9\u8c61</span></div><div class="panel-body">'+(docs.length?'<table class="table"><tr><th>\u6587\u6863</th><th>\u6765\u6e90</th><th>\u5207\u7247</th><th>\u672c\u4f53\u5bf9\u8c61</th><th>\u7248\u672c</th><th>\u64cd\u4f5c</th></tr>'+docs.map(d=>'<tr><td><strong>'+escapeHtml(cleanText(d.title,'\u672a\u547d\u540d\u6587\u6863'))+'</strong><small>'+escapeHtml(d.external_id)+'</small></td><td>'+escapeHtml(cleanText(d.source_name,d.source_type))+'</td><td>'+d.chunk_count+'</td><td>'+d.entity_count+'</td><td>V'+d.version+'</td><td class="production-actions"><button class="btn" data-document-edit="'+d.id+'">\u7f16\u8f91</button><button class="btn danger" data-document-delete="'+d.id+'">\u5220\u9664</button></td></tr>').join('')+'</table>':'<div class="empty-action">\u6682\u65e0\u77e5\u8bc6\u6587\u6863\u3002\u4e0a\u4f20\u6587\u4ef6\u540e\uff0c\u5904\u7406\u7ed3\u679c\u4f1a\u5728\u8fd9\u91cc\u5f62\u6210\u77e5\u8bc6\u4e0e\u672c\u4f53\u3002</div>')+'</div>';
   }
@@ -1080,13 +1218,28 @@
     const context=item.generation_context||{};
     const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML=`<div class="production-modal-card content-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.name,'营销内容'))}</b><small>${escapeHtml(displayText(item.channel,'营销渠道'))} · ${escapeHtml(displayText(item.version,'V1'))} · ${escapeHtml(displayText(item.status,'草稿'))}</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="content-preview-layout"><section class="content-preview-stage"><div class="content-preview-stage-head"><div><b>渠道预览</b><small>按实际触达渠道模拟展示</small></div><span>${escapeHtml(displayText(item.channel,'营销渠道'))}</span></div>${renderContentChannelPreview(item)}</section><section class="content-detail-copy"><div class="campaign-detail-summary"><span><b>活动</b>${escapeHtml(item.campaign_id||context.campaign_name||'未关联活动')}</span><span><b>客群包</b>${escapeHtml(audience?.name||context.audience_name||'未关联')}</span><span><b>产品包</b>${escapeHtml(product?.name||context.product_name||'未关联')}</span><span><b>内容目标</b>${escapeHtml(item.generation_objective||context.objective||'提升转化')}</span></div><h3>${escapeHtml(item.title||'内容正文')}</h3><p class="content-body-copy">${escapeHtml(item.body||'暂无正文')}</p><div class="content-evidence-note"><i data-lucide="shield-check"></i><span>生成上下文已保存，可在编辑中调整内容后重新提交审核。</span></div></section></div></div></div>`;document.body.appendChild(layer);layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();});if(window.lucide)lucide.createIcons();
   }
-  function showPersonaDetail(item){
-    const rules=(item.rules||[]).map(rule=>`<li><b>${escapeHtml(displayText(rule.dimension_name,'\u753b\u50cf\u6761\u4ef6'))}</b><span>${escapeHtml(displayText(rule.condition_expression,`${rule.condition_operator||'='} ${rule.condition_value||''}`))}</span><small>\u6765\u6e90\uff1a${escapeHtml(displayText(rule.data_source,'\u753b\u50cf\u63a5\u53e3'))}</small></li>`).join('');
-    const layer=document.createElement('div'); layer.className='production-modal';
-    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.segment_name,'\u5ba2\u6237\u753b\u50cf'))}</b><small>${escapeHtml(displayText(item.segment_code,'\u753b\u50cf\u7f16\u7801'))} · ${escapeHtml(displayText(item.primary_persona_name,'\u5ba2\u6237\u753b\u50cf'))}</small></div><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>\u753b\u50cf\u7c7b\u578b</b>${escapeHtml(displayText(item.primary_persona_name,'\u672a\u5206\u7c7b'))}</span><span><b>\u6761\u4ef6\u6570\u91cf</b>${item.rules?.length||0} \u6761</span><span><b>\u53ef\u7ecf\u8425\u72b6\u6001</b>\u53ef\u7528\u4e8e\u5708\u9009</span></div><section><h3>\u753b\u50cf\u7ec4\u5408\u6761\u4ef6</h3><ul class="catalog-detail-list">${rules||'<li><span>\u6682\u65e0\u660e\u7ec6\u6761\u4ef6</span></li>'}</ul></section><section><h3>\u5173\u8054\u8bf4\u660e</h3><p>\u8be5\u753b\u50cf\u53ef\u4e0e\u5176\u4ed6\u753b\u50cf\u548c\u6807\u7b7e\u7ec4\u5408\u751f\u6210\u5ba2\u7fa4\u5305\uff0c\u518d\u7528\u4e8e\u6d3b\u52a8\u5ba2\u7fa4\u5feb\u7167\u548c\u4ea7\u54c1\u5339\u914d\u3002</p></section></div></div>`;
-    document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();}); if(window.lucide)lucide.createIcons();
+  function showAudienceDimensionDetail(item) {
+    const applicable = Array.isArray(item.applicable_personas) ? item.applicable_personas.join('、') : displayText(item.applicable_personas, '全部客群');
+    const layer = document.createElement('div'); layer.className = 'production-modal';
+    layer.innerHTML = `<div class="production-modal-card audience-dimension-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.field_name, '画像字段'))}</b><small>${escapeHtml(displayText(item.field_code, 'FIELD'))} · 底层画像定义</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>维度分类</b>${escapeHtml(displayText(item.module_name, '画像维度'))}</span><span><b>数据类型</b>${escapeHtml(displayText(item.data_type, '枚举'))}</span><span><b>更新频率</b>${escapeHtml(displayText(item.update_frequency, '按日更新'))}</span></div><div class="audience-dimension-detail-grid"><section><h3>业务口径</h3><dl><dt>取值范围</dt><dd>${escapeHtml(displayText(item.allowed_values, '按用户行为和业务规则计算'))}</dd><dt>采集方式</dt><dd>${escapeHtml(displayText(item.collection_method, '系统分析'))}</dd><dt>来源类型</dt><dd>${escapeHtml(displayText(item.source_data_type, '画像接口'))}</dd><dt>适用客群</dt><dd>${escapeHtml(applicable)}</dd></dl></section><section><h3>营销使用</h3><p>该画像字段可以与其他画像字段组合，形成客群包。例如将“职业类型 + 年龄 + 航线偏好 + 近期开票状态”组合为可执行的航空营销客群。</p><span class="dimension-detail-hint"><i data-lucide="combine"></i>可在新建客群包时作为组合条件</span></section></div></div></div>`;
+    document.body.appendChild(layer); layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('[data-close]')) layer.remove(); }); if (window.lucide) lucide.createIcons();
   }
-  function showBaseProductDetail(item){
+
+  function showAudienceDimensionGroupDetail(moduleKey) {
+    const items = (tenantData.personaDimensions || []).filter(item => String(item.module_key) === String(moduleKey));
+    if (!items.length) return;
+    const title = displayText(items[0].module_name, '画像维度');
+    const rows = items.map(item => `<tr><td><strong>${escapeHtml(displayText(item.field_name, '未命名字段'))}</strong><small>${escapeHtml(displayText(item.field_code, 'FIELD'))}</small></td><td>${escapeHtml(displayText(item.allowed_values, displayText(item.data_type, '按规则计算')))}</td><td>${escapeHtml(displayText(item.collection_method, '系统分析'))}</td><td><button class="btn compact" data-audience-dimension="${escapeHtml(item.id)}">查看定义</button></td></tr>`).join('');
+    const layer = document.createElement('div'); layer.className = 'production-modal';
+    layer.innerHTML = `<div class="production-modal-card audience-dimension-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(title)}</b><small>画像字段分组 · ${items.length} 个字段</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><table class="table compact-table"><tr><th>画像字段</th><th>取值 / 口径</th><th>采集方式</th><th>操作</th></tr>${rows}</table></div></div>`;
+    document.body.appendChild(layer); layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('[data-close]')) layer.remove(); }); if (window.lucide) lucide.createIcons();
+  }
+  function showPersonaDetail(item) {
+    const rules = (item.rules || []).map(rule => `<li><b>${escapeHtml(displayText(rule.dimension_name, '画像条件'))}</b><span>${escapeHtml(displayText(rule.condition_expression, `${rule.condition_operator || '='} ${rule.condition_value || ''}`))}</span><small>来源：${escapeHtml(displayText(rule.data_source, '画像接口'))}</small></li>`).join('');
+    const layer = document.createElement('div'); layer.className = 'production-modal';
+    layer.innerHTML = `<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.segment_name, '预置客群包'))}</b><small>${escapeHtml(displayText(item.segment_code, 'PRESET'))} · 预置客群包组合</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>客群包类型</b>${escapeHtml(displayText(item.primary_persona_name, '未分类'))}</span><span><b>画像条件</b>${item.rules?.length || 0} 项</span><span><b>推荐触达</b>${escapeHtml((item.recommended_channels || []).join('、') || '待配置')}</span></div><section><h3>组合画像条件</h3><ul class="catalog-detail-list">${rules || '<li><span>暂无明细条件</span></li>'}</ul></section><section><h3>推荐产品与使用方式</h3><p>${escapeHtml((item.recommended_products || []).join('、') || '可在活动中继续匹配产品包')}。该预置客群包由多个底层画像字段组合而成，运营人员可以据此新建租户客群包并继续调整条件。</p></section></div></div>`;
+    document.body.appendChild(layer); layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('[data-close]')) layer.remove(); }); if (window.lucide) lucide.createIcons();
+  }  function showBaseProductDetail(item){
     const layer=document.createElement('div'); layer.className='production-modal';
     layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.name,'\u57fa\u7840\u4ea7\u54c1'))}</b><small>${escapeHtml(displayText(item.code,'\u4ea7\u54c1\u7f16\u7801'))} · \u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0</small></div><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>\u4ea7\u54c1\u7c7b\u522b</b>${escapeHtml(displayText(item.category,'\u822a\u7a7a\u4ea7\u54c1'))}</span><span><b>\u6743\u76ca\u9879</b>${(item.benefits||[]).length} \u9879</span></div><section><h3>\u9002\u7528\u6761\u4ef6</h3><p>${escapeHtml(displayText(item.eligibility,'\u4ee5\u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0\u5b9e\u9645\u8d44\u683c\u89c4\u5219\u4e3a\u51c6'))}</p></section><section><h3>\u5305\u542b\u6743\u76ca</h3><ul class="catalog-detail-list">${(item.benefits||[]).map(value=>`<li><span>${escapeHtml(value)}</span><small>\u53ef\u88ab\u4ea7\u54c1\u5305\u7ec4\u5408</small></li>`).join('')||'<li><span>\u6682\u65e0\u6743\u76ca\u660e\u7ec6</span></li>'}</ul></section></div></div>`;
     document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();}); if(window.lucide)lucide.createIcons();
@@ -1413,6 +1566,8 @@
        if(button.dataset.productionCampaignEdit){const item=(tenantData.campaigns||[]).find(value=>value.id===button.dataset.productionCampaignEdit);if(!item||!canWrite())return;await showCampaignEditor(item);return;}
        if(button.dataset.productView){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productView));if(item)showProductDetail(item);return;}
        if(button.dataset.productCatalogView){const item=(tenantData.productCatalog?.products||[]).find(value=>String(value.code)===String(button.dataset.productCatalogView));if(item)showBaseProductDetail(item);return;}
+       if(button.dataset.audienceDimension){const item=(tenantData.personaDimensions||[]).find(value=>String(value.id)===String(button.dataset.audienceDimension));if(item)showAudienceDimensionDetail(item);return;}
+       if(button.dataset.audienceDimensionGroup){showAudienceDimensionGroupDetail(button.dataset.audienceDimensionGroup);return;}
        if(button.dataset.audiencePersona){const item=(tenantData.personaSegments||[]).find(value=>String(value.id)===String(button.dataset.audiencePersona));if(item)showPersonaDetail(item);return;}
        if(button.dataset.productEdit){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productEdit));if(!item||!canWrite())return;showProductEditor(item);return;}
        if(button.dataset.productDelete){const item=(tenantData.productPackages||[]).find(value=>String(value.id)===String(button.dataset.productDelete));if(!item||!canWrite()||!window.confirm('确认删除产品包“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/product-packages/${item.id}`,{method:'DELETE'});toast('产品包“'+item.name+'”已删除');await loadTenantData();}catch(cause){toast(cause.message||'产品包删除失败');}return;}      if(button.dataset.action==='newProduct'){
@@ -1442,7 +1597,11 @@
         const item=(tenantData.documents||[]).find(value=>String(value.id)===String(button.dataset.documentEdit));if(!item||!canWrite())return;
         showKnowledgeDocumentEditor(item);return;
       }
+      if(button.dataset.action==='newAudience'){if(!canWrite())return;showAudiencePackageCreator();return;}
       if(button.dataset.action==='refreshAudienceCatalog'){if(!canWrite())return;button.disabled=true;try{await loadTenantData();toast('\u753b\u50cf\u76ee\u5f55\u5df2\u540c\u6b65\uff1a'+(tenantData.personaDimensions||[]).length+'\u4e2a\u753b\u50cf\u7ef4\u5ea6');}catch(cause){toast(cause.message||'\u753b\u50cf\u540c\u6b65\u5931\u8d25');}finally{button.disabled=false;}return;}
+       if(button.dataset.action==='newProvider'){if(!isTenantAdmin())return;showProviderCreateEditor();return;}
+       if(button.dataset.action==='editMineru'){if(!isTenantAdmin())return;showMineruEditor();return;}
+       if(button.dataset.action==='newTenant'){if(!session?.is_platform_admin)return;showTenantCreateEditor();return;}
        if(button.dataset.providerEdit){const item=(tenantData.providers||[]).find(value=>Number(value.id)===Number(button.dataset.providerEdit));if(!item||!isTenantAdmin())return;showProviderEditor(item);return;}
        if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'模型连接正常');}
       if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
