@@ -4,16 +4,16 @@
   <img src=apps/web-v32/brand/ceair-wordmark.svg alt=中国东方航空 width=220 />
 </p>
 
-**China Eastern Intelligent Marketing Platform**
+**China Eastern AI Marketing Cloud**
 
 面向东方航空营销、产品、运营、审批和分析人员的生产级智能营销工作台。平台将航线经营、航班运行、用户画像、市场热点、活动产品和渠道回执连接为一条可治理的营销链路，通过 AI 智能域提供机会发现、客群洞察、产品匹配、内容生成和效果分析能力，同时保留人工审批、权限控制和全链路审计。
 
-> **当前版本**：`v2.7`　|　**部署形态**：Docker Compose + PostgreSQL　|　**后端**：FastAPI　|　**前端**：React / TypeScript + 生产工作台
+> **当前版本**：`v2.7`　|　**部署形态**：Docker Compose + PostgreSQL　|　**后端**：FastAPI　|　**前端**：生产工作台 `apps/web-v32`
 
 [![Quality](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/quality.yml/badge.svg)](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/quality.yml)
 [![Deploy](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/deploy-production.yml)
 
-中文 | [English](#china-eastern-intelligent-marketing-platform)
+中文 | [English](#china-eastern-ai-marketing-cloud)
 
 ## 产品定位
 
@@ -124,8 +124,7 @@ AI 输出以建议、解释和可执行结果为主，关键动作保留人工�
 
 ```text
 .
-├── apps/web/                         React + TypeScript 源码前端
-├── apps/web-v32/                     当前 Docker 生产工作台
+├── apps/web-v32/                     唯一前端：Docker 生产工作台
 ├── services/platform-api/            FastAPI、智能体、本体和数据管道
 ├── docs/                             业务、架构和数据处理方案
 ├── .github/workflows/                质量检查与生产部署流水线
@@ -133,9 +132,11 @@ AI 输出以建议、解释和可执行结果为主，关键动作保留人工�
 └── scripts/                          生产检查脚本
 ```
 
+> **前端只有一条链路**：`apps/web-v32` 是唯一参与容器构建、CI 检查和本地开发的页面目录——`compose.yml` 的 `web` 服务只构建它，`quality.yml` 与 `deploy-production.yml` 只对它执行 `node --check`，`scripts/dev-web.mjs` 只服务它。早期 React + TypeScript 原型 `apps/web/` 已冻结：不再新增功能、不接入 Compose 和 CI，正在通过独立分支 `chore/drop-react-prototype` 走移除评审；该分支合并后目录会从 `main` 删除，历史提交中仍可找回，不要在它上面继续开发。
+
 ## 本地开发
 
-环境要求：Node.js 22+、pnpm、Python 3.12+、PostgreSQL 16 和 Docker Desktop。
+环境要求：Node.js 22+、Python 3.12+、PostgreSQL 16 和 Docker Desktop。
 
 ```powershell
 # API
@@ -147,11 +148,11 @@ python -m uvicorn app.main:app --reload --port 8800
 ```
 
 ```powershell
-# React 前端
-cd apps/web
-pnpm install
-pnpm dev --host 127.0.0.1 --port 8780
+# 生产工作台页面：静态服务 apps/web-v32，并把 /api 代理到 8800
+node scripts/dev-web.mjs
 ```
+
+也可以一次拉起两者：`.\start-dev.ps1`（API 8800 + 工作台 8780）。
 
 完整容器系统：复制 `.env.example` 为 `.env`，填写本地数据库、管理员和模型服务配置后执行：
 
@@ -178,13 +179,10 @@ BOOTSTRAP_MINERU_API_KEY=
 ## 测试与质量检查
 
 ```powershell
-cd apps/web
-pnpm run build
-cd ../..
-node --check apps/web-v32/app.js
-node --check apps/web-v32/production.js
-node --check apps/web-v32/market-hotspots.js
+# 与 CI 一致：对 apps/web-v32 下全部 JavaScript 做语法检查
+Get-ChildItem apps/web-v32/*.js | ForEach-Object { node --check $_.FullName }
 node scripts/check-production-copy.mjs
+git diff --check
 cd services/platform-api
 python -m pytest -q
 ```
@@ -213,9 +211,9 @@ python -m pytest -q
 
 ---
 
-<a id=china-eastern-intelligent-marketing-platform></a>
+<a id=china-eastern-ai-marketing-cloud></a>
 
-## China Eastern Intelligent Marketing Platform
+## China Eastern AI Marketing Cloud
 
 Production-oriented marketing operations platform for China Eastern airline teams. It connects market signals, flight operations, aggregated customer profiles, airline products, campaign content, approval, channel execution, feedback and performance learning in one governed workflow.
 
