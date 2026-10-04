@@ -127,27 +127,12 @@
   const openScopeEditor = () => showDetail('调整数据范围', '治理中心 · 按区域、航线和敏感等级控制访问', `
     <div class="drawer-section"><div class="drawer-section-title">营销运营当前范围</div><div class="drawer-section-body"><div class="drawer-form"><label>区域<select><option>华东营销中心</option><option>全国营销中心</option><option>国际及地区营销中心</option></select></label><label>航线范围<select><option>上海、江苏、浙江、安徽</option><option>全部国内航线</option><option>国际及地区航线</option></select></label><label>敏感画像<input value="不含特殊旅客敏感画像"></label></div></div></div>
     <div class="drawer-ai"><b>权限策略提示</b><br>扩大到全国航线后，需重新确认活动审批范围；特殊旅客、未成年人和高敏感标签仍保持脱敏。</div>`, '<button class="btn primary" data-v32-action="saveScope">保存范围变更</button>');
-  const bindSearch = () => {
-    const search = $('.global-search');
-    if (!search || search.dataset.v32Bound) return;
-    search.dataset.v32Bound = 'true';
-    search.addEventListener('click', e => { e.stopPropagation();
-      showDetail('全局业务对象检索', '支持机会、客群、产品包、活动、内容和结果', `<div class="drawer-form"><label>输入对象名称或编号<input id="v32GlobalSearch" placeholder="如：三亚、ACT-2026-0921、PKG-2026-0834"></label><button class="btn primary" data-v32-action="globalSearch">检索</button></div><div id="v32SearchResult" class="drawer-list" style="margin-top:12px"><button><span>最近访问</span><b>上海—三亚国庆早鸟</b></button></div>`);
-    });
-  };
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-view]')) $('#businessDrawer')?.classList.remove('open');
     const b = e.target.closest('button');
     if (!b) return;
     const action = b.dataset.v32Action || b.dataset.action || b.dataset.approvalAction;
-    if (b.dataset.v32Action === 'globalSearch') {
-      const q = $('#v32GlobalSearch')?.value.trim() || '';
-      const result = $('#v32SearchResult');
-      if (result) result.innerHTML = q ? `<button><span>营销活动</span><b>${escapeHtml(q)} · 点击打开</b></button><button><span>关联业务对象</span><b>客群 / 产品包 / 渠道回传</b></button>` : '<div class="empty-action">请输入检索条件</div>';
-      notify(q ? `检索完成：已找到与“${q}”相关的业务对象` : '请输入检索条件');
-      return;
-    }
     if (b.dataset.v32Action) { bindAction(b.dataset.v32Action, b); if (['generateReview','applyLearning','exportReview'].includes(b.dataset.v32Action)) reviewAction(b.dataset.v32Action); if (['saveRole','saveScope'].includes(b.dataset.v32Action)) { b.textContent = '已保存'; b.disabled = true; notify(b.dataset.v32Action === 'saveRole' ? '角色权限已保存，已生成权限审计记录' : '数据范围已保存，已生成范围变更审计记录'); } return; }
     if (b.dataset.approval) { const title=b.querySelector('b')?.textContent||'当前审批活动'; const detail=$('#approvalDetail'); if(detail){detail.dataset.title=title;detail.innerHTML=`<div class="approval-detail-hero"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><div><h3>${escapeHtml(title)}</h3><p>活动发布审批 · 当前版本 V3 · 负责人李洋</p></div><span class="pill red">待我审批</span></div><div class="approval-detail-grid"><div><b>活动目标</b><span>提升目标航线出票与辅营产品购买转化</span></div><div><b>客群范围</b><span>36,420 人 · 高意向未购客群</span></div><div><b>产品包</b><span>机票 + 行李 + 优选座位</span></div><div><b>触达渠道</b><span>东航 App、短信、微信</span></div><div><b>预算</b><span>¥320,000 · 需营销负责人确认</span></div><div><b>合规检查</b><span>客户授权、敏感词、频控均已通过</span></div></div><div class="approval-content-preview"><b>内容预览</b><p>国庆去三亚，机票、行李和优选座位一次安排，带孩子出行更从容。</p></div><div class="business-actions"><button class="btn" data-action="reject">退回修改</button><button class="btn primary" data-action="approve">审批通过</button></div>`;if(window.lucide)lucide.createIcons();}document.querySelectorAll('.approval-item').forEach(x=>x.classList.toggle('active',x===b));return; }
     if (action === 'viewOpportunityAudience') { openAudienceProfile(); return; }
@@ -161,15 +146,9 @@
     if (b.dataset.drawer === 'close') { $('#businessDrawer')?.classList.remove('open'); return; }
     if (action === 'editRole') { openRoleEditor(); return; }
     if (action === 'editScope') { openScopeEditor(); return; }
-    if (action === 'globalSearch') {
-      const q = $('#v32GlobalSearch')?.value.trim() || '';
-      const result = $('#v32SearchResult');
-      if (result) result.innerHTML = q ? `<button><span>营销活动</span><b>${escapeHtml(q)} · 点击打开</b></button><button><span>关联业务对象</span><b>客群 / 产品包 / 渠道回传</b></button>` : '<div class="empty-action">请输入对象名称或编号</div>';
-      notify(q ? `检索完成：已找到与“${q}”相关的业务对象` : '请输入检索条件');
-    }
   });
 
-  const init = () => { filterViews(); bindSearch(); if (window.lucide) lucide.createIcons(); };
+  const init = () => { filterViews(); if (window.lucide) lucide.createIcons(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 

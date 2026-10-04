@@ -1,0 +1,1489 @@
+/* 预览节点默认隐藏，避免首页和普通入口出现未初始化结构。 */
+.preview-sidebar, .preview-sidebar-toggle, .preview-topbar-actions { display: none; }
+
+/* 东航智慧营销云 · 内页高保真预览
+   仅由 body.preview-ui 作用于首页之外的页面；首页完全沿用原有视觉。 */
+:root {
+  --pv-blue-950: #102e52;
+  --pv-blue-900: #173f6c;
+  --pv-blue-700: #1b67a8;
+  --pv-blue-500: #2b8fd2;
+  --pv-red: #d93542;
+  --pv-red-deep: #b82235;
+  --pv-ink: #142f4a;
+  --pv-muted: #6f8396;
+  --pv-line: #dfe8f0;
+  --pv-line-soft: #ebf1f6;
+  --pv-canvas: #f5f8fb;
+  --pv-surface: #fff;
+  --pv-cyan: #1ba3b9;
+  --pv-green: #258b6c;
+  --pv-amber: #aa741c;
+  --pv-shadow: 0 10px 28px rgba(21, 62, 99, .07);
+  --pv-radius: 12px;
+}
+
+body.preview-ui { background: var(--pv-canvas); color: var(--pv-ink); font-family: "Inter", "Microsoft YaHei", "PingFang SC", Arial, sans-serif; }
+body.preview-ui .topnav { position: fixed; inset: 0 0 auto; z-index: 90; height: 76px; display: flex; align-items: center; padding: 0 28px 0 24px; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--pv-line); box-shadow: 0 4px 18px rgba(28, 67, 102, .05); backdrop-filter: blur(14px); }
+body.preview-ui .topnav .brand { flex: 0 0 272px; height: 76px; min-height: 0; padding: 0 20px 0 0; border: 0; background: transparent; display: flex; align-items: center; gap: 12px; }
+body.preview-ui .topnav .brand .logo { width: 42px; height: 42px; border: 1px solid #dbe7ef; border-radius: 11px; background: #fff; box-shadow: 0 5px 13px rgba(18, 73, 111, .08); }
+body.preview-ui .topnav .brand .logo img { width: 28px; height: 28px; object-fit: contain; }
+body.preview-ui .topnav .brand-text b { display: block; color: var(--pv-blue-950); font-size: 16px; letter-spacing: .2px; }
+body.preview-ui .topnav .brand-text span { display: block; margin-top: 4px; color: #8a9cae; font-size: 10px; letter-spacing: .3px; }
+body.preview-ui .topnav > .nav { display: none; }
+body.preview-ui .topnav > .user { margin-left: auto; min-height: 0; padding: 0 0 0 24px; border: 0; border-left: 1px solid var(--pv-line); background: transparent; text-align: right; }
+body.preview-ui .topnav > .user b { display: block; color: var(--pv-blue-900); font-size: 12px; }
+body.preview-ui .topnav > .user span { display: block; margin-top: 4px; color: #8497a9; font-size: 11px; }
+body.preview-ui .app { display: block; min-height: 100vh; min-width: 0; }
+body.preview-ui .main { min-width: 0; margin-left: 248px; padding-top: 76px; background: var(--pv-canvas); }
+body.preview-ui .topbar { position: sticky; top: 76px; z-index: 50; height: 72px; padding: 0 32px; background: rgba(255,255,255,.94); border-bottom: 1px solid var(--pv-line); box-shadow: 0 2px 12px rgba(32, 73, 107, .035); }
+body.preview-ui .crumb { color: #8aa0b1; font-size: 12px; }
+body.preview-ui .crumb-home { color: var(--pv-blue-700); font-weight: 700; }
+body.preview-ui .crumb strong { color: var(--pv-ink); font-size: 13px; }
+body.preview-ui .top-actions { gap: 10px; }
+body.preview-ui .global-search { width: min(360px, 32vw); height: 40px; border-color: var(--pv-line); border-radius: 9px; background: #f8fafc; }
+body.preview-ui .top-actions > .btn.primary { display: none; }
+body.preview-ui .preview-topbar-actions { display: flex; align-items: center; gap: 12px; margin-left: 22px; }
+body.preview-ui .preview-topbar-home { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--pv-blue-700); font-size: 12px; font-weight: 700; padding: 8px 0; }
+body.preview-ui .preview-topbar-home svg { width: 15px; }
+body.preview-ui .preview-divider { height: 20px; width: 1px; background: var(--pv-line); }
+body.preview-ui .preview-mode-label { display: inline-flex; align-items: center; gap: 5px; color: var(--pv-muted); font-size: 11px; }
+body.preview-ui .preview-mode-label svg { width: 14px; color: var(--pv-cyan); }
+body.preview-ui .preview-topbar-exit { display: inline-flex; align-items: center; color: #8b9aaa; font-size: 11px; text-decoration: none; }
+
+body.preview-ui .preview-sidebar { position: fixed; z-index: 80; inset: 76px auto 0 0; width: 248px; display: flex; flex-direction: column; background: linear-gradient(180deg, #133c69 0%, #0f3158 100%); color: #dceafa; box-shadow: 8px 0 24px rgba(17, 52, 83, .12); }
+body.preview-ui .preview-sidebar-head { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,.11); }
+body.preview-ui .preview-home { width: 100%; display: grid; grid-template-columns: 34px 1fr; gap: 0 10px; align-items: center; text-align: left; border: 0; border-radius: 10px; padding: 10px 12px; background: rgba(255,255,255,.1); color: #fff; }
+body.preview-ui .preview-home svg { grid-row: span 2; width: 20px; color: #70d8de; }
+body.preview-ui .preview-home span { font-size: 13px; font-weight: 700; }
+body.preview-ui .preview-home small { margin-top: 3px; color: #9fc2df; font-size: 10px; }
+body.preview-ui .preview-home.active { background: linear-gradient(90deg, rgba(39,154,211,.34), rgba(39,154,211,.16)); box-shadow: inset 3px 0 #61d9df; }
+body.preview-ui .preview-sidebar-scroll { flex: 1; overflow: auto; padding: 18px 12px; }
+body.preview-ui .preview-nav-group { margin-bottom: 18px; }
+body.preview-ui .preview-nav-label { display: flex; align-items: center; gap: 9px; padding: 0 10px 8px; color: #9ec0dc; font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+body.preview-ui .preview-nav-label svg { width: 15px; color: #6dc5d5; }
+body.preview-ui .preview-nav-items { display: grid; gap: 3px; }
+body.preview-ui .preview-nav-items button { width: 100%; min-height: 40px; display: flex; align-items: center; gap: 10px; border: 0; border-radius: 8px; padding: 0 12px 0 16px; background: transparent; color: #c2d8ec; text-align: left; font-size: 12px; transition: background .18s ease, color .18s ease, transform .18s ease; }
+body.preview-ui .preview-nav-items button svg { width: 16px; color: #8cb8d6; }
+body.preview-ui .preview-nav-items button:hover { color: #fff; background: rgba(255,255,255,.09); transform: translateX(2px); }
+body.preview-ui .preview-nav-items button.active { color: #fff; background: linear-gradient(90deg, #1b69ac, #1a5d98); box-shadow: inset 3px 0 #5be0dc; }
+body.preview-ui .preview-nav-items button.active svg { color: #71e0dd; }
+body.preview-ui .preview-nav-count { min-width: 19px; height: 19px; display: grid; place-items: center; margin-left: auto; border-radius: 10px; background: #e46062; color: #fff; font-size: 10px; font-style: normal; }
+body.preview-ui .preview-sidebar-foot { padding: 14px 16px 18px; border-top: 1px solid rgba(255,255,255,.11); }
+body.preview-ui .preview-tenant { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+body.preview-ui .preview-avatar { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #e7f5fb; color: var(--pv-blue-700); font-size: 12px; font-weight: 800; }
+body.preview-ui .preview-tenant b, body.preview-ui .preview-tenant small { display: block; }
+body.preview-ui .preview-tenant b { color: #edf6ff; font-size: 11px; }
+body.preview-ui .preview-tenant small { margin-top: 3px; color: #93b2cd; font-size: 10px; }
+body.preview-ui .preview-exit { display: inline-flex; align-items: center; gap: 7px; color: #93b2cd; font-size: 10px; text-decoration: none; }
+body.preview-ui .preview-exit:hover { color: #fff; }
+body.preview-ui .preview-exit svg { width: 14px; }
+body.preview-ui .preview-local-label { display: inline-flex; align-items: center; gap: 6px; color: #93b2cd; font-size: 10px; }
+body.preview-ui .preview-local-label svg { width: 14px; color: #6dc5d5; }
+
+body.preview-ui .content { max-width: none; padding: 30px 32px 50px; }
+body.preview-ui .view:not(.dongdong-view) { max-width: 1600px; margin: 0 auto; }
+body.preview-ui .page-head { display: flex; align-items: flex-end; padding: 0; margin: 0 0 24px; background: transparent; border: 0; }
+body.preview-ui .page-head h1 { color: var(--pv-blue-950); font-size: 28px; line-height: 1.25; letter-spacing: -.02em; }
+body.preview-ui .page-head p { margin-top: 7px; color: var(--pv-muted); font-size: 13px; line-height: 1.6; }
+body.preview-ui .head-actions { gap: 8px; }
+body.preview-ui .btn, body.preview-ui .icon-btn { min-height: 40px; border-radius: 9px; border-color: var(--pv-line); color: var(--pv-blue-900); background: #fff; box-shadow: none; font-size: 12px; }
+body.preview-ui .btn:hover, body.preview-ui .icon-btn:hover { border-color: #9dc7e1; background: #f7fbfe; transform: none; }
+body.preview-ui .btn.primary { border-color: var(--pv-blue-700); background: var(--pv-blue-700); color: #fff; box-shadow: 0 7px 15px rgba(27,103,168,.18); }
+body.preview-ui .btn.primary:hover { border-color: var(--pv-blue-900); background: var(--pv-blue-900); }
+body.preview-ui .btn.ai { border-color: #168ea4; background: linear-gradient(135deg, #1aa9bb, #1978ae); color: #fff; }
+body.preview-ui .btn.danger { border-color: #e7b3b9; background: #fff; color: var(--pv-red-deep); }
+body.preview-ui .toolbar-strip { min-height: 60px; gap: 9px; padding: 10px 12px; margin-bottom: 16px; border: 1px solid var(--pv-line); border-radius: 10px; background: #fff; box-shadow: var(--pv-shadow); }
+body.preview-ui .toolbar-strip input, body.preview-ui .toolbar-strip select { height: 40px; border: 1px solid var(--pv-line); border-radius: 8px; background: #fbfdff; color: var(--pv-ink); font-size: 12px; }
+body.preview-ui .toolbar-strip input:focus, body.preview-ui .toolbar-strip select:focus { border-color: #63acd5; box-shadow: 0 0 0 3px rgba(43,143,210,.1); }
+body.preview-ui .toolbar-note { color: #8a9cac; font-size: 11px; }
+body.preview-ui .panel, body.preview-ui .kpi, body.preview-ui .small-panel { border: 1px solid var(--pv-line); border-radius: var(--pv-radius); background: var(--pv-surface); box-shadow: var(--pv-shadow); }
+body.preview-ui .panel:hover, body.preview-ui .kpi:hover { box-shadow: var(--pv-shadow); }
+body.preview-ui .panel-head { min-height: 58px; height: auto; padding: 0 20px; border-bottom: 1px solid var(--pv-line-soft); background: #fff; }
+body.preview-ui .panel-head h2 { color: var(--pv-ink); font-size: 15px; }
+body.preview-ui .panel-head h2:before { width: 3px; height: 17px; margin-right: 10px; border-radius: 2px; background: var(--pv-blue-500); }
+body.preview-ui .panel-head span { color: #8a9bab; font-size: 11px; }
+body.preview-ui .panel-body { padding: 20px; }
+body.preview-ui .kpis { gap: 12px; margin-bottom: 18px; }
+body.preview-ui .kpi { min-height: 116px; padding: 18px 20px; }
+body.preview-ui .kpi:after { width: 96px; height: 96px; right: -28px; bottom: -30px; border-color: #e0f0f5; }
+body.preview-ui .kpi span { color: #768a9b; font-size: 12px; }
+body.preview-ui .kpi b { color: var(--pv-blue-950); font-size: 28px; }
+body.preview-ui .kpi .trend { color: var(--pv-green); font-size: 11px; }
+body.preview-ui .kpi .trend.amber { color: var(--pv-amber); }
+body.preview-ui .lifecycle { display: grid; grid-template-columns: repeat(7, minmax(108px, 1fr)); gap: 8px; padding: 12px; margin-bottom: 18px; border: 1px solid var(--pv-line); border-radius: var(--pv-radius); background: #fff; box-shadow: var(--pv-shadow); overflow-x: auto; }
+body.preview-ui .lifecycle > i { display: none; }
+body.preview-ui .life { min-width: 0; height: 72px; padding: 9px 11px; border: 1px solid transparent; border-radius: 9px; background: #f7fafc; }
+body.preview-ui .life:hover { border-color: #c5dfea; background: #f5fbfd; transform: none; }
+body.preview-ui .life.active { border-color: #9bc8e4; background: #eef7fd; box-shadow: inset 3px 0 var(--pv-blue-500); }
+body.preview-ui .life b { color: var(--pv-blue-500); font-size: 16px; }
+body.preview-ui .life span { color: var(--pv-ink); font-size: 12px; }
+body.preview-ui .life small { color: #899baa; font-size: 10px; }
+body.preview-ui .table, body.preview-ui .opportunity-table { min-width: 680px; border-collapse: separate; border-spacing: 0; font-size: 12px; }
+body.preview-ui .table th, body.preview-ui .table td, body.preview-ui .opportunity-table th, body.preview-ui .opportunity-table td { padding: 14px 12px; border-bottom: 1px solid var(--pv-line-soft); }
+body.preview-ui .table th, body.preview-ui .opportunity-table th { color: #71879a; background: #f8fafc; font-size: 11px; font-weight: 700; }
+body.preview-ui .table td, body.preview-ui .opportunity-table td { color: #36556d; }
+body.preview-ui .table td strong, body.preview-ui .opportunity-table td strong { color: var(--pv-ink); font-weight: 700; }
+body.preview-ui .table tr:hover td, body.preview-ui .opportunity-table tr:hover td { background: #f6fbfe; }
+body.preview-ui .status, body.preview-ui .pill, body.preview-ui .tag { border-radius: 999px; padding: 5px 8px; font-size: 10px; font-weight: 700; }
+body.preview-ui .status.good { border: 1px solid #b8e3d2; background: #eaf8f1; color: var(--pv-green); }
+body.preview-ui .status.warn { border: 1px solid #eed8a5; background: #fff7e6; color: var(--pv-amber); }
+body.preview-ui .status.bad, body.preview-ui .pill.red { border: 1px solid #edc0c5; background: #fff1f2; color: var(--pv-red-deep); }
+body.preview-ui .action { color: var(--pv-blue-700); font-weight: 700; }
+body.preview-ui .empty-action, body.preview-ui .empty-state { min-height: 156px; color: #8498a8; }
+body.preview-ui .empty-action b, body.preview-ui .empty-state b { color: #577288; font-size: 13px; }
+
+body.preview-ui #overview .grid2 { grid-template-columns: minmax(0, 1.35fr) minmax(310px, .65fr); gap: 18px; }
+body.preview-ui #overview .panel { margin-bottom: 18px; }
+body.preview-ui #overview .opportunity-bars { gap: 18px; }
+body.preview-ui #overview .opportunity-bars > div { grid-template-columns: 82px 1fr 28px; }
+body.preview-ui #opportunities .grid2 { grid-template-columns: minmax(0, 1.12fr) minmax(330px, .88fr); gap: 18px; }
+body.preview-ui #opportunities > .panel { margin-bottom: 18px; }
+body.preview-ui #opportunities .opportunity-table td:first-child { min-width: 180px; }
+body.preview-ui #opportunities .opportunity-table .production-actions { display: flex; gap: 6px; }
+body.preview-ui #campaigns .panel { margin-bottom: 18px; }
+body.preview-ui #campaigns .table td:first-child { min-width: 220px; }
+body.preview-ui #campaigns .production-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+body.preview-ui #campaigns .production-actions .btn { min-height: 32px; padding: 0 10px; font-size: 11px; }
+body.preview-ui .business-subview-shell { margin: 0 0 18px; padding: 9px 12px 10px; border: 1px solid var(--pv-line); border-radius: 12px; background: #fff; box-shadow: var(--pv-shadow); }
+body.preview-ui .business-subview-tabs { gap: 6px; }
+body.preview-ui .business-subview-tabs button { min-height: 38px; border-radius: 8px; color: #6e8495; }
+body.preview-ui .business-subview-tabs button:hover { color: var(--pv-blue-700); background: #f0f7fc; transform: none; }
+body.preview-ui .business-subview-tabs button.active { color: var(--pv-blue-700); border-color: #b9d9eb; background: #eef7fd; box-shadow: inset 0 -2px var(--pv-blue-500); }
+body.preview-ui .business-subview-shell > p { margin: 7px 2px 0; color: #899baa; font-size: 11px; }
+body.preview-ui .opportunity-insight-console { border-radius: var(--pv-radius); }
+body.preview-ui .opportunity-insight-console .insight-console-grid { gap: 18px; }
+body.preview-ui .insight-source-config, body.preview-ui .insight-run-config { border-color: var(--pv-line); border-radius: 10px; background: #fbfdff; }
+body.preview-ui .insight-prompt { min-height: 148px; border-color: var(--pv-line); border-radius: 9px; background: #fff; }
+body.preview-ui .production-modal { background: rgba(13, 34, 57, .48); backdrop-filter: blur(5px); }
+body.preview-ui .production-modal-card, body.preview-ui .modal, body.preview-ui .drawer { border: 1px solid var(--pv-line); border-radius: 14px; box-shadow: 0 24px 70px rgba(11, 40, 70, .22); }
+
+@media (max-width: 1180px) {
+  body.preview-ui .topnav .brand { flex-basis: 230px; }
+  body.preview-ui .main { margin-left: 224px; }
+  body.preview-ui .preview-sidebar { width: 224px; }
+  body.preview-ui .content { padding-inline: 24px; }
+  body.preview-ui #overview .grid2, body.preview-ui #opportunities .grid2 { grid-template-columns: 1fr; }
+  body.preview-ui #overview .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 820px) {
+  body.preview-ui .topnav { padding-inline: 16px; }
+  body.preview-ui .topnav .brand { flex-basis: 48px; padding-right: 0; }
+  body.preview-ui .topnav .brand-text, body.preview-ui .topnav > .user, body.preview-ui .preview-mode-label, body.preview-ui .preview-divider { display: none; }
+  body.preview-ui .main { margin-left: 0; }
+  body.preview-ui .preview-sidebar { inset: 76px auto 0 0; width: 224px; transform: translateX(-100%); transition: transform .2s ease; }
+  body.preview-ui .preview-sidebar.is-open { transform: translateX(0); }
+  body.preview-ui .preview-sidebar-toggle { position: fixed; left: 0; top: 94px; z-index: 81; display: grid; place-items: center; width: 36px; height: 48px; padding: 0; border: 0; border-radius: 0 9px 9px 0; background: var(--pv-blue-900); color: #fff; writing-mode: vertical-rl; font-size: 12px; font-weight: 700; letter-spacing: .08em; box-shadow: 0 8px 18px rgba(11, 43, 78, .2); cursor: pointer; }
+  body.preview-ui .preview-sidebar-toggle:hover { background: var(--pv-blue-700); }
+  body.preview-ui .preview-sidebar-toggle:focus-visible { outline: 3px solid rgba(82, 190, 224, .7); outline-offset: 2px; }
+  /* 可访问的真实按钮占据左侧热区，给面包屑留出安全起点，避免遮住“首页”。 */
+  body.preview-ui .topbar { top: 76px; padding: 0 16px 0 56px; }
+  body.preview-ui .crumb { min-width: 0; max-width: min(52%, 420px); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  body.preview-ui .global-search { width: min(240px, 40vw); }
+  body.preview-ui .content { padding: 24px 16px 40px; }
+  body.preview-ui .page-head { display: block; }
+  body.preview-ui .head-actions { margin-top: 14px; }
+  body.preview-ui #overview .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  body.preview-ui .topbar { height: auto; min-height: 68px; align-items: flex-start; padding-block: 12px; }
+  body.preview-ui .crumb { max-width: 42%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  body.preview-ui .global-search { display: none; }
+  body.preview-ui .preview-topbar-actions { margin-left: auto; }
+  body.preview-ui .preview-topbar-exit { display: none; }
+  body.preview-ui .content { padding-top: 22px; }
+  body.preview-ui #overview .kpis { grid-template-columns: 1fr; }
+  body.preview-ui .kpi { min-height: 98px; }
+  body.preview-ui .lifecycle { grid-template-columns: repeat(7, 130px); }
+}
+
+@media (min-width: 821px) {
+  body.preview-ui .preview-sidebar { transform: none !important; }
+  body.preview-ui .preview-sidebar-toggle { display: none !important; }
+}
+
+/* 内页固定东东助手球位于右下角，内容区至少保留 136px 安全区，避免遮挡末行操作。 */
+body.preview-ui .content { padding-bottom: 136px; }
+
+/* 内页助手球固定在视口右下角；给工作台主体预留同宽的右侧安全区，
+   防止它覆盖中部的操作按钮或空状态。窄屏继续使用紧凑布局。 */
+@media (min-width: 821px) {
+  /* 球宽 118 + right 24 = 横向要占 142，这里留 156（14px 余量）；再宽就会挤掉工作台中间栏的表格列 */
+  body.preview-ui .content { padding-right: 156px !important; }
+}
+
+/* 内页右侧重排：保留侧栏，收敛内容层级与装饰。首页不受此块影响。 */
+body.preview-ui .main { background: #f4f7fb; }
+body.preview-ui .content { max-width: 1680px; padding: 26px 36px 56px; }
+body.preview-ui .view:not(.dongdong-view) { max-width: 1580px; }
+
+/* 模型配置：服务清单使用卡片化信息行，避免表格横向拖动操作列。 */
+body.preview-ui #models .production-grid { grid-template-columns: minmax(0, 1.12fr) minmax(360px, .88fr); gap: 18px; align-items: start; }
+body.preview-ui #models .production-grid > .panel { min-width: 0; }
+body.preview-ui #models .model-provider-list { display: grid; gap: 10px; padding: 14px; }
+body.preview-ui #models .model-provider-card { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(150px, .9fr) auto; align-items: center; gap: 14px; min-width: 0; padding: 14px 15px; border: 1px solid var(--pv-line-soft); border-radius: 10px; background: #fff; box-shadow: 0 3px 10px rgba(20, 58, 90, .04); }
+body.preview-ui #models .model-provider-main { display: grid; gap: 5px; min-width: 0; }
+body.preview-ui #models .model-provider-main strong { overflow-wrap: anywhere; color: var(--pv-ink); font-size: 15px; line-height: 1.4; }
+body.preview-ui #models .model-provider-id { overflow-wrap: anywhere; color: var(--pv-muted); font-size: 12px; line-height: 1.45; }
+body.preview-ui #models .model-provider-meta { display: flex; flex-wrap: wrap; gap: 7px 12px; min-width: 0; color: #49657b; font-size: 12px; }
+body.preview-ui #models .model-provider-meta span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+body.preview-ui #models .model-provider-meta em { color: #8a9baa; font-size: 11px; font-style: normal; }
+body.preview-ui #models .model-provider-actions { justify-content: flex-end; flex-wrap: wrap; min-width: 0; }
+body.preview-ui #models .model-provider-actions .btn { min-height: 32px; padding: 0 10px; }
+body.preview-ui #models .model-create-panel .config-entry-card { min-width: 0; }
+@media (max-width: 1180px) {
+  body.preview-ui #models .production-grid { grid-template-columns: 1fr; }
+  body.preview-ui #models .model-provider-card { grid-template-columns: minmax(0, 1fr) auto; }
+  body.preview-ui #models .model-provider-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (max-width: 680px) {
+  body.preview-ui #models .model-provider-card { grid-template-columns: 1fr; gap: 10px; padding: 13px; }
+  body.preview-ui #models .model-provider-actions { grid-column: auto; }
+}
+body.preview-ui .page-head {
+  min-height: 0;
+  align-items: center;
+  padding: 0 0 20px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.preview-ui .page-head h1 {
+  color: #13243a;
+  font-family: "Inter", "Microsoft YaHei", sans-serif;
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -.035em;
+}
+body.preview-ui .page-head p { max-width: 720px; margin-top: 8px; color: #6b7b8d; font-size: 13px; }
+body.preview-ui .head-actions { gap: 8px; }
+body.preview-ui .head-actions .btn { min-height: 40px; padding-inline: 15px; }
+body.preview-ui .lifecycle {
+  min-height: 68px;
+  padding: 6px 8px;
+  margin-bottom: 14px;
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 6px 18px rgba(31, 67, 105, .045);
+}
+body.preview-ui .lifecycle > i { width: 10px; color: #c4d0dc; }
+body.preview-ui .life { min-width: 100px; min-height: 54px; padding: 8px 10px; border-radius: 9px; grid-template-columns: 28px minmax(0,1fr); }
+body.preview-ui .life b { color: #8aa0b5; font-size: 20px; }
+body.preview-ui .life span { color: #40546a; font-size: 13px; }
+body.preview-ui .life small { display: none; }
+body.preview-ui .life.active { background: #edf4ff; box-shadow: inset 0 -2px #3974cf; }
+body.preview-ui .life.active b, body.preview-ui .life.active span { color: #205db4; }
+body.preview-ui .business-subview-shell {
+  margin: 0 0 14px;
+  padding: 0 12px;
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 6px 18px rgba(31, 67, 105, .04);
+}
+body.preview-ui .business-subview-tabs { gap: 2px; }
+body.preview-ui .business-subview-tabs button { min-height: 48px; padding-inline: 14px; color: #74869a; border-radius: 0; }
+body.preview-ui .business-subview-tabs button.active { color: #205db4; background: #f4f8ff; box-shadow: inset 0 -2px #3974cf; }
+body.preview-ui .business-subview-shell > p { margin: 0; padding: 0 2px 10px; color: #8a9aaa; }
+body.preview-ui .toolbar-strip {
+  min-height: 58px;
+  padding: 9px 12px;
+  margin-bottom: 14px;
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 6px 18px rgba(31, 67, 105, .04);
+}
+body.preview-ui .toolbar-strip input, body.preview-ui .toolbar-strip select { height: 38px; border-color: #d8e2ed; border-radius: 8px; background: #fbfdff; }
+body.preview-ui .toolbar-strip input { min-width: 260px; }
+body.preview-ui .toolbar-strip .btn { min-height: 38px; border-radius: 8px; }
+body.preview-ui .toolbar-note { color: #8a9aaa; }
+body.preview-ui .panel, body.preview-ui .kpi, body.preview-ui .small-panel {
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(31, 67, 105, .055);
+}
+body.preview-ui .panel-head { min-height: 56px; height: auto; padding-inline: 18px; border-bottom-color: #edf1f5; background: #fff; }
+body.preview-ui .panel-head h2 { color: #1d3046; font-size: 15px; }
+body.preview-ui .panel-head h2:before { width: 3px; height: 16px; margin-right: 9px; background: #3974cf; }
+body.preview-ui .panel-head span { color: #8a9aaa; letter-spacing: 0; }
+body.preview-ui .panel-body { padding: 18px; }
+body.preview-ui .v-workbench { gap: 16px; }
+body.preview-ui .v-rail { border-color: #dfe7f0; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px rgba(31, 67, 105, .04); }
+body.preview-ui .v-rail__title { color: #53677d; }
+body.preview-ui .v-facet { border-radius: 8px; }
+body.preview-ui .v-facet.is-active { background: #edf4ff; color: #205db4; box-shadow: inset 3px 0 #3974cf; }
+body.preview-ui .table, body.preview-ui .opportunity-table { font-size: 13px; }
+body.preview-ui .table th, body.preview-ui .opportunity-table th { background: #eff4f9; color: #4c6178; font-size: 12px; }
+body.preview-ui .table td, body.preview-ui .opportunity-table td { padding: 14px 12px; color: #4e647b; border-bottom-color: #edf1f5; }
+body.preview-ui .table td strong, body.preview-ui .opportunity-table td strong { color: #1d3046; }
+body.preview-ui .table tr:hover td, body.preview-ui .opportunity-table tr:hover td { background: #f7fbff; }
+body.preview-ui #audiences .catalog-summary { padding: 18px 20px; margin-bottom: 20px; border-color: #e1e9f1; border-radius: 10px; background: #f7faff; }
+body.preview-ui #audiences .catalog-summary b { color: #1d3046; font-size: 16px; }
+body.preview-ui #audiences .catalog-summary span { color: #6d7f92; }
+body.preview-ui #audiences .catalog-summary-stats strong { color: #245fb7; font-size: 28px; }
+body.preview-ui #audiences .catalog-section-head { margin-top: 18px; border-bottom-color: #e8eef4; }
+body.preview-ui #audiences .v-scroll-x { border-color: #e1e9f1; border-radius: 10px; }
+body.preview-ui #audiences [data-audience-detail] .campaign-detail-summary span { border-color: #e1e9f1; border-radius: 9px; background: #f8fafc; }
+body.preview-ui .status, body.preview-ui .pill, body.preview-ui .tag { border-radius: 999px; }
+body.preview-ui .empty-state { min-height: 180px; color: #8797a8; }
+
+@media (max-width: 1180px) {
+  body.preview-ui .content { padding-inline: 24px; }
+  body.preview-ui .page-head h1 { font-size: 27px; }
+  body.preview-ui .life { min-width: 92px; }
+}
+
+/* 预览页的工作台组件优先级高于生产基线：右侧采用轻量工作区，首页仍保持原样。 */
+body.preview-ui .view:not(.dongdong-view) .page-head {
+  min-height: 0;
+  padding: 0 0 22px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.preview-ui .view:not(.dongdong-view) .page-head h1 { font-size: 30px; font-weight: 750; letter-spacing: -.035em; }
+body.preview-ui .view:not(.dongdong-view) .page-head p { margin-top: 8px; color: #6b7b8d; }
+body.preview-ui .view:not(.dongdong-view) .lifecycle {
+  min-height: 68px;
+  padding: 6px 8px;
+  margin-bottom: 14px;
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 6px 18px rgba(31, 67, 105, .045);
+}
+body.preview-ui .view:not(.dongdong-view) .lifecycle > i { color: #c4d0dc; }
+body.preview-ui .view:not(.dongdong-view) .life {
+  min-width: 100px;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: #f7fafc;
+}
+body.preview-ui .view:not(.dongdong-view) .life small { display: none; }
+body.preview-ui .view:not(.dongdong-view) .life.active { background: #edf4ff; box-shadow: inset 0 -2px #3974cf; }
+body.preview-ui .view:not(.dongdong-view) .business-subview-shell {
+  margin-bottom: 14px;
+  padding: 0 12px;
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 6px 18px rgba(31, 67, 105, .04);
+}
+body.preview-ui .view:not(.dongdong-view) .business-subview-tabs button { min-height: 48px; border-radius: 0; }
+body.preview-ui .view:not(.dongdong-view) .business-subview-tabs button.active { background: #f4f8ff; box-shadow: inset 0 -2px #3974cf; }
+body.preview-ui .view:not(.dongdong-view) .toolbar-strip {
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 6px 18px rgba(31, 67, 105, .04);
+}
+body.preview-ui .view:not(.dongdong-view) .panel,
+body.preview-ui .view:not(.dongdong-view) .small-panel {
+  border: 1px solid #dfe7f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(31, 67, 105, .055);
+}
+body.preview-ui .view:not(.dongdong-view) .panel-head {
+  min-height: 56px;
+  padding-inline: 18px;
+  border-bottom-color: #edf1f5;
+  background: #fff;
+}
+body.preview-ui .view:not(.dongdong-view) .panel-head h2 { color: #1d3046; font-size: 15px; }
+body.preview-ui .view:not(.dongdong-view) .panel-head h2:before { background: #3974cf; }
+body.preview-ui .view:not(.dongdong-view) .panel-body { padding: 18px; }
+
+/* 客群包：让清单成为主工作区，详情栏作为轻量检查器，避免右侧大面积空白。 */
+/* 客群工作台：清单才是主工作区。旧写法 `auto minmax(0,1fr) 340px` 会让左栏按内容撑到 268px、
+   详情栏固定 340px，中间表格只剩 480px（1600 宽也要左右拉）。这里锁死两栏宽度，并在 <1500
+   把详情栏降到下一行整宽，保证表格列放得下；表格本身不再强制 860px 最小宽。 */
+body.preview-ui #audiences .v-workbench { grid-template-columns: 248px minmax(0, 1fr); gap: 16px; }
+body.preview-ui #audiences .v-workbench > :nth-child(3) { grid-column: 1 / -1; }
+body.preview-ui #audiences .v-rail { min-width: 0; overflow-wrap: anywhere; }
+body.preview-ui #audiences .audience-dimension-table,
+body.preview-ui #audiences .audience-package-table { min-width: 0; }
+/* 固定表格布局：表格宽度恒等于中间栏宽度，列宽按比例分配、单元格内换行，
+   不再因为 min-content 撑出 567px 而逼用户左右拖。 */
+body.preview-ui #audiences .audience-dimension-table,
+body.preview-ui #audiences .audience-package-table {
+  table-layout: fixed;
+  width: 100%;
+}
+body.preview-ui #audiences .audience-dimension-table th:nth-child(1),
+body.preview-ui #audiences .audience-dimension-table td:nth-child(1) { width: 31%; }
+body.preview-ui #audiences .audience-dimension-table th:nth-child(2),
+body.preview-ui #audiences .audience-dimension-table td:nth-child(2) { width: 30%; }
+body.preview-ui #audiences .audience-dimension-table th:nth-child(3),
+body.preview-ui #audiences .audience-dimension-table td:nth-child(3) { width: 23%; }
+body.preview-ui #audiences .audience-dimension-table th:nth-child(4),
+body.preview-ui #audiences .audience-dimension-table td:nth-child(4) { width: 16%; }
+body.preview-ui #audiences .audience-package-table th:nth-child(1),
+body.preview-ui #audiences .audience-package-table td:nth-child(1) { width: 30%; }
+body.preview-ui #audiences .audience-package-table th:nth-child(2),
+body.preview-ui #audiences .audience-package-table td:nth-child(2) { width: 13%; }
+body.preview-ui #audiences .audience-package-table th:nth-child(3),
+body.preview-ui #audiences .audience-package-table td:nth-child(3) { width: 22%; }
+body.preview-ui #audiences .audience-package-table th:nth-child(4),
+body.preview-ui #audiences .audience-package-table td:nth-child(4) { width: 14%; }
+body.preview-ui #audiences .audience-package-table th:nth-child(5),
+body.preview-ui #audiences .audience-package-table td:nth-child(5) { width: 20%; }
+body.preview-ui #audiences .audience-dimension-table td,
+body.preview-ui #audiences .audience-package-table td {
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+/* 操作列里的按钮保持单行，宁可让列宽兜住文字，也不要把“查看组合”折成竖排。 */
+body.preview-ui #audiences .audience-dimension-table .btn,
+body.preview-ui #audiences .audience-package-table .btn {
+  max-width: 100%;
+  white-space: nowrap;
+  padding-inline: 9px;
+  font-size: 12px;
+}
+body.preview-ui #audiences .audience-package-table td small .package-source-tag {
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+/* 操作列的 <td> 本身带 .production-actions，全局把它设成了 display:flex，
+   在 table-layout:fixed 下会脱离列宽算法（实测 td 只有 24px 宽）。这里恢复成表格单元格，
+   按钮各自单行、按钮之间允许换行。 */
+body.preview-ui #audiences .audience-package-table td.production-actions,
+body.preview-ui #audiences .audience-dimension-table td.production-actions {
+  display: table-cell;
+  white-space: normal;
+}
+body.preview-ui #audiences .audience-package-table td.production-actions .btn + .btn { margin-top: 6px; }
+body.preview-ui #audiences .audience-dimension-table td:nth-child(3) small {
+  display: block;
+  margin-top: 3px;
+  color: #8a9eab;
+  font-size: 11px;
+}
+
+@media (min-width: 1500px) {
+  body.preview-ui #audiences .v-workbench { grid-template-columns: 248px minmax(0, 1fr) 320px; }
+  body.preview-ui #audiences .v-workbench > :nth-child(3) { grid-column: auto; }
+}
+
+/* 客群包 / 圈选记录页签下左侧筛选栏会被 hidden（筛选只作用于画像字段），
+   但网格仍保留 248px 空轨道，清单就被推到中间、左边留一大块空白。
+   这里收掉空轨道：清单回到第 1 轨。≥1500 才保留右侧详情栏，
+   1181–1499 沿用上面的规则让详情落到第二行整宽；≤1180 本来就是单列。
+   （上一版把详情按 nth-child 钉到第 2 轨，在 ~1180 宽度下把清单压成 284px，已回退重做。） */
+body.preview-ui #audiences .v-workbench:has(> .v-rail[hidden]) > [data-audience-list] { grid-column: 1; }
+@media (min-width: 1181px) {
+  body.preview-ui #audiences .v-workbench:has(> .v-rail[hidden]) { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1500px) {
+  body.preview-ui #audiences .v-workbench:has(> .v-rail[hidden]) { grid-template-columns: minmax(0, 1fr) 320px; }
+  body.preview-ui #audiences .v-workbench:has(> .v-rail[hidden]) > [data-audience-detail] { grid-column: 2; }
+}
+body.preview-ui #audiences [data-audience-detail] {
+  min-height: 260px;
+  border-color: #dfe7f0;
+  background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+}
+body.preview-ui #audiences [data-audience-detail] .panel-head { background: transparent; }
+body.preview-ui #audiences [data-audience-detail] .panel-body { min-height: 190px; }
+body.preview-ui #audiences .catalog-summary {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 20px;
+  border: 1px solid #dbe8f5;
+  border-radius: 12px;
+  background: linear-gradient(110deg, #f3f8ff 0%, #fbfdff 66%, #f8fbff 100%);
+}
+body.preview-ui #audiences .catalog-summary:before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #3974cf, #6bc5d8);
+}
+body.preview-ui #audiences .catalog-summary b { font-size: 16px; color: #162b45; }
+body.preview-ui #audiences .catalog-summary span { color: #60758a; }
+body.preview-ui #audiences .catalog-summary-stats strong { color: #245fb7; font-size: 28px; }
+body.preview-ui #audiences .catalog-section-head { margin-top: 18px; border-bottom-color: #e8eef4; }
+body.preview-ui #audiences .audience-package-table,
+body.preview-ui #audiences .audience-dimension-table { border-collapse: separate; border-spacing: 0; }
+body.preview-ui #audiences .audience-package-table th,
+body.preview-ui #audiences .audience-dimension-table th {
+  color: #4c6178 !important;
+  background: #eff4f9 !important;
+  border-bottom: 1px solid #dfe7f0 !important;
+  font-size: 12px;
+  letter-spacing: .01em;
+}
+body.preview-ui #audiences .audience-package-table td,
+body.preview-ui #audiences .audience-dimension-table td {
+  padding: 14px 12px;
+  color: #4e647b;
+  border-bottom: 1px solid #edf1f5;
+}
+body.preview-ui #audiences .audience-package-table tr:hover td,
+body.preview-ui #audiences .audience-dimension-table tr:hover td { background: #f7fbff; }
+body.preview-ui #audiences .audience-package-table .btn,
+body.preview-ui #audiences .audience-dimension-table .btn { min-height: 32px; border-radius: 8px; color: #245fb7; }
+body.preview-ui #audiences .v-scroll-x { border-color: #dfe7f0; border-radius: 10px; }
+
+/* 所有预览内页统一采用浅色表头，保留行分隔和状态色，降低旧后台感。 */
+body.preview-ui .view:not(.dongdong-view) .table th,
+body.preview-ui .view:not(.dongdong-view) .v-table th,
+body.preview-ui .view:not(.dongdong-view) .opportunity-table th {
+  background: #eff4f9 !important;
+  color: #4c6178 !important;
+  border-bottom: 1px solid #dfe7f0 !important;
+  text-shadow: none;
+}
+body.preview-ui .view:not(.dongdong-view) .table td,
+body.preview-ui .view:not(.dongdong-view) .v-table td,
+body.preview-ui .view:not(.dongdong-view) .opportunity-table td {
+  border-bottom-color: #edf1f5;
+}
+body.preview-ui .view:not(.dongdong-view) .table tr:hover td,
+body.preview-ui .view:not(.dongdong-view) .v-table tr:hover td,
+body.preview-ui .view:not(.dongdong-view) .opportunity-table tr:hover td { background: #f7fbff; }
+
+@media (max-width: 1180px) {
+  body.preview-ui #audiences .v-workbench { grid-template-columns: minmax(0, 1fr); }
+  body.preview-ui #audiences [data-audience-detail] { min-height: 220px; }
+}
+
+
+/* 全局业务对象检索：仅作用于内页工作台，首页浮层保持原样 */
+body.preview-ui #globalSearchOverlay { --gs-ink:#102a43; --gs-muted:#6b7d92; --gs-blue:#2563eb; padding:clamp(56px,10vh,112px) 24px 24px; }
+body.preview-ui #globalSearchOverlay .gs-backdrop { background:rgba(10,28,53,.48); backdrop-filter:blur(12px) saturate(115%); }
+body.preview-ui #globalSearchOverlay .gs-panel { width:min(860px,100%); max-height:min(78vh,760px); border:1px solid rgba(255,255,255,.8); border-radius:22px; background:#fff; box-shadow:0 30px 90px rgba(3,24,55,.3),0 8px 24px rgba(3,24,55,.12); }
+body.preview-ui #globalSearchOverlay .gs-panel::before { content:""; position:absolute; inset:0 0 auto; height:3px; background:linear-gradient(90deg,#17498f,#4b8df8 55%,#a9d8ff); }
+body.preview-ui #globalSearchOverlay .gs-title { margin:0; padding:24px 28px 14px; color:var(--gs-ink); font-size:18px; font-weight:700; letter-spacing:-.02em; }
+body.preview-ui #globalSearchOverlay .gs-title[hidden],body.preview-ui #globalSearchOverlay .gs-workbench-intro[hidden]{display:none;}
+body.preview-ui #globalSearchOverlay .gs-workbench-intro { padding:26px 28px 17px; }
+body.preview-ui #globalSearchOverlay .gs-eyebrow { display:flex; align-items:center; gap:7px; color:#4675af; font-size:11px; font-weight:700; letter-spacing:.1em; }
+body.preview-ui #globalSearchOverlay .gs-eyebrow span { width:7px; height:7px; border-radius:50%; background:#367ce7; box-shadow:0 0 0 4px #e6f0ff; }
+body.preview-ui #globalSearchOverlay .gs-workbench-intro h2 { margin:10px 0 5px; color:var(--gs-ink); font-size:22px; letter-spacing:-.03em; }
+body.preview-ui #globalSearchOverlay .gs-workbench-intro p { margin:0; color:var(--gs-muted); font-size:12px; }
+body.preview-ui #globalSearchOverlay .gs-head { min-height:60px; margin:0 20px 12px; padding:0 14px 0 17px; border:1px solid #cdddf1; border-radius:14px; background:linear-gradient(180deg,#fbfdff,#f5f9fe); box-shadow:0 4px 14px rgba(38,91,157,.06),inset 0 1px 0 rgba(255,255,255,.9); }
+body.preview-ui #globalSearchOverlay .gs-head:focus-within { border-color:#6d9fe8; box-shadow:0 0 0 4px rgba(37,99,235,.11),0 8px 20px rgba(38,91,157,.08); }
+body.preview-ui #globalSearchOverlay .gs-head-icon { width:21px; height:21px; color:var(--gs-blue); }
+body.preview-ui #globalSearchOverlay .gs-head input { height:38px; padding:0; border:0; outline:0; background:transparent; color:var(--gs-ink); font-size:17px; }
+body.preview-ui #globalSearchOverlay .gs-head input::placeholder { color:#91a2b6; }
+body.preview-ui #globalSearchOverlay .gs-close { width:30px; height:30px; border:1px solid #d8e3ef; border-radius:9px; background:#fff; color:#7890a7; }
+body.preview-ui #globalSearchOverlay .gs-close:hover { border-color:#9db9dc; background:#f4f8fd; color:#17498f; }
+body.preview-ui #globalSearchOverlay .gs-close:focus-visible { outline:0; box-shadow:0 0 0 3px rgba(37,99,235,.18); }
+body.preview-ui #globalSearchOverlay .gs-suggest { min-height:52px; padding:0 28px 16px; border-bottom:1px solid #edf2f8; }
+body.preview-ui #globalSearchOverlay .gs-suggest-label { margin-right:4px; color:#73869c; font-size:12px; font-weight:600; }
+body.preview-ui #globalSearchOverlay .gs-pill { padding:6px 11px; border:1px solid #dce7f4; border-radius:999px; background:#f7faff; color:#45617e; font-size:12px; }
+body.preview-ui #globalSearchOverlay .gs-pill:hover { border-color:#8eb6ee; background:#edf5ff; color:#17498f; transform:translateY(-1px); }
+body.preview-ui #globalSearchOverlay .gs-results { min-height:180px; padding:18px 20px; background:#f7faff; }
+body.preview-ui #globalSearchOverlay .search-card { padding:15px 17px; border:1px solid #e1e9f3; border-radius:13px; background:#fff; box-shadow:0 2px 7px rgba(15,48,88,.025); transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease; }
+body.preview-ui #globalSearchOverlay .search-card:hover { border-color:#a9c7ee; box-shadow:0 8px 20px rgba(27,82,146,.09); transform:translateY(-1px); }
+body.preview-ui #globalSearchOverlay .search-card-type { padding:3px 8px; border-radius:6px; background:#edf4ff; color:#2563b8; font-size:11px; font-weight:700; }
+body.preview-ui #globalSearchOverlay .search-card h3 { color:#142d49; font-size:14px; font-weight:700; }
+body.preview-ui #globalSearchOverlay .search-card-snippet { color:#5d7188; font-size:12px; line-height:1.65; }
+body.preview-ui #globalSearchOverlay .search-card-tags { gap:6px; margin-top:10px; }
+body.preview-ui #globalSearchOverlay .search-card .v-chip { padding:3px 7px; border-radius:5px; background:#f1f5f9; color:#71839a; font-size:11px; }
+body.preview-ui #globalSearchOverlay .gs-empty { min-height:190px; padding:34px 16px; color:#70839a; }
+body.preview-ui #globalSearchOverlay .gs-empty svg { width:30px; height:30px; color:#96b4d8; }
+body.preview-ui #globalSearchOverlay .gs-empty p { color:#3e5874; font-size:14px; font-weight:700; }
+body.preview-ui #globalSearchOverlay .gs-empty span { font-size:12px; }
+body.preview-ui #globalSearchOverlay .gs-foot { min-height:56px; padding:0 22px 0 28px; border-top:1px solid #e5edf6; background:#fff; }
+body.preview-ui #globalSearchOverlay .gs-foot span { color:#74869a; font-size:12px; }
+body.preview-ui #globalSearchOverlay .gs-more { padding:8px 12px; border:1px solid #cfe0f6; border-radius:8px; background:#f3f8ff; color:#1f5eaf; font-size:12px; font-weight:700; }
+body.preview-ui #globalSearchOverlay .gs-more:hover { border-color:#8db6e9; background:#eaf3ff; color:#17498f; }
+body.preview-ui #globalSearchOverlay .gs-more:focus-visible { outline:0; box-shadow:0 0 0 3px rgba(37,99,235,.14); }
+@media (max-width:680px) { body.preview-ui #globalSearchOverlay { padding:0; } body.preview-ui #globalSearchOverlay .gs-panel { width:100%; max-height:100vh; border:0; border-radius:0; } body.preview-ui #globalSearchOverlay .gs-title,body.preview-ui #globalSearchOverlay .gs-workbench-intro { padding-left:18px; padding-right:18px; } body.preview-ui #globalSearchOverlay .gs-head { margin:0 14px 10px; } body.preview-ui #globalSearchOverlay .gs-suggest { padding-left:18px; padding-right:18px; } body.preview-ui #globalSearchOverlay .gs-results { padding:14px; } body.preview-ui #globalSearchOverlay .gs-foot { padding:0 16px; } }
+
+
+/* 侧边栏滚动条：窄轨道、透明底，与深蓝导航融为一体 */
+body.preview-ui .preview-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(176, 218, 244, .68) transparent;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar-thumb {
+  min-height: 54px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(176, 218, 244, .68);
+  background-clip: padding-box;
+}
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(207, 235, 250, .92);
+  background-clip: padding-box;
+}
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar-corner { background: transparent; }
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+/* 年长用户阅读优化：内页正文与业务标签整体放大，首页不受影响 */
+body.preview-ui { font-size: 15px; }
+body.preview-ui .topnav .brand-text b { font-size: 17px; }
+body.preview-ui .topnav .brand-text span { font-size: 11px; }
+body.preview-ui .topnav > .user b { font-size: 13px; }
+body.preview-ui .topnav > .user span { font-size: 12px; }
+body.preview-ui .crumb { font-size: 14px; }
+body.preview-ui .crumb strong { font-size: 14px; }
+body.preview-ui .global-search { font-size: 14px; }
+body.preview-ui .preview-home span { font-size: 14px; }
+body.preview-ui .preview-home small { font-size: 11px; }
+body.preview-ui .preview-nav-label { font-size: 12px; }
+body.preview-ui .preview-nav-items button { font-size: 14px; }
+body.preview-ui .preview-tenant b { font-size: 12px; }
+body.preview-ui .preview-tenant small, body.preview-ui .preview-exit { font-size: 11px; }
+body.preview-ui .view:not(.dongdong-view) .page-head h1 { font-size: 32px; line-height: 1.2; }
+body.preview-ui .view:not(.dongdong-view) .page-head p { font-size: 15px; line-height: 1.6; }
+body.preview-ui .life b { font-size: 22px; }
+body.preview-ui .life span { font-size: 15px; }
+body.preview-ui .business-subview-tabs button { font-size: 15px; }
+body.preview-ui .business-subview-shell > p { font-size: 13px; }
+body.preview-ui .panel-head h2 { font-size: 18px; }
+body.preview-ui .panel-head span { font-size: 13px; }
+body.preview-ui .panel-body { font-size: 15px; }
+body.preview-ui .kpi span { font-size: 14px; }
+body.preview-ui .kpi b { font-size: 30px; }
+body.preview-ui .kpi .trend { font-size: 13px; }
+body.preview-ui .btn, body.preview-ui .icon-btn { font-size: 14px; }
+body.preview-ui .toolbar-strip input, body.preview-ui .toolbar-strip select { font-size: 14px; }
+body.preview-ui .toolbar-note { font-size: 13px; }
+body.preview-ui .table, body.preview-ui .opportunity-table { font-size: 14px; }
+body.preview-ui .table th, body.preview-ui .opportunity-table th { font-size: 13px; }
+body.preview-ui .status, body.preview-ui .pill, body.preview-ui .tag { font-size: 13px; }
+body.preview-ui .empty-state { font-size: 14px; }
+
+/* 第二档阅读放大：标题保持原尺寸，其余内页业务文字再提升一级 */
+body.preview-ui { font-size: 16px; }
+body.preview-ui .topnav .brand-text b { font-size: 18px; }
+body.preview-ui .topnav .brand-text span { font-size: 12px; }
+body.preview-ui .topnav > .user b { font-size: 14px; }
+body.preview-ui .topnav > .user span { font-size: 13px; }
+body.preview-ui .crumb, body.preview-ui .crumb strong { font-size: 15px; }
+body.preview-ui .global-search { font-size: 15px; }
+body.preview-ui .preview-home span { font-size: 15px; }
+body.preview-ui .preview-home small { font-size: 12px; }
+body.preview-ui .preview-nav-label { font-size: 13px; }
+body.preview-ui .preview-nav-items button { font-size: 15px; }
+body.preview-ui .preview-tenant b { font-size: 13px; }
+body.preview-ui .preview-tenant small, body.preview-ui .preview-exit { font-size: 12px; }
+body.preview-ui .view:not(.dongdong-view) .page-head h1 { font-size: 30px; }
+body.preview-ui .view:not(.dongdong-view) .page-head p { font-size: 16px; }
+body.preview-ui .life b { font-size: 23px; }
+body.preview-ui .life span { font-size: 17px; }
+body.preview-ui .business-subview-tabs button { font-size: 17px; }
+body.preview-ui .business-subview-shell > p { font-size: 14px; }
+body.preview-ui .panel-head h2 { font-size: 20px; }
+body.preview-ui .panel-head span { font-size: 15px; }
+body.preview-ui .panel-body { font-size: 16px; }
+body.preview-ui .kpi span { font-size: 15px; }
+body.preview-ui .kpi b { font-size: 32px; }
+body.preview-ui .kpi .trend { font-size: 14px; }
+body.preview-ui .btn, body.preview-ui .icon-btn { font-size: 15px; }
+body.preview-ui .toolbar-strip input, body.preview-ui .toolbar-strip select { font-size: 15px; }
+body.preview-ui .toolbar-note { font-size: 14px; }
+body.preview-ui .table, body.preview-ui .opportunity-table { font-size: 15px; }
+body.preview-ui .table th, body.preview-ui .opportunity-table th { font-size: 14px; }
+body.preview-ui .status, body.preview-ui .pill, body.preview-ui .tag { font-size: 14px; }
+body.preview-ui .empty-state { font-size: 15px; }
+
+/* 内页组件级阅读优化：覆盖显式写死的小字号 */
+body.preview-ui .view:not(.dongdong-view) .small-panel { min-height: 138px; padding: 18px; gap: 10px; justify-content: flex-start; }
+body.preview-ui .view:not(.dongdong-view) .small-panel b { font-size: 18px; line-height: 1.35; }
+body.preview-ui .view:not(.dongdong-view) .small-panel span,
+body.preview-ui .view:not(.dongdong-view) .small-panel em { font-size: 16px; line-height: 1.5; }
+body.preview-ui .view:not(.dongdong-view) .catalog-card { min-height: 184px; padding: 16px; display: flex; flex-direction: column; }
+body.preview-ui .view:not(.dongdong-view) .catalog-card strong { margin: 12px 0 6px; font-size: 17px; line-height: 1.4; }
+body.preview-ui .view:not(.dongdong-view) .catalog-card small { font-size: 15px; line-height: 1.45; }
+body.preview-ui .view:not(.dongdong-view) .catalog-card-meta { margin-top: auto; font-size: 15px; }
+body.preview-ui .view:not(.dongdong-view) .catalog-card .btn { font-size: 14px; }
+body.preview-ui .view:not(.dongdong-view) .catalog-summary b,
+body.preview-ui .view:not(.dongdong-view) .catalog-section-head b { font-size: 18px; }
+body.preview-ui .view:not(.dongdong-view) .catalog-summary span,
+body.preview-ui .view:not(.dongdong-view) .catalog-section-head span,
+body.preview-ui .view:not(.dongdong-view) .catalog-foot { font-size: 15px; line-height: 1.55; }
+body.preview-ui .view:not(.dongdong-view) .insight-source-config,
+body.preview-ui .view:not(.dongdong-view) .insight-run-config { padding: 18px; }
+body.preview-ui .view:not(.dongdong-view) .section-kicker { font-size: 15px; }
+body.preview-ui .view:not(.dongdong-view) .insight-source-row { min-height: 78px; padding: 13px 14px; }
+body.preview-ui .view:not(.dongdong-view) .insight-source-row b { font-size: 17px; }
+body.preview-ui .view:not(.dongdong-view) .insight-source-row small { font-size: 15px; line-height: 1.45; }
+body.preview-ui .view:not(.dongdong-view) .insight-source-form input,
+body.preview-ui .view:not(.dongdong-view) .insight-source-form select,
+body.preview-ui .view:not(.dongdong-view) .insight-source-form textarea { font-size: 15px; }
+body.preview-ui .view:not(.dongdong-view) .insight-prompt { min-height: 148px; font-size: 16px; line-height: 1.7; }
+body.preview-ui .view:not(.dongdong-view) .insight-run-actions > span { font-size: 14px; }
+body.preview-ui .view:not(.dongdong-view) .insight-agent-lane { font-size: 14px; }
+body.preview-ui .view:not(.dongdong-view) .insight-history .table small { font-size: 13px; }
+body.preview-ui .view:not(.dongdong-view) .approval-item span:nth-child(2) b,
+body.preview-ui .view:not(.dongdong-view) .role-item span { font-size: 16px; }
+body.preview-ui .view:not(.dongdong-view) .approval-item small,
+body.preview-ui .view:not(.dongdong-view) .role-item b { font-size: 14px; }
+body.preview-ui .view:not(.dongdong-view) .detail-grid,
+body.preview-ui .view:not(.dongdong-view) .catalog-detail-list { font-size: 15px; }
+body.preview-ui .view:not(.dongdong-view) .detail-block h3 { font-size: 18px; }
+body.preview-ui .view:not(.dongdong-view) .ai-result b { font-size: 15px; }
+body.preview-ui .view:not(.dongdong-view) .ai-result p { font-size: 14px; }
+body.preview-ui .view:not(.dongdong-view) .empty-state b { font-size: 16px; }
+body.preview-ui .view:not(.dongdong-view) .empty-state span { font-size: 14px; }
+
+/* 同一行模块统一等高，底部边缘对齐；堆叠列仍保持自然间距 */
+body.preview-ui .view:not(.dongdong-view) .grid2,
+body.preview-ui .view:not(.dongdong-view) .grid3,
+body.preview-ui .view:not(.dongdong-view) .v-workbench,
+body.preview-ui .view:not(.dongdong-view) .insight-console-grid,
+body.preview-ui .view:not(.dongdong-view) .insight-run-grid { align-items: stretch; }
+body.preview-ui .view:not(.dongdong-view) .grid2 > .panel,
+body.preview-ui .view:not(.dongdong-view) .grid3 > .panel,
+body.preview-ui .view:not(.dongdong-view) .grid3 > .small-panel,
+body.preview-ui .view:not(.dongdong-view) .v-workbench > .panel,
+body.preview-ui .view:not(.dongdong-view) .v-workbench > section,
+body.preview-ui .view:not(.dongdong-view) .insight-console-grid > section,
+body.preview-ui .view:not(.dongdong-view) .insight-run-grid > section { height: 100%; box-sizing: border-box; }
+body.preview-ui .view:not(.dongdong-view) .grid2 > [data-ov-col] { display: flex; flex-direction: column; gap: 18px; }
+body.preview-ui .view:not(.dongdong-view) .grid2 > [data-ov-col] > .panel { flex: 1 1 0; margin-bottom: 0; }
+body.preview-ui .view:not(.dongdong-view) .catalog-grid { align-items: stretch; }
+body.preview-ui .view:not(.dongdong-view) .catalog-grid > .catalog-card { height: 100%; }
+body.preview-ui .view:not(.dongdong-view) .catalog-card-meta { align-items: center; }
+
+/* 总览页上下堆叠模块保持内容高度，避免等高规则把面板压成边线 */
+body.preview-ui #overview .grid2 > [data-ov-col] {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(180px, auto));
+  gap: 18px;
+  align-content: stretch;
+}
+body.preview-ui #overview .grid2 > [data-ov-col] > .panel {
+  flex: none;
+  height: auto;
+  min-height: 180px;
+  margin-bottom: 0;
+}
+
+/* 洞察工作台完整标题层级：每个分组的上级标题都不小于其下级条目 */
+body.preview-ui #opportunities .opportunity-insight-console .panel-head h2 {
+  font-size: 22px;
+  line-height: 1.35;
+}
+body.preview-ui #opportunities .opportunity-insight-console > .panel-head {
+  height: auto;
+  min-height: 88px;
+  align-items: flex-start;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  overflow: visible;
+}
+body.preview-ui #opportunities .opportunity-insight-console > .panel-head > div {
+  min-width: 0;
+}
+body.preview-ui #opportunities .opportunity-insight-console > .panel-head > .insight-badge {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+body.preview-ui #opportunities .opportunity-insight-console .panel-head > span { font-size: 15px; }
+body.preview-ui #opportunities .opportunity-insight-console .section-kicker {
+  font-size: 20px;
+  line-height: 1.35;
+  letter-spacing: .02em;
+}
+body.preview-ui #opportunities .opportunity-insight-console .insight-source-row b {
+  font-size: 18px;
+  line-height: 1.4;
+}
+body.preview-ui #opportunities .opportunity-insight-console .insight-source-row small,
+body.preview-ui #opportunities .opportunity-insight-console .insight-history .table small {
+  font-size: 15px;
+  line-height: 1.45;
+}
+body.preview-ui #opportunities .opportunity-insight-console .insight-agent-lane,
+body.preview-ui #opportunities .opportunity-insight-console .insight-run-actions > span {
+  font-size: 15px;
+  line-height: 1.45;
+}
+body.preview-ui #opportunities .opportunity-insight-console .insight-agent-lane span,
+body.preview-ui #opportunities .opportunity-insight-console .insight-agent-lane b {
+  font-size: 15px;
+  line-height: 1.35;
+}
+body.preview-ui #opportunities .opportunity-insight-console .insight-history .table th {
+  font-size: 15px;
+}
+body.preview-ui #opportunities .opportunity-insight-console .insight-history .table td {
+  font-size: 15px;
+}
+body.preview-ui .production-modal .insight-run-detail .production-modal-head b {
+  font-size: 20px;
+  line-height: 1.35;
+}
+body.preview-ui .production-modal .insight-run-detail .production-modal-head small {
+  font-size: 14px;
+  line-height: 1.45;
+}
+body.preview-ui .production-modal .insight-run-detail h3 {
+  font-size: 18px;
+  line-height: 1.4;
+}
+body.preview-ui .production-modal .insight-run-detail .insight-step-list b,
+body.preview-ui .production-modal .insight-run-detail .insight-agent-card b {
+  font-size: 16px;
+  line-height: 1.4;
+}
+body.preview-ui .production-modal .insight-run-detail .insight-step-list small,
+body.preview-ui .production-modal .insight-run-detail .insight-agent-card p,
+body.preview-ui .production-modal .insight-run-detail .insight-agent-card small {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* 最终覆盖：固定助手球下方必须保留安全留白，避免内页最后一行被遮挡。 */
+body.preview-ui .content { padding-bottom: 136px !important; }
+
+/* 窄屏（≤820）助手球避让：桌面那套 196px 右安全区在窄屏会吃掉三成宽度，所以这里把球
+   收成一枚 44px 圆标（"东东"二字隐藏，按钮仍有 title/aria-label="打开东东"），
+   并在内容区右侧留出 76px 同宽安全区，保证任意滚动位置都不压到表格按钮与空状态。 */
+@media (max-width: 820px) {
+  body.preview-ui .assistant-fab {
+    right: 16px;
+    bottom: 16px;
+    gap: 0;
+    width: 44px;
+    min-width: 44px;   /* 覆盖 ui-production-v2.css:125 的 118px，否则球横向占据宽于安全区 */
+  }
+
+  body.preview-ui .assistant-fab > span {
+    display: none;
+  }
+
+  body.preview-ui .assistant-fab .assistant-fab-mark {
+    width: 44px;
+    height: 44px;
+  }
+
+  body.preview-ui .content {
+    padding-right: 76px !important;
+  }
+}
+
+/* 智能检索：两栏下沿必须同线。`#search .search-layout` 用的是 align-items:start，
+   左栏按内容长、右栏按内容短，空结果时右边先结束，看起来就是"下端没对齐"。
+   改成等高：结果面板吃掉剩余高度，索引说明钉在左栏底部。 */
+body.preview-ui #search .search-layout { align-items: stretch; }
+body.preview-ui #search .search-main { display: flex; flex-direction: column; min-width: 0; }
+body.preview-ui #search .search-main > .panel { flex: 1 1 auto; display: flex; flex-direction: column; margin-bottom: 0; }
+body.preview-ui #search .search-main > .panel > .panel-body { flex: 1 1 auto; }
+body.preview-ui #search .search-main .empty-state { height: 100%; }
+body.preview-ui #search .v-rail__note { margin-top: auto; padding-top: 14px; }
+body.preview-ui #search .v-rail { margin-bottom: 0; }
+
+/* 执行监控：渠道任务 / 回执与补偿 各自只显示 .grid2 里的一块面板，另一块被 hidden，
+   但 1.35fr/.85fr 两条轨道都还在，所以面板只占 706px、右边空出 444px，
+   与「执行批次」整宽的概览面板对不齐。子面板被隐藏时收成单列。 */
+body.preview-ui #execution .grid2:has(> [data-subview-panel][hidden]) { grid-template-columns: minmax(0, 1fr); }
+/* 渠道执行状态这张表原本按 min-content 撑到 896px，1176 宽以下就要左右拖。
+   收成固定布局 + 百分比列宽，随面板宽度自适应。 */
+body.preview-ui #execution .grid2 .table {
+  table-layout: fixed;
+  width: 100%;
+  min-width: 0;
+}
+body.preview-ui #execution .grid2 .table th:nth-child(1), body.preview-ui #execution .grid2 .table td:nth-child(1):not([colspan]) { width: 17%; }
+body.preview-ui #execution .grid2 .table th:nth-child(2), body.preview-ui #execution .grid2 .table td:nth-child(2):not([colspan]) { width: 16%; }
+body.preview-ui #execution .grid2 .table th:nth-child(3), body.preview-ui #execution .grid2 .table td:nth-child(3):not([colspan]) { width: 15%; }
+body.preview-ui #execution .grid2 .table th:nth-child(4), body.preview-ui #execution .grid2 .table td:nth-child(4):not([colspan]) { width: 13%; }
+body.preview-ui #execution .grid2 .table th:nth-child(5), body.preview-ui #execution .grid2 .table td:nth-child(5):not([colspan]) { width: 17%; }
+body.preview-ui #execution .grid2 .table th:nth-child(6), body.preview-ui #execution .grid2 .table td:nth-child(6):not([colspan]) { width: 22%; }
+body.preview-ui #execution .grid2 .table th, body.preview-ui #execution .grid2 .table td { overflow-wrap: anywhere; }
+/* 空状态行是 colspan=6 的单元格，不能被上面的列宽百分比压成竖排。 */
+body.preview-ui #execution .grid2 .table td[colspan] { width: auto; }
+/* 防呆（今天踩了两次）：ui-workbench.css 把 .table-empty / .production-actions 设成
+   display:flex，而这两个类会直接挂在 <td> 上；在 table-layout:fixed 下 flex 单元格
+   会脱离列宽算法、塌成第一列的宽度，空状态文案就被挤成竖排。恢复成表格单元格。 */
+body.preview-ui table td.table-empty,
+body.preview-ui table td.empty-action,
+body.preview-ui table td.production-actions {
+  display: table-cell !important;   /* 对手是 :is(.view:not(.dongdong-view),…) .table-empty，特异度 (0,3,0)，只能压 */
+  text-align: center;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+/* 通用：内页里两轨的 .grid2 / 权限两栏布局，只要有一块面板被 subview 隐藏，
+   剩下那块就不该继续被关在原来的窄轨里（执行监控、权限与审计、效果复盘三处同因）。 */
+body.preview-ui .view:not(.dongdong-view) .grid2:has(> [hidden]),
+body.preview-ui .view:not(.dongdong-view) .insight-console-grid:has(> [hidden]),
+body.preview-ui .view:not(.dongdong-view) .insight-run-grid:has(> [hidden]),
+body.preview-ui #permissions .permission-layout:has(> [data-subview-panel][hidden]) { grid-template-columns: minmax(0, 1fr); }
+body.preview-ui #permissions .permission-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 24px;
+}
+body.preview-ui #permissions .permission-summary > div {
+  display: flex;
+  min-width: 96px;
+  flex-direction: column;
+  gap: 4px;
+}
+body.preview-ui #permissions .permission-summary span { color: #6f8396; font-size: 12px; }
+body.preview-ui #permissions .permission-summary b { color: #142f4a; font-size: 20px; line-height: 1.25; }
+body.preview-ui #permissions .permission-table th,
+body.preview-ui #permissions .permission-table td,
+body.preview-ui #permissions .role-item,
+body.preview-ui #permissions .table { font-size: 14px; }
+/* 角色行只有「名称 + 人数」两个子元素，套不上 .role-item 默认的 32px 图标轨
+   （ui-workbench.css:673 的 32px minmax(0,1fr) auto 是给带图标的列表用的），
+   名称会被压进 32px 轨道竖排。按实际结构给两轨。 */
+body.preview-ui #permissions .role-list .role-item { grid-template-columns: minmax(0, 1fr) auto; }
+body.preview-ui #permissions .role-list .role-item span { min-width: 0; }
+body.preview-ui #permissions .role-list .role-item b { font-size: 14px; color: #6f8396; }
+body.preview-ui #permissions .permission-table th { color: #4c6178; font-size: 13px; }
+body.preview-ui #permissions .role-item b { font-size: 13px; }
+body.preview-ui #permissions .scope-box p,
+body.preview-ui #permissions .table small { font-size: 13px; }
+
+/* 模型配置页按业务阅读顺序纵向排列：服务清单 → 新增模型服务 → 可用性与用量。 */
+body.preview-ui #models .production-grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 18px;
+}
+body.preview-ui #models .production-grid > .panel { width: 100%; min-width: 0; }
+body.preview-ui #models .model-provider-card {
+  grid-template-columns: minmax(260px, 1.15fr) minmax(300px, .85fr) auto;
+}
+body.preview-ui #models .model-provider-main,
+body.preview-ui #models .model-provider-meta,
+body.preview-ui #models .model-provider-actions { min-width: 0; }
+@media (max-width: 1280px) {
+  body.preview-ui #models .model-provider-card { grid-template-columns: minmax(0, 1fr) auto; }
+  body.preview-ui #models .model-provider-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* 配置类页面最终对齐层：新增页面沿用内页的 16px 正文基准，
+   清单卡片采用固定轨道，操作按钮数量变化时不会再把中间信息列推来推去。 */
+body.preview-ui #models .model-provider-list {
+  gap: 12px;
+  padding: 0;
+}
+body.preview-ui #models .model-provider-card {
+  grid-template-columns: 38% 28% minmax(0, 34%);
+  align-items: stretch;
+  column-gap: 14px;
+  padding: 16px 18px;
+}
+body.preview-ui #models .model-provider-main,
+body.preview-ui #models .model-provider-meta,
+body.preview-ui #models .model-provider-actions {
+  min-width: 0;
+  align-content: center;
+}
+body.preview-ui #models .model-provider-main strong {
+  font-size: 18px;
+  line-height: 1.45;
+}
+body.preview-ui #models .model-provider-id {
+  font-size: 15px;
+  line-height: 1.5;
+}
+body.preview-ui #models .model-provider-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(92px, .8fr) minmax(70px, .55fr);
+  align-items: center;
+  gap: 8px 14px;
+  color: #36556d;
+  font-size: 15px;
+  line-height: 1.5;
+}
+body.preview-ui #models .model-provider-meta > span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body.preview-ui #models .model-provider-meta > span:nth-child(1) { grid-column: 1; }
+body.preview-ui #models .model-provider-meta > span:nth-child(2) { grid-column: 2; }
+body.preview-ui #models .model-provider-meta > span:nth-child(3) { grid-column: 3; }
+body.preview-ui #models .model-provider-meta em {
+  color: #71879a;
+  font-size: 14px;
+}
+body.preview-ui #models .model-provider-meta .status {
+  font-size: 14px;
+}
+body.preview-ui #models .model-provider-actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+body.preview-ui #models .model-provider-actions .btn {
+  min-height: 40px;
+  padding-inline: 12px;
+  font-size: 15px;
+}
+body.preview-ui #models .config-entry-body,
+body.preview-ui #tenants .config-entry-body,
+body.preview-ui #models .mineru-panel .config-entry-body {
+  min-height: 0;
+  gap: 20px;
+  padding: 20px;
+}
+body.preview-ui #models .config-entry-card,
+body.preview-ui #tenants .config-entry-card {
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  padding: 16px;
+}
+body.preview-ui #models .config-entry-icon,
+body.preview-ui #tenants .config-entry-icon {
+  width: 48px;
+  height: 48px;
+}
+body.preview-ui #models .config-entry-card b,
+body.preview-ui #tenants .config-entry-card b {
+  font-size: 18px;
+  line-height: 1.45;
+}
+body.preview-ui #models .config-entry-card p,
+body.preview-ui #tenants .config-entry-card p {
+  margin: 8px 0 6px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+body.preview-ui #models .config-entry-card small,
+body.preview-ui #tenants .config-entry-card small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+body.preview-ui #models .config-entry-button,
+body.preview-ui #tenants .config-entry-button {
+  min-height: 40px;
+  font-size: 15px;
+}
+
+/* 三个新增治理页面使用同一条纵向阅读轴，面板内部左边线和标题基线保持一致。 */
+body.preview-ui {
+  font-family: var(--wb-fam);
+}
+body.preview-ui #imports .ingestion-workbench,
+body.preview-ui #tenants .production-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+body.preview-ui #imports .ingestion-entry,
+body.preview-ui #imports .pipeline-queue-panel,
+body.preview-ui #imports .pipeline-history-panel,
+body.preview-ui #tenants .production-grid > .panel {
+  grid-column: 1;
+  width: 100%;
+  min-width: 0;
+}
+body.preview-ui #imports .pipeline-dropzone b { font-size: 18px; }
+body.preview-ui #imports .pipeline-dropzone p { font-size: 15px; line-height: 1.6; }
+body.preview-ui #imports .pipeline-dropzone small { font-size: 14px; }
+body.preview-ui #imports .pipeline-flow { height: 64px; gap: 14px; }
+body.preview-ui #imports .pipeline-flow span { font-size: 14px; }
+body.preview-ui #imports .pipeline-empty b { font-size: 16px; }
+body.preview-ui #imports .pipeline-empty span { font-size: 14px; }
+body.preview-ui #imports .pipeline-task-title b { font-size: 15px; }
+body.preview-ui #imports .pipeline-task-title span,
+body.preview-ui #imports .pipeline-task-meta small,
+body.preview-ui #imports .pipeline-task-meta span { font-size: 14px; }
+body.preview-ui #imports .pipeline-history-panel .panel-body { overflow-x: auto; }
+body.preview-ui #tenants .panel-body { min-width: 0; }
+body.preview-ui #tenants .table { width: 100%; }
+
+/* 操作列使用固定网格，按钮数量不同也保持卡片高度和右边线一致。 */
+body.preview-ui #models .model-provider-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  align-items: center;
+}
+body.preview-ui #models .model-provider-actions .btn {
+  width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 1280px) {
+  body.preview-ui #models .model-provider-card {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 250px);
+  }
+  body.preview-ui #models .model-provider-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 680px) {
+  body.preview-ui #models .model-provider-card {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 12px;
+  }
+  body.preview-ui #models .model-provider-actions {
+    grid-column: auto;
+  }
+}
+
+/* 预览内页的助手球固定在右下安全区；旧版本保存过拖拽坐标时也不能回到内容中部。 */
+body.preview-ui #marketingAssistant .assistant-fab {
+  left: auto !important;
+  top: auto !important;
+  right: 24px !important;
+  bottom: 24px !important;
+}
+@media (max-width: 820px) {
+  body.preview-ui #marketingAssistant .assistant-fab {
+    right: 16px !important;
+    bottom: 16px !important;
+  }
+}
+
+/* ========================================================================
+   最终字体规范层 · 2026-10-04
+   作用：一次性收口首页、全部内页/子模块、弹窗和抽屉的历史字号覆盖。
+   页面标题保持既定尺寸；业务正文按年长用户阅读基准统一。
+   ======================================================================== */
+
+/* 内页基础阅读基线（首页由下方 body.dongdong-mode 单独处理） */
+body.preview-ui .view:not(.dongdong-view),
+body.preview-ui .modal-layer .modal,
+body.preview-ui .drawer-layer .drawer {
+  font-family: var(--wb-fam, "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", Arial, sans-serif);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+/* 页面标题保持当前尺寸，不再继续放大 */
+body.preview-ui .view:not(.dongdong-view) .page-head h1 { font-size: 30px !important; line-height: 1.2; }
+body.preview-ui .view:not(.dongdong-view) .page-head p { font-size: 16px !important; line-height: 1.6; }
+
+/* 顶栏、侧栏和子页签 */
+body.preview-ui .crumb,
+body.preview-ui .crumb strong { font-size: 15px !important; }
+body.preview-ui .preview-nav-label { font-size: 14px !important; }
+body.preview-ui .preview-nav-items button { font-size: 16px !important; }
+body.preview-ui .preview-home span { font-size: 16px !important; }
+body.preview-ui .preview-home small,
+body.preview-ui .preview-tenant small,
+body.preview-ui .preview-exit,
+body.preview-ui .preview-local-label { font-size: 14px !important; }
+body.preview-ui .business-subview-tabs button { font-size: 17px !important; }
+body.preview-ui .business-subview-shell > p { font-size: 15px !important; }
+
+/* 通用正文元素：防止动态子模块回落到旧的 10–13px */
+body.preview-ui .view:not(.dongdong-view) :is(p, label, dt, dd, li),
+body.preview-ui .modal-layer .modal :is(p, label, dt, dd, li),
+body.preview-ui .drawer-layer .drawer :is(p, label, dt, dd, li) {
+  font-size: 16px !important;
+  line-height: 1.55;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.panel-body, .toolbar-strip, .v-rail, .v-list, .detail-block, .detail-grid, .metric-list, .metric, .control-item, .flow-step, .scope-box, .permission-summary, .approval-item, .role-item, .config-entry-card, .config-entry-body, .search-card, .search-layout, .search-main, .graph-toolbar, .entity, .insight-source-config, .insight-run-config, .pipeline-task, .pipeline-history, .pipeline-queue),
+body.preview-ui .modal-layer .modal :is(.modal-body, .wizard-body, .selection-box, .decision-choice, .check-row, .submit-summary, .content-option, .channel-check, .ai-suggestion),
+body.preview-ui .drawer-layer .drawer .drawer-body {
+  font-size: 16px;
+}
+
+/* 组件标题层级：上级标题不小于下级正文 */
+body.preview-ui .view:not(.dongdong-view) :is(.panel-head h2, .catalog-section-head b, .catalog-summary b, .detail-block h3, .graph-panel h2, .entity h2, .production-modal-head b),
+body.preview-ui .modal-layer .modal :is(.modal-head h2, h3),
+body.preview-ui .drawer-layer .drawer .drawer-head h2 {
+  font-size: 20px !important;
+  line-height: 1.4;
+}
+body.preview-ui .view:not(.dongdong-view) :is(h3, .detail-block h3, .content-detail-copy h3, .insight-run-detail h3),
+body.preview-ui .modal-layer .modal :is(h3, .content-channel-grid h3) {
+  font-size: 18px !important;
+}
+body.preview-ui .view:not(.dongdong-view) .panel-head > span,
+body.preview-ui .view:not(.dongdong-view) :is(.toolbar-note, .catalog-summary span, .catalog-section-head span, .catalog-foot, .v-rail__note),
+body.preview-ui .modal-layer .modal .modal-head p,
+body.preview-ui .drawer-layer .drawer .drawer-head p {
+  font-size: 15px !important;
+}
+
+/* 表格与可滚动清单 */
+body.preview-ui .view:not(.dongdong-view) :is(.table, .v-table, .opportunity-table, .permission-table),
+body.preview-ui .view:not(.dongdong-view) :is(.table th, .v-table th, .opportunity-table th, .permission-table th),
+body.preview-ui .view:not(.dongdong-view) :is(.table td, .v-table td, .opportunity-table td, .permission-table td) {
+  font-size: 15px !important;
+  line-height: 1.5;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.table td small, .v-table td small, .opportunity-table td small, .permission-table td small, .catalog-card small, .catalog-detail-list small, .pipeline-task-meta small),
+body.preview-ui .modal-layer .modal small,
+body.preview-ui .drawer-layer .drawer small {
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.status, .pill, .tag, .package-source-tag, .insight-badge) {
+  font-size: 14px !important;
+  line-height: 1.35;
+}
+
+/* 表单、按钮、空状态和指标 */
+body.preview-ui .view:not(.dongdong-view) :is(input, select, textarea),
+body.preview-ui .modal-layer .modal :is(input, select, textarea),
+body.preview-ui .drawer-layer .drawer :is(input, select, textarea) {
+  font-size: 16px !important;
+  line-height: 1.45;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.btn, .icon-btn, .action, button),
+body.preview-ui .modal-layer .modal :is(.btn, .icon-btn, button),
+body.preview-ui .drawer-layer .drawer :is(.btn, .icon-btn, button) {
+  font-size: 15px !important;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.empty-state, .empty-action, .table-empty, .empty-state span, .empty-action span) {
+  font-size: 15px !important;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.empty-state b, .empty-action b) { font-size: 17px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.kpi > span, .v-kpi__label) { font-size: 15px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.kpi b, .v-kpi__value) { font-size: 32px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.kpi .trend, .v-kpi__trend) { font-size: 14px !important; }
+
+/* 生命周期、卡片和目录 */
+body.preview-ui .view:not(.dongdong-view) .life b { font-size: 23px !important; }
+body.preview-ui .view:not(.dongdong-view) .life span { font-size: 17px !important; }
+body.preview-ui .view:not(.dongdong-view) .life small { font-size: 14px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.small-panel b, .catalog-card strong, .catalog-detail-list b) { font-size: 18px !important; line-height: 1.4; }
+body.preview-ui .view:not(.dongdong-view) :is(.small-panel span, .small-panel em, .catalog-card-meta, .catalog-detail-list span) { font-size: 16px !important; line-height: 1.5; }
+body.preview-ui .view:not(.dongdong-view) :is(.catalog-card .btn, .catalog-foot) { font-size: 15px !important; }
+
+/* 机会洞察、运行记录、审批、权限、智能检索和知识图谱子模块 */
+body.preview-ui .view:not(.dongdong-view) :is(.section-kicker, .insight-source-row b, .insight-agent-card b, .insight-step-list b) { font-size: 18px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.insight-source-row small, .insight-history .table small, .insight-run-actions > span, .insight-agent-lane, .insight-step-list small, .insight-agent-card p, .insight-agent-card small) { font-size: 15px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.permission-summary span, .role-item b, .scope-box p, .approval-item small, .approval-overview span, .approval-node span, .approval-check small) { font-size: 15px !important; }
+body.preview-ui #search :is(.search-suggest-label, .search-card-snippet, .search-card .v-chip, .gs-foot span, .v-facet, .v-facet-more, .search-relation span, .search-relation b) { font-size: 15px !important; }
+body.preview-ui #search :is(.search-card-type, .search-card-meta, .search-card small) { font-size: 14px !important; }
+body.preview-ui #search .search-card h3 { font-size: 18px !important; }
+body.preview-ui #search .search-hero :is(.search-entry input, .search-suggest button) { font-size: 16px !important; }
+body.preview-ui #globalSearchOverlay :is(.gs-eyebrow, .gs-suggest-label, .gs-pill, .search-card-snippet, .search-card .v-chip, .gs-foot span) { font-size: 15px !important; }
+body.preview-ui #globalSearchOverlay .gs-title { font-size: 20px !important; }
+body.preview-ui #globalSearchOverlay .gs-workbench-intro h2 { font-size: 22px !important; }
+body.preview-ui #globalSearchOverlay .gs-workbench-intro p { font-size: 15px !important; }
+body.preview-ui #globalSearchOverlay .search-card h3 { font-size: 18px !important; }
+body.preview-ui #globalSearchOverlay .search-card-type { font-size: 14px !important; }
+body.preview-ui #graph svg text { font-size: 15px !important; }
+
+/* 治理新增页及动态内容 */
+body.preview-ui #imports :is(.pipeline-dropzone b, .pipeline-task-title b, .pipeline-empty b) { font-size: 18px !important; }
+body.preview-ui #imports :is(.pipeline-dropzone p, .pipeline-empty span, .pipeline-task-title span, .pipeline-task-meta small, .pipeline-task-meta span, .pipeline-flow span) { font-size: 15px !important; }
+body.preview-ui #models :is(.model-provider-main strong, .config-entry-card b) { font-size: 18px !important; }
+body.preview-ui #models :is(.model-provider-id, .model-provider-meta, .model-provider-actions .btn, .config-entry-card p, .config-entry-card small) { font-size: 15px !important; }
+body.preview-ui #tenants :is(.config-entry-card b, .config-entry-card p) { font-size: 18px !important; }
+body.preview-ui #tenants :is(.config-entry-card small, .tenant-table td small) { font-size: 15px !important; }
+
+/* 首页：不改主标题，仅放大其余说明、快捷入口和能力列表 */
+body.dongdong-mode .dongdong-card-title p { font-size: 15px !important; line-height: 1.7; }
+body.dongdong-mode .dongdong-live { font-size: 14px !important; }
+body.dongdong-mode .dongdong-chat-placeholder { font-size: 15px !important; }
+body.dongdong-mode .dongdong-chat-placeholder b { font-size: 17px !important; }
+body.dongdong-mode .dongdong-chat-placeholder span { font-size: 15px !important; }
+body.dongdong-mode .dongdong-chip { font-size: 15px !important; }
+body.dongdong-mode .dongdong-section-head h2 { font-size: 20px !important; }
+body.dongdong-mode .dongdong-section-head span,
+body.dongdong-mode .dongdong-link { font-size: 15px !important; }
+body.dongdong-mode .dongdong-cap b { font-size: 17px !important; }
+body.dongdong-mode .dongdong-cap p { font-size: 15px !important; line-height: 1.75; }
+body.dongdong-mode .dongdong-cap small,
+body.dongdong-mode .dongdong-cap-empty { font-size: 14px !important; }
+body.dongdong-mode .assistant-panel.is-docked :is(.assistant-message.assistant b, .assistant-message.assistant p, .assistant-message.user, .assistant-answer) { font-size: 15px !important; }
+body.dongdong-mode .assistant-panel.is-docked .assistant-suggestions button { font-size: 14px !important; }
+
+/* 首页窄屏只调整文字，不改变已验收的导航/布局断点 */
+@media (max-width: 560px) {
+  body.dongdong-mode .dongdong-section-head { gap: 8px; }
+  body.dongdong-mode .dongdong-section-head h2 { font-size: 19px !important; }
+  body.dongdong-mode .dongdong-card-title p { font-size: 14px !important; }
+}
+
+
+/* 动态运行时模态框/抽屉也必须遵循同一套字体基线（它们不挂在 .modal-layer 下）。 */
+body.preview-ui .production-modal,
+body.preview-ui .production-modal-card,
+body.preview-ui .drawer-layer,
+body.preview-ui .drawer-layer .drawer,
+body.preview-ui .gs-overlay,
+body.preview-ui #globalSearchOverlay {
+  font-family: var(--wb-fam, "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", Arial, sans-serif);
+}
+body.preview-ui .production-modal :is(p, label, dt, dd, li, span, small),
+body.preview-ui .drawer-layer .drawer :is(p, label, dt, dd, li, span, small),
+body.preview-ui .gs-overlay :is(p, label, dt, dd, li, span, small),
+body.preview-ui #globalSearchOverlay :is(p, label, dt, dd, li, span, small) {
+  font-size: 15px !important;
+  line-height: 1.55;
+}
+body.preview-ui .production-modal :is(small),
+body.preview-ui .drawer-layer .drawer :is(small),
+body.preview-ui .gs-overlay :is(small),
+body.preview-ui #globalSearchOverlay :is(small) {
+  font-size: 14px !important;
+}
+body.preview-ui .production-modal :is(input, select, textarea) ,
+body.preview-ui .drawer-layer .drawer :is(input, select, textarea),
+body.preview-ui .gs-overlay :is(input, select, textarea),
+body.preview-ui #globalSearchOverlay :is(input, select, textarea) {
+  font-size: 16px !important;
+}
+body.preview-ui .production-modal :is(button, .btn, .icon-btn),
+body.preview-ui .drawer-layer .drawer :is(button, .btn, .icon-btn),
+body.preview-ui .gs-overlay :is(button, .btn, .icon-btn),
+body.preview-ui #globalSearchOverlay :is(button, .btn, .icon-btn) {
+  font-size: 15px !important;
+}
+body.preview-ui .production-modal .production-modal-head > div > b,
+body.preview-ui .drawer-layer .drawer .drawer-head h2,
+body.preview-ui .gs-overlay .gs-title,
+body.preview-ui #globalSearchOverlay .gs-title {
+  font-size: 20px !important;
+  line-height: 1.4;
+}
+body.preview-ui .production-modal .production-modal-body :is(h3, .catalog-section-head b, .campaign-detail-summary b),
+body.preview-ui .drawer-layer .drawer :is(h3, .drawer-ai b),
+body.preview-ui .gs-overlay :is(.gs-workbench-intro h2, .search-card h3),
+body.preview-ui #globalSearchOverlay :is(.gs-workbench-intro h2, .search-card h3) {
+  font-size: 18px !important;
+  line-height: 1.45;
+}
+body.preview-ui .production-modal .business-editor-field > span,
+body.preview-ui .production-modal .business-editor-field > legend > span,
+body.preview-ui .production-modal .business-editor-foot > span {
+  font-size: 15px !important;
+}
+body.preview-ui .production-modal .query-builder :is(.query-label, .query-chip),
+body.preview-ui .production-modal .campaign-detail-summary > span,
+body.preview-ui .production-modal .campaign-version-list :is(span, small),
+body.preview-ui .drawer-layer .step-trail > span,
+body.preview-ui .drawer-layer .drawer-kv :is(span, b) {
+  font-size: 15px !important;
+}
+body.preview-ui .production-modal .usage-metrics > div > span,
+body.preview-ui .production-modal .business-editor-field > small,
+body.preview-ui .production-modal .production-modal-head > div > small,
+body.preview-ui .drawer-layer .drawer-ai,
+body.preview-ui .drawer-layer .drawer-section-body {
+  font-size: 14px !important;
+}
+body.preview-ui .production-modal .business-editor-field > small,
+body.preview-ui .production-modal .business-editor-foot > span {
+  line-height: 1.5;
+}
+body.preview-ui .production-modal .flow-step strong { font-size: 18px !important; }
+body.preview-ui .production-modal .flow-step b,
+body.preview-ui .production-modal .flow-step p { font-size: 16px !important; }
+
+/* 知识中心的图例、统计说明和 SVG 节点说明 */
+body.preview-ui #graph :is(.ontology-map-summary > div > span, .ontology-map-summary > strong > small, .ontology-map-toolbar .ontology-map-hint, .ontology-map-legend > span, .graph-help, .graph-toolbar .count) {
+  font-size: 15px !important;
+}
+body.preview-ui #graph .ontology-map-edge-label,
+body.preview-ui #graph .ontology-map-module,
+body.preview-ui #graph .ontology-map-id,
+body.preview-ui #graph .ontology-map-attrs { font-size: 14px !important; }
+body.preview-ui #graph .ontology-map-title { font-size: 16px !important; }
+
+/* 业务卡片中的流程标题、检查状态和数据范围 */
+body.preview-ui .view:not(.dongdong-view) :is(.flow-step strong, .check-inline span, .scope-box > div > b, .approval-overview span, .approval-node b, .approval-node span) {
+  font-size: 16px !important;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.todo small, .opportunity-bars > div > span, .catalog-summary-stats small, .audience-tag-details summary, .dimension-detail-hint) {
+  font-size: 15px !important;
+}
+body.preview-ui .view:not(.dongdong-view) :is(.insight-source-row em) { font-size: 14px !important; }
+
+/* 首页文字在桌面和窄屏都统一；手机只保持导航单行，不回落到旧 12–13px。 */
+body.dongdong-mode .topnav .nav > .dongdong-entry,
+body.dongdong-mode .topnav .nav .menu-toggle,
+body.dongdong-mode .topnav .nav .submenu button { font-size: 15px !important; }
+body.dongdong-mode .dongdong-tabs button { font-size: 15px !important; }
+body.dongdong-mode .topnav .brand-text span { font-size: 13px !important; }
+body.dongdong-mode .topnav > .user span { font-size: 14px !important; }
+@media (max-width: 560px) {
+  body.dongdong-mode .topnav .nav > .dongdong-entry,
+  body.dongdong-mode .topnav .nav .menu-toggle { font-size: 13px !important; }
+  body.dongdong-mode .dongdong-tabs button { font-size: 15px !important; }
+}
+
+/* 让页签本身也满足“上级不小于下级”的层级检查 */
+body.preview-ui .view:not(.dongdong-view) .business-subview-tabs button { font-size: 17px !important; }
+
+
+/* 最后一批动态文字：内容上下文、全局检索浮层实际挂载在 body 直系节点。 */
+body.preview-ui .view:not(.dongdong-view) .content-context-hint span { font-size: 15px !important; }
+body.preview-ui .production-modal .business-editor-field > span,
+body.preview-ui .production-modal .business-editor-field > legend > span { font-size: 16px !important; }
+
+/* 全局业务对象检索浮层/结果卡使用独立根节点，不能依赖 preview-ui 祖先状态。 */
+#globalSearchOverlay,
+.gs-overlay { font-family: var(--wb-fam, "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", Arial, sans-serif); }
+#globalSearchOverlay .gs-title,
+.gs-overlay .gs-title { font-size: 20px !important; }
+#globalSearchOverlay .gs-workbench-intro h2,
+.gs-overlay .gs-workbench-intro h2 { font-size: 22px !important; }
+#globalSearchOverlay .gs-workbench-intro p,
+#globalSearchOverlay .gs-foot span,
+#globalSearchOverlay .search-card-snippet,
+.gs-overlay .gs-workbench-intro p,
+.gs-overlay .gs-foot span,
+.gs-overlay .search-card-snippet { font-size: 15px !important; }
+#globalSearchOverlay .search-card-type,
+#globalSearchOverlay .search-card-tags .v-chip,
+.gs-overlay .search-card-type,
+.gs-overlay .search-card-tags .v-chip { font-size: 14px !important; }
+#globalSearchOverlay .search-card h3,
+.gs-overlay .search-card h3 { font-size: 18px !important; }
+#gsResults .search-card-snippet { font-size: 15px !important; }
+#gsResults .search-card-tags .v-chip,
+#gsResults .search-card-type { font-size: 14px !important; }
+#gsHint { font-size: 15px !important; }
+
+
+body.preview-ui .audience-detail .campaign-detail-summary > span,
+body.preview-ui #audienceDetail .campaign-detail-summary > span,
+body.preview-ui #audienceDetail .campaign-detail-summary > span > b {
+  font-size: 15px !important;
+}
+body.preview-ui #modelDetail .usage-metrics > div > span { font-size: 15px !important; }
+body.dongdong-mode .topnav .brand-text span { font-size: 14px !important; }
+@media (max-width: 560px) {
+  body.dongdong-mode .topnav .nav > .dongdong-entry,
+  body.dongdong-mode .topnav .nav > .dongdong-entry > span { font-size: 14px !important; }
+}
+
+
+/* 静态活动向导/审批弹窗：覆盖历史 wizard、check-row、submit-summary 小字号。 */
+body.preview-ui .modal-layer .modal :is(p, label, dt, dd, li, span, small, b, em) {
+  font-size: 15px !important;
+  line-height: 1.5;
+}
+body.preview-ui .modal-layer .modal :is(small) { font-size: 14px !important; }
+body.preview-ui .modal-layer .modal :is(h2, .modal-head h2) { font-size: 20px !important; line-height: 1.4; }
+body.preview-ui .modal-layer .modal :is(h3, .content-channel-grid h3) { font-size: 18px !important; line-height: 1.45; }
+body.preview-ui .modal-layer .modal :is(input, select, textarea) { font-size: 16px !important; }
+body.preview-ui .modal-layer .modal :is(button, .btn, .icon-btn) { font-size: 15px !important; }
+body.preview-ui .modal-layer .modal .wizard-steps span { font-size: 15px !important; }
+body.preview-ui .modal-layer .modal .check-row :is(b, em, span),
+body.preview-ui .modal-layer .modal .submit-summary :is(span, b),
+body.preview-ui .modal-layer .modal .content-option span { font-size: 15px !important; }
+
+
+/* 首页主视觉在 1024px 左右沿用负边距铺满画布，根态裁切其 8px 视觉溢出，避免产生横向滚动条。 */
+body.dongdong-mode { overflow-x: clip; }
+
+
+/* 首页铺满主视觉的负边距只允许在视口内显示，不扩大 html 滚动宽度。 */
+html:has(body.dongdong-mode) { overflow-x: clip; }

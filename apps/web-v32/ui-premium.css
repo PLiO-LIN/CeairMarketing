@@ -1,4 +1,4 @@
-/* China Eastern Smart Marketing Cloud - premium operations console layer */
+/* China Eastern AI Marketing Cloud - premium operations console layer */
 :root {
   --nav: #071b31;
   --nav-2: #0c2c49;
@@ -66,12 +66,6 @@ button { -webkit-tap-highlight-color: transparent; }
 .page-head h1 { color: var(--ink); letter-spacing: -.1px; font-size: 22px; }
 .page-head p { color: var(--muted); line-height: 1.7; }
 
-/* Production workspaces show actions and live state, not slide-style narration. */
-.page-head p,
-.lifecycle,
-.nav-count {
-  display: none !important;
-}
 
 .page-head h1 {
   margin-bottom: 0;

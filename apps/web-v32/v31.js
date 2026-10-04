@@ -43,7 +43,6 @@
     }[type];
     openDrawer(data[0],'创建业务对象并保存为草稿',section('基本信息',`<div class="drawer-form"><label>${data[1]}<input value="${data[2]}"></label><label>${data[3]}<textarea>${data[4]}</textarea></label></div>`) + '<div class="drawer-ai"><b>AI辅助校验</b><br>保存前将自动执行画像权限、产品资格或内容事实检查。</div>',`<button class="btn" data-drawer="saveDraft">保存草稿</button><button class="btn primary" data-drawer="saveEntity">${data[5]}</button>`);
   };
-  const search = () => openDrawer('全局业务搜索','检索机会、客群、产品包、内容和活动',section('搜索条件','<div class="drawer-form"><label>关键字<input value="三亚"></label><label>对象类型<select><option>全部业务对象</option><option>营销活动</option><option>客群</option><option>产品包</option><option>内容</option></select></label></div>') + section('相关对象','<div class="drawer-list"><button data-open="campaign"><span>上海—三亚国庆早鸟</span><b>营销活动 ›</b></button><button data-nav="audiences"><span>三亚高意向未购</span><b>动态客群 ›</b></button><button data-open="product"><span>三亚国庆早鸟产品包</span><b>产品包 ›</b></button></div>'),'<button class="btn primary" data-drawer="search">查询</button>');
 
   document.querySelectorAll('.menu-toggle').forEach(b => {
     const group = b.closest('.menu-group');
@@ -71,7 +70,6 @@
     }
     const open = e.target.closest('[data-open]')?.dataset.open;
     if (open) { if (open === 'product') product(); if (open === 'campaign') campaign(); return; }
-    if (e.target.closest('.global-search')) { search(); return; }
     const opp = e.target.closest('[data-open-opportunity]');
     if (opp) { opportunity(opp.dataset.openOpportunity); return; }
     const camp = e.target.closest('[data-open-campaign]');

@@ -101,63 +101,27 @@ html, body {
 .menu-toggle[aria-expanded="true"] .menu-chevron { transform: rotate(0); }
 .submenu button { font-size: 13px !important; }
 
-/* Dashboard typography and data visualization. */
-#overview .kpis { gap: 12px; }
-#overview .kpi {
-  min-height: 108px;
-  padding: 17px 17px 15px;
-  border-top: 3px solid #1985cf;
-  background: linear-gradient(180deg, #fff, #fbfdff);
+/* 首页导航下拉以按钮状态为准，避免点击后 aria 已展开但菜单仍被隐藏。 */
+.topnav .menu-toggle[aria-expanded="true"] + .submenu {
+  display: grid !important;
+  max-height: 260px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
-#overview .kpi:nth-child(2) { border-top-color: #eea328; }
-#overview .kpi:nth-child(3) { border-top-color: #12a8bd; }
-#overview .kpi:nth-child(4) { border-top-color: #1f9a68; }
-#overview .kpi:nth-child(5) { border-top-color: #735fc1; }
-#overview .kpi span { font-size: 12px; font-weight: 600; color: #607b8e; }
-#overview .kpi b { margin: 10px 0 7px; font-size: 29px; letter-spacing: 0; color: #102f48; }
-#overview .trend { font-size: 11px; font-weight: 600; }
-#overview .grid2 { grid-template-columns: minmax(0, 1.55fr) minmax(360px, .75fr); gap: 16px; }
-#overview .todo { min-height: 61px; padding: 10px 4px; }
-#overview .todo b { font-size: 13px; color: #183f5c; }
-#overview .todo small { margin-top: 4px; font-size: 11px; line-height: 1.55; color: #6b8293; }
-#overview .todo-icon { width: 32px; height: 32px; border-radius: 6px; background: #eaf7fb; color: #0994ad; }
+.topnav .menu-toggle[aria-expanded="false"] + .submenu {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 
-#overview .opportunity-bars {
-  position: relative;
-  display: grid;
-  gap: 17px;
-  padding: 4px 0 2px;
-}
-#overview .opportunity-bars::before {
-  content: "低　　　　　　　　　机会价值　　　　　　　　　高";
-  display: block;
-  padding-left: 92px;
-  color: #91a5b3;
-  font-size: 10px;
-  white-space: pre;
-}
-#overview .opportunity-bars > div { grid-template-columns: 76px minmax(120px, 1fr) 26px; gap: 11px; }
-#overview .opportunity-bars span { color: #365a73; font-size: 12px; font-weight: 600; }
-#overview .opportunity-bars i { height: 10px; border-radius: 5px; background: #e8f0f5; overflow: hidden; }
-#overview .opportunity-bars em { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #1688d2, #23b1ca); }
-#overview .opportunity-bars > div:nth-of-type(2) em { background: linear-gradient(90deg, #4f7ed0, #6d9be3); }
-#overview .opportunity-bars > div:nth-of-type(3) em { background: linear-gradient(90deg, #18a178, #47bd94); }
-#overview .opportunity-bars > div:nth-of-type(4) em { background: linear-gradient(90deg, #d38b24, #efb64c); }
-#overview .opportunity-bars b { color: #153f5c; font-size: 13px; }
-#overview .metric-list { padding: 17px 17px 19px; }
-#overview .metric { margin-top: 13px; }
-#overview .metric:first-child { margin-top: 0; }
-#overview .metric label { color: #48687f; font-size: 12px; font-weight: 600; }
-#overview .metric b { color: #123b58; font-size: 13px; }
-#overview .bar { height: 8px; margin-top: 8px; border-radius: 4px; background: #e8eff4; }
-#overview .bar i { border-radius: 4px; background: linear-gradient(90deg, #147dca, #36a3e5); }
-#overview .bar.green i { background: linear-gradient(90deg, #168c64, #2eb386); }
-#overview .bar.amber i { background: linear-gradient(90deg, #c98318, #e7aa36); }
 
-/* Keep the assistant available even when a data module fails during startup. */
-#marketingAssistant { position: relative; z-index: 1200; }
 .assistant-fab {
-  z-index: 1200 !important;
   min-width: 118px;
   height: 50px;
   border: 1px solid rgba(255,255,255,.35);
@@ -165,7 +129,7 @@ html, body {
   box-shadow: 0 12px 30px rgba(5, 83, 139, .32);
 }
 .assistant-fab:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(5, 83, 139, .38); }
-.assistant-panel { z-index: 1201 !important; border-color: #bdd5e3; }
+.assistant-panel { border-color: #bdd5e3; }
 .assistant-panel header { background: linear-gradient(180deg, #fafdff, #f2f8fc); }
 .assistant-message.assistant > div:last-child { border-radius: 4px 10px 10px 10px; }
 
@@ -330,13 +294,6 @@ html, body {
 .content-evidence-note svg { width: 15px; height: 15px; flex: 0 0 auto; }
 @media (max-width: 980px) { .content-context-form { grid-template-columns: repeat(2,minmax(0,1fr)); } .content-context-form .context-instruction { grid-column: auto; } }
 @media (max-width: 680px) { .content-context-form { grid-template-columns: 1fr; } .content-context-form .context-instruction { grid-column: auto; } .content-generate-trigger { width: 100%; } }
-.dimension-group-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 2px 0 18px; }
-.dimension-group-card { min-width: 0; padding: 13px; border: 1px solid #d5e6ef; background: linear-gradient(180deg, #ffffff, #f7fbfd); }
-.dimension-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.dimension-group-card strong { display: block; margin: 10px 0 4px; color: #193b5b; font-size: 13px; }
-.dimension-group-card small { display: block; color: #7b8da0; font-size: 11px; }
-.dimension-group-card p { min-height: 32px; margin: 9px 0 10px; color: #56778d; font-size: 11px; line-height: 1.5; }
-.dimension-group-card .btn { min-height: 28px; padding: 4px 8px; font-size: 11px; }
 .audience-dimension-table-wrap { overflow: auto; max-height: 440px; border: 1px solid #e0eaf0; }
 .audience-dimension-table { min-width: 820px; margin: 0; }
 .audience-dimension-table td, .audience-dimension-table th { vertical-align: middle; }
@@ -347,18 +304,8 @@ html, body {
 .package-source-tag { display: inline-flex; align-items: center; padding: 3px 7px; font-size: 10px; border: 1px solid; white-space: nowrap; }
 .package-source-tag.created { color: #166d9b; border-color: #b9dcea; background: #edf8fc; }
 .package-source-tag.preset { color: #6d5d9a; border-color: #d9cfee; background: #f5f1fc; }
-.audience-dimension-detail-card { width: min(860px, calc(100vw - 40px)); }
-.audience-dimension-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
-.audience-dimension-detail-grid section { padding: 14px; border: 1px solid #dce8ee; background: #fbfdfe; }
-.audience-dimension-detail-grid h3 { margin: 0 0 12px; color: #28536e; font-size: 13px; }
-.audience-dimension-detail-grid dl { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 9px 12px; margin: 0; font-size: 12px; }
-.audience-dimension-detail-grid dt { color: #8499a7; }
-.audience-dimension-detail-grid dd { margin: 0; color: #3f6277; line-height: 1.55; overflow-wrap: anywhere; }
-.audience-dimension-detail-grid p { margin: 0; color: #587286; line-height: 1.75; font-size: 12px; }
 .dimension-detail-hint { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 7px 9px; color: #1979b5; background: #eaf6fb; font-size: 11px; }
 .dimension-detail-hint svg { width: 14px; height: 14px; }
-@media (max-width: 1050px) { .dimension-group-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 680px) { .dimension-group-grid { grid-template-columns: 1fr; } .audience-dimension-detail-grid { grid-template-columns: 1fr; } }
 
 /* ============ 东东 · 智能对话首页 ============
    高幅品牌主视觉 + 白色对话卡压在画面下沿 + 分段控件骑跨卡顶；主行动使用东航红。 */
@@ -367,7 +314,7 @@ html, body {
   --dd-red: #cb1e36; --dd-red-b: #e2603a;
   --dd-ink: #12283d; --dd-body: #2c4a60; --dd-muted: #66798c; --dd-faint: #8a9aa8;
   --dd-soft: #f6f7f9; --dd-line: rgba(41, 83, 142, .14);
-  margin: -22px -28px -40px; padding-bottom: 60px; background: #fff; color: var(--dd-body);
+  margin: -22px -28px -40px; padding-bottom: 120px; background: #fff; color: var(--dd-body);
 }
 .dongdong-view.active { display: block; }
 
@@ -464,6 +411,10 @@ html, body {
 .topnav .brand span { margin: 0; color: #7d93a4; font-size: 10.5px; }
 .topnav .nav { display: flex; align-items: center; gap: 2px; flex: 1; padding: 0; overflow: visible; }
 .topnav .nav button { width: auto; height: auto; margin: 0; padding: 10px 13px; border: 0; border-radius: 9px; background: transparent; color: #2c4a60; font-size: 13.5px; justify-content: center; }
+.topnav .nav > .dongdong-entry,
+.topnav .nav .menu-toggle { min-height: 44px; display: inline-flex; align-items: center; line-height: 1; }
+.topnav .nav > .dongdong-entry > span,
+.topnav .nav .menu-toggle > span { display: inline-flex; align-items: center; gap: 7px; line-height: 1; }
 .topnav .nav button:hover { transform: none; background: #f1f6fa; color: #0d3a5c; }
 .topnav .nav button.active { background: transparent; color: #29538e; box-shadow: none; font-weight: 700; }
 .topnav .menu-group { position: relative; }
@@ -666,6 +617,28 @@ body.dongdong-mode .crumb-tail { display: none; }
 .topnav .menu-group { margin: 0 !important; }
 .topnav .nav .menu-toggle > span { line-height: 1; }
 
+/* 首页下拉：悬停展开，离开导航项与面板区域后自动收起；色彩贴合首页暖米色顶栏 */
+body.dongdong-mode .topnav .submenu {
+  background: rgba(253, 246, 239, .98);
+  border-top-color: rgba(41, 83, 142, .12);
+  border-bottom-color: rgba(41, 83, 142, .18);
+  box-shadow: 0 20px 44px rgba(13, 58, 92, .14);
+}
+body.dongdong-mode .topnav .submenu button {
+  color: #2a5fae !important;
+}
+body.dongdong-mode .topnav .submenu button:hover {
+  background: rgba(42, 95, 174, .1);
+  color: #17498f !important;
+}
+body.dongdong-mode .topnav .submenu button.active {
+  background: rgba(42, 95, 174, .14);
+  color: #17498f !important;
+}
+body.dongdong-mode .topnav .submenu button + button {
+  border-left-color: rgba(41, 83, 142, .14);
+}
+
 /* 统一导航图标尺寸，避免视觉错位 */
 .topnav .nav button > svg, .topnav .nav .menu-toggle > span > svg, .topnav .menu-chevron { width: 17px; height: 17px; flex: 0 0 17px; }
 
@@ -726,3 +699,131 @@ body.dongdong-mode .crumb-tail { display: none; }
 @keyframes dongdongSpinY { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
 .assistant-fab:hover .assistant-fab-mark, .assistant-fab:focus-visible .assistant-fab-mark { animation: dongdongSpinY 1.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .assistant-fab:hover .assistant-fab-mark { animation: none; } }
+
+/* 顶栏整段高度都是导航热区；面板紧接顶栏，不再留下鼠标移入时的空隙。 */
+body:not(.preview-ui) .topnav .nav { align-self: stretch; align-items: stretch; }
+body:not(.preview-ui) .topnav .menu-group { display: flex; align-items: center; padding: 0; }
+body:not(.preview-ui) .topnav .submenu { overflow: visible; z-index: 2; }
+body:not(.preview-ui) .topnav .submenu button { min-height: 48px; height: 48px !important; }
+body:not(.preview-ui) .topnav .menu-toggle[aria-expanded="true"] + .submenu { padding-top: 12px !important; padding-bottom: 12px !important; }
+
+/* 首页顶栏导航保持单行，避免“东东AI伙伴”被 flex 压缩后与其他入口错位。 */
+body.dongdong-mode .topnav .nav { gap: 8px; }
+body.dongdong-mode .topnav .dongdong-entry,
+body.dongdong-mode .topnav .menu-group { flex: 0 0 auto; }
+body.dongdong-mode .topnav .dongdong-entry,
+body.dongdong-mode .topnav .menu-toggle,
+body.dongdong-mode .topnav .menu-toggle > span { white-space: nowrap; }
+body.dongdong-mode .topnav .dongdong-entry { min-width: 132px; justify-content: center; }
+/* 导航容器为下拉菜单保留整段热区；东东入口本身仍需在顶栏垂直居中。 */
+body:not(.preview-ui) .topnav .nav > .dongdong-entry { align-self: center; }
+body.dongdong-mode .topnav .menu-group { flex: 0 1 auto; }
+body.dongdong-mode .topnav .menu-toggle { min-width: 0; justify-content: center !important; }
+body.dongdong-mode .topnav .brand { min-width: 292px; }
+@media (max-width: 1280px) and (min-width: 1181px) {
+  body.dongdong-mode .topnav { gap: 14px; padding-inline: 18px; }
+  body.dongdong-mode .topnav .brand { min-width: 260px; }
+  body.dongdong-mode .topnav .nav { gap: 4px; }
+  body.dongdong-mode .topnav .user { max-width: 180px; overflow: hidden; }
+  body.dongdong-mode .topnav .user b,
+  body.dongdong-mode .topnav .user span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* 首页窄屏：导航在自身轨道内滚动，主视觉与内容卡保持可读且不撑宽文档。 */
+@media (max-width: 820px) {
+  html, body { max-width: 100%; overflow-x: hidden; }
+  body.dongdong-mode .app,
+  body.dongdong-mode .main,
+  body.dongdong-mode .content { min-width: 0 !important; width: 100%; }
+  body.dongdong-mode .content { padding-inline: 0; }
+  body.dongdong-mode .topbar { width: 100%; }
+  body.dongdong-mode .dongdong-view { width: 100%; margin-left: 0; margin-right: 0; padding-bottom: 120px; }
+  body.dongdong-mode .topnav {
+    height: 64px;
+    min-height: 64px;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 0 14px;
+  }
+  body.dongdong-mode .topnav .brand { min-width: 0; flex: 0 0 auto; gap: 0; }
+  body.dongdong-mode .topnav .brand-text { display: none; }
+  body.dongdong-mode .topnav .logo { padding-right: 0; }
+  body.dongdong-mode .topnav .logo img { height: 28px; }
+  body.dongdong-mode .topnav .nav {
+    min-width: 0;
+    flex: 1 1 auto;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  body.dongdong-mode .topnav .nav::-webkit-scrollbar { display: none; }
+  body.dongdong-mode .topnav .nav > .dongdong-entry,
+  body.dongdong-mode .topnav .menu-group { flex: 0 0 auto; }
+  body.dongdong-mode .topnav .nav button,
+  body.dongdong-mode .topnav .menu-toggle { height: 40px; min-height: 40px; padding-inline: 10px; font-size: 13px !important; }
+  body.dongdong-mode .topnav .user { display: none; }
+  body.dongdong-mode .topnav .submenu { max-width: 100vw; }
+  body.dongdong-mode .topbar { height: 56px; min-height: 56px; padding-inline: 14px; }
+  body.dongdong-mode .topbar .global-search { width: min(250px, 42vw); }
+  body.dongdong-mode .dongdong-band { height: 240px; }
+  body.dongdong-mode .dongdong-inner { max-width: none; padding-inline: 16px; }
+  body.dongdong-mode .dongdong-console { margin-top: -136px; }
+  body.dongdong-mode .dongdong-card { border-radius: 18px; }
+  body.dongdong-mode .dongdong-card-head { padding: 20px; gap: 10px; }
+  body.dongdong-mode .dongdong-card-title h1 { font-size: 20px; }
+  body.dongdong-mode .dongdong-card-title p { font-size: 13px; }
+  body.dongdong-mode .dongdong-quick { max-width: none; margin-top: 52px; padding: 42px 8px 14px; }
+  body.dongdong-mode .dongdong-section { max-width: none; margin-top: 40px; }
+  /* 助手球占据右下角时，列表右侧保留 136px 安全区。 */
+  body.dongdong-mode .dongdong-section { padding-right: 136px; box-sizing: border-box; }
+  /* 模式页签与任务卡上下分离，避免页签压住卡片标题。 */
+  body.dongdong-mode .dongdong-tabs { margin-bottom: 12px; }
+  /* 五个一级入口始终落在视口内，二级菜单仍由各组按钮展开。 */
+  body.dongdong-mode .topnav .nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; overflow: visible; }
+  body.dongdong-mode .topnav .nav > .dongdong-entry,
+  body.dongdong-mode .topnav .nav > .menu-group { min-width: 0; width: 100%; }
+  body.dongdong-mode .topnav .nav > .dongdong-entry,
+  body.dongdong-mode .topnav .menu-toggle { justify-content: center !important; padding-inline: 2px; }
+  body.dongdong-mode .topnav .nav button > svg,
+  body.dongdong-mode .topnav .menu-toggle > span > svg,
+  body.dongdong-mode .topnav .menu-chevron { display: none; }
+  body.dongdong-mode .topnav .menu-group { position: relative; }
+  body.dongdong-mode .topnav .submenu { position: absolute; top: calc(100% + 8px); left: 50%; right: auto; width: max-content; min-width: 174px; transform: translateX(-50%); padding: 7px; border: 1px solid #e2eaf1; border-radius: 13px; }
+  body.dongdong-mode .topnav .submenu button { justify-content: flex-start; padding: 10px 12px; }
+}
+
+@media (max-width: 560px) {
+  body.dongdong-mode .topnav { height: 56px; min-height: 56px; padding-inline: 10px; gap: 6px; }
+  body.dongdong-mode .topnav .logo img { height: 25px; }
+  body.dongdong-mode .topnav .nav button,
+  body.dongdong-mode .topnav .menu-toggle { padding-inline: 8px; font-size: 12px !important; }
+  body.dongdong-mode .topnav .menu-toggle > span { gap: 4px; }
+  body.dongdong-mode .topnav .menu-chevron { width: 14px; }
+  body.dongdong-mode .topbar { height: 64px; min-height: 64px; padding: 10px 12px; }
+  body.dongdong-mode .crumb { min-width: 0; max-width: 42%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  body.dongdong-mode .global-search,
+  body.dongdong-mode .top-actions > .btn.primary { display: none; }
+  body.dongdong-mode .top-actions { margin-left: auto; gap: 6px; }
+  body.dongdong-mode .top-actions .icon-btn { width: 34px; height: 34px; }
+  body.dongdong-mode .dongdong-band { height: 210px; }
+  body.dongdong-mode .dongdong-inner { padding-inline: 10px; }
+  body.dongdong-mode .dongdong-console { margin-top: -116px; }
+  body.dongdong-mode .dongdong-tabs { width: 100%; overflow-x: auto; justify-content: flex-start; padding-inline: 2px; }
+  body.dongdong-mode .dongdong-tabs { margin-bottom: 12px; }
+  body.dongdong-mode .dongdong-tabs button { flex: 0 0 auto; padding-inline: 16px; font-size: 13px; }
+  body.dongdong-mode .dongdong-card-head { align-items: flex-start; padding: 16px; }
+  body.dongdong-mode .dongdong-avatar { width: 38px; height: 38px; flex-basis: 38px; }
+  body.dongdong-mode .dongdong-card-title h1 { font-size: 18px; line-height: 1.35; }
+  body.dongdong-mode .dongdong-card-title p { font-size: 12px; line-height: 1.6; }
+  body.dongdong-mode .dongdong-live { margin-left: auto; font-size: 10px; padding-inline: 8px; }
+  body.dongdong-mode .dongdong-quick { margin-top: 42px; padding: 36px 4px 10px; }
+  body.dongdong-mode .dongdong-chip { min-width: 0; flex: 1 1 33%; padding-inline: 6px; font-size: 11px; }
+  body.dongdong-mode .dongdong-chip svg { width: 18px; height: 18px; }
+  body.dongdong-mode .dongdong-section { margin-top: 30px; }
+  body.dongdong-mode .dongdong-section-head { flex-wrap: wrap; gap: 8px; }
+  body.dongdong-mode .dongdong-section-head span { width: 100%; order: 3; }
+  body.dongdong-mode .dongdong-cap-grid { gap: 18px; }
+  body.dongdong-mode .dongdong-cap b { font-size: 14px; }
+  body.dongdong-mode .dongdong-cap p { font-size: 12px; }
+}
