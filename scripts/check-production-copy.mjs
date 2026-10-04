@@ -5,6 +5,9 @@ const root = new URL('../apps/web-v32/', import.meta.url);
 const allowedExtensions = new Set(['.html', '.js', '.css']);
 const forbiddenPatterns = [
   { name: '连续问号乱码', pattern: /\?{3,}|[>'"\x60]\?{2}[<'"\x60]/g },
+  // 转义形式的问号（\u003f / \u003F）同样会在界面上显示成 ???，
+  // 但字面 ?? 的正则抓不到，所以单独检测连续三处以上的转义问号。
+  { name: '转义问号乱码', pattern: /(?:\\u003[fF]\s*){3,}|\\u003[fF][^]{0,4}(?:\\u003[fF][^]{0,4}){2,}/g },
   { name: '常见中文乱码', pattern: /[鍙璇绠钀鏅绉妯闂锛銆]/g },
   { name: '演示或占位文案', pattern: /运行演示|使用演示|演示运行|演示数据|模拟数据|示例数据|样例数据|占位|生产原型/gi },
   // provider_type 的机器取值就叫 'mock'（后端 llm.py 的受控回退分支），
