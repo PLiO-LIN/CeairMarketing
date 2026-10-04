@@ -93,6 +93,8 @@ def get_tenant_context(
     ).all()
     if not memberships:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="用户未加入任何租户")
+    if x_tenant_id is None and len(memberships) > 1:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="多租户用户必须通过 X-Tenant-ID 明确选择租户")
     membership = next((item for item in memberships if item.tenant_id == x_tenant_id), memberships[0] if x_tenant_id is None else None)
     if membership is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="无权访问该租户")
@@ -105,6 +107,13 @@ def get_tenant_context(
 def require_write(context: TenantContext = Depends(get_tenant_context)) -> TenantContext:
     if context.role not in {"admin", "manager", "analyst"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="当前角色没有写入权限")
+    return context
+
+
+def require_approver(context: TenantContext = Depends(get_tenant_context)) -> TenantContext:
+    """Approval decisions require an explicit approval-capable role."""
+    if context.role not in {"admin", "manager"}:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="仅租户管理员或营销经理可以处理审批")
     return context
 
 

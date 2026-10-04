@@ -28,6 +28,21 @@ MINERU_DEFAULT_URL = "https://mineru.net"
 DOCUMENT_SUFFIXES = {"pdf", "png", "jpg", "jpeg", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "html"}
 
 
+class PipelineCancelled(RuntimeError):
+    """Internal signal used to stop a worker after a user cancellation."""
+
+
+def bounded_confidence(value: Any, fallback: float = 0.0) -> float:
+    """Normalize model confidence values without failing a whole pipeline."""
+    try:
+        number = float(value)
+        if number != number:  # NaN
+            return fallback
+        return max(0.0, min(1.0, number))
+    except (TypeError, ValueError):
+        return fallback
+
+
 def normalize_ontology_decision(payload: Any) -> dict[str, Any]:
     """Normalize an agent admission decision without allowing implicit ontology writes."""
     raw = payload if isinstance(payload, dict) else {}
@@ -43,7 +58,7 @@ def normalize_ontology_decision(payload: Any) -> dict[str, Any]:
         "decision": "update" if eligible else "knowledge_only",
         "reason": str(decision.get("reason") or ("发现可映射且有来源证据的航空营销业务对象" if eligible else "内容未识别出可稳定映射的航空营销业务对象")),
         "matched_entity_types": sorted(business_types) if eligible else [],
-        "confidence": max(0.0, min(1.0, float(decision.get("confidence", 0.75 if eligible else 0.88) or 0.0))),
+        "confidence": bounded_confidence(decision.get("confidence", 0.75 if eligible else 0.88)),
         "review_required": eligible,
     }
 
@@ -306,7 +321,7 @@ class DataProcessingAgent:
             record.label = label
             record.attributes_json = json.dumps({"pipeline_status": pipeline_status, **(item.get("attributes") or {})}, ensure_ascii=False)
             record.source = source_name
-            record.confidence = max(0.0, min(1.0, float(item.get("confidence", 0.5))))
+            record.confidence = bounded_confidence(item.get("confidence", 0.5), 0.5)
             self.session.flush()
             records[external_id] = record
             accepted_entities += 1
@@ -329,7 +344,7 @@ class DataProcessingAgent:
             if item.get("ontology_eligible") is not True or not source or not target or not relation or validate_relation_endpoints(relation, source.entity_type, target.entity_type):
                 rejected += 1
                 continue
-            self.session.add(OntologyRelationRecord(tenant_id=self.tenant.tenant_id, source_entity_id=source.id, relation_type=relation, target_entity_id=target.id, evidence=str(item.get("evidence") or ""), source=source_name, confidence=max(0.0, min(1.0, float(item.get("confidence", 0.5))))))
+            self.session.add(OntologyRelationRecord(tenant_id=self.tenant.tenant_id, source_entity_id=source.id, relation_type=relation, target_entity_id=target.id, evidence=str(item.get("evidence") or ""), source=source_name, confidence=bounded_confidence(item.get("confidence", 0.5), 0.5)))
             accepted_relations += 1
         self.session.commit()
         self.job.accepted_entities = accepted_entities
@@ -340,6 +355,7 @@ class DataProcessingAgent:
         return {"accepted_entities": accepted_entities, "accepted_relations": accepted_relations, "rejected_items": rejected}
 
     def _stage(self, stage: str, label: str, status: str, **payload: Any) -> None:
+        self._ensure_active()
         self.job.current_stage = stage
         self.events.append({"stage": stage, "label": label, "status": status, "timestamp": datetime.now(timezone.utc).isoformat(), **payload})
         self._checkpoint()
@@ -349,9 +365,29 @@ class DataProcessingAgent:
         self._checkpoint()
 
     def _checkpoint(self) -> None:
+        self._ensure_active()
         self.result["events"] = self.events
         self.job.result_json = json.dumps(self.result, ensure_ascii=False)
         self.session.commit()
+
+    def _ensure_active(self) -> None:
+        """Stop a worker whose job was cancelled through the API.
+
+        The probe runs on its own session: refreshing ``self.job`` would discard
+        the terminal status this worker just wrote (``awaiting_confirmation`` or
+        ``completed``) and leave the row stuck on ``running``.
+        """
+        from .database import SessionLocal
+
+        with SessionLocal() as probe:
+            status = probe.scalar(
+                select(DataPipelineJobRecord.status).where(
+                    DataPipelineJobRecord.id == self.job.id,
+                    DataPipelineJobRecord.tenant_id == self.tenant.tenant_id,
+                )
+            )
+        if status == "cancelled":
+            raise PipelineCancelled("数据处理任务已取消")
 
 
 
@@ -374,7 +410,7 @@ def apply_ontology_admission(candidates: dict[str, Any]) -> dict[str, Any]:
         item = dict(raw_item)
         entity_type = str(item.get("entity_type") or "")
         external_id = str(item.get("external_id") or "")
-        confidence = float(item.get("confidence", 0) or 0)
+        confidence = bounded_confidence(item.get("confidence", 0))
         has_evidence = bool(item.get("source_refs") or item.get("evidence"))
         eligible = item.get("ontology_eligible") is not False and entity_type in allowed_types and entity_type not in {"KnowledgeDocument", "KnowledgeChunk"} and bool(external_id) and bool(item.get("label")) and has_evidence and confidence >= 0.65
         item["ontology_eligible"] = eligible
@@ -393,7 +429,7 @@ def apply_ontology_admission(candidates: dict[str, Any]) -> dict[str, Any]:
             rejected.append({"kind": "relation", "reason": "候选关系格式无效"})
             continue
         item = dict(raw_item)
-        confidence = float(item.get("confidence", 0) or 0)
+        confidence = bounded_confidence(item.get("confidence", 0))
         source_id = str(item.get("source_external_id") or "")
         target_id = str(item.get("target_external_id") or "")
         relation_type = str(item.get("relation_type") or "")

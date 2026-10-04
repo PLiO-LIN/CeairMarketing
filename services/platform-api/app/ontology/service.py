@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 
-from sqlalchemy import or_, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..db_models import OntologyEntityRecord, OntologyRelationRecord
@@ -15,7 +15,7 @@ def build_campaign_graph(session: Session, tenant_id: int, campaign_id: str | No
     entity_query = select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id)
     entities = list(session.scalars(entity_query.order_by(OntologyEntityRecord.id).limit(limit)))
     if campaign_id:
-        campaign = next((item for item in entities if item.external_id == campaign_id), None)
+        campaign = session.scalar(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id, OntologyEntityRecord.external_id == campaign_id))
         if campaign is not None:
             all_relations = list(
                 session.scalars(select(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == tenant_id))
@@ -27,7 +27,7 @@ def build_campaign_graph(session: Session, tenant_id: int, campaign_id: str | No
             for relation in all_relations:
                 if relation.source_entity_id in connected_ids or relation.target_entity_id in connected_ids:
                     connected_ids.update({relation.source_entity_id, relation.target_entity_id})
-            entities = [item for item in entities if item.id in connected_ids]
+            entities = list(session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id, OntologyEntityRecord.id.in_(connected_ids)).order_by(OntologyEntityRecord.id).limit(limit)))
     ids = {item.id for item in entities}
     relations = list(
         session.scalars(
@@ -66,13 +66,14 @@ def build_campaign_graph(session: Session, tenant_id: int, campaign_id: str | No
 
 
 def graph_stats(session: Session, tenant_id: int) -> GraphStats:
-    entities = list(session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id)))
-    relation_count = len(list(session.scalars(select(OntologyRelationRecord.id).where(OntologyRelationRecord.tenant_id == tenant_id))))
+    entity_counts = dict(session.execute(select(OntologyEntityRecord.entity_type, func.count()).where(OntologyEntityRecord.tenant_id == tenant_id).group_by(OntologyEntityRecord.entity_type)).all())
+    source_count = session.scalar(select(func.count(func.distinct(OntologyEntityRecord.source))).where(OntologyEntityRecord.tenant_id == tenant_id)) or 0
+    relation_count = session.scalar(select(func.count()).select_from(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == tenant_id)) or 0
     return GraphStats(
-        entity_count=len(entities),
+        entity_count=sum(entity_counts.values()),
         relation_count=relation_count,
-        entity_types=dict(Counter(item.entity_type for item in entities)),
-        source_count=len({item.source for item in entities}),
+        entity_types=entity_counts,
+        source_count=source_count,
     )
 
 

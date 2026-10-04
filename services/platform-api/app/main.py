@@ -16,12 +16,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .agents import AgentRuntime, MarketingCopilot
-from .auth import TenantContext, create_token, get_current_user, get_tenant_context, hash_password, require_admin, require_platform_admin, require_write, verify_password
+from .auth import TenantContext, create_token, get_current_user, get_tenant_context, hash_password, require_admin, require_approver, require_platform_admin, require_write, verify_password
 from .config import get_settings
 from .data import AGENT_DOMAINS
 from .database import Base, SessionLocal, engine, get_session
 from .db_models import AgentRunRecord, ApprovalTaskRecord, AudiencePackageRecord, AudienceSnapshotRecord, AudienceTagRecord, CampaignRecord, CampaignVersionRecord, ChannelTaskRecord, ContentAssetRecord, DataPipelineJobRecord, DataSourceConfigRecord, ExecutionBatchRecord, ImportJobRecord, IntegrationConfigRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, MarketHotspotRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord, OpportunityInsightRunRecord, OpportunityInsightSourceRecord, OpportunityRecord, ProductPackageRecord, PersonaDimensionDefinitionRecord, PersonaSegmentRecord, RuntimeEventRecord, TenantMembershipRecord, TenantRecord, UserRecord
-from .data_pipeline import DataProcessingAgent, get_mineru_config, integration_view
+from .data_pipeline import DataProcessingAgent, PipelineCancelled, get_mineru_config, integration_view
 from .ndc_mock import air_shopping_payload, best_pricing_payload, order_list_payload
 from .market_hotspots import collect_source, confirm_hotspot_ontology, create_opportunity_from_hotspot, delete_hotspot, hotspot_view, ingest_hotspots, process_hotspot, synthetic_hotspot_rows
 from .opportunity_insight import launch_opportunity_insight
@@ -103,6 +103,7 @@ from .models import (
 )
 from .ontology import build_campaign_graph, graph_stats, semantic_model, semantic_status
 from .security import SecretCipher
+from .url_security import UnsafeUrlError, validate_public_url
 from .seed import seed_database, seed_opportunity_insight_sources, seed_persona_catalog, seed_tenant_data
 
 settings = get_settings()
@@ -439,13 +440,10 @@ def delete_campaign(campaign_id: str, context: TenantContext = Depends(require_w
     if campaign.status != "已归档" and (batches or campaign.status not in {"草稿", "待修改"}):
         raise HTTPException(status_code=409, detail="活动已进入执行或留痕阶段，请先归档后删除")
     if campaign.status == "已归档":
-        session.query(ChannelTaskRecord).filter(ChannelTaskRecord.tenant_id == context.tenant_id, ChannelTaskRecord.campaign_id == campaign_id).delete(synchronize_session=False)
-        session.query(ExecutionBatchRecord).filter(ExecutionBatchRecord.tenant_id == context.tenant_id, ExecutionBatchRecord.campaign_id == campaign_id).delete(synchronize_session=False)
-        session.query(ApprovalTaskRecord).filter(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_id == campaign_id).delete(synchronize_session=False)
-        agent_runs = session.scalars(select(AgentRunRecord.id).where(AgentRunRecord.tenant_id == context.tenant_id, AgentRunRecord.campaign_id == campaign_id)).all()
-        if agent_runs:
-            session.query(RuntimeEventRecord).filter(RuntimeEventRecord.run_id.in_(agent_runs)).delete(synchronize_session=False)
-            session.query(AgentRunRecord).filter(AgentRunRecord.id.in_(agent_runs)).delete(synchronize_session=False)
+        # Archived campaigns are the audit boundary.  Removing their versions,
+        # approvals, delivery batches or agent events would make the UI's
+        # retention promise false and break regulatory traceability.
+        raise HTTPException(status_code=409, detail="已归档活动及其审计链必须保留，不允许物理删除")
     for version in versions:
         session.delete(version)
     session.flush()
@@ -540,17 +538,24 @@ def create_approval_task(campaign_id: str, version_id: int, context: TenantConte
 
 
 @app.post("/api/approvals/{approval_id}/decision", response_model=ApprovalTask)
-def decide_approval(approval_id: int, payload: ApprovalDecision, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+def decide_approval(approval_id: int, payload: ApprovalDecision, context: TenantContext = Depends(require_approver), session: Session = Depends(get_session)):
     record = session.scalar(select(ApprovalTaskRecord).where(ApprovalTaskRecord.id == approval_id, ApprovalTaskRecord.tenant_id == context.tenant_id))
     if record is None:
         raise HTTPException(status_code=404, detail="审批任务不存在")
     if record.status != "待审批":
         raise HTTPException(status_code=409, detail="审批任务已处理")
+    version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.id == record.campaign_version_id, CampaignVersionRecord.tenant_id == context.tenant_id))
+    self_approval = version is not None and version.created_by == context.user_id
+    if self_approval and context.role != "admin":
+        raise HTTPException(status_code=409, detail="提交人不能审批自己提交的版本")
     record.status = "已通过" if payload.decision == "approve" else "已退回"
     record.comment = payload.comment
+    if self_approval:
+        # Tenant admins are the only role allowed to decide a version they
+        # submitted, and that exception has to be visible in the record itself.
+        record.comment = f"{payload.comment or ''}（提交人自审批：仅租户管理员可用）".strip()
     record.decided_by = context.user_id
     record.decided_at = datetime.now(timezone.utc)
-    version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.id == record.campaign_version_id, CampaignVersionRecord.tenant_id == context.tenant_id))
     if version:
         version.status = "已通过" if payload.decision == "approve" else "已退回"
     campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == record.campaign_id, CampaignRecord.tenant_id == context.tenant_id))
@@ -604,8 +609,11 @@ def update_execution_batch_status(batch_id: int, payload: dict[str, str], contex
     if record is None:
         raise HTTPException(status_code=404, detail="执行批次不存在")
     next_status = payload.get("status", "")
-    if next_status not in {"待执行", "执行中", "已暂停", "已完成", "失败"}:
+    allowed_transitions = {"待执行": {"待执行", "执行中", "已暂停", "失败"}, "执行中": {"执行中", "已暂停", "已完成", "失败"}, "已暂停": {"已暂停", "执行中", "失败"}, "已完成": {"已完成"}, "失败": {"失败", "待执行"}}
+    if next_status not in allowed_transitions:
         raise HTTPException(status_code=422, detail="不支持的执行状态")
+    if next_status not in allowed_transitions.get(record.status, set()):
+        raise HTTPException(status_code=409, detail=f"执行批次不能从“{record.status}”流转到“{next_status}”")
     record.status = next_status
     tasks = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.batch_id == record.id, ChannelTaskRecord.tenant_id == context.tenant_id)).all()
     for task in tasks:
@@ -614,7 +622,7 @@ def update_execution_batch_status(batch_id: int, payload: dict[str, str], contex
         record.delivered_count = max(record.delivered_count, min(record.target_size, max(1, int(record.target_size * 0.35))))
     if next_status == "已完成":
         record.delivered_count = record.target_size
-        record.feedback_count = max(record.feedback_count, record.delivered_count)
+        record.feedback_count = max(record.feedback_count, sum(item.clicked_count + item.converted_count for item in tasks))
     session.commit()
     session.refresh(record)
     return execution_batch_view(record)
@@ -666,10 +674,13 @@ def update_channel_feedback(task_id: int, payload: dict[str, int | str], context
     task = session.scalar(select(ChannelTaskRecord).where(ChannelTaskRecord.id == task_id, ChannelTaskRecord.tenant_id == context.tenant_id))
     if task is None:
         raise HTTPException(status_code=404, detail="渠道任务不存在")
+    candidate = {field: int(payload[field]) if field in payload else getattr(task, field) for field in ("sent_count", "delivered_count", "clicked_count", "converted_count", "failed_count")}
+    if candidate["sent_count"] > task.target_count or candidate["delivered_count"] > candidate["sent_count"] or candidate["clicked_count"] > candidate["delivered_count"] or candidate["converted_count"] > candidate["clicked_count"] or candidate["failed_count"] + candidate["delivered_count"] > candidate["sent_count"]:
+        raise HTTPException(status_code=422, detail="渠道回执必须满足 target >= sent >= delivered >= clicked >= converted，且失败+送达不得超过发送数")
     for field in ("sent_count", "delivered_count", "clicked_count", "converted_count", "failed_count"):
         if field in payload:
-            value = int(payload[field])
-            if value < 0 or value > task.target_count:
+            value = candidate[field]
+            if value < 0:
                 raise HTTPException(status_code=422, detail=f"{field} 超出渠道任务范围")
             setattr(task, field, value)
     next_status = str(payload.get("status", task.status))
@@ -965,6 +976,10 @@ def list_opportunity_insight_sources(context: TenantContext = Depends(get_tenant
 
 @app.post("/api/opportunity-insight/sources", response_model=OpportunityInsightSource, status_code=status.HTTP_201_CREATED)
 def create_opportunity_insight_source(payload: OpportunityInsightSourceBase, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    try:
+        payload.source_url = validate_public_url(payload.source_url, allow_empty=True)
+    except UnsafeUrlError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     record = OpportunityInsightSourceRecord(tenant_id=context.tenant_id, created_by=context.user_id, **payload.model_dump())
     session.add(record)
     try:
@@ -981,6 +996,10 @@ def update_opportunity_insight_source(source_id: int, payload: OpportunityInsigh
     record = session.scalar(select(OpportunityInsightSourceRecord).where(OpportunityInsightSourceRecord.id == source_id, OpportunityInsightSourceRecord.tenant_id == context.tenant_id))
     if record is None:
         raise HTTPException(status_code=404, detail="洞察来源不存在")
+    try:
+        payload.source_url = validate_public_url(payload.source_url, allow_empty=True)
+    except UnsafeUrlError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     for key, value in payload.model_dump().items():
         setattr(record, key, value)
     session.commit(); session.refresh(record)
@@ -1008,6 +1027,21 @@ def get_opportunity_insight_run(run_id: str, context: TenantContext = Depends(ge
     if record is None:
         raise HTTPException(status_code=404, detail="洞察任务不存在")
     return opportunity_run_view(record, detailed=True)
+
+
+@app.post("/api/opportunity-insight/runs/{run_id}/cancel", response_model=OpportunityInsightRunSummary)
+def cancel_opportunity_insight_run(run_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    record = session.scalar(select(OpportunityInsightRunRecord).where(OpportunityInsightRunRecord.id == run_id, OpportunityInsightRunRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(status_code=404, detail="洞察任务不存在")
+    if record.status not in {"queued", "running"}:
+        raise HTTPException(status_code=409, detail="只有排队中或运行中的洞察任务可以取消")
+    record.status = "cancelled"
+    record.current_stage = "cancelled"
+    record.error_message = "由用户取消"
+    record.completed_at = datetime.now(timezone.utc)
+    session.commit(); session.refresh(record)
+    return opportunity_run_view(record)
 
 
 @app.post("/api/opportunity-insight/runs", response_model=OpportunityInsightRunSummary, status_code=status.HTTP_202_ACCEPTED)
@@ -1471,6 +1505,18 @@ def pipeline_view_internal(record: DataPipelineJobRecord) -> DataPipelineJob:
     return DataPipelineJob.model_validate(record).model_copy(update={"result": json.loads(record.result_json or "{}")})
 
 
+def _fail_pipeline_job(session: Session, job_id: str, exc: BaseException) -> None:
+    """Record a pipeline failure, but never overwrite a user cancellation."""
+    job = session.get(DataPipelineJobRecord, job_id)
+    if job is None or job.status == "cancelled":
+        return
+    job.status = "failed"
+    job.current_stage = "failed"
+    job.error_message = str(exc)[:1000]
+    job.completed_at = datetime.now(timezone.utc)
+    session.commit()
+
+
 @app.get("/api/internal/integrations/mineru", response_model=IntegrationConfig, include_in_schema=False)
 def get_mineru_integration_internal(context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
     return integration_view(get_mineru_config(session, context.tenant_id))
@@ -1517,14 +1563,12 @@ def create_data_pipeline_internal(file: UploadFile = File(...), context: TenantC
         job.status = "completed"
         job.completed_at = datetime.now(timezone.utc)
         session.commit()
+    except PipelineCancelled:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="数据处理任务已取消")
     except Exception as exc:
         session.rollback()
-        job = session.get(DataPipelineJobRecord, job.id)
-        job.status = "failed"
-        job.current_stage = "failed"
-        job.error_message = str(exc)[:1000]
-        job.completed_at = datetime.now(timezone.utc)
-        session.commit()
+        _fail_pipeline_job(session, job.id, exc)
         raise HTTPException(status_code=502, detail=f"数据处理失败：{exc}") from exc
     return DataPipelineCreateResult(job=pipeline_view(job), stages=events)
 
@@ -1547,7 +1591,7 @@ def process_data_pipeline_job(job_id: str, context: TenantContext, filename: str
         except Exception as exc:
             session.rollback()
             job = session.get(DataPipelineJobRecord, job_id)
-            if job is not None:
+            if job is not None and job.status != "cancelled":
                 job.status = "failed"
                 job.current_stage = "failed"
                 job.error_message = str(exc)[:1000]
@@ -1691,14 +1735,12 @@ def sync_ndc_mock_flight_products(payload: NdcAirShoppingRequest, context: Tenan
         stages = agent.process_structured(response["data"], "NDC 24.1模拟航班产品接口")
         source.last_sync_at = datetime.now(timezone.utc)
         session.commit()
+    except PipelineCancelled:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="数据处理任务已取消")
     except Exception as exc:
         session.rollback()
-        job = session.get(DataPipelineJobRecord, job.id)
-        job.status = "failed"
-        job.current_stage = "failed"
-        job.error_message = str(exc)[:1000]
-        job.completed_at = datetime.now(timezone.utc)
-        session.commit()
+        _fail_pipeline_job(session, job.id, exc)
         raise HTTPException(status_code=502, detail=f"NDC模拟数据处理失败：{exc}") from exc
     return DataPipelineCreateResult(job=pipeline_view(job), stages=stages)
 
@@ -1731,9 +1773,11 @@ def create_flight_product_pipeline(payload: FlightProductPipelineRequest, contex
         if not payload.require_confirmation and job.status == "awaiting_confirmation":
             agent.confirm("approve", "Auto-confirmed by explicitly requested trusted pipeline mode", "system")
         session.commit()
+    except PipelineCancelled:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="Flight/product pipeline cancelled")
     except Exception as exc:
-        session.rollback(); job = session.get(DataPipelineJobRecord, job.id)
-        job.status = "failed"; job.current_stage = "failed"; job.error_message = str(exc)[:1000]; job.completed_at = datetime.now(timezone.utc); session.commit()
+        session.rollback(); _fail_pipeline_job(session, job.id, exc)
         raise HTTPException(status_code=502, detail=f"Flight/product pipeline failed: {exc}") from exc
     return DataPipelineCreateResult(job=pipeline_view(job), stages=stages)
 
@@ -1828,10 +1872,12 @@ def review_data_pipeline(job_id: str, payload: DataPipelineReviewRequest, contex
 
 @app.get("/api/knowledge/search", response_model=list[KnowledgeSearchResult])
 def search_knowledge(q: str = "", limit: int = 10, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
-    query = q.strip().lower()
-    chunks = session.scalars(select(KnowledgeChunkRecord).where(KnowledgeChunkRecord.tenant_id == context.tenant_id).order_by(KnowledgeChunkRecord.created_at.desc()).limit(500)).all()
-    documents = {item.id: item for item in session.scalars(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == context.tenant_id)).all()}
-    selected = [item for item in chunks if not query or query in item.content.lower()][:max(1, min(limit, 50))]
+    query = q.strip()
+    chunk_query = select(KnowledgeChunkRecord).where(KnowledgeChunkRecord.tenant_id == context.tenant_id)
+    if query:
+        chunk_query = chunk_query.where(KnowledgeChunkRecord.content.ilike(f"%{query}%"))
+    selected = list(session.scalars(chunk_query.order_by(KnowledgeChunkRecord.created_at.desc()).limit(max(1, min(limit, 50)))))
+    documents = {item.id: item for item in session.scalars(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == context.tenant_id, KnowledgeDocumentRecord.id.in_([item.document_id for item in selected]) if selected else KnowledgeDocumentRecord.id == -1)).all()}
     if not selected:
         return []
     ontology_chunks = {

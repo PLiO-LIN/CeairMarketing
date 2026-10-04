@@ -19,6 +19,7 @@ from typing import Any, Callable
 from pydantic import BaseModel, SecretStr
 
 from ..llm import LLMConfig, LLMResult
+from ..config import get_settings
 
 try:
     from agentscope.agent import Agent, ContextConfig, ReActConfig
@@ -211,7 +212,10 @@ class AgentScopeRuntime:
                     cwd=str(ROOT),
                     env={
                         **os.environ,
-                        "CEAIR_MARKETING_DB": str(ROOT / "ceair-marketing.db"),
+                        # MCP must query the same database as FastAPI.  The
+                        # previous hard-coded SQLite path silently exposed an
+                        # empty/stale database when production used Postgres.
+                        "CEAIR_MARKETING_DATABASE_URL": get_settings().database_url,
                         "CEAIR_TENANT_ID": str(tenant_id),
                     },
                 ),

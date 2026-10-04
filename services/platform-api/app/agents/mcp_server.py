@@ -17,17 +17,46 @@ import sys
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from sqlalchemy import create_engine, text
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
+DATABASE_URL = os.environ.get("CEAIR_MARKETING_DATABASE_URL", "sqlite:///./ceair-marketing.db")
 DB_PATH = Path(os.environ.get("CEAIR_MARKETING_DB", "ceair-marketing.db")).resolve()
 TENANT_ID = int(os.environ.get("CEAIR_TENANT_ID", "0"))
 PROFILE = ""
 
+IS_SERVER_DATABASE = DATABASE_URL.startswith(("postgresql://", "postgresql+", "mysql://", "mysql+"))
+_engine = None
+
+
+def _server_engine():
+    """One pooled engine per MCP process instead of one per query."""
+    global _engine
+    if _engine is None:
+        _engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    return _engine
+
 
 def db_rows(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+    if IS_SERVER_DATABASE:
+        # Existing MCP queries use qmark placeholders.  Translate them to
+        # SQLAlchemy named binds so the same read-only tool works on Postgres.
+        names = [f"p{i}" for i in range(len(params))]
+        for name in names:
+            sql = sql.replace("?", f":{name}", 1)
+        with _server_engine().connect() as conn:
+            rows = conn.execute(text(sql), {name: value for name, value in zip(names, params)}).mappings().all()
+            return [dict(row) for row in rows]
     if not DB_PATH.is_file():
+        # An empty result here used to be silent, which is how an agent ended up
+        # answering from an empty file while production read Postgres.
+        print(
+            f"MCP sqlite fallback found no database at {DB_PATH}; returning no rows. "
+            f"Set CEAIR_MARKETING_DATABASE_URL to the service database (currently {DATABASE_URL.split('://')[0]}).",
+            file=sys.stderr,
+        )
         return []
     conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
     conn.row_factory = sqlite3.Row
