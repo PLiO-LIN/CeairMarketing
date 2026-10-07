@@ -36,7 +36,7 @@ Each commit should represent one complete change.
 
 ## Ownership boundaries
 
-- Frontend: `apps/web-v32` and `apps/web`.
+- Frontend: `apps/web-v32` (the only frontend built by Compose and checked by CI). `apps/web` is a frozen React prototype: no new features, no CI job, removal is being reviewed on branch `chore/drop-react-prototype`.
 - API, agent runtime, model configuration, and ontology: `services/platform-api`.
 - Container and reverse proxy: `compose.yml`, Dockerfiles, and nginx configs.
 - Architecture decisions: `docs/adr`.

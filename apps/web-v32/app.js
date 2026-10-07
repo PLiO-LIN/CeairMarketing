@@ -1,23 +1,68 @@
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const titles={dongdong:'东东',overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',graph:'知识中心',permissions:'权限与审计'};
+const titles={dongdong:'东东',overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',search:'智能检索',graph:'知识中心',permissions:'权限与审计'};
 let toastTimer=null,wizardStep=0,selectedDecision='approve',editingCampaignRow=null;const toastEl=$('#toast');
 function toast(t){if(!toastEl)return;toastEl.textContent=t;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2800)}
 function icons(){if(window.lucide)lucide.createIcons()}
-function activate(view){$$('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$$('.view').forEach(v=>v.classList.toggle('active',v.id===view));if($('#crumbTitle'))$('#crumbTitle').textContent=titles[view]||titles.overview;if($('#activeTab'))$('#activeTab').textContent=titles[view]||titles.overview;if(view==='graph')requestAnimationFrame(()=>{if(window.graph&&typeof window.graph.resize==='function')window.graph.resize();});if(window.dockDongdong)window.dockDongdong(view==='dongdong');syncDongdongChrome()}
+function activate(view){
+  // 普通首页点击不能触发空路由；只有已存在的业务视图允许切换。
+  if(typeof view!=='string'||!view||!document.getElementById(view)) return;
+  $$('.nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  $$('.view').forEach(v=>v.classList.toggle('active',v.id===view));
+  if($('#crumbTitle'))$('#crumbTitle').textContent=titles[view]||titles.overview;
+  if($('#activeTab'))$('#activeTab').textContent=titles[view]||titles.overview;
+  if(view==='graph')requestAnimationFrame(()=>{if(window.graph&&typeof window.graph.resize==='function')window.graph.resize();});
+  if(window.dockDongdong)window.dockDongdong(view==='dongdong');
+  syncDongdongChrome();
+}
+window.activate = activate;
 document.addEventListener('click',event=>{
   const toggle=event.target.closest('.menu-toggle');
   if(toggle){
     event.preventDefault();
     event.stopPropagation();
     const group=toggle.closest('.menu-group');
-    const expanded=!group.classList.contains('open');
-    group.classList.toggle('open',expanded);
+    const expanded=true;
+    $$('.topnav .menu-group').forEach(item=>{
+      const isCurrent=item===group;
+      item.classList.toggle('open',isCurrent&&expanded);
+      const itemToggle=item.querySelector('.menu-toggle');
+      if(itemToggle)itemToggle.setAttribute('aria-expanded',String(isCurrent&&expanded));
+    });
     toggle.setAttribute('aria-expanded',String(expanded));
     return;
   }
   const nav=event.target.closest('.nav button[data-view]');
-  if(nav){activate(nav.dataset.view);$$('.topnav .menu-group').forEach(g=>g.classList.remove('open'));}
+  if(nav){activate(nav.dataset.view);$$('.topnav .menu-group').forEach(g=>{g.classList.remove('open');g.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');});}
 });
+function bindTopnavHoverMenus(){
+  let closeTimer=null;
+  const cancelClose=()=>{clearTimeout(closeTimer);closeTimer=null;};
+  $$('.topnav .menu-group').forEach(group=>{
+    if(group.dataset.hoverBound)return;
+    group.dataset.hoverBound='1';
+    const toggle=group.querySelector('.menu-toggle');
+    const setExpanded=expanded=>{
+      cancelClose();
+      $$('.topnav .menu-group').forEach(item=>{
+        const current=item===group;
+        item.classList.toggle('open',current&&expanded);
+        const itemToggle=item.querySelector('.menu-toggle');
+        if(itemToggle)itemToggle.setAttribute('aria-expanded',String(current&&expanded));
+      });
+    };
+    const scheduleClose=event=>{
+      if(group.contains(event.relatedTarget))return;
+      cancelClose();
+      closeTimer=setTimeout(()=>{if(group.classList.contains('open'))setExpanded(false);},180);
+    };
+    group.addEventListener('pointerenter',()=>setExpanded(true));
+    group.addEventListener('pointerleave',scheduleClose);
+    group.addEventListener('focusin',()=>{cancelClose();setExpanded(true);});
+    group.addEventListener('focusout',scheduleClose);
+    group.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();setExpanded(false);toggle?.focus();setExpanded(false);}});
+  });
+}
+bindTopnavHoverMenus();
 $$('[data-jump]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.jump)));
 function openLayer(id){const e=$(`#${id}`);if(e){e.classList.add('open');e.setAttribute('aria-hidden','false');document.body.classList.add('layer-open');icons()}}function closeLayer(id){const e=$(`#${id}`);if(e){e.classList.remove('open');e.setAttribute('aria-hidden','true')}if(!$('.modal-layer.open,.drawer-layer.open'))document.body.classList.remove('layer-open')}
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeLayer(b.dataset.close)));
@@ -30,7 +75,6 @@ async function submitCampaign(){const name=$('#campaignName')?.value?.trim()||'�
 $('#wizardNext')?.addEventListener('click',()=>wizardStep===3?submitCampaign():setStep(wizardStep+1));$('#wizardPrev')?.addEventListener('click',()=>setStep(wizardStep-1));
 bindCampaignRows();
 $('#campaigns')?.addEventListener('click',e=>{const button=e.target.closest('[data-campaign-action]');if(!button)return;const row=button.closest('tr');const name=row?.querySelector('td:nth-child(2) strong')?.textContent?.trim()||'未命名活动';if(button.dataset.campaignAction==='view'){openCampaign(name);toast(`已打开活动“${name}”`)}if(button.dataset.campaignAction==='edit'){editingCampaignRow=row;openCampaign(name);toast(`已载入活动“${name}”，可修改活动信息`)}if(button.dataset.campaignAction==='delete'){if(!window.confirm(`确认删除活动“${name}”？删除后不可恢复。`))return;row.remove();toast(`活动“${name}”已删除`)}});
-$$('.life').forEach(b=>b.addEventListener('click',()=>{activate(b.dataset.jump);toast(`已进入${titles[b.dataset.jump]}，当前活动生命周期节点已定位`)}));
 $$('[data-open-campaign]').forEach(b=>b.addEventListener('click',()=>{activate('campaigns');toast(`已打开活动：${b.dataset.openCampaign}`)}));
 $$('[data-open-opportunity]').forEach(b=>b.addEventListener('click',()=>{const title=b.dataset.openOpportunity;$('#opportunityDetail').querySelector('h3').textContent=title;toast(`已加载机会详情：${title}`)}));
 $$('[data-audience]').forEach(b=>b.addEventListener('click',()=>showAudience(b.dataset.audience)));
@@ -80,8 +124,8 @@ function syncDongdongChrome(){
   const home=!!document.querySelector('#dongdong.active');
   document.body.classList.toggle('dongdong-mode',home);
   if(home){
-    const h=['.topnav','.topbar'].reduce((sum,sel)=>{const el=document.querySelector(sel);return sum+(el?el.offsetHeight:0)},0)-22;
-    document.documentElement.style.setProperty('--dd-head-h',Math.max(0,h)+'px');
+    // 首页主视觉的接缝基准固定为 120px：桌面 78+64-22，窄屏由 CSS 调整到同一总高。
+    document.documentElement.style.setProperty('--dd-head-h','120px');
   }
   document.body.classList.toggle('dongdong-scrolled',(window.scrollY||document.documentElement.scrollTop||0)>8);
 }
@@ -91,5 +135,4 @@ syncDongdongChrome();
 requestAnimationFrame(()=>{syncDongdongChrome();setTimeout(syncDongdongChrome,60)});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(syncDongdongChrome);
 
-/* 指针离开整个顶栏时收起所有下拉，避免点击态残留 */
-document.querySelector('.topnav')?.addEventListener('pointerleave',()=>{$$('.topnav .menu-group').forEach(g=>g.classList.remove('open'))});
+/* 下拉菜单由 aria-expanded 和点击状态控制，避免指针移出顶栏时误收起。 */
