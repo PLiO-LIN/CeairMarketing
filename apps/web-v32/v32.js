@@ -37,6 +37,7 @@
     campaigns: '#campaigns .table'
   };
   const filterViews = () => {
+    if (window.ceairProductionV32) return;
     Object.entries(tableMap).forEach(([view, selector]) => {
       const panel = document.querySelector(`#${view}`);
       const input = panel?.querySelector('.toolbar-strip input');
@@ -130,6 +131,7 @@
 
   document.addEventListener('click', e => {
     if (e.target.closest('[data-view]')) $('#businessDrawer')?.classList.remove('open');
+    if (window.ceairProductionV32) return;
     const b = e.target.closest('button');
     if (!b) return;
     const action = b.dataset.v32Action || b.dataset.action || b.dataset.approvalAction;
@@ -151,7 +153,6 @@
   const init = () => { filterViews(); if (window.lucide) lucide.createIcons(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
-
 
 
 

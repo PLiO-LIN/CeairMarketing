@@ -8,14 +8,15 @@ const forbiddenPatterns = [
   { name: '常见中文乱码', pattern: /[鍙璇绠钀鏅绉妯闂锛銆]/g },
   { name: '演示或占位文案', pattern: /运行演示|使用演示|演示运行|演示数据|模拟数据|示例数据|样例数据|占位|生产原型/gi },
   // provider_type 的机器取值就叫 'mock'（后端 llm.py 的受控回退分支），
-  // 它不是给用户看的文案，所以只放行 value: 'mock' 这一种写法。
-  { name: '前端模拟实现标记', pattern: /\b(?:demo|mock)\b/gi, ignore: /\bvalue:\s*['"](?:demo|mock)['"]/gi },
+  // 放行选择器机器值及 provider_type 比较；结果页必须据此标注受控测试模型。
+  { name: '前端模拟实现标记', pattern: /\b(?:demo|mock)\b/gi, ignore: /\bvalue:\s*['"](?:demo|mock)['"]|\bprovider_type\s*===\s*['"]mock['"]/gi },
 ];
 
 async function collect(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
+    if (entry.isDirectory() && entry.name === 'vendor') continue;
     const target = new URL(entry.name + (entry.isDirectory() ? '/' : ''), directory);
     if (entry.isDirectory()) files.push(...await collect(target));
     else if (allowedExtensions.has(extname(entry.name))) files.push(target);

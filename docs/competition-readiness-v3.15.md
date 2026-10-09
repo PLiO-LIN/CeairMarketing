@@ -1,6 +1,8 @@
-# v3.15 竞赛演示与标准接口
+# v3.16 竞赛演示与标准接口
 
 本轮围绕东航用户画像与智能营销竞赛加强流程闭环、AI 结果落地和上游接口。真实画像、产品及交易系统的接口资料尚未提供；本版本提供聚合数据契约和可独立运行的虚构案例。
+
+v3.16 的现场操作与验证范围见 [演示手卡](demo-runbook-v3.16.md)；本文保留标准接口约定。
 
 ## 启动与登录
 
@@ -18,12 +20,12 @@
 | 本地竞赛账号 | `competition` / `Competition@2026` |
 | 登录后选择的工作区 | `CEA-COMPETITION`，竞赛演示（虚构数据） |
 | 本地独立数据库 | `services/platform-api/ceair-competition.db`，被 Git 忽略 |
-| API 启动日志 | `services/platform-api/competition-api-error.log` |
+| API 启动日志 | `services/platform-api/competition-api-8801-error.log`（随 API 端口变化） |
 
-脚本只监听本机地址，使用独立 SQLite 文件并等待 API 就绪。重复启动会保留已演示的状态；初始化使用稳定对象标识，不重复插入案例。若需要重新排练，可先停止占用 8801 端口的竞赛 API，再指定新的文件：
+脚本只监听本机地址，使用独立 SQLite 文件并等待 API、页面就绪。重复启动会保留已演示的状态；初始化使用稳定对象标识，不重复插入案例。从头排练可选择一对空闲端口，创建新数据库而保留旧状态：
 
 ```powershell
-.\start-competition.ps1 -DatabasePath "$PWD\services\platform-api\ceair-competition-rehearsal.db"
+.\start-competition.ps1 -NewRehearsal -ApiPort 8803 -WebPort 8783
 ```
 
 `SEED_DEMO_BUSINESS_DATA` 默认是 `false`。在独立的 Compose 演示环境中可显式设为 `true`，登录该环境已配置的管理员账号后选择竞赛工作区。Compose 的数据库、生产校验和凭据仍按 `.env` 配置。
@@ -34,7 +36,7 @@
 
 工作区选择器位于页面顶部搜索框左侧，只展示登录账号获授权的租户。切换工作区后重新加载当前租户数据；刷新时保留选择。答辩前确认选中“竞赛演示（虚构数据）”。
 
-![智慧营销首页](screenshots/competition-home-v3.15.png)
+![智慧营销首页](screenshots/competition-home-v3.16.png)
 
 ## 答辩演示流程（约 6 分钟）
 

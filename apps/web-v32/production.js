@@ -8,6 +8,12 @@
   const tenantKey = 'ceair-production-tenant';
   let session = null;
   let tenantId = null;
+  let tenantDataReady = false;
+  let selectedExecutionCampaignId = '';
+  let selectedExecutionBatchId = '';
+  let selectedExecutionChannel = '';
+  let selectedEffectCampaignId = '';
+  let effectRequestId = 0;
   let tenantData = { campaigns: [], graph: { nodes: [], edges: [] }, imports: [], pipelines: [], providers: [], domains: [], runs: [], opportunitySources: [], opportunityRuns: [], mineru: null, opportunities: [], audienceTags: [], audiencePackages: [], personaDimensions: [], personaSegments: [], productPackages: [], productCatalog: {products: []}, contentAssets: [], audienceSnapshots: [], approvals: [], executionBatches: [], documents: [] };
   const pipelineFiles = new Map();
   const roleLabels = { admin: '租户管理员', manager: '营销经理', analyst: '营销分析师', viewer: '只读用户' };
@@ -92,6 +98,15 @@
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
   const channelOptions = [['App', '东航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
   const domainLabels = { 'content-generation': '内容生成智能域', 'audience-insight': '客群洞察智能域', 'product-match': '产品匹配智能域', 'activity-orchestration': '活动编排智能域' };
+  // SQLite serializes persisted UTC timestamps without a timezone suffix.
+  function businessTime(value, timeOnly = false) {
+    const raw = String(value ?? '');
+    const utc = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) && !/(Z|[+-]\d{2}:?\d{2})$/i.test(raw) ? raw + 'Z' : value;
+    const date = new Date(utc);
+    if (Number.isNaN(date.getTime())) return '暂无时间';
+    const options = { timeZone: 'Asia/Shanghai', hour12: false };
+    return timeOnly ? date.toLocaleTimeString('zh-CN', options) : date.toLocaleString('zh-CN', options);
+  }
 
   const businessSubviewState = new Map();
   const businessSubviewDefinitions = {
@@ -105,7 +120,7 @@
     feedback: [['overview','效果总览','查看触达、点击、转化与收入','chart-no-axes-combined'],['attribution','转化归因','分析活动、客群、产品与渠道贡献','git-branch'],['learning','策略学习','沉淀复盘建议并更新营销关系','brain-circuit']],
     graph: [['schema','本体结构','查看类、属性和关系定义','network'],['instances','本体实例','查看租户真实业务对象与关系','waypoints'],['documents','知识文档','管理进入知识底座的来源文档','book-open-text']],
     imports: [['upload','数据投递','拖入文档、表格和结构化文件','cloud-upload'],['queue','处理队列','查看解析、抽取、校验与入库进度','list-restart'],['history','处理记录','追溯历史批次和本体更新结果','history']],
-    permissions: [['roles','角色权限','维护角色、成员和数据范围','user-cog'],['audit','审计记录','追踪关键操作与权限变更','scroll-text']]
+    permissions: [['roles','角色权限','查看当前账号在工作区的授权','user-cog'],['audit','处理记录','追溯审批、数据导入与智能域运行','scroll-text']]
   };
 
   function subviewContains(element,key){return String(element?.dataset?.subviewPanel||'').split(/\s+/).includes(key);}
@@ -137,7 +152,7 @@
   function renderAgentRunPanel(hostId,domains,emptyText){
     const host=q('#'+hostId);if(!host)return;const runs=(tenantData.runs||[]).filter(item=>domains.includes(item.domain_id));
     const statusLabel=value=>{const text=String(value||'');if(['queued','running','processing'].includes(text.toLowerCase()))return '处理中';if(text==='needs_approval')return '待人工审核';if(text==='completed')return '已完成';if(text==='failed')return '处理失败';return displayText(text,'已完成');};
-    host.innerHTML='<div class=panel-head><h2>任务进度</h2><span>'+runs.length+' 次运行</span></div><div class=panel-body>'+(runs.length?'<div class=run-card-list>'+runs.map(item=>{const active=['queued','running','processing'].includes(String(item.status).toLowerCase());return '<article class="run-card '+(active?'is-running':'')+'"><span class="live-state '+(active?'is-active':'')+'"><i></i>'+(active?'正在处理':escapeHtml(statusLabel(item.status)))+' </span><div><b>'+escapeHtml(displayText(item.summary,domainLabels[item.domain_id]||'智能营销任务'))+'</b><small>'+escapeHtml(domainLabels[item.domain_id]||'智能营销任务')+' · '+escapeHtml(item.campaign_id||'未关联活动')+'</small></div><time>'+(item.created_at?new Date(item.created_at).toLocaleString('zh-CN'):'刚刚')+'</time></article>';}).join('')+'</div>':'<div class=empty-action>'+escapeHtml(emptyText)+'</div>')+'</div>';
+    host.innerHTML='<div class=panel-head><h2>任务进度</h2><span>'+runs.length+' 次运行</span></div><div class=panel-body>'+(runs.length?'<div class=run-card-list>'+runs.map(item=>{const active=['queued','running','processing'].includes(String(item.status).toLowerCase());return '<article class="run-card '+(active?'is-running':'')+'"><span class="live-state '+(active?'is-active':'')+'"><i></i>'+(active?'正在处理':escapeHtml(statusLabel(item.status)))+' </span><div><b>'+escapeHtml(displayText(item.summary,domainLabels[item.domain_id]||'智能营销任务'))+'</b><small>'+escapeHtml(domainLabels[item.domain_id]||'智能营销任务')+' · '+escapeHtml(item.campaign_id||'未关联活动')+'</small></div><time>'+(item.created_at?businessTime(item.created_at):'刚刚')+'</time></article>';}).join('')+'</div>':'<div class=empty-action>'+escapeHtml(emptyText)+'</div>')+'</div>';
     qa('.run-card',host).forEach((card,index)=>{
       const button=document.createElement('button');button.className='btn';button.textContent='查看结果';button.title='查看已保存的智能域结果';
       button.addEventListener('click',async()=>{
@@ -153,8 +168,9 @@
     let panel=q('#approvalHistoryPanel');
     if(!panel){panel=document.createElement('div');panel.id='approvalHistoryPanel';panel.className='panel';view.appendChild(panel);}
     panel.dataset.subviewPanel='history';
+    panel.hidden=(businessSubviewState.get('approvals')||'pending')!=='history';
     const items=(tenantData.approvals||[]).filter(item=>!approvalIsPending(item));
-    const rows=items.map(item=>'<article><b>'+escapeHtml(item.external_id||item.id)+'</b><span>'+escapeHtml(item.approver_role||'审批节点')+' · '+escapeHtml(item.status||'未知')+'</span><time>'+escapeHtml(item.updated_at?new Date(item.updated_at).toLocaleString('zh-CN'):'暂无时间')+'</time></article>').join('');
+    const rows=items.map(item=>'<article><b>'+escapeHtml(item.external_id||item.id)+'</b><span>'+escapeHtml(item.approver_role||'审批节点')+' · '+escapeHtml(item.status||'未知')+'</span><time>'+escapeHtml(item.decided_at?businessTime(item.decided_at):'暂无时间')+'</time></article>').join('');
     panel.innerHTML='<div class=panel-head><h2>审批处理记录</h2><span>'+items.length+' 条已处理</span></div><div class=panel-body>'+(rows?'<div class=history-list>'+rows+'</div>':'<div class=empty-action>暂无审批历史。活动提交后，处理结果会在这里留痕。</div>')+'</div>';
   }
 
@@ -163,9 +179,10 @@
     let panel=q('#executionBatchPanel');
     if(!panel){panel=document.createElement('div');panel.id='executionBatchPanel';panel.className='panel';const anchor=q('.toolbar-strip',view);if(anchor)anchor.insertAdjacentElement('afterend',panel);else view.appendChild(panel);}
     panel.dataset.subviewPanel='batches';
-    const batch=(tenantData.executionBatches||[])[0];
+    panel.hidden=(businessSubviewState.get('execution')||'batches')!=='batches';
+    const batch=currentExecutionBatch();
     const title=batch?(batch.external_id||batch.id):'等待审批通过';
-    const body=batch?'<div class=batch-summary><strong>'+escapeHtml(batch.external_id||batch.id)+'</strong><span>目标名单 '+Number(batch.target_size||0).toLocaleString('zh-CN')+' 人</span><span>成功触达 '+Number(batch.delivered_count||0).toLocaleString('zh-CN')+' 人</span><span>回执回流 '+Number(batch.feedback_count||0).toLocaleString('zh-CN')+' 人</span></div>':'<div class=empty-action>暂无执行批次。审批通过后，系统会按活动版本和渠道自动生成批次。</div>';
+    const body=batch?'<div class=batch-summary><strong>'+escapeHtml(batch.external_id||batch.id)+'</strong><span>目标名单 '+Number(batch.target_size||0).toLocaleString('zh-CN')+' 人</span><span>渠道送达 '+Number(batch.delivered_count||0).toLocaleString('zh-CN')+' 次</span><span>点击与转化 '+Number(batch.feedback_count||0).toLocaleString('zh-CN')+' 次事件</span></div>':'<div class=empty-action>暂无执行批次。审批通过后，系统会按活动版本和渠道自动生成批次。</div>';
     panel.innerHTML='<div class=panel-head><h2>执行批次概览</h2><span>'+escapeHtml(title)+'</span></div><div class=panel-body>'+body+'</div>';
   }
 
@@ -233,7 +250,7 @@
     return value ?? '';
   }
 
-  function openBusinessEditor({ title, subtitle, item, fields, save, width = 'business-editor-card' }) {
+  function openBusinessEditor({ title, subtitle, item, fields, save, width = 'business-editor-card', saveLabel = '保存修改' }) {
     const layer = document.createElement('div');
     layer.className = 'production-modal';
     layer.innerHTML = `<div class="production-modal-card business-editor-card ${width}" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
@@ -256,7 +273,7 @@
           return `<label class="business-editor-field">${label}<input name="${escapeHtml(field.name)}" type="${field.type || 'text'}" value="${escapeHtml(value)}"${required} min="${field.min ?? ''}" max="${field.max ?? ''}" step="${field.step ?? ''}" placeholder="${escapeHtml(field.placeholder || '')}">${field.help ? `<small>${escapeHtml(field.help)}</small>` : ''}</label>`;
         }).join('')}</div>
         <p class="business-editor-error" role="alert" hidden></p>
-        <div class="business-editor-foot"><span>带 <em>*</em> 为必填项</span><div><button type="button" class="btn" data-close>取消</button><button type="submit" class="btn primary">保存修改</button></div></div>
+        <div class="business-editor-foot"><span>带 <em>*</em> 为必填项</span><div><button type="button" class="btn" data-close>取消</button><button type="submit" class="btn primary">${escapeHtml(saveLabel)}</button></div></div>
       </form>
     </div>`;
     document.body.appendChild(layer);
@@ -299,10 +316,11 @@
         } else if (field.type === 'datetime-local') values[field.name] = raw[field.name] ? (raw[field.name] === editorValue(item?.[field.name], field.type) ? item[field.name] : new Date(raw[field.name]).toISOString()) : null;
         else values[field.name] = field.type === 'textarea' || field.type === 'password' ? (raw[field.name] ?? '') : String(raw[field.name] ?? '').trim();
         if (field.required !== false && field.type !== 'checkbox' && typeof values[field.name] === 'string' && !values[field.name].trim()) { invalidJson = true; error.textContent = `请填写${field.label}`; error.hidden = false; control.focus(); }
+        if (field.required !== false && field.type === 'multiselect' && !values[field.name].length) { invalidJson = true; error.textContent = `请选择${field.label}`; error.hidden = false; q(`input[name="${field.name}"]`, form)?.focus(); }
       });
       if (invalidJson) return;
       saving = true; button.disabled = true; button.textContent = '正在保存...';
-      try { await save(values); saving = false; close(); } catch (cause) { error.textContent = cause.message || '保存失败'; error.hidden = false; error.scrollIntoView({block:'nearest'}); } finally { saving = false; button.disabled = false; button.textContent = '保存修改'; }
+      try { await save(values); saving = false; close(); } catch (cause) { error.textContent = cause.message || '保存失败'; error.hidden = false; error.scrollIntoView({block:'nearest'}); } finally { saving = false; button.disabled = false; button.textContent = saveLabel; }
     });
     if (window.lucide) lucide.createIcons();
     q('input,select,textarea', layer)?.focus();
@@ -327,8 +345,9 @@
   }
 
   function showContentEditor(item) {
+    const creating = !item.id;
     openBusinessEditor({
-      title: '编辑营销内容', subtitle: item.external_id || '内容资产', item,
+      title: creating ? '新建营销内容' : '编辑营销内容', subtitle: item.external_id || '内容资产', item,
       fields: [
         { name: 'name', label: '内容资产名称', type: 'text' },
         { name: 'campaign_id', label: '关联活动', type: 'select', required: false, options: [{value:'',label:'未关联活动'}, ...(tenantData.campaigns || []).map(campaign => ({value:campaign.id,label:`${campaign.name} · ${campaign.id}`}))] },
@@ -342,7 +361,7 @@
         { name: 'title', label: '展示标题', type: 'text', required: false },
         { name: 'body', label: '内容正文', type: 'textarea', rows: 8, required: false, placeholder: '填写短信、App 卡片、微信图文或客服话术的完整内容' },
       ],
-      save: async values => { values.campaign_id = String(values.campaign_id || '').trim() || null; values.audience_package_id = values.audience_package_id ? Number(values.audience_package_id) : null; values.product_package_id = values.product_package_id ? Number(values.product_package_id) : null; const result = await request(`/api/content-assets/${item.id}`, { method: 'PUT', body: JSON.stringify({...values, generated_by: item.generated_by, generation_context: item.generation_context || {}}) }); toast(result.status !== values.status ? '营销内容已更新，状态已退回草稿，请重新审核' : '营销内容已完整更新'); await refreshAfterBusinessSave(); }
+      save: async values => { values.campaign_id = String(values.campaign_id || '').trim() || null; values.audience_package_id = values.audience_package_id ? Number(values.audience_package_id) : null; values.product_package_id = values.product_package_id ? Number(values.product_package_id) : null; const result = await request(creating ? '/api/content-assets' : `/api/content-assets/${item.id}`, { method: creating ? 'POST' : 'PUT', body: JSON.stringify({...values, generated_by: item.generated_by, generation_context: item.generation_context || {}}) }); toast(creating ? '营销内容已创建为草稿' : result.status !== values.status ? '营销内容已更新，状态已退回草稿，请重新审核' : '营销内容已完整更新'); await refreshAfterBusinessSave(); }
     });
   }
 
@@ -728,6 +747,7 @@
     session.tenants = (session.tenants || []).filter(item => item.code !== 'CEA-ECOM' && !String(item.name || '').includes('电商运营中心'));
     if (!session.tenants.some(item => item.id === tenantId)) tenantId = session.tenants[0]?.id;
     const tenant = activeTenant(); const user = q('.user');
+    user.dataset.displayName = session.display_name || session.username;
     q('b', user).textContent = tenant?.name || '未选择租户';
     q('span', user).textContent = `${session.display_name} · 当前角色：${roleLabels[tenant?.role] || tenant?.role || '未授权'}`;
     let workspace = q('#workspaceSelect');
@@ -950,7 +970,7 @@
 
   function showAudienceSelectionModal() {
     const snapshots = tenantData.audienceSnapshots || [];
-    const rows = snapshots.map(item => `<tr><td><strong>${escapeHtml(displayText(item.external_id, `快照 #${item.id}`))}</strong><small>${escapeHtml(displayText(item.selection_logic, '已保存的客群圈选条件'))}</small></td><td>${Number(item.estimated_size || item.population || 0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(displayText(item.status, '已冻结'))}</td><td>${escapeHtml(item.frozen_at ? new Date(item.frozen_at).toLocaleString('zh-CN') : '暂无时间')}</td><td>${escapeHtml(displayText(item.created_by, '系统'))}</td></tr>`).join('');
+    const rows = snapshots.map(item => `<tr><td><strong>${escapeHtml(displayText(item.external_id, `快照 #${item.id}`))}</strong><small>${escapeHtml(displayText(item.selection_logic, '已保存的客群圈选条件'))}</small></td><td>${Number(item.estimated_size || item.population || 0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(displayText(item.status, '已冻结'))}</td><td>${escapeHtml(item.frozen_at ? businessTime(item.frozen_at) : '暂无时间')}</td><td>${escapeHtml(displayText(item.created_by, '系统'))}</td></tr>`).join('');
     const layer = document.createElement('div');
     layer.className = 'production-modal';
     layer.innerHTML = `<div class="production-modal-card audience-selection-modal"><div class="production-modal-head"><div><b>圈选记录</b><small>查看已保存的圈选条件与冻结快照</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="query-builder"><span class="query-label">当前圈选示例</span><span class="query-chip">目的地意向 = 三亚</span><span class="query-chip">近14天搜索 ≥ 2次</span><span class="query-chip">出票状态 = 未出票</span><span class="query-chip">排除营销疲劳</span><button class="btn ai" data-action="calculateAudience">计算人数</button></div><div class="catalog-section-head"><div><b>已保存圈选快照</b><span>快照是活动执行时使用的客群版本</span></div><span class="catalog-count">${snapshots.length} 条</span></div>${rows ? `<table class="table compact-table"><thead><tr><th>快照</th><th>人数</th><th>状态</th><th>冻结时间</th><th>创建人</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty-action">暂无圈选快照，完成 AI 圈选并冻结客群包后会出现在这里。</div>'}</div></div>`;
@@ -961,13 +981,14 @@
 
   function showAgentTrace(run){
     if(run?.output && Object.keys(run.output).length){showAgentResult(run);return;}
-    const events=run?.events||[]; const html='<div class="agent-trace"><div class="agent-trace-head"><i data-lucide="bot"></i><b>Agent\u6267\u884c\u8fc7\u7a0b</b><span>'+escapeHtml(cleanText(run?.status,'\u5df2\u5b8c\u6210'))+'</span></div><div class="agent-trace-list">'+(events.length?events.map((e,i)=>'<div class="agent-trace-item"><i>'+(i+1)+'</i><div><b>'+escapeHtml(cleanText(e.event_type,'\u5904\u7406\u6b65\u9aa4'))+'</b><small>'+new Date(e.timestamp).toLocaleString('zh-CN')+'</small><p>'+escapeHtml(JSON.stringify(e.payload||{}))+'</p></div></div>').join(''):'<div class="empty-action">\u672a\u8fd4\u56de\u6b65\u9aa4\u4e8b\u4ef6</div>')+'</div><div class="drawer-ai">'+escapeHtml(cleanText(run?.summary,'Agent\u5df2\u5b8c\u6210\u5904\u7406'))+'</div></div>';
+    const events=run?.events||[]; const html='<div class="agent-trace"><div class="agent-trace-head"><i data-lucide="bot"></i><b>Agent\u6267\u884c\u8fc7\u7a0b</b><span>'+escapeHtml(cleanText(run?.status,'\u5df2\u5b8c\u6210'))+'</span></div><div class="agent-trace-list">'+(events.length?events.map((e,i)=>'<div class="agent-trace-item"><i>'+(i+1)+'</i><div><b>'+escapeHtml(cleanText(e.event_type,'\u5904\u7406\u6b65\u9aa4'))+'</b><small>'+businessTime(e.timestamp)+'</small><p>'+escapeHtml(JSON.stringify(e.payload||{}))+'</p></div></div>').join(''):'<div class="empty-action">\u672a\u8fd4\u56de\u6b65\u9aa4\u4e8b\u4ef6</div>')+'</div><div class="drawer-ai">'+escapeHtml(cleanText(run?.summary,'Agent\u5df2\u5b8c\u6210\u5904\u7406'))+'</div></div>';
     const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>\u667a\u80fd\u57df\u8fc7\u7a0b\u8ffd\u8e2a</b><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body">'+html+'</div></div>';document.body.appendChild(layer);layer.addEventListener('click',e=>{if(e.target===layer||e.target.closest('[data-close]'))layer.remove();});if(window.lucide)lucide.createIcons();
   }
   function showAgentResult(run){
     const layer=document.createElement('div');layer.className='production-modal';
     const output=run.output||{}, text=output.body||output.text||run.summary;
-    layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>智能域结果</b><button class="icon-btn" data-close title="关闭"><i data-lucide="x"></i></button></div><div class="production-modal-body"><h3>'+escapeHtml(output.title||domainLabels[run.domain_id]||'业务建议')+'</h3><p style="white-space:pre-wrap">'+escapeHtml(text)+'</p><details><summary>业务依据</summary><pre style="white-space:pre-wrap">'+escapeHtml(JSON.stringify(output.context||{},null,2))+'</pre></details><p data-result-state>'+escapeHtml(run.applied_object?'已保存：'+run.applied_object.label:'等待人工确认')+'</p><button class="btn primary" data-result-accept '+(run.applied_object||!canWrite()?'disabled':'')+'><i data-lucide="check"></i>确认并保存草稿</button></div></div>';
+    const modelNote=output.provider_type==='mock'?'竞赛流程验证模型 · 受控测试结果，待人工确认':'模型建议 · 待人工确认';
+    layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>智能域结果</b><button class="icon-btn" data-close title="关闭"><i data-lucide="x"></i></button></div><div class="production-modal-body"><p class="toolbar-note">'+escapeHtml(modelNote)+'</p><h3>'+escapeHtml(output.title||domainLabels[run.domain_id]||'业务建议')+'</h3><p style="white-space:pre-wrap">'+escapeHtml(text)+'</p><details><summary>业务依据</summary><pre style="white-space:pre-wrap">'+escapeHtml(JSON.stringify(output.context||{},null,2))+'</pre></details><p data-result-state>'+escapeHtml(run.applied_object?'已保存：'+run.applied_object.label:'等待人工确认')+'</p><button class="btn primary" data-result-accept '+(run.applied_object||!canWrite()?'disabled':'')+'><i data-lucide="check"></i>确认并保存草稿</button></div></div>';
     document.body.appendChild(layer);bindProductionModal(layer);
     q('[data-result-accept]',layer)?.addEventListener('click',async event=>{
       const button=event.currentTarget;button.disabled=true;
@@ -1033,7 +1054,6 @@
 <td>${escapeHtml(item.stage)}</td>
 <td>${escapeHtml(item.version)}</td>
 <td>${escapeHtml(item.owner)}</td>
-<td>刚刚</td>
 <td>
 <span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span>
 </td>
@@ -1045,7 +1065,6 @@
 <th>当前节点</th>
 <th>当前版本</th>
 <th>负责人</th>
-<th>最近变更</th>
 <th>状态</th>
 <th>操作</th>
 </tr>${rows}`;
@@ -1168,10 +1187,11 @@
 
   function renderDashboardHealth(state) {
     const body=q('.metric-list',q('#overview [data-ov-slot="health"]'));if(!body)return;
-    const target=state.channelTasks.reduce((sum,item)=>sum+Number(item.target_count||0),0),delivered=state.channelTasks.reduce((sum,item)=>sum+Number(item.delivered_count||0),0),feedback=state.executionBatches.reduce((sum,item)=>sum+Number(item.feedback_count||0),0);
-    const delivery=target?Math.min(100,delivered/target*100):null,feedbackRate=delivered?Math.min(100,feedback/delivered*100):null,approval=state.approvals.length?state.approvals.filter(item=>/通过|驳回|拒绝/.test(item.status||'')).length/state.approvals.length*100:null;
+    const target=state.channelTasks.reduce((sum,item)=>sum+Number(item.target_count||0),0),delivered=state.channelTasks.reduce((sum,item)=>sum+Number(item.delivered_count||0),0);
+    const delivery=target?Math.min(100,delivered/target*100):null,approval=state.approvals.length?state.approvals.filter(item=>!approvalIsPending(item)).length/state.approvals.length*100:null;
     const metric=(label,rate,tone)=>`<div class='metric'><label>${label}</label><b>${rate===null?'待产生':`${rate.toFixed(1)}%`}</b></div><div class='bar ${tone||''}'><i style='width:${rate===null?0:rate}%'></i></div>`;
-    body.innerHTML=metric('渠道送达率',delivery,'green')+metric('回执回流率',feedbackRate,'')+metric('审批处理率',approval,'amber');
+    const withReceipts=state.channelTasks.filter(item=>item.last_feedback_at).length;
+    body.innerHTML=metric('渠道送达率',delivery,'green')+metric('渠道任务回执覆盖率',state.channelTasks.length?withReceipts/state.channelTasks.length*100:null,'')+metric('审批处理率',approval,'amber');
   }
 
   function renderDashboard() {
@@ -1188,6 +1208,9 @@
     if(!baseCatalog){baseCatalog=document.createElement('div');baseCatalog.id='productCatalog';baseCatalog.className='base-product-catalog';body.insertBefore(baseCatalog,table);}
     const baseProducts=tenantData.productCatalog?.products||[];
     baseCatalog.innerHTML=`<div class="catalog-section-head"><div><b>基础产品目录</b><span>来自产品管理平台的可售产品，是产品包组合和活动匹配的底层对象</span></div><span class="catalog-count">${baseProducts.length} 个</span></div><div class="catalog-grid product-catalog-grid">${baseProducts.map(item=>`<div class="catalog-card product-card"><div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="ticket"></i></span><span class="status good">可引用</span></div><strong>${escapeHtml(displayText(item.name,'未命名产品'))}</strong><small>${escapeHtml(displayText(item.category,'航空产品'))} · ${escapeHtml(displayText(item.code,'产品编码'))}</small><div class="catalog-card-meta"><span>${(item.benefits||[]).length} 项权益</span><button class="btn" data-product-catalog-view="${escapeHtml(item.code)}">查看产品</button></div></div>`).join('')||'<div class="empty-action">暂无基础产品，可从产品管理平台同步</div>'}</div>`;
+    q('.catalog-section-head span',baseCatalog).textContent='联调产品目录；实际价格、库存与权益等待上游核验';
+    const services=q('#products > .grid3');
+    if(services)services.innerHTML='<div class="small-panel"><b>产品资格</b><span>价格、库存、航班与权益</span><em>等待上游可售校验</em></div><div class="small-panel"><b>标准接口</b><span>产品包导入、版本与来源追踪</span><em>可通过同步业务数据导入</em></div><div class="small-panel"><b>履约回流</b><span>购买、使用与异常状态</span><em>等待实际履约系统接入</em></div>';
     if(window.lucide)lucide.createIcons();
     const rows=products.map(item=>`<tr>
 <td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.product_type||'组合产品')} · ${escapeHtml(item.external_id)}</small></td>
@@ -1274,9 +1297,26 @@
     finally{button.disabled=false;button.classList.remove('is-loading');button.innerHTML=previous||label;if(window.lucide)lucide.createIcons();}
   }
 
+  function currentExecutionBatch(){
+    const batches=tenantData.executionBatches||[];
+    const chosen=batches.find(item=>String(item.id)===selectedExecutionBatchId);
+    const batch=chosen||batches.find(item=>item.campaign_id===selectedExecutionCampaignId)||batches[0];
+    selectedExecutionBatchId=batch?String(batch.id):'';
+    selectedExecutionCampaignId=batch?.campaign_id||'';
+    return batch;
+  }
   function renderExecution(){
     const section=q('#execution'); if(!section)return;
-    const batches=tenantData.executionBatches||[]; const batch=batches[0];
+    const batches=tenantData.executionBatches||[]; const batch=currentExecutionBatch();
+    const selects=qa('.toolbar-strip select',section);
+    const campaignIds=[...new Set(batches.map(item=>item.campaign_id))];
+    if(selects[0]){selects[0].setAttribute('aria-label','执行活动');selects[0].innerHTML=campaignIds.length?campaignIds.map(id=>`<option value="${escapeHtml(id)}">${escapeHtml(tenantData.campaigns.find(item=>item.id===id)?.name||id)}</option>`).join(''):'<option>暂无可执行活动</option>';selects[0].value=selectedExecutionCampaignId;}
+    const channels=batch?.channels||[];
+    if(!channels.includes(selectedExecutionChannel))selectedExecutionChannel='';
+    if(selects[1]){selects[1].setAttribute('aria-label','执行渠道');selects[1].innerHTML='<option value="">全部渠道</option>'+channels.map(channel=>`<option value="${escapeHtml(channel)}">${escapeHtml(channel)}</option>`).join('');selects[1].value=selectedExecutionChannel;}
+    if(selects[2]){selects[2].setAttribute('aria-label','执行批次');selects[2].innerHTML=batch?batches.filter(item=>item.campaign_id===batch.campaign_id).map(item=>`<option value="${item.id}">${escapeHtml(item.external_id)} · ${escapeHtml(item.status)}</option>`).join(''):'<option>暂无执行批次</option>';selects[2].value=selectedExecutionBatchId;}
+    const labels=['目标名单','渠道送达','互动事件','渠道失败','执行状态'];
+    qa('.kpi > span',section).forEach((node,index)=>node.textContent=labels[index]);
     const executeButton=q('[data-action="refreshExecution"]',section);
     const pauseButton=q('[data-action="pauseCampaign"]',section);
     if(executeButton){executeButton.innerHTML='<i data-lucide="play"></i>执行联调';executeButton.disabled=!canWrite()||!batch||!['待执行','已暂停'].includes(batch.status);executeButton.title='生成虚构渠道回执，用于流程验证';if(batch)executeButton.dataset.batchId=batch.id;else delete executeButton.dataset.batchId;}
@@ -1285,14 +1325,14 @@
     ['冻结快照规模','渠道任务送达计数','点击与转化事件','渠道失败计数',batch?'批次实际状态':'等待审批'].forEach((label,index)=>{if(trends[index])trends[index].textContent=label;});
     if(!batch){const kpis=qa('.kpi b',section);kpis.forEach((node,index)=>{node.textContent=index===4?'待产生':'0';});const selects=qa('.toolbar-strip select',section);selects.forEach(select=>{select.innerHTML='<option>暂无可执行数据</option>';});const table=q('#execution .table');if(table)table.innerHTML='<tr><th>渠道</th><th>任务数</th><th>成功</th><th>失败</th><th>回执延迟</th><th>状态</th></tr><tr><td colspan="6" class="table-empty">暂无执行批次，审批通过后将按活动版本渠道自动生成</td></tr>';const control=q('.grid2 > .panel:nth-child(2) .panel-body',section);if(control)control.innerHTML='<div class="empty-action">暂无执行控制项，活动进入执行阶段后可进行暂停、快照和失败补偿。</div>';const head=q('.grid2 > .panel:first-child .panel-head span',section);if(head)head.textContent='等待活动进入执行阶段';return;}
     const kpis=qa('.kpi b',section); if(kpis[0])kpis[0].textContent=Number(batch.target_size||0).toLocaleString('zh-CN'); if(kpis[1])kpis[1].textContent=Number(batch.delivered_count||0).toLocaleString('zh-CN'); if(kpis[2])kpis[2].textContent=Number(batch.feedback_count||0).toLocaleString('zh-CN'); if(kpis[3])kpis[3].textContent=Number(batch.failed_count||0).toLocaleString('zh-CN'); if(kpis[4])kpis[4].textContent=batch.status;
-    const batchText=qa('#execution .toolbar-strip option'); if(batchText[0])batchText[0].textContent=batch.external_id+' · '+batch.status;
     const action=qa('#execution [data-action]'); action.filter(button=>['pauseCampaign','refreshExecution'].includes(button.dataset.action)).forEach(button=>{button.dataset.batchId=batch.id;});
-    const tasks=(tenantData.channelTasks||[]).filter(item=>item.batch_id===batch.id);
+    const tasks=(tenantData.channelTasks||[]).filter(item=>item.batch_id===batch.id&&(!selectedExecutionChannel||item.channel===selectedExecutionChannel));
     const control=q('.grid2 > .panel:nth-child(2) .panel-body',section);
     if(control)control.innerHTML=`<div class="control-item"><b>执行批次</b><span>${escapeHtml(batch.external_id)} · ${escapeHtml(batch.status)}</span></div><div class="control-item"><b>冻结规模</b><span>${Number(batch.target_size||0).toLocaleString('zh-CN')} 人 · 活动版本 #${Number(batch.campaign_version_id)}</span><button class="btn" data-action="viewAudienceSnapshot">查看快照</button></div><div class="control-item"><b>渠道联调</b><span>${escapeHtml((batch.channels||[]).join('、'))} · 虚构回执用于流程验证</span></div>`;
     const head=q('.grid2 > .panel:first-child .panel-head span',section);if(head)head.textContent=batch.external_id;
     const table=q('#execution .table');
-    if(table){const rows=tasks.length?tasks.map(item=>`<tr><td><strong>${escapeHtml(item.channel)}</strong><small class="table-subline">${escapeHtml(item.external_id)}</small></td><td>${Number(item.target_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.delivered_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.failed_count||0).toLocaleString('zh-CN')}</td><td>${item.last_feedback_at?new Date(item.last_feedback_at).toLocaleTimeString('zh-CN'):'待回执'}</td><td><span class="status ${item.status==='失败'?'bad':item.status==='执行中'?'good':'warn'}">${escapeHtml(item.status)}</span> <button class="btn compact" data-channel-feedback="${item.id}">录入回执</button></td></tr>`).join(''):'<tr><td colspan="6" class="table-empty">暂无渠道任务，审批通过后将按活动版本渠道自动生成</td></tr>';table.innerHTML=`<tr><th>渠道</th><th>任务数</th><th>成功</th><th>失败</th><th>回执延迟</th><th>状态</th></tr>${rows}`;}
+    if(table){const rows=tasks.length?tasks.map(item=>`<tr><td><strong>${escapeHtml(item.channel)}</strong><small class="table-subline">${escapeHtml(item.external_id)}</small></td><td>${Number(item.target_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.delivered_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.failed_count||0).toLocaleString('zh-CN')}</td><td>${item.last_feedback_at?businessTime(item.last_feedback_at,true):'待回执'}</td><td><span class="status ${item.status==='失败'?'bad':item.status==='执行中'?'good':'warn'}">${escapeHtml(item.status)}</span> <button class="btn compact" data-channel-feedback="${item.id}">录入回执</button></td></tr>`).join(''):'<tr><td colspan="6" class="table-empty">当前渠道暂无任务</td></tr>';table.innerHTML=`<tr><th>渠道</th><th>任务数</th><th>送达</th><th>失败</th><th>最近回执时间</th><th>状态</th></tr>${rows}`;}
+    renderExecutionBatchPanel();
   }
   function renderFeedback(){
     const section=q('#feedback'); if(!section)return;
@@ -1309,15 +1349,16 @@
       if(label)label.textContent=labels[index];if(value)value.textContent=values[index];if(note)note.textContent=notes[index];
     });
     const selects=qa('.toolbar-strip select',section);
-    if(selects[0])selects[0].innerHTML=`<option>${escapeHtml(campaign?.name||'暂无可复盘活动')}</option>`;
-    if(selects[1])selects[1].innerHTML=`<option>${escapeHtml(latest?.external_id||'暂无执行批次')}</option>`;
+    if(selects[0]){selects[0].setAttribute('aria-label','复盘活动');selects[0].innerHTML=(tenantData.campaigns||[]).map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}</option>`).join('')||'<option>暂无可复盘活动</option>';selects[0].value=selectedEffectCampaignId;}
+    if(selects[1]){selects[1].setAttribute('aria-label','复盘批次');selects[1].innerHTML=`<option>${escapeHtml(latest?.external_id||'暂无执行批次')}</option>`;}
     let sourceNote=q('.feedback-data-note',section);
     if(!sourceNote){sourceNote=document.createElement('div');sourceNote.className='feedback-data-note';section.insertBefore(sourceNote,q('.kpis',section));}
     const receiptLabel=summary.sent_count?(summary.execution_mode==='synthetic'?'虚构回执（流程验证）':'渠道回执已汇总'):'等待批次执行';
     const explanation=hasBatch?`当前展示最新执行批次；送达率 ${Number(summary.delivery_rate||0)}%，点击率 ${Number(summary.click_rate||0)}%，点击后转化率 ${Number(summary.conversion_rate||0)}%。${summary.execution_mode==='synthetic'?'数值仅用于流程验证，不代表实际经营结果。':''}收入与 ROI 等待交易归因回流。`:'活动审批并执行后展示渠道回执，收入与 ROI 等待交易归因回流。';
     sourceNote.innerHTML=`<b>${hasBatch?receiptLabel:'暂无渠道回执'}</b><p>${escapeHtml(explanation)}</p>`;
     const funnel=q('.grid2 > .panel:first-child .metric-list',section);
-    if(funnel){const counts=[summary.target_count,summary.delivered_count,summary.clicked_count,summary.converted_count],rates=[100,summary.delivery_rate,summary.click_rate,summary.conversion_rate];funnel.innerHTML=hasBatch?['目标任务','送达','点击','转化'].map((name,index)=>`<div class="metric"><label>${name}</label><b>${format(counts[index])}</b></div><div class="bar"><i style="width:${Math.max(0,Math.min(100,Number(rates[index]||0)))}%"></i></div>`).join(''):'<div class="empty-state"><b>暂无渠道回执</b><span>执行活动后查看渠道任务统计</span></div>';}
+    const funnelNote=q('.grid2 > .panel:first-child .panel-head span',section);if(funnelNote)funnelNote.textContent='按目标任务计数；不代表旅客去重归因';
+    if(funnel){const counts=[summary.target_count,summary.delivered_count,summary.clicked_count,summary.converted_count],rates=counts.map(value=>summary.target_count?Number(value||0)/summary.target_count*100:0);funnel.innerHTML=hasBatch?['目标任务','送达','点击','转化'].map((name,index)=>`<div class="metric"><label>${name}</label><b>${format(counts[index])}</b></div><div class="bar"><i style="width:${Math.max(0,Math.min(100,Number(rates[index]||0)))}%"></i></div>`).join(''):'<div class="empty-state"><b>暂无渠道回执</b><span>执行活动后查看渠道任务统计</span></div>';}
     const box=q('#reviewBox');if(box)box.innerHTML=hasBatch?`<div class="review-summary"><b>${receiptLabel}</b><p>${escapeHtml(explanation)}</p><div class="review-tags"><span>送达 ${format(summary.delivered_count)}</span><span>点击 ${format(summary.clicked_count)}</span><span>转化 ${format(summary.converted_count)}</span><span>失败 ${format(summary.failed_count)}</span></div></div>`:'<div class="empty-state"><b>暂无渠道回执</b><span>执行活动后查看复盘依据</span></div>';
     if(window.lucide)lucide.createIcons();
   }
@@ -1356,7 +1397,7 @@
     const pending = approvalIsPending(approval);
     if (no) no.textContent = displayText(approval.external_id, `审批任务 #${approval.id}`);
     detail.dataset.title = displayText(campaign.name, approval.campaign_id);
-    detail.innerHTML = `<div class="approval-detail-hero"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><div><h3>${escapeHtml(displayText(campaign.name, approval.campaign_id))}</h3><p>${escapeHtml(approval.approver_role || '营销审批')} · ${escapeHtml(displayText(version?.version, campaign.version || '当前版本'))} · ${escapeHtml(displayText(approval.external_id, '审批任务'))}</p></div><span class="pill ${pending ? 'red' : 'blue'}">${escapeHtml(status)}</span></div><div class="approval-detail-grid"><div><b>活动阶段</b><span>${escapeHtml(displayText(campaign.stage, '未设置'))} · ${escapeHtml(displayText(campaign.status, '未设置'))}</span></div><div><b>负责人</b><span>${escapeHtml(displayText(campaign.owner, '未设置'))}</span></div><div><b>客群范围</b><span>${Number(audienceSize || 0).toLocaleString('zh-CN')} 人${audience ? ` · ${escapeHtml(audience.name || audience.package_name || '客群快照')}` : ''}</span></div><div><b>产品包</b><span>${escapeHtml(productName)}</span></div><div><b>预算</b><span>¥${Number(version?.budget_yuan ?? campaign.budget_yuan ?? 0).toLocaleString('zh-CN')}</span></div><div><b>触达渠道</b><span>${escapeHtml(channels.join('、') || '未配置')}</span></div></div><div class="approval-content-preview"><b>版本与内容</b><p>${version ? `版本 ${escapeHtml(version.version || '未命名')} · ${contents.length} 个内容资产 · ${escapeHtml(version.status || '未设置')}` : '版本详情暂不可用，请刷新后重试。'}</p>${contents.slice(0, 3).map(item => `<div class="approval-content-item"><span>${escapeHtml(item.channel || '渠道')}</span><b>${escapeHtml(displayText(item.title || item.name, '未命名内容'))}</b></div>`).join('')}</div><div class="approval-checks"><div class="approval-check"><i><i data-lucide="check"></i></i><span><b>客群与保护规则</b><small>${audience ? '已绑定客群快照，可追溯冻结规模与生成时间' : '未绑定客群快照，请补充活动客群'}</small></span></div><div class="approval-check"><i><i data-lucide="${product ? 'check' : 'alert-circle'}"></i></i><span><b>产品资格校验</b><small>${product ? '已关联产品包，审批时沿用当前产品版本' : '未关联产品包，请补充活动产品'}</small></span></div><div class="approval-check"><i><i data-lucide="${channels.length ? 'check' : 'alert-circle'}"></i></i><span><b>渠道与频控</b><small>${channels.length ? `已配置 ${channels.length} 个触达渠道` : '尚未配置触达渠道'}</small></span></div><div class="approval-check"><i><i data-lucide="${approval.comment ? 'message-square-check' : 'clock-3'}"></i></i><span><b>审批意见</b><small>${escapeHtml(approval.comment || (pending ? '等待审批人处理' : '暂无审批意见'))}</small></span></div></div>${pending ? '<div class="approval-actions"><button class="btn danger" data-production-approval-action="reject">退回修改</button><button class="btn primary" data-production-approval-action="approve">通过并进入执行</button></div>' : ''}`;
+    detail.innerHTML = `<div class="approval-detail-hero"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><div><h3>${escapeHtml(displayText(campaign.name, approval.campaign_id))}</h3><p>${escapeHtml(approval.approver_role || '营销审批')} · ${escapeHtml(displayText(version?.version, campaign.version || '当前版本'))} · ${escapeHtml(displayText(approval.external_id, '审批任务'))}</p></div><span class="pill ${pending ? 'red' : 'blue'}">${escapeHtml(status)}</span></div><div class="approval-detail-grid"><div><b>活动阶段</b><span>${escapeHtml(displayText(campaign.stage, '未设置'))} · ${escapeHtml(displayText(campaign.status, '未设置'))}</span></div><div><b>负责人</b><span>${escapeHtml(displayText(campaign.owner, '未设置'))}</span></div><div><b>客群范围</b><span>${Number(audienceSize || 0).toLocaleString('zh-CN')} 人${audience ? ` · ${escapeHtml(audience.name || audience.package_name || '客群快照')}` : ''}</span></div><div><b>产品包</b><span>${escapeHtml(productName)}</span></div><div><b>预算</b><span>¥${Number(version?.budget_yuan ?? campaign.budget_yuan ?? 0).toLocaleString('zh-CN')}</span></div><div><b>触达渠道</b><span>${escapeHtml(channels.join('、') || '未配置')}</span></div></div><div class="approval-content-preview"><b>版本与内容</b><p>${version ? `版本 ${escapeHtml(version.version || '未命名')} · ${contents.length} 个内容资产 · ${escapeHtml(version.status || '未设置')}` : '版本详情暂不可用，请刷新后重试。'}</p>${contents.slice(0, 3).map(item => `<div class="approval-content-item"><span>${escapeHtml(item.channel || '渠道')}</span><b>${escapeHtml(displayText(item.title || item.name, '未命名内容'))}</b></div>`).join('')}</div><div class="approval-checks"><div class="approval-check"><i><i data-lucide="check"></i></i><span><b>客群快照关联</b><small>${audience ? '已绑定客群快照，可追溯冻结规模与生成时间' : '未绑定客群快照，请补充活动客群'}</small></span></div><div class="approval-check"><i><i data-lucide="${product ? 'check' : 'alert-circle'}"></i></i><span><b>产品版本关联</b><small>${product ? '已关联当前产品版本；实际价格、库存与权益仍需上游核验' : '未关联产品包，请补充活动产品'}</small></span></div><div class="approval-check"><i><i data-lucide="${channels.length ? 'check' : 'alert-circle'}"></i></i><span><b>渠道配置</b><small>${channels.length ? `已配置 ${channels.length} 个触达渠道` : '尚未配置触达渠道'}</small></span></div><div class="approval-check"><i><i data-lucide="${approval.comment ? 'message-square-check' : 'clock-3'}"></i></i><span><b>审批意见</b><small>${escapeHtml(approval.comment || (pending ? '等待审批人处理' : '暂无审批意见'))}</small></span></div></div>${pending ? '<div class="approval-actions"><button class="btn danger" data-production-approval-action="reject">退回修改</button><button class="btn primary" data-production-approval-action="approve">通过并进入执行</button></div>' : ''}`;
     if (window.lucide) lucide.createIcons();
   }
 
@@ -1472,6 +1513,7 @@
     ];
     approvalNotes.forEach((node, index) => { node.textContent = noteValues[index] || ''; });
     const approvalKpiValues = qa('#approvals .kpi b');
+    qa('#approvals .kpi > span').forEach((node,index)=>node.textContent=['待审批任务','待产品确认','待内容合规','已处理任务','审批处理率'][index]);
     if (approvalKpiValues[0]) approvalKpiValues[0].textContent = pending.length;
     if (approvalKpiValues[1]) approvalKpiValues[1].textContent = pendingProductCount;
     if (approvalKpiValues[2]) approvalKpiValues[2].textContent = pendingContentCount;
@@ -1544,9 +1586,11 @@
   }
   function showCampaignVersionDetail(version, campaignName){
     const layer=document.createElement('div'); layer.className='production-modal';
-    const audience=version.audience_snapshot_id ? `客群快照 #${version.audience_snapshot_id}` : '未绑定客群快照';
-    const product=version.product_package_id ? `产品包 #${version.product_package_id}` : '未绑定产品包';
-    layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(campaignName)} · ${escapeHtml(version.version)}</b><small>${escapeHtml(version.external_id)} · 版本详情</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>版本状态</b>${escapeHtml(version.status)}</span><span><b>创建时间</b>${new Date(version.created_at).toLocaleString('zh-CN')}</span><span><b>客群</b>${escapeHtml(audience)}</span><span><b>产品</b>${escapeHtml(product)}</span></div><div class="campaign-detail-grid"><section><h3>版本配置</h3><dl><dt>预算</dt><dd>¥${Number(version.budget_yuan||0).toLocaleString('zh-CN')}</dd><dt>内容资产</dt><dd>${(version.content_asset_ids||[]).length} 个</dd><dt>执行渠道</dt><dd>${escapeHtml((version.channels||[]).join('、')||'未配置')}</dd></dl></section><section><h3>可追溯信息</h3><dl><dt>版本编号</dt><dd>${escapeHtml(version.external_id)}</dd><dt>关联客群快照</dt><dd>${escapeHtml(audience)}</dd><dt>关联产品包</dt><dd>${escapeHtml(product)}</dd></dl></section></div></div></div>`;
+    const snapshot=tenantData.audienceSnapshots.find(item=>item.id===version.audience_snapshot_id);
+    const packageName=tenantData.audiencePackages.find(item=>item.id===snapshot?.package_id)?.name;
+    const audience=snapshot ? `${packageName||'客群快照'} · ${snapshot.version} · ${Number(snapshot.estimated_size).toLocaleString('zh-CN')} 人` : '未绑定客群快照';
+    const product=tenantData.productPackages.find(item=>item.id===version.product_package_id)?.name || '未绑定产品包';
+    layer.innerHTML=`<div class="production-modal-card campaign-detail-card"><div class="production-modal-head"><div><b>${escapeHtml(campaignName)} · ${escapeHtml(version.version)}</b><small>${escapeHtml(version.external_id)} · 版本详情</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>版本状态</b>${escapeHtml(version.status)}</span><span><b>创建时间</b>${businessTime(version.created_at)}</span><span><b>客群</b>${escapeHtml(audience)}</span><span><b>产品</b>${escapeHtml(product)}</span></div><div class="campaign-detail-grid"><section><h3>版本配置</h3><dl><dt>预算</dt><dd>¥${Number(version.budget_yuan||0).toLocaleString('zh-CN')}</dd><dt>内容资产</dt><dd>${(version.content_asset_ids||[]).length} 个</dd><dt>执行渠道</dt><dd>${escapeHtml((version.channels||[]).join('、')||'未配置')}</dd></dl></section><section><h3>可追溯信息</h3><dl><dt>版本编号</dt><dd>${escapeHtml(version.external_id)}</dd><dt>关联客群快照</dt><dd>${escapeHtml(audience)}</dd><dt>关联产品包</dt><dd>${escapeHtml(product)}</dd></dl></section></div></div></div>`;
     document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();}); if(window.lucide)lucide.createIcons();
   }
   function showCampaignVersionCompare(left,right,campaignName){
@@ -1556,8 +1600,9 @@
     document.body.appendChild(layer); bindProductionModal(layer);
   }
   async function showCampaignEditor(item){
+    const creating=!item.id;
     let versions=[];
-    try { versions = await request(`/api/campaigns/${encodeURIComponent(item.id)}/versions`); } catch (cause) { toast(cause.message || '活动版本加载失败'); return; }
+    if(!creating){try { versions = await request(`/api/campaigns/${encodeURIComponent(item.id)}/versions`); } catch (cause) { toast(cause.message || '活动版本加载失败'); return; }}
     const latest = versions[0] || {};
     const productOptions = (tenantData.productPackages || []).map(value => ({ value: value.id, label: `${value.name} · ${value.version || 'V1'}` }));
     const snapshotOptions = (tenantData.audienceSnapshots || []).map(value => ({ value: value.id, label: `${value.external_id || `快照 #${value.id}`} · ${Number(value.estimated_size || 0).toLocaleString('zh-CN')} 人` }));
@@ -1566,35 +1611,35 @@
     const currentSnapshotId = latest.audience_snapshot_id ?? '';
     const currentContentIds = latest.content_asset_ids || [];
     openBusinessEditor({
-      title: '编辑营销活动', subtitle: `${item.id} · 活动主数据与当前版本配置`, item: {
+      title: creating?'新建营销活动':'编辑营销活动', subtitle: creating?'配置并保存 V1 草稿；提交审批后才能执行':`${item.id} · 活动主数据与当前版本配置`, item: {
         ...item,
         audience_snapshot_id: currentSnapshotId,
         product_package_id: currentProductId,
         content_asset_ids: currentContentIds,
-        channels: (latest.channels || item.channels || []).join('、'),
+        channels: latest.channels || item.channels || [],
         budget_yuan: latest.budget_yuan ?? item.budget_yuan,
-      }, width: 'campaign-editor-card',
+      }, width: 'campaign-editor-card', saveLabel: creating ? '保存草稿' : '保存修改',
       fields: [
         { name: 'name', label: '活动名称', type: 'text' },
         { name: 'stage', label: '当前节点', type: 'select', options: ({'机会':['机会','创建'],'创建':['创建','内容','审批'],'内容':['内容','审批','创建'],'审批':['审批','内容'],'执行':['执行','复盘'],'复盘':['复盘'],'归档':['归档']})[item.stage] || [item.stage] },
         { name: 'audience_size', label: '预计客群人数', type: 'number', min: 0 },
         { name: 'budget_yuan', label: '活动预算（元）', type: 'number', min: 0 },
         { name: 'roi_target', label: '目标 ROI', type: 'number', min: 0, step: 0.1 },
-        { name: 'channels', label: '执行渠道', type: 'text', required: false, placeholder: '东航App、短信、微信、OTA' },
+        { name: 'channels', label: '执行渠道', type: 'multiselect', options: channelOptions.map(([value, label]) => ({value, label})), help: '选择本次活动的渠道；演示执行仅产生虚构回执。' },
         { name: 'audience_snapshot_id', label: '客群快照', type: 'select', required: false, options: [{ value: '', label: '暂不绑定' }, ...snapshotOptions] },
         { name: 'product_package_id', label: '活动产品包', type: 'select', required: false, options: [{ value: '', label: '暂不绑定' }, ...productOptions] },
         { name: 'content_asset_ids', label: '内容资产', type: 'multiselect', required: false, options: contentOptions, help: '可多选短信、App 卡片、微信图文等已生成内容。' },
       ],
       save: async values => {
-        await request(`/api/campaigns/${encodeURIComponent(item.id)}`, { method: 'PUT', body: JSON.stringify({
+        await request(creating?'/api/campaigns':`/api/campaigns/${encodeURIComponent(item.id)}`, { method: creating?'POST':'PUT', body: JSON.stringify({
           name: String(values.name || '').trim(), stage: values.stage, audience_size: values.audience_size,
           budget_yuan: values.budget_yuan, roi_target: values.roi_target,
-          channels: String(values.channels || '').split(/[、,，]/).map(value => value.trim()).filter(Boolean),
+          channels: values.channels || [],
           audience_snapshot_id: values.audience_snapshot_id ? Number(values.audience_snapshot_id) : null,
           product_package_id: values.product_package_id ? Number(values.product_package_id) : null,
           content_asset_ids: values.content_asset_ids || [],
         }) });
-        toast('活动完整配置已更新'); await refreshAfterBusinessSave();
+        toast(creating?'活动与 V1 配置已保存为草稿':'活动完整配置已更新'); await refreshAfterBusinessSave();activate('campaigns');
       }
     });
   }
@@ -1603,11 +1648,11 @@
     openBusinessEditor({
       title: '编辑渠道回执', subtitle: `${item.external_id || item.channel} · 更新执行结果`, item,
       fields: [
-        { name: 'sent_count', label: '已发送人数', type: 'number', min: 0, max: item.target_count },
-        { name: 'delivered_count', label: '已送达人数', type: 'number', min: 0 },
-        { name: 'clicked_count', label: '点击人数', type: 'number', min: 0 },
-        { name: 'converted_count', label: '转化人数', type: 'number', min: 0 },
-        { name: 'failed_count', label: '失败人数', type: 'number', min: 0 },
+        { name: 'sent_count', label: '已发送任务数', type: 'number', min: 0, max: item.target_count },
+        { name: 'delivered_count', label: '已送达任务数', type: 'number', min: 0 },
+        { name: 'clicked_count', label: '点击任务数', type: 'number', min: 0 },
+        { name: 'converted_count', label: '转化任务数', type: 'number', min: 0 },
+        { name: 'failed_count', label: '失败任务数', type: 'number', min: 0 },
         { name: 'status', label: '任务状态', type: 'select', options: ['待执行', '执行中', '已完成', '已暂停', '失败'] },
       ],
       save: async values => {
@@ -1626,7 +1671,12 @@
     try{
       const versions=await request('/api/campaigns/'+encodeURIComponent(item.id)+'/versions');
       const list=q('[data-version-list]',layer);
-      if(list)list.innerHTML=versions.length?versions.map((version,index)=>`<div class="${index===0?'current':''}"><b>${escapeHtml(version.version)}</b><span>${new Date(version.created_at).toLocaleString('zh-CN')} · ${escapeHtml(version.status)}</span><small>客群 ${(version.audience_snapshot_id||'未绑定')} · 产品 ${(version.product_package_id||'未绑定')} · ${(version.channels||[]).join('、')||'未配置渠道'}</small><button class="btn" data-campaign-version-view="${version.id}">查看</button>${versions.length>1?`<button class="btn" data-campaign-version-compare="${version.id}">对比当前</button>`:''}</div>`).join(''):'<div class="empty-action">暂无版本记录</div>';
+      if(list)list.innerHTML=versions.length?versions.map((version,index)=>`<div class="${index===0?'current':''}"><b>${escapeHtml(version.version)}</b><span>${businessTime(version.created_at)} · ${escapeHtml(version.status)}</span><small>客群 ${(version.audience_snapshot_id||'未绑定')} · 产品 ${(version.product_package_id||'未绑定')} · ${escapeHtml((version.channels||[]).join('、')||'未配置渠道')}</small><button class="btn" data-campaign-version-view="${version.id}">查看</button>${canWrite()&&['草稿','已退回'].includes(version.status)?`<button class="btn primary" data-version-submit="${version.id}">提交审批</button>`:''}${versions.length>1?`<button class="btn" data-campaign-version-compare="${version.id}">对比当前</button>`:''}</div>`).join(''):'<div class="empty-action">暂无版本记录</div>';
+      qa('[data-version-submit]',layer).forEach(button=>button.addEventListener('click',async()=>{
+        button.disabled=true;
+        try{await request(`/api/campaigns/${encodeURIComponent(item.id)}/versions/${button.dataset.versionSubmit}/approval`,{method:'POST'});layer.remove();await loadTenantData();activate('approvals');toast('活动版本已提交审批');}
+        catch(cause){toast(cause.message||'提交审批失败');button.disabled=false;}
+      }));
       qa('[data-campaign-version-view]',layer).forEach(button=>button.addEventListener('click',()=>{const version=versions.find(value=>String(value.id)===String(button.dataset.campaignVersionView));if(version)showCampaignVersionDetail(version,item.name);}));
       qa('[data-campaign-version-compare]',layer).forEach(button=>button.addEventListener('click',()=>{const version=versions.find(value=>String(value.id)===String(button.dataset.campaignVersionCompare));const current=versions[0];if(version&&current&&version.id!==current.id)showCampaignVersionCompare(version,current,item.name);else toast('当前只有一个可比较的版本');}));
     }catch(cause){const list=q('[data-version-list]',layer);if(list)list.innerHTML='<div class="empty-action">版本记录加载失败：'+escapeHtml(cause.message||'请稍后重试')+'</div>';}
@@ -1739,7 +1789,7 @@
 <dd>${Math.round((item.confidence||0)*100)}%</dd>
 </dl>
 <div class="ai-result">
-<b>对象属性</b>
+<b>对象属性（入库记录）</b>
 <p>${escapeHtml(Object.entries(item.attributes||{}).slice(0,6).map(([key,value])=>`${key}：${typeof value==='object'?JSON.stringify(value):value}`).join('；')||'暂无扩展属性')}</p>
 </div>`;});
     const simulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(item=>item.id).distance(145).strength(.7)).force('charge',d3.forceManyBody().strength(-420)).force('collide',d3.forceCollide().radius(90)).force('center',d3.forceCenter(width/2,height/2)).on('tick',()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);labels.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);node.attr('transform',item=>`translate(${item.x},${item.y})`)});
@@ -1750,7 +1800,17 @@
   const pipelineStatusText={queued:'\u6392\u961f\u4e2d',running:'\u5904\u7406\u4e2d',completed:'\u5df2\u5b8c\u6210',failed:'\u5931\u8d25'};
   const formatBytes=value=>value>=1048576?(value/1048576).toFixed(1)+' MB':Math.max(1,Math.round(value/1024))+' KB';
   function stageInfo(item){const value=pipelineStages[item.current_stage]||[item.current_stage||'\u5904\u7406\u4e2d',item.status==='completed'?100:12];return {label:value[0],progress:value[1]};}
-  function renderImports(){const table=q('#importTable');if(!table)return;const items=tenantData.pipelines||[];q('#importCount').textContent=items.length+' \u4e2a\u6279\u6b21';let html='<tr><th>\u6587\u4ef6</th><th>\u683c\u5f0f</th><th>\u5904\u7406\u7ed3\u679c</th><th>\u72b6\u6001</th><th>\u5b8c\u6210\u65f6\u95f4</th></tr>';items.forEach(item=>{html+='<tr><td><strong>'+escapeHtml(item.file_name)+'</strong><small>'+escapeHtml(item.id)+'</small></td><td>'+escapeHtml((item.file_format||'').toUpperCase())+'</td><td>\u4e1a\u52a1\u5bf9\u8c61 '+item.accepted_entities+' \u00b7 \u5173\u7cfb '+item.accepted_relations+(item.rejected_items?' \u00b7 \u5f85\u590d\u6838 '+item.rejected_items:'')+'</td><td><span class="status '+(item.status==='failed'?'warn':'good')+'">'+escapeHtml(pipelineStatusText[item.status]||item.status)+'</span>'+(item.error_message?'<small class="pipeline-error">'+escapeHtml(item.error_message)+'</small>':'')+'</td><td>'+new Date(item.completed_at||item.created_at).toLocaleString('zh-CN')+'</td></tr>';});table.innerHTML=html;}
+  function renderImports() {
+    const table=q('#importTable'); if(!table)return;
+    const pipelines=tenantData.pipelines||[];
+    const syncs=(tenantData.imports||[]).filter(item=>['audience','product'].includes(item.dataset_type));
+    q('#importCount').textContent=(pipelines.length+syncs.length)+' 个批次';
+    const rows=[
+      ...pipelines.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:'业务对象 '+item.accepted_entities+' · 关系 '+item.accepted_relations+(item.rejected_items?' · 待复核 '+item.rejected_items:''),error:item.error_message})),
+      ...syncs.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:(item.dataset_type==='audience'?'聚合客群':'产品包')+' · 接收 '+item.accepted_rows+' / '+item.total_rows+' 条',error:item.rejected_rows?'待复核 '+item.rejected_rows+' 条':''}))
+    ].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
+    table.innerHTML='<tr><th>文件 / 来源</th><th>格式</th><th>处理结果</th><th>状态</th><th>完成时间（北京时间）</th></tr>'+(rows.length?rows.map(item=>'<tr><td><strong>'+escapeHtml(item.name)+'</strong><small>'+escapeHtml(item.id)+'</small></td><td>'+escapeHtml(String(item.format||'').toUpperCase())+'</td><td>'+escapeHtml(item.result)+'</td><td><span class="status '+(item.status==='failed'?'warn':'good')+'">'+escapeHtml(pipelineStatusText[item.status]||item.status)+'</span>'+(item.error?'<small class="pipeline-error">'+escapeHtml(item.error)+'</small>':'')+'</td><td>'+escapeHtml(businessTime(item.time))+'</td></tr>').join(''):'<tr><td colspan="5" class="table-empty">暂无处理记录。可投递文件，或在客群与产品页同步标准 JSON。</td></tr>');
+  }
   function renderPipelineQueue(){const queue=q('#pipelineQueue');if(!queue)return;const active=(tenantData.pipelines||[]).filter(item=>['queued','running'].includes(item.status));const local=[...pipelineFiles.values()].filter(item=>!item.job||['uploading','failed'].includes(item.status));const merged=[...local,...active.filter(item=>!local.some(localItem=>localItem.job&&localItem.job.id===item.id))];q('#pipelineQueueCount').textContent=merged.length+' \u4e2a\u4efb\u52a1';if(!merged.length){queue.innerHTML='<div class="pipeline-empty"><i data-lucide="inbox"></i><b>\u6682\u65e0\u5904\u7406\u4efb\u52a1</b><span>\u62d6\u5165\u6587\u4ef6\u540e\u5c06\u5728\u8fd9\u91cc\u663e\u793a\u8fdb\u5ea6</span></div>';}else{queue.innerHTML=merged.map(item=>{const job=item.job||item;const info=item.status==='uploading'?{label:'\u6b63\u5728\u4e0a\u4f20',progress:item.progress||8}:stageInfo(job);const failed=item.status==='failed'||job.status==='failed';return '<article class="pipeline-task '+(failed?'is-failed':'')+'"><div class="pipeline-file-icon"><i data-lucide="file-text"></i></div><div class="pipeline-task-main"><div class="pipeline-task-title"><b>'+escapeHtml(item.file?item.file.name:job.file_name)+'</b><span>'+(item.file?formatBytes(item.file.size):escapeHtml((job.file_format||'').toUpperCase()))+'</span></div><div class="pipeline-progress"><i style="width:'+info.progress+'%"></i></div><div class="pipeline-task-meta"><span>'+(failed?'\u5904\u7406\u5931\u8d25':info.label)+'</span><small>'+(failed?escapeHtml(item.error||job.error_message||'\u8bf7\u68c0\u67e5\u6587\u4ef6\u540e\u91cd\u8bd5'):info.progress+'% \u00b7 \u7cfb\u7edf\u6b63\u5728\u81ea\u52a8\u5904\u7406')+'</small></div></div>'+(failed&&item.file?'<button class="btn" data-pipeline-retry="'+item.localId+'"><i data-lucide="rotate-ccw"></i>\u91cd\u8bd5</button>':'')+'</article>';}).join('');}if(window.lucide)lucide.createIcons();}
   async function refreshPipelines(){tenantData.pipelines=await request('/api/data-pipelines');for(const [localId,entry] of pipelineFiles){if(!entry.job)continue;const latest=tenantData.pipelines.find(item=>item.id===entry.job.id);if(!latest)continue;entry.job=latest;if(latest.status==='failed'){entry.status='failed';entry.error=latest.error_message;}else if(latest.status==='completed'){pipelineFiles.delete(localId);}}renderPipelineQueue();renderImports();const hasActive=tenantData.pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);}
   async function uploadPipelineFile(entry){entry.status='uploading';entry.progress=8;renderPipelineQueue();const form=new FormData();form.append('file',entry.file);try{const result=await request('/api/data-pipelines',{method:'POST',body:form},true);entry.job=result.job;entry.status='queued';entry.progress=10;await refreshPipelines();}catch(cause){entry.status='failed';entry.error=cause.message||'\u4e0a\u4f20\u5931\u8d25';renderPipelineQueue();}}
@@ -1819,12 +1879,23 @@
 </tr>`).join('') : '<tr><td colspan="4"><div class="empty-action"><b>暂无用户授权</b><span>创建用户后，可在这里配置租户、角色与数据范围。</span></div></td></tr>'}`; }
 
   function bindProductionActions() {
+    bindWorkbenchControls();
+    document.addEventListener('click',event=>{
+      if(!event.target.closest('[data-action="createCampaign"]'))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      if(canWrite())showCampaignEditor({name:'',stage:'创建',audience_size:0,budget_yuan:0,roi_target:0});
+    },true);
     document.addEventListener('click', async event => {
       const subviewButton=event.target.closest?.('[data-business-subview]');
       if(subviewButton){const view=subviewButton.closest('.view');if(view?.id==='audiences'&&subviewButton.dataset.businessSubview==='selection'){showAudienceSelectionModal();return;}if(view)activateBusinessSubview(view.id,subviewButton.dataset.businessSubview);return;}
       const openCampaign=event.target.closest?.('[data-open-campaign]');
       if(openCampaign){const item=(tenantData.campaigns||[]).find(value=>value.name===openCampaign.dataset.openCampaign);if(item){showCampaignDetail(item);toast('已打开活动详情：'+item.name);}return;}
       const button=event.target.closest('button'); if(!button) return;
+      if(button.dataset.action==='approvalHistory'){activateBusinessSubview('approvals','history');return;}
+      if(button.dataset.action==='exportCampaign'){downloadBusinessJson('活动清单',{workspace:activeTenant().name,campaigns:tenantData.campaigns});return;}
+      if(button.dataset.action==='exportReview'){downloadBusinessJson('活动复盘',{workspace:activeTenant().name,exported_at:new Date().toISOString(),note:'渠道联调为虚构回执；收入与ROI等待交易归因',summary:tenantData.effectSummary});return;}
+      if(button.dataset.action==='traceLifecycle'){activate('graph');activateBusinessSubview('graph','instances');return;}
+      if(button.matches('[aria-label="查看通知"]')){showNotifications();return;}
       const decisionModal=q('#decisionModal');
       if(button.dataset.productionApprovalAction){
         const approval=(tenantData.approvals||[]).find(item=>String(item.id)===String(selectedProductionApprovalId));
@@ -1884,7 +1955,7 @@
       }
       if(button.dataset.action==='newAudience'){if(!canWrite())return;showAudiencePackageCreator();return;}
       if(button.dataset.action==='viewAudienceSnapshot'){showAudienceSelectionModal();return;}
-      if(button.dataset.action==='newContent'){activate('contents');return;}
+      if(button.dataset.action==='newContent'){if(!canWrite())return;showContentEditor({name:'',campaign_id:contentGenerationContext.campaign_id||null,channel:'App',version:'V1',status:'草稿',generated_by:'manual',title:'',body:''});return;}
       if(button.dataset.action==='refreshAudienceCatalog'){if(!canWrite())return;button.disabled=true;try{await loadTenantData();toast('\u753b\u50cf\u76ee\u5f55\u5df2\u540c\u6b65\uff1a'+(tenantData.personaDimensions||[]).length+'\u4e2a\u753b\u50cf\u7ef4\u5ea6');}catch(cause){toast(cause.message||'\u753b\u50cf\u540c\u6b65\u5931\u8d25');}finally{button.disabled=false;}return;}
        if(button.dataset.action==='newProvider'){if(!isTenantAdmin())return;showProviderCreateEditor();return;}
        if(button.dataset.action==='editMineru'){if(!isTenantAdmin())return;showMineruEditor();return;}
@@ -1955,7 +2026,7 @@ function mountMarketingAssistantV2(){
     };
     const addTrace=(traceBox,item)=>{
       const label=traceLabel[item.event]||'业务处理';
-      traceBox.insertAdjacentHTML('beforeend','<div class="assistant-trace-row"><span class="assistant-trace-dot"></span><div><b>'+escapeHtml(label)+'</b><small>'+new Date(item.timestamp||Date.now()).toLocaleTimeString('zh-CN',{hour12:false})+'</small><p>'+escapeHtml(traceDetail(item))+'</p></div></div>');
+      traceBox.insertAdjacentHTML('beforeend','<div class="assistant-trace-row"><span class="assistant-trace-dot"></span><div><b>'+escapeHtml(label)+'</b><small>'+businessTime(item.timestamp||Date.now(),true)+'</small><p>'+escapeHtml(traceDetail(item))+'</p></div></div>');
       traceBox.scrollTop=traceBox.scrollHeight;
     };
     const stateKey='ceair-marketing-assistant-layout-v2';
@@ -2021,7 +2092,7 @@ function mountMarketingAssistantV2(){
     const domains=tenantData.domains||[];
     const note=q('#dongdongCapabilityCount');
     if(note)note.textContent=domains.length?`${domains.length} 个智能域 · 当前租户已启用`:'智能域按租户启用';
-    if(!domains.length){host.innerHTML='<div class="dongdong-cap-empty">当前租户尚未启用智能域，请先在模型配置中接入大模型服务</div>';return;}
+    if(!domains.length){host.innerHTML='<div class="dongdong-cap-empty">'+(tenantDataReady?'当前租户尚未启用智能域，请先在模型配置中接入大模型服务':'正在加载智能域')+'</div>';return;}
     host.innerHTML=domains.map(item=>`<div class="dongdong-cap"><b>${escapeHtml(displayText(item.name,'智能域'))}</b><p>${escapeHtml(displayText(item.responsibility,''))}</p>${item.module?`<small>${escapeHtml(item.module)}</small>`:''}</div>`).join('');
   }
   const dongdongModes={
@@ -2076,7 +2147,101 @@ function mountMarketingAssistantV2(){
   }
 
   window.createProductionCampaign = async function(name) { return request("/api/campaigns", {method: "POST", body: JSON.stringify({name: name, stage: "机会"})}); };
-  async function loadTenantData(){updateIdentity();const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];const values=await Promise.all(paths.map(path=>request(path)));let mineru=null;if(activeTenant()?.role==='admin'){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=values;let effectSummary={};const effectCampaignId=campaigns[0]?.id;if(effectCampaignId){try{effectSummary=await request(`/api/campaigns/${encodeURIComponent(effectCampaignId)}/effect-summary`);}catch{effectSummary={};}}tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary,mineru};renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderDongdongCapabilities();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();applyBusinessSubviewLayouts();const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);}
+  function downloadBusinessJson(name,payload){
+    const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));
+    const link=document.createElement('a');link.href=url;link.download=name+'-'+new Date().toISOString().slice(0,10)+'.json';link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  function showNotifications(){
+    const pending=(tenantData.approvals||[]).filter(approvalIsPending);
+    const failed=(tenantData.runs||[]).filter(item=>item.status==='failed');
+    const layer=document.createElement('div');layer.className='production-modal';
+    layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>工作区通知</b><button class="icon-btn" data-close title="关闭"><i data-lucide="x"></i></button></div><div class="production-modal-body"><p>待审批 '+pending.length+' 项 · 智能域失败 '+failed.length+' 项</p>'+pending.map(item=>'<p>'+escapeHtml(item.external_id)+' · '+escapeHtml(item.status)+'</p>').join('')+failed.map(item=>'<p>'+escapeHtml(item.summary)+'</p>').join('')+(!pending.length&&!failed.length?'<div class="empty-action">当前无待处理通知</div>':'')+'</div></div>';
+    document.body.appendChild(layer);bindProductionModal(layer);if(window.lucide)lucide.createIcons();
+  }
+  function renderPermissions(){
+    const view=q('#permissions');if(!view)return;
+    const description=q('.page-head p',view);if(description)description.textContent='当前账号授权、租户数据范围与业务处理记录';
+    q('[data-action="addRole"]',view).hidden=true;
+    const role=activeTenant()?.role;
+    const rules=[['查看业务数据',true],['创建与编辑业务对象',canWrite()],['审批与渠道联调',canWrite()],['同步数据与配置模型',isTenantAdmin()],['管理平台租户与用户',Boolean(session.is_platform_admin)]];
+    const records=[
+      ...(tenantData.approvals||[]).map(item=>({time:item.decided_at||item.updated_at,label:'审批 '+item.external_id,status:item.status})),
+      ...(tenantData.imports||[]).map(item=>({time:item.completed_at||item.created_at,label:'导入 '+item.file_name,status:item.status})),
+      ...(tenantData.runs||[]).map(item=>({time:item.created_at,label:(domainLabels[item.domain_id]||item.domain_id)+' '+item.id,status:item.status}))
+    ].sort((a,b)=>new Date(b.time)-new Date(a.time)).slice(0,20);
+    q('.permission-layout',view).innerHTML='<div class="panel" data-subview-panel="roles"><div class="panel-head"><h2>当前账号授权</h2><span>按租户成员关系生效</span></div><div class="panel-body"><p>'+escapeHtml(session.display_name)+' · '+escapeHtml(activeTenant().name)+' · '+escapeHtml(roleLabels[role]||role)+'</p><table class="table"><tr><th>操作范围</th><th>权限</th></tr>'+rules.map(([name,allowed])=>'<tr><td>'+name+'</td><td>'+ (allowed?'允许':'只读 / 无权限')+'</td></tr>').join('')+'</table><p>当前工作区仅展示聚合画像；账号角色由“租户与用户”维护。</p></div></div><div class="panel" data-subview-panel="audit"><div class="panel-head"><h2>业务处理记录</h2><span>当前租户 · 最近20条</span></div><div class="panel-body"><table class="table"><tr><th>对象与操作</th><th>状态</th><th>时间</th></tr>'+records.map(item=>'<tr><td>'+escapeHtml(item.label)+'</td><td>'+escapeHtml(item.status)+'</td><td>'+escapeHtml(item.time?businessTime(item.time):'待处理')+'</td></tr>').join('')+'</table></div></div>';
+  }
+  function applyWorkbenchFilters(){
+    ['opportunities','audiences','products','contents','campaigns'].forEach(viewId=>{
+      const view=q('#'+viewId),toolbar=q(':scope > .toolbar-strip',view);if(!toolbar)return;
+      const query=(q('input',toolbar)?.value||'').trim().toLowerCase();
+      const selects=qa('select',toolbar),status=selects[1]?.value||'';
+      const type=selects[0]?.hidden?'':selects[0]?.value||'';
+      const filterType=type&&!type.startsWith('全部');
+      const filterStatus=!status.startsWith('全部')&&status!=='当前版本';
+      qa('table tr',view).forEach(row=>{
+        if(!q('td',row))return;
+        const text=row.textContent.toLowerCase();
+        const matchesStatus=!filterStatus||(q('.status',row)?.textContent||'').includes(status);
+        row.hidden=Boolean((query&&!text.includes(query))||!matchesStatus||(filterType&&!text.includes(type.toLowerCase())));
+      });
+      if(viewId==='products')qa('.catalog-card',view).forEach(card=>card.hidden=Boolean(query&&!card.textContent.toLowerCase().includes(query)));
+      let hint=q('[data-filter-count]',toolbar);if(!hint){hint=document.createElement('span');hint.dataset.filterCount='true';hint.className='toolbar-note';toolbar.appendChild(hint);}
+      hint.textContent=query||filterStatus||filterType?qa('table tr',view).filter(row=>q('td',row)&&!row.hidden).length+' 条匹配':'';
+    });
+  }
+  function bindWorkbenchControls(){
+    q('.crumb-home')?.addEventListener('click',event=>{event.preventDefault();activate('dongdong');});
+    q('#execution .toolbar-strip')?.addEventListener('change',event=>{
+      const selects=qa('#execution .toolbar-strip select');
+      if(event.target===selects[0]){selectedExecutionCampaignId=event.target.value;selectedExecutionBatchId='';selectedExecutionChannel='';}
+      if(event.target===selects[1])selectedExecutionChannel=event.target.value;
+      if(event.target===selects[2])selectedExecutionBatchId=event.target.value;
+      renderExecution();if(window.lucide)lucide.createIcons();
+    });
+    q('#feedback .toolbar-strip')?.addEventListener('change',async event=>{
+      if(event.target!==q('#feedback .toolbar-strip select'))return;
+      selectedEffectCampaignId=event.target.value;tenantData.effectSummary={};
+      try{await loadEffectSummary();renderFeedback();}catch(cause){renderFeedback();toast(cause.message||'复盘加载失败');}
+    });
+    ['opportunities','audiences','products','contents','campaigns'].forEach(viewId=>{
+      const toolbar=q('#'+viewId+' > .toolbar-strip');if(!toolbar)return;
+      q('input',toolbar)?.addEventListener('input',applyWorkbenchFilters);
+      toolbar.addEventListener('change',applyWorkbenchFilters);
+      const selects=qa('select',toolbar);
+      if(['opportunities','audiences'].includes(viewId)&&selects[0])selects[0].hidden=true;
+      if(viewId==='campaigns'&&selects[1])selects[1].hidden=true;
+      q('.toolbar-note',toolbar)?.remove();
+      q('.btn',toolbar)?.addEventListener('click',applyWorkbenchFilters);
+    });
+    q('#execution .toolbar-strip .btn')?.addEventListener('click',async()=>{await loadTenantData();});
+    q('#feedback .toolbar-strip .btn')?.addEventListener('click',async()=>{try{await loadEffectSummary();renderFeedback();}catch(cause){toast(cause.message);}});
+  }
+  async function loadEffectSummary(){
+    const campaign=tenantData.campaigns.find(item=>item.id===selectedEffectCampaignId)
+      ||tenantData.campaigns.find(item=>tenantData.executionBatches.some(batch=>batch.campaign_id===item.id))
+      ||tenantData.campaigns[0];
+    selectedEffectCampaignId=campaign?.id||'';
+    const requestId=++effectRequestId;
+    const summary=campaign?await request(`/api/campaigns/${encodeURIComponent(campaign.id)}/effect-summary`):{};
+    if(requestId===effectRequestId)tenantData.effectSummary=summary;
+  }
+  async function loadTenantData(){
+    updateIdentity();
+    const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];
+    const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=await Promise.all(paths.map(path=>request(path)));
+    let mineru=null;
+    if(isTenantAdmin()){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}
+    tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary:{},mineru};
+    tenantDataReady=true;
+    await loadEffectSummary();
+    renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderDongdongCapabilities();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();renderPermissions();applyBusinessSubviewLayouts();applyWorkbenchFilters();
+    const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));
+    clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);
+    const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));
+    clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);
+  }
   /* ── 活动生命周期导轨 ──────────────────────────────────────────────────
      原来只在 #overview 出现，点任意阶段整页跳走且无回途，且 .life.active
      是写死在 01 上的静态类（跳回来仍亮着 01）。改成跨 8 个视图常驻：
@@ -2559,7 +2724,7 @@ function mountMarketingAssistantV2(){
     try{bindDongdongChips();renderDongdongChips('opportunity');mountDongdongHero();renderDongdongCapabilities();}catch(cause){console.error('东东首页挂载失败',cause);}
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}
     try{bindProductionActions();}catch(cause){console.error('生产功能绑定失败',cause);}
-    try{await loadTenantData();}catch(cause){console.error('租户数据加载失败',cause);toast(cause.message||'租户数据加载失败，请稍后重试');}
+    try{await loadTenantData();}catch(cause){console.error('租户数据加载失败',cause);const capabilities=q('#dongdongCapabilityGrid');if(capabilities)capabilities.innerHTML='<div class="dongdong-cap-empty">业务数据加载失败，请检查本地 API 后刷新页面</div>';toast(cause.message||'租户数据加载失败，请稍后重试');}
     try{mountLifecycleRails();}catch(cause){console.error('生命周期导轨挂载失败',cause);}
     try{mountSearchModule();}catch(cause){console.error('检索模块挂载失败',cause);}
     if(window.lucide)lucide.createIcons();

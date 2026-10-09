@@ -1,3 +1,13 @@
+## v3.16 - 2026-10-09
+
+- Replaced the static campaign wizard with tenant-backed V1 draft configuration and a submit-for-approval action.
+- Added manual content creation, working list filters, campaign/review JSON exports and notifications based on actual pending tasks.
+- Added execution campaign/batch/channel selection and effect campaign selection; corrected task counts, receipt coverage and funnel denominators.
+- Replaced static permission claims with current-user authorization and business processing records; included upstream sync batches in import history.
+- Displayed persisted UTC timestamps in Asia/Shanghai and identified controlled model results and synthetic channel feedback.
+- Bundled Lucide and D3, restored the home stylesheet in Docker packaging, and added an asset packaging check to CI.
+- Added fresh rehearsal databases, configurable ports, readiness checks and a six-minute demonstration runbook.
+
 ## v3.15 - 2026-10-09
 
 - Aligned the home page with China Eastern's official site: full brand mark, two-row navigation, consistent spacing and restrained shadows.

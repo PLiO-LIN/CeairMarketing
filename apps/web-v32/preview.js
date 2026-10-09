@@ -110,6 +110,16 @@
     queryAll('.preview-nav-group').forEach(group => group.classList.toggle('active', !!query(`.preview-nav-items [data-preview-view].active`, group)));
     const campaignCount = query('[data-view="campaigns"] .nav-count')?.textContent;
     query('[data-preview-campaign-count]')?.replaceChildren(document.createTextNode(campaignCount || '0'));
+    const identity = query('.topnav .user');
+    const tenant = query('.preview-tenant b', sidebar);
+    const user = query('.preview-tenant small', sidebar);
+    const avatar = query('.preview-avatar', sidebar);
+    const tenantText = query('b', identity)?.textContent || '当前工作区';
+    const userText = query('span', identity)?.textContent || '正在加载用户';
+    if (tenant.textContent !== tenantText) tenant.textContent = tenantText;
+    if (user.textContent !== userText) user.textContent = userText;
+    const initial = identity?.dataset.displayName?.slice(0, 1) || '用';
+    if (avatar.textContent !== initial) avatar.textContent = initial;
   }
 
   function refresh() {

@@ -52,6 +52,7 @@
   $$('.selection-box,.content-option').forEach(e => e.addEventListener('click', () => e.classList.toggle('selected')));
 
   document.addEventListener('click', e => {
+    if (window.ceairProductionV32) return;
     const nav = e.target.closest('[data-nav]');
     if (nav) { closeDrawer(); activate(nav.dataset.nav); return; }
     const d = e.target.closest('[data-drawer]')?.dataset.drawer;
