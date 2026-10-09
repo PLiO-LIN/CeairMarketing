@@ -16,6 +16,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .agents import AgentRuntime, MarketingCopilot
+from .agents.business_results import accept_result, read_result
+from .business_sync import AudienceSyncRequest, ProductSyncRequest, sync_business
 from .auth import TenantContext, create_token, get_current_user, get_tenant_context, hash_password, require_admin, require_platform_admin, require_write, verify_password
 from .config import get_settings
 from .data import AGENT_DOMAINS
@@ -103,7 +105,7 @@ from .models import (
 )
 from .ontology import build_campaign_graph, graph_stats, semantic_model, semantic_status
 from .security import SecretCipher
-from .seed import seed_database, seed_opportunity_insight_sources, seed_persona_catalog, seed_tenant_data
+from .seed import seed_database, seed_competition_workspace, seed_opportunity_insight_sources, seed_persona_catalog, seed_tenant_data
 
 settings = get_settings()
 
@@ -139,10 +141,15 @@ async def lifespan(_app: FastAPI):
             seed_persona_catalog(session, tenant_id)
         with SessionLocal() as session:
             seed_opportunity_insight_sources(session, tenant_id)
+        if settings.seed_demo_business_data:
+            with SessionLocal() as session:
+                admin = session.scalar(select(UserRecord).where(UserRecord.username == settings.initial_admin_username))
+                if admin is not None:
+                    seed_competition_workspace(session, admin.id)
     yield
 
 
-app = FastAPI(title=settings.app_name, version="3.0.0", lifespan=lifespan)
+app = FastAPI(title=settings.app_name, version="3.15.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -600,21 +607,18 @@ def list_execution_batches(context: TenantContext = Depends(get_tenant_context),
 
 @app.post("/api/execution-batches/{batch_id}/status", response_model=ExecutionBatch)
 def update_execution_batch_status(batch_id: int, payload: dict[str, str], context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
-    record = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    record = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id).with_for_update())
     if record is None:
         raise HTTPException(status_code=404, detail="执行批次不存在")
     next_status = payload.get("status", "")
     if next_status not in {"待执行", "执行中", "已暂停", "已完成", "失败"}:
         raise HTTPException(status_code=422, detail="不支持的执行状态")
+    if record.status in {"已完成", "失败"} and next_status != record.status:
+        raise HTTPException(409, "已结束的批次不能重新打开，请创建并审批新的活动版本")
     record.status = next_status
     tasks = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.batch_id == record.id, ChannelTaskRecord.tenant_id == context.tenant_id)).all()
     for task in tasks:
         task.status = next_status
-    if next_status == "执行中":
-        record.delivered_count = max(record.delivered_count, min(record.target_size, max(1, int(record.target_size * 0.35))))
-    if next_status == "已完成":
-        record.delivered_count = record.target_size
-        record.feedback_count = max(record.feedback_count, record.delivered_count)
     session.commit()
     session.refresh(record)
     return execution_batch_view(record)
@@ -624,9 +628,15 @@ def update_execution_batch_status(batch_id: int, payload: dict[str, str], contex
 def run_execution_batch(batch_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     """Run deterministic Mock channel delivery and persist feedback metrics."""
     pending, paused, running, done = "待执行", "已暂停", "执行中", "已完成"
-    batch = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id))
+    batch = session.scalar(select(ExecutionBatchRecord).where(ExecutionBatchRecord.id == batch_id, ExecutionBatchRecord.tenant_id == context.tenant_id).with_for_update())
     if batch is None:
         raise HTTPException(status_code=404, detail="Execution batch not found")
+    version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.id == batch.campaign_version_id, CampaignVersionRecord.tenant_id == context.tenant_id))
+    if version is None or version.status != "已通过":
+        raise HTTPException(409, "只有审批通过的活动版本可以执行")
+    campaign = session.scalar(select(CampaignRecord).where(CampaignRecord.id == batch.campaign_id, CampaignRecord.tenant_id == context.tenant_id))
+    if campaign is None or campaign.status == "已归档":
+        raise HTTPException(409, "活动已归档或不存在")
     if batch.status not in {pending, paused}:
         raise HTTPException(status_code=409, detail="Current batch status cannot be executed")
     tasks = session.scalars(select(ChannelTaskRecord).where(ChannelTaskRecord.batch_id == batch.id, ChannelTaskRecord.tenant_id == context.tenant_id)).all()
@@ -704,6 +714,8 @@ def campaign_effect_summary(campaign_id: str, context: TenantContext = Depends(g
     failed = sum(item.failed_count for item in tasks)
     return {
         "campaign_id": campaign_id,
+        "data_source": "channel_feedback",
+        "execution_mode": "synthetic",
         "batch_count": len(batches),
         "target_count": target,
         "sent_count": sent,
@@ -1340,8 +1352,14 @@ def get_agent_run(run_id: str, context: TenantContext = Depends(get_tenant_conte
     if record is None: raise HTTPException(status_code=404, detail="Agent run record not found")
     events = []
     for event in sorted(record.events, key=lambda item: item.timestamp):
-        events.append({"id": event.id, "event_type": event.event_type, "timestamp": event.timestamp, "payload": json.loads(event.payload_json or "{}")})
-    return AgentRun(id=record.id, campaign_id=record.campaign_id, domain_id=record.domain_id, status=record.status, summary=record.summary, events=events)
+        events.append({"id": event.id, "run_id": record.id, "event_type": event.event_type, "timestamp": event.timestamp, "payload": json.loads(event.payload_json or "{}")})
+    output, applied = read_result(record.events)
+    return AgentRun(id=record.id, campaign_id=record.campaign_id, domain_id=record.domain_id, status=record.status, summary=record.summary, events=events, output=output, applied_object=applied)
+
+
+@app.post("/api/agent-runs/{run_id}/accept")
+def accept_agent_result(run_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    return accept_result(session, context, run_id)
 
 
 @app.get("/api/agent-runs", response_model=list[AgentRunListItem])
@@ -1649,6 +1667,16 @@ def mock_product_catalog(_context: TenantContext = Depends(get_tenant_context)):
 def product_catalog_view(_context: TenantContext = Depends(get_tenant_context)):
     """Expose the product-management catalog through the production-facing contract."""
     return product_catalog()
+
+
+@app.post("/api/integrations/profile/audiences")
+def sync_profile_audiences(payload: AudienceSyncRequest, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    return sync_business(session, context, payload, "audience")
+
+
+@app.post("/api/integrations/products/packages")
+def sync_product_packages(payload: ProductSyncRequest, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    return sync_business(session, context, payload, "product")
 
 @app.post("/api/mock/channels/{channel}/deliver")
 def mock_channel_deliver(channel: str, audience_size: int = 0, campaign_id: str = "MOCK-CAMPAIGN", _context: TenantContext = Depends(require_write)):

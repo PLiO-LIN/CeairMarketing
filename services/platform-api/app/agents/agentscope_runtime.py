@@ -211,7 +211,7 @@ class AgentScopeRuntime:
                     cwd=str(ROOT),
                     env={
                         **os.environ,
-                        "CEAIR_MARKETING_DB": str(ROOT / "ceair-marketing.db"),
+                        "DATABASE_URL": self._database_url(),
                         "CEAIR_TENANT_ID": str(tenant_id),
                     },
                 ),
@@ -265,6 +265,15 @@ class AgentScopeRuntime:
             max_retries=3,
             client_kwargs={"timeout": config.timeout_seconds},
         )
+
+    @staticmethod
+    def _database_url() -> str:
+        from sqlalchemy.engine import make_url
+        from ..config import get_settings
+        url = make_url(get_settings().database_url)
+        if url.get_backend_name() == "sqlite" and url.database and url.database != ":memory:":
+            url = url.set(database=str(Path(url.database).resolve()))
+        return url.render_as_string(hide_password=False)
 
     def _handle_event(
         self,

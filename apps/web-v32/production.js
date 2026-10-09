@@ -1,6 +1,8 @@
 (function () {
   'use strict';
   window.ceairProductionV32 = true;
+  const productionActions = new Set(['newAudience', 'newProduct', 'newContent', 'generateContent', 'naturalAudience', 'calculateAudience', 'aiOrchestrate', 'scanOpportunity', 'useProduct', 'generateReview', 'refreshExecution', 'pauseCampaign', 'viewAudienceSnapshot']);
+  window.productionHandlesAction = action => productionActions.has(action);
   const mount = location.pathname.startsWith('/ceair-marketing') ? '/ceair-marketing' : '';
   const sessionKey = 'ceair-production-session';
   const tenantKey = 'ceair-production-tenant';
@@ -136,6 +138,14 @@
     const host=q('#'+hostId);if(!host)return;const runs=(tenantData.runs||[]).filter(item=>domains.includes(item.domain_id));
     const statusLabel=value=>{const text=String(value||'');if(['queued','running','processing'].includes(text.toLowerCase()))return '处理中';if(text==='needs_approval')return '待人工审核';if(text==='completed')return '已完成';if(text==='failed')return '处理失败';return displayText(text,'已完成');};
     host.innerHTML='<div class=panel-head><h2>任务进度</h2><span>'+runs.length+' 次运行</span></div><div class=panel-body>'+(runs.length?'<div class=run-card-list>'+runs.map(item=>{const active=['queued','running','processing'].includes(String(item.status).toLowerCase());return '<article class="run-card '+(active?'is-running':'')+'"><span class="live-state '+(active?'is-active':'')+'"><i></i>'+(active?'正在处理':escapeHtml(statusLabel(item.status)))+' </span><div><b>'+escapeHtml(displayText(item.summary,domainLabels[item.domain_id]||'智能营销任务'))+'</b><small>'+escapeHtml(domainLabels[item.domain_id]||'智能营销任务')+' · '+escapeHtml(item.campaign_id||'未关联活动')+'</small></div><time>'+(item.created_at?new Date(item.created_at).toLocaleString('zh-CN'):'刚刚')+'</time></article>';}).join('')+'</div>':'<div class=empty-action>'+escapeHtml(emptyText)+'</div>')+'</div>';
+    qa('.run-card',host).forEach((card,index)=>{
+      const button=document.createElement('button');button.className='btn';button.textContent='查看结果';button.title='查看已保存的智能域结果';
+      button.addEventListener('click',async()=>{
+        try{showAgentTrace(await request('/api/agent-runs/'+encodeURIComponent(runs[index].id)));}
+        catch(cause){toast(cause.message||'结果读取失败');}
+      });
+      card.appendChild(button);
+    });
   }
 
   function renderApprovalHistoryPanel(){
@@ -720,6 +730,23 @@
     const tenant = activeTenant(); const user = q('.user');
     q('b', user).textContent = tenant?.name || '未选择租户';
     q('span', user).textContent = `${session.display_name} · 当前角色：${roleLabels[tenant?.role] || tenant?.role || '未授权'}`;
+    let workspace = q('#workspaceSelect');
+    if (!workspace) {
+      const label = document.createElement('label');
+      label.className = 'workspace-switch';
+      label.innerHTML = '<span>当前工作区</span><select id="workspaceSelect" aria-label="切换工作区"></select>';
+      q('.top-actions').prepend(label);
+      workspace = q('select', label);
+      workspace.addEventListener('change', () => {
+        const next = Number(workspace.value);
+        if (!session.tenants.some(item => item.id === next)) return;
+        localStorage.setItem(tenantKey, String(next));
+        // Reload clears pending requests, drafts and cached objects from the previous workspace.
+        location.reload();
+      });
+    }
+    workspace.innerHTML = session.tenants.map(item => `<option value="${item.id}">${escapeHtml(item.name)}</option>`).join('');
+    workspace.value = String(tenantId);
     document.body.classList.toggle('platform-admin', !!session.is_platform_admin);
     document.body.classList.toggle('tenant-admin', isTenantAdmin());
     document.body.classList.toggle('tenant-readonly', !canWrite());
@@ -860,6 +887,7 @@
   }
 
   function renderAudienceStructure() {
+    mountStandardSync('audiences','/api/integrations/profile/audiences');
     const view = q('#audiences');
     const listPanel = q('[data-audience-list]', view);
     const detailPanel = q('[data-audience-detail]', view);
@@ -932,8 +960,57 @@
   }
 
   function showAgentTrace(run){
+    if(run?.output && Object.keys(run.output).length){showAgentResult(run);return;}
     const events=run?.events||[]; const html='<div class="agent-trace"><div class="agent-trace-head"><i data-lucide="bot"></i><b>Agent\u6267\u884c\u8fc7\u7a0b</b><span>'+escapeHtml(cleanText(run?.status,'\u5df2\u5b8c\u6210'))+'</span></div><div class="agent-trace-list">'+(events.length?events.map((e,i)=>'<div class="agent-trace-item"><i>'+(i+1)+'</i><div><b>'+escapeHtml(cleanText(e.event_type,'\u5904\u7406\u6b65\u9aa4'))+'</b><small>'+new Date(e.timestamp).toLocaleString('zh-CN')+'</small><p>'+escapeHtml(JSON.stringify(e.payload||{}))+'</p></div></div>').join(''):'<div class="empty-action">\u672a\u8fd4\u56de\u6b65\u9aa4\u4e8b\u4ef6</div>')+'</div><div class="drawer-ai">'+escapeHtml(cleanText(run?.summary,'Agent\u5df2\u5b8c\u6210\u5904\u7406'))+'</div></div>';
     const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>\u667a\u80fd\u57df\u8fc7\u7a0b\u8ffd\u8e2a</b><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body">'+html+'</div></div>';document.body.appendChild(layer);layer.addEventListener('click',e=>{if(e.target===layer||e.target.closest('[data-close]'))layer.remove();});if(window.lucide)lucide.createIcons();
+  }
+  function showAgentResult(run){
+    const layer=document.createElement('div');layer.className='production-modal';
+    const output=run.output||{}, text=output.body||output.text||run.summary;
+    layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>智能域结果</b><button class="icon-btn" data-close title="关闭"><i data-lucide="x"></i></button></div><div class="production-modal-body"><h3>'+escapeHtml(output.title||domainLabels[run.domain_id]||'业务建议')+'</h3><p style="white-space:pre-wrap">'+escapeHtml(text)+'</p><details><summary>业务依据</summary><pre style="white-space:pre-wrap">'+escapeHtml(JSON.stringify(output.context||{},null,2))+'</pre></details><p data-result-state>'+escapeHtml(run.applied_object?'已保存：'+run.applied_object.label:'等待人工确认')+'</p><button class="btn primary" data-result-accept '+(run.applied_object||!canWrite()?'disabled':'')+'><i data-lucide="check"></i>确认并保存草稿</button></div></div>';
+    document.body.appendChild(layer);bindProductionModal(layer);
+    q('[data-result-accept]',layer)?.addEventListener('click',async event=>{
+      const button=event.currentTarget;button.disabled=true;
+      try{const saved=await request('/api/agent-runs/'+encodeURIComponent(run.id)+'/accept',{method:'POST'});q('[data-result-state]',layer).textContent='已保存：'+saved.label;await loadTenantData();toast('结果已保存为草稿');}
+      catch(cause){button.disabled=false;toast(cause.message||'结果保存失败');}
+    });
+    if(window.lucide)lucide.createIcons();
+  }
+  function mountStandardSync(viewId,path){
+    const head=q('#'+viewId+' .page-head');
+    if(!head)return;
+    let host=q('.head-actions',head);
+    if(!host&&head){host=document.createElement('div');host.className='head-actions';qa(':scope > button',head).forEach(button=>host.appendChild(button));head.appendChild(host);}
+    const existing=host?.querySelector('[data-standard-sync]');
+    if(existing)existing.hidden=!isTenantAdmin();
+    if(!host||existing||!isTenantAdmin())return;
+    const button=document.createElement('button');button.className='btn';button.dataset.standardSync='true';button.title='导入上游系统 JSON';button.innerHTML='<i data-lucide="upload"></i>同步业务数据';
+    const input=document.createElement('input');input.type='file';input.accept='.json';input.hidden=true;host.append(button,input);
+    button.addEventListener('click',()=>input.click());
+    input.addEventListener('change',async()=>{
+      const file=input.files[0];if(!file)return;
+      button.disabled=true;
+      try{if(file.size>5*1024*1024)throw new Error('文件不能超过5MB');const payload=JSON.parse(await file.text());const result=await request(path,{method:'POST',body:JSON.stringify(payload)});toast('同步完成：新增'+result.created+'，更新'+result.updated+'，未变化'+result.unchanged);await loadTenantData();}
+      catch(cause){toast(cause.message||'数据同步失败');}
+      finally{input.value='';button.disabled=false;}
+    });
+  }
+  function showDomainRequest(domain){
+    if(!canWrite())return;
+    const campaigns=tenantData.campaigns.filter(item=>item.status!=='已归档');
+    if(!campaigns.length){toast('请先创建营销活动');return;}
+    openBusinessEditor({
+      title:domainLabels[domain]||'运行智能域',item:{campaign_id:campaigns[0].id,instruction:''},
+      fields:[
+        {name:'campaign_id',label:'关联活动',type:'select',options:campaigns.map(item=>({value:item.id,label:item.name}))},
+        {name:'instruction',label:'业务要求',type:'textarea',required:true}
+      ],
+      save:async values=>{
+        const run=await request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:values.campaign_id,domain_id:domain,instruction:values.instruction})});
+        if(run.status==='failed')throw new Error(run.summary);
+        await loadTenantData();setTimeout(()=>showAgentResult(run),0);
+      }
+    });
   }
   function campaignActions(item){
     const archived=item.status==='已归档';
@@ -1103,6 +1180,7 @@
   }
 
   function renderProducts(){
+    mountStandardSync('products','/api/integrations/products/packages');
     const table=q('#products .table'); if(!table)return;
     const products=tenantData.productPackages||[];
     const body=table.parentElement;
@@ -1146,7 +1224,7 @@
     const objectives=['提升转化','促进出票','提升辅营购买','会员权益激活','航线淡季促销','企业客户线索转化'];
     const objectiveOptions=objectives.map(item=>`<option${item===contentGenerationContext.objective?' selected':''}>${item}</option>`).join('');
     const ready=Boolean(contentGenerationContext.campaign_id&&contentGenerationContext.audience_package_id&&contentGenerationContext.product_package_id&&contentGenerationContext.channel);
-    panel.innerHTML=`<div class="panel-head"><div><h2>生成上下文</h2><span>先确定活动、客群包、产品包和渠道，再生成可审核内容</span></div><span class="context-readiness ${ready?'ready':'pending'}">${ready?'配置完成':'待补齐必要信息'}</span></div><div class="panel-body"><form id="contentGenerationContextForm" class="content-context-form"><label><span>关联活动 <em>*</em></span><select name="campaign_id"><option value="">${campaigns.length?'请选择活动':'暂无活动，请先创建'}</option>${options(campaigns,item=>item.id,'campaign_id')}</select></label><label><span>目标客群包 <em>*</em></span><select name="audience_package_id"><option value="">${audiences.length?'请选择客群包':'暂无客群包，请先组合画像'}</option>${options(audiences,item=>item.id,'audience_package_id')}</select></label><label><span>活动产品包 <em>*</em></span><select name="product_package_id"><option value="">${products.length?'请选择产品包':'暂无产品包，请先创建'}</option>${options(products,item=>item.id,'product_package_id')}</select></label><label><span>目标渠道 <em>*</em></span><select name="channel">${channel}</select></label><label><span>内容目标</span><select name="objective">${objectiveOptions}</select></label><label class="context-instruction"><span>补充要求</span><input name="instruction" value="${escapeHtml(contentGenerationContext.instruction)}" placeholder="例如：突出行李权益，不使用最低价表述"/></label><button class="btn ai content-generate-trigger" type="button" data-action="generateContent" ${ready?'':'disabled'}><i data-lucide="wand-sparkles"></i>按当前上下文生成</button></form><div class="content-context-hint"><i data-lucide="info"></i><span>生成结果会保存为内容资产草稿，页面下方的任务进度会显示处理状态；生成后可编辑、审核和按渠道预览。</span></div></div>`;
+    panel.innerHTML=`<div class="panel-head"><div><h2>生成上下文</h2><span>先确定活动、客群包、产品包和渠道，再生成可审核内容</span></div><span class="context-readiness ${ready?'ready':'pending'}">${ready?'配置完成':'待补齐必要信息'}</span></div><div class="panel-body"><form id="contentGenerationContextForm" class="content-context-form"><label><span>关联活动 <em>*</em></span><select name="campaign_id"><option value="">${campaigns.length?'请选择活动':'暂无活动，请先创建'}</option>${options(campaigns,item=>item.id,'campaign_id')}</select></label><label><span>目标客群包 <em>*</em></span><select name="audience_package_id"><option value="">${audiences.length?'请选择客群包':'暂无客群包，请先组合画像'}</option>${options(audiences,item=>item.id,'audience_package_id')}</select></label><label><span>活动产品包 <em>*</em></span><select name="product_package_id"><option value="">${products.length?'请选择产品包':'暂无产品包，请先创建'}</option>${options(products,item=>item.id,'product_package_id')}</select></label><label><span>目标渠道 <em>*</em></span><select name="channel">${channel}</select></label><label><span>内容目标</span><select name="objective">${objectiveOptions}</select></label><label class="context-instruction"><span>补充要求</span><input name="instruction" value="${escapeHtml(contentGenerationContext.instruction)}" placeholder="例如：突出行李权益，不使用最低价表述"/></label><button class="btn ai content-generate-trigger" type="button" data-action="generateContent" ${ready?'':'disabled'}><i data-lucide="wand-sparkles"></i>按当前上下文生成</button></form><div class="content-context-hint"><i data-lucide="info"></i><span>先查看生成结果与业务依据，人工确认后保存为内容草稿；随后可编辑、审核和按渠道预览。</span></div></div>`;
     panel.dataset.subviewPanel='assets tasks';
     const form=q('#contentGenerationContextForm'); form?.addEventListener('change',()=>{contentContextValues();renderContentGenerationContext();});form?.addEventListener('input',()=>{contentContextValues();});
     if(window.lucide)lucide.createIcons();
@@ -1168,7 +1246,7 @@
     const selected=assets.find(item=>String(item.id)===String(selectedContentAssetId))||assets[0];
     if(selected)selectedContentAssetId=String(selected.id);
     const previewPanel=q('#contents .grid2 .panel:nth-child(2)');
-    if(previewPanel){previewPanel.dataset.subviewPanel='preview';const body=previewPanel.querySelector('.panel-body');if(body){body.innerHTML='<div id="contentPreviewHost"></div><div class="check-inline"><span>产品事实一致</span><span>敏感词通过</span><span>渠道格式通过</span></div>';renderContentPreview(selected);}}
+    if(previewPanel){previewPanel.dataset.subviewPanel='preview';const body=previewPanel.querySelector('.panel-body');if(body){body.innerHTML='<div id="contentPreviewHost"></div><div class="check-inline"><span>待事实审核</span><span>待合规审核</span><span>待渠道校验</span></div>';renderContentPreview(selected);}}
     renderContentGenerationContext();
     if(window.lucide)lucide.createIcons();
   }
@@ -1189,19 +1267,9 @@
     if(generationPanel){generationPanel.innerHTML=`<div class="panel-head"><h2>任务进度</h2><span class="live-state is-active"><i></i>正在处理</span></div><div class="panel-body"><div class="content-progress"><div class="content-progress-head"><b>正在读取业务上下文</b><span>1/4</span></div><div class="content-progress-bar"><i style="width:22%"></i></div><ol><li class="active">读取活动：${escapeHtml(campaign.name)}</li><li>分析客群包：${escapeHtml(audience.name)}</li><li>校验产品包：${escapeHtml(product.name)}</li><li>生成 ${escapeHtml(channel)} 内容版本</li></ol></div></div>`;}
     if(window.lucide)lucide.createIcons();
     try{
-      const channelCopy={
-        App:{title:`${campaign.name} · ${objective}`,body:`${audience.name}专属出行推荐：${product.name}已为您准备。结合当前航线与出行需求，提前规划行程，享受更顺畅的东航出行服务。${instruction?` ${instruction}`:''}`},
-        官网:{title:`${campaign.name}｜${product.name}`,body:`面向${audience.name}的活动方案已上线。${product.description||product.name}，适用于符合资格的航班与旅客，具体以产品管理平台实时可售状态为准。${instruction?` ${instruction}`:''}`},
-        微信:{title:`${campaign.name} · 东航专属权益`,body:`为${audience.name}推荐${product.name}。点击查看适用航班、权益说明和活动规则。${instruction?` ${instruction}`:''}`},
-        短信:{title:`东航活动提醒`,body:`${campaign.name}：${audience.name}可关注${product.name}，详情请登录东航渠道查看。${instruction||''}`},
-        邮件:{title:`${campaign.name}｜${product.name}`,body:`尊敬的旅客，基于您的出行偏好，我们为您准备了${product.name}。活动对象：${audience.name}。${instruction||'请登录东航渠道查看活动详情。'}`},
-        客服外呼:{title:`${campaign.name} · 客服沟通话术`,body:`您好，东航针对${audience.name}推出${product.name}，可为您提供更匹配的出行服务。${instruction||'具体资格与价格以系统查询结果为准。'}`}
-      }[channel]||{title:campaign.name,body:`为${audience.name}推荐${product.name}。`};
-      const payload={campaign_id:campaign.id,audience_package_id:Number(audience.id),product_package_id:Number(product.id),generation_objective:objective,generation_context:{campaign_name:campaign.name,audience_name:audience.name,audience_size:Number(audience.estimated_size||0),product_name:product.name,product_type:product.product_type,channel,objective,instruction},name:`${campaign.name}·${channel}内容`,channel,version:'V1',title:channelCopy.title,body:channelCopy.body,status:'待审核',generated_by:'content-generation'};
-      const asset=await request('/api/content-assets',{method:'POST',body:JSON.stringify(payload)});
-      selectedContentAssetId=String(asset.id);selectedPreviewChannel=channel;
-      try{await request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:campaign.id,domain_id:'content-generation',operator:session?.display_name||''})});}catch(cause){toast(`内容已生成，但任务记录未建立：${cause.message||'请检查模型服务'}`);}
-      toast(`已生成${channel}内容，已保存为待审核版本`);await loadTenantData();
+      const run=await request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:campaign.id,domain_id:'content-generation',audience_package_id:Number(audience.id),product_package_id:Number(product.id),channel,objective,instruction})});
+      if(run.status==='failed')throw new Error(run.summary);
+      await loadTenantData();showAgentResult(run);
     }catch(cause){toast(cause.message||'内容生成失败');if(generationPanel)renderAgentRunPanel('contentGenerationPanel',['content-generation'],'内容生成任务尚未开始');}
     finally{button.disabled=false;button.classList.remove('is-loading');button.innerHTML=previous||label;if(window.lucide)lucide.createIcons();}
   }
@@ -1209,23 +1277,49 @@
   function renderExecution(){
     const section=q('#execution'); if(!section)return;
     const batches=tenantData.executionBatches||[]; const batch=batches[0];
+    const executeButton=q('[data-action="refreshExecution"]',section);
+    const pauseButton=q('[data-action="pauseCampaign"]',section);
+    if(executeButton){executeButton.innerHTML='<i data-lucide="play"></i>执行联调';executeButton.disabled=!canWrite()||!batch||!['待执行','已暂停'].includes(batch.status);executeButton.title='生成虚构渠道回执，用于流程验证';if(batch)executeButton.dataset.batchId=batch.id;else delete executeButton.dataset.batchId;}
+    if(pauseButton){pauseButton.disabled=!canWrite()||!batch||!['待执行','执行中'].includes(batch.status);if(batch)pauseButton.dataset.batchId=batch.id;else delete pauseButton.dataset.batchId;}
+    const trends=qa('.kpi .trend',section);
+    ['冻结快照规模','渠道任务送达计数','点击与转化事件','渠道失败计数',batch?'批次实际状态':'等待审批'].forEach((label,index)=>{if(trends[index])trends[index].textContent=label;});
     if(!batch){const kpis=qa('.kpi b',section);kpis.forEach((node,index)=>{node.textContent=index===4?'待产生':'0';});const selects=qa('.toolbar-strip select',section);selects.forEach(select=>{select.innerHTML='<option>暂无可执行数据</option>';});const table=q('#execution .table');if(table)table.innerHTML='<tr><th>渠道</th><th>任务数</th><th>成功</th><th>失败</th><th>回执延迟</th><th>状态</th></tr><tr><td colspan="6" class="table-empty">暂无执行批次，审批通过后将按活动版本渠道自动生成</td></tr>';const control=q('.grid2 > .panel:nth-child(2) .panel-body',section);if(control)control.innerHTML='<div class="empty-action">暂无执行控制项，活动进入执行阶段后可进行暂停、快照和失败补偿。</div>';const head=q('.grid2 > .panel:first-child .panel-head span',section);if(head)head.textContent='等待活动进入执行阶段';return;}
     const kpis=qa('.kpi b',section); if(kpis[0])kpis[0].textContent=Number(batch.target_size||0).toLocaleString('zh-CN'); if(kpis[1])kpis[1].textContent=Number(batch.delivered_count||0).toLocaleString('zh-CN'); if(kpis[2])kpis[2].textContent=Number(batch.feedback_count||0).toLocaleString('zh-CN'); if(kpis[3])kpis[3].textContent=Number(batch.failed_count||0).toLocaleString('zh-CN'); if(kpis[4])kpis[4].textContent=batch.status;
     const batchText=qa('#execution .toolbar-strip option'); if(batchText[0])batchText[0].textContent=batch.external_id+' · '+batch.status;
     const action=qa('#execution [data-action]'); action.filter(button=>['pauseCampaign','refreshExecution'].includes(button.dataset.action)).forEach(button=>{button.dataset.batchId=batch.id;});
     const tasks=(tenantData.channelTasks||[]).filter(item=>item.batch_id===batch.id);
+    const control=q('.grid2 > .panel:nth-child(2) .panel-body',section);
+    if(control)control.innerHTML=`<div class="control-item"><b>执行批次</b><span>${escapeHtml(batch.external_id)} · ${escapeHtml(batch.status)}</span></div><div class="control-item"><b>冻结规模</b><span>${Number(batch.target_size||0).toLocaleString('zh-CN')} 人 · 活动版本 #${Number(batch.campaign_version_id)}</span><button class="btn" data-action="viewAudienceSnapshot">查看快照</button></div><div class="control-item"><b>渠道联调</b><span>${escapeHtml((batch.channels||[]).join('、'))} · 虚构回执用于流程验证</span></div>`;
+    const head=q('.grid2 > .panel:first-child .panel-head span',section);if(head)head.textContent=batch.external_id;
     const table=q('#execution .table');
     if(table){const rows=tasks.length?tasks.map(item=>`<tr><td><strong>${escapeHtml(item.channel)}</strong><small class="table-subline">${escapeHtml(item.external_id)}</small></td><td>${Number(item.target_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.delivered_count||0).toLocaleString('zh-CN')}</td><td>${Number(item.failed_count||0).toLocaleString('zh-CN')}</td><td>${item.last_feedback_at?new Date(item.last_feedback_at).toLocaleTimeString('zh-CN'):'待回执'}</td><td><span class="status ${item.status==='失败'?'bad':item.status==='执行中'?'good':'warn'}">${escapeHtml(item.status)}</span> <button class="btn compact" data-channel-feedback="${item.id}">录入回执</button></td></tr>`).join(''):'<tr><td colspan="6" class="table-empty">暂无渠道任务，审批通过后将按活动版本渠道自动生成</td></tr>';table.innerHTML=`<tr><th>渠道</th><th>任务数</th><th>成功</th><th>失败</th><th>回执延迟</th><th>状态</th></tr>${rows}`;}
   }
   function renderFeedback(){
     const section=q('#feedback'); if(!section)return;
-    const summary=tenantData.effectSummary;
-    if(!summary||!summary.batch_count){const kpis=qa('.kpi b',section);kpis.forEach((node,index)=>{node.textContent=index===3||index===4?'待回流':'0';});const selects=qa('.toolbar-strip select',section);selects.forEach(select=>{select.innerHTML='<option>暂无可复盘活动</option>';});const funnel=q('.grid2 > .panel:first-child .metric-list',section);if(funnel)funnel.innerHTML='<div class="empty-state"><i data-lucide="clock-3"></i><b>暂无真实回执</b><span>活动执行产生渠道回执后，这里将展示触达、转化、归因与策略学习结果</span></div>';const box=q('#reviewBox');if(box)box.innerHTML='<div class="empty-state"><i data-lucide="clock-3"></i><b>暂无真实回执</b><span>活动执行产生渠道回执后，这里将展示转化、归因与策略学习结果</span></div>';if(window.lucide)lucide.createIcons();return;}
-    const values=[summary.target_count,summary.delivered_count,summary.clicked_count,summary.converted_count];
-    const kpis=qa('.kpi b',section); if(kpis[0])kpis[0].textContent=Number(summary.target_count||0).toLocaleString('zh-CN'); if(kpis[1])kpis[1].textContent=`${Number(summary.click_rate||0).toFixed(1)}%`; if(kpis[2])kpis[2].textContent=`${Number(summary.conversion_rate||0).toFixed(1)}%`; if(kpis[3])kpis[3].textContent='待回流'; if(kpis[4])kpis[4].textContent='待回流';
-    const metrics=qa('.metric-list .metric b',section); metrics.forEach((item,index)=>{if(values[index]!==undefined)item.textContent=Number(values[index]||0).toLocaleString('zh-CN');});
-    const bars=qa('.metric-list .bar i',section); if(bars[0])bars[0].style.width='100%'; if(bars[1])bars[1].style.width=Math.min(100,summary.delivery_rate||0)+'%'; if(bars[2])bars[2].style.width=Math.min(100,summary.click_rate||0)+'%'; if(bars[3])bars[3].style.width=Math.min(100,summary.conversion_rate||0)+'%';
-    const box=q('#reviewBox'); if(box && summary.batch_count){box.innerHTML=`<div class="review-summary"><b>真实回执已接入</b><p>已汇总 ${summary.batch_count} 个执行批次，触达率 ${summary.delivery_rate}%、点击率 ${summary.click_rate}%、点击后转化率 ${summary.conversion_rate}%。效果分析智能域可基于这些结果继续生成客群、内容、时机和渠道优化建议。</p><div class="review-tags"><span>送达 ${Number(summary.delivered_count||0).toLocaleString('zh-CN')}</span><span>点击 ${Number(summary.clicked_count||0).toLocaleString('zh-CN')}</span><span>转化 ${Number(summary.converted_count||0).toLocaleString('zh-CN')}</span><span>失败 ${Number(summary.failed_count||0).toLocaleString('zh-CN')}</span></div></div>`;}
+    const summary=tenantData.effectSummary||{};
+    const hasBatch=Boolean(summary.batch_count);
+    const campaign=(tenantData.campaigns||[]).find(item=>item.id===summary.campaign_id);
+    const latest=(tenantData.executionBatches||[]).find(item=>item.campaign_id===summary.campaign_id);
+    const format=value=>Number(value||0).toLocaleString('zh-CN');
+    const values=hasBatch?[format(summary.target_count),`${Number(summary.click_rate||0).toFixed(1)}%`,`${Number(summary.conversion_rate||0).toFixed(1)}%`,'待回流','待回流']:['0','0%','0%','待回流','待回流'];
+    const labels=['目标名单','点击率','点击后转化率','增量收入','活动ROI'];
+    const notes=['渠道任务目标计数','点击 / 送达','转化 / 点击','等待交易归因','等待收入与成本归因'];
+    qa('.kpi',section).forEach((card,index)=>{
+      const label=q('span',card),value=q('b',card),note=q('em',card);
+      if(label)label.textContent=labels[index];if(value)value.textContent=values[index];if(note)note.textContent=notes[index];
+    });
+    const selects=qa('.toolbar-strip select',section);
+    if(selects[0])selects[0].innerHTML=`<option>${escapeHtml(campaign?.name||'暂无可复盘活动')}</option>`;
+    if(selects[1])selects[1].innerHTML=`<option>${escapeHtml(latest?.external_id||'暂无执行批次')}</option>`;
+    let sourceNote=q('.feedback-data-note',section);
+    if(!sourceNote){sourceNote=document.createElement('div');sourceNote.className='feedback-data-note';section.insertBefore(sourceNote,q('.kpis',section));}
+    const receiptLabel=summary.sent_count?(summary.execution_mode==='synthetic'?'虚构回执（流程验证）':'渠道回执已汇总'):'等待批次执行';
+    const explanation=hasBatch?`当前展示最新执行批次；送达率 ${Number(summary.delivery_rate||0)}%，点击率 ${Number(summary.click_rate||0)}%，点击后转化率 ${Number(summary.conversion_rate||0)}%。${summary.execution_mode==='synthetic'?'数值仅用于流程验证，不代表实际经营结果。':''}收入与 ROI 等待交易归因回流。`:'活动审批并执行后展示渠道回执，收入与 ROI 等待交易归因回流。';
+    sourceNote.innerHTML=`<b>${hasBatch?receiptLabel:'暂无渠道回执'}</b><p>${escapeHtml(explanation)}</p>`;
+    const funnel=q('.grid2 > .panel:first-child .metric-list',section);
+    if(funnel){const counts=[summary.target_count,summary.delivered_count,summary.clicked_count,summary.converted_count],rates=[100,summary.delivery_rate,summary.click_rate,summary.conversion_rate];funnel.innerHTML=hasBatch?['目标任务','送达','点击','转化'].map((name,index)=>`<div class="metric"><label>${name}</label><b>${format(counts[index])}</b></div><div class="bar"><i style="width:${Math.max(0,Math.min(100,Number(rates[index]||0)))}%"></i></div>`).join(''):'<div class="empty-state"><b>暂无渠道回执</b><span>执行活动后查看渠道任务统计</span></div>';}
+    const box=q('#reviewBox');if(box)box.innerHTML=hasBatch?`<div class="review-summary"><b>${receiptLabel}</b><p>${escapeHtml(explanation)}</p><div class="review-tags"><span>送达 ${format(summary.delivered_count)}</span><span>点击 ${format(summary.clicked_count)}</span><span>转化 ${format(summary.converted_count)}</span><span>失败 ${format(summary.failed_count)}</span></div></div>`:'<div class="empty-state"><b>暂无渠道回执</b><span>执行活动后查看复盘依据</span></div>';
+    if(window.lucide)lucide.createIcons();
   }
   let selectedProductionApprovalId = null;
 
@@ -1763,7 +1857,14 @@
       if(button.dataset.audienceSnapshot){if(!canWrite()||button.disabled)return;try{const result=await request(`/api/audience-packages/${button.dataset.audienceSnapshot}/snapshots`,{method:'POST'});toast('客群快照 '+result.version+' 已冻结，可用于活动执行');await loadTenantData();}catch(cause){toast(cause.message||'客群快照生成失败');}return;}      if(button.dataset.contentView){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentView));if(item){selectedContentAssetId=String(item.id);selectedPreviewChannel=item.channel||'App';renderContents();showContentDetail(item);}return;}
       if(button.dataset.contentEdit){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentEdit));if(!item||!canWrite())return;showContentEditor(item);return;}
        if(button.dataset.channelFeedback){const item=(tenantData.channelTasks||[]).find(value=>String(value.id)===String(button.dataset.channelFeedback));if(!item||!canWrite())return;showChannelFeedbackEditor(item);return;}
-      if(button.dataset.contentDelete){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentDelete));if(!item||!canWrite()||!window.confirm('确认删除内容“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/content-assets/${item.id}`,{method:'DELETE'});toast('内容已删除');await loadTenantData();}catch(cause){toast(cause.message||'内容删除失败');}return;}      if(button.dataset.action==='refreshExecution'&&button.dataset.batchId){try{const result=await request(`/api/execution-batches/${button.dataset.batchId}/status`,{method:'POST',body:JSON.stringify({status:'执行中'})});toast('执行批次已启动：'+result.external_id);await loadTenantData();}catch(cause){toast(cause.message||'批次启动失败');}return;}
+      if(button.dataset.contentDelete){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentDelete));if(!item||!canWrite()||!window.confirm('确认删除内容“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/content-assets/${item.id}`,{method:'DELETE'});toast('内容已删除');await loadTenantData();}catch(cause){toast(cause.message||'内容删除失败');}return;}
+      if(button.dataset.action==='refreshExecution'&&button.dataset.batchId){
+        if(!canWrite())return;
+        button.disabled=true;
+        try{const result=await request(`/api/execution-batches/${button.dataset.batchId}/run`,{method:'POST'});toast('执行完成：'+result.external_id);await loadTenantData();}
+        catch(cause){toast(cause.message||'批次执行失败');}
+        finally{renderExecution();if(window.lucide)lucide.createIcons();}return;
+      }
       if(button.dataset.action==='pauseCampaign'&&button.dataset.batchId){try{const result=await request(`/api/execution-batches/${button.dataset.batchId}/status`,{method:'POST',body:JSON.stringify({status:'已暂停'})});toast('执行批次已暂停：'+result.external_id);await loadTenantData();}catch(cause){toast(cause.message||'批次暂停失败');}return;}      if(button.dataset.pipelineRetry){const entry=pipelineFiles.get(button.dataset.pipelineRetry);if(entry){entry.error='';uploadPipelineFile(entry);}return;}
       if(button.dataset.opportunityDelete){
         if(!canWrite()||!window.confirm('删除后该机会及其关联引用将不再出现在当前租户，确定继续吗？')) return;
@@ -1782,6 +1883,8 @@
         showKnowledgeDocumentEditor(item);return;
       }
       if(button.dataset.action==='newAudience'){if(!canWrite())return;showAudiencePackageCreator();return;}
+      if(button.dataset.action==='viewAudienceSnapshot'){showAudienceSelectionModal();return;}
+      if(button.dataset.action==='newContent'){activate('contents');return;}
       if(button.dataset.action==='refreshAudienceCatalog'){if(!canWrite())return;button.disabled=true;try{await loadTenantData();toast('\u753b\u50cf\u76ee\u5f55\u5df2\u540c\u6b65\uff1a'+(tenantData.personaDimensions||[]).length+'\u4e2a\u753b\u50cf\u7ef4\u5ea6');}catch(cause){toast(cause.message||'\u753b\u50cf\u540c\u6b65\u5931\u8d25');}finally{button.disabled=false;}return;}
        if(button.dataset.action==='newProvider'){if(!isTenantAdmin())return;showProviderCreateEditor();return;}
        if(button.dataset.action==='editMineru'){if(!isTenantAdmin())return;showMineruEditor();return;}
@@ -1791,15 +1894,10 @@
       if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
       if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
       if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('默认模型已更新');await loadTenantData();renderModels();}
-       const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration'};
+       const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateReview:'effect-analysis'};
        if(button.dataset.action==='generateContent'){await generateContentFromContext(button);return;}
        const domain=agentMap[button.dataset.action];
-       if(domain&&tenantData.campaigns[0]){
-         button.disabled=true;
-         try{const result=await request('/api/agent-runs',{method:'POST',body:JSON.stringify({campaign_id:tenantData.campaigns[0].id,domain_id:domain,operator:session.display_name})});toast(`${domainLabels[domain]||'智能域'}已启动，进度请在任务进度中查看`);await loadTenantData();if(button.dataset.action==='naturalAudience'||button.dataset.action==='calculateAudience')activate('audiences');}
-         catch(cause){toast(cause.message||'智能域运行失败');}
-         finally{button.disabled=false;}
-       }
+       if(domain){showDomainRequest(domain);return;}
     });
     document.addEventListener('submit',async event=>{if(event.target?.id!=='opportunitySourceForm')return;event.preventDefault();if(!canWrite())return;const form=event.target;const values=Object.fromEntries(new FormData(form));values.max_pages=5;values.enabled=true;const sourceId=values.source_id;delete values.source_id;try{await request(sourceId?'/api/opportunity-insight/sources/'+sourceId:'/api/opportunity-insight/sources',{method:sourceId?'PUT':'POST',body:JSON.stringify(values)});form.reset();form.elements.source_id.value='';toast(sourceId?'洞察来源已更新':'洞察来源已新增');await loadTenantData();}catch(cause){toast(cause.message||'来源保存失败');}});
     const dropzone=q('#pipelineDropzone'),fileInput=q('#pipelineFiles');
@@ -1961,7 +2059,7 @@ function mountMarketingAssistantV2(){
       else toast('东东正在准备，请稍候再试');
     });
     qa('.dongdong-tabs button[data-dongdong-mode]').forEach(tab=>tab.addEventListener('click',()=>{
-      qa('.dongdong-tabs button[data-dongdong-mode]').forEach(item=>item.classList.toggle('active',item===tab));
+      qa('.dongdong-tabs button[data-dongdong-mode]').forEach(item=>{item.classList.toggle('active',item===tab);item.setAttribute('aria-selected',String(item===tab));});
       renderDongdongChips(tab.dataset.dongdongMode);
     }));
   }
@@ -2466,7 +2564,7 @@ function mountMarketingAssistantV2(){
     try{mountSearchModule();}catch(cause){console.error('检索模块挂载失败',cause);}
     if(window.lucide)lucide.createIcons();
   }
-  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();tenantId=session.tenants?.[0]?.id || null; localStorage.removeItem(tenantKey);q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
+  function boot(){try{session=JSON.parse(localStorage.getItem(sessionKey)||'null');}catch{session=null;}if(!session)return createLogin();const savedTenant=Number(localStorage.getItem(tenantKey));tenantId=session.tenants?.some(item=>item.id===savedTenant)?savedTenant:(session.tenants?.[0]?.id||null);q('.app').style.visibility='visible';initializeSession().catch(cause=>{console.error(cause);toast(cause.message||'租户数据加载失败，请稍后重试');});}
   bindProductionApprovalCapture();
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();

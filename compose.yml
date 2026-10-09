@@ -45,6 +45,7 @@ services:
       BOOTSTRAP_MODEL_API_KEY: ${BOOTSTRAP_MODEL_API_KEY:-}
       BOOTSTRAP_MINERU_BASE_URL: ${BOOTSTRAP_MINERU_BASE_URL:-https://mineru.net}
       BOOTSTRAP_MINERU_API_KEY: ${BOOTSTRAP_MINERU_API_KEY:-}
+      SEED_DEMO_BUSINESS_DATA: ${SEED_DEMO_BUSINESS_DATA:-false}
     depends_on:
       db:
         condition: service_healthy

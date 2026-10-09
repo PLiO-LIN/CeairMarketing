@@ -75,11 +75,13 @@ def test_all_six_marketing_domains_use_harness_and_governance() -> None:
         hq = next(item for item in tenants if item["code"] == "CEA-HQ")
         headers = tenant_headers(auth, hq["id"])
 
+        audience = client.post("/api/audience-packages", headers=headers, json={"name": "智能域测试客群", "status": "草稿", "expression": {"destination": "三亚"}}).json()
+        product = client.post("/api/product-packages", headers=headers, json={"name": "智能域测试产品", "description": "行李与选座组合"}).json()
         for domain_id, expected_status in domains.items():
             response = client.post(
                 "/api/agent-runs",
                 headers=headers,
-                json={"campaign_id": "ACT-2026-0921", "domain_id": domain_id, "provider_id": 1},
+                json={"campaign_id": "ACT-2026-0921", "domain_id": domain_id, "provider_id": 1, "audience_package_id": audience["id"], "product_package_id": product["id"]},
             )
             assert response.status_code == 200
             result = response.json()

@@ -12,7 +12,6 @@ import argparse
 import json
 import os
 from pathlib import Path
-import sqlite3
 import sys
 from typing import Any
 
@@ -21,20 +20,21 @@ from mcp.server.fastmcp import FastMCP
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
-DB_PATH = Path(os.environ.get("CEAIR_MARKETING_DB", "ceair-marketing.db")).resolve()
+from sqlalchemy import text
+from app.database import engine
 TENANT_ID = int(os.environ.get("CEAIR_TENANT_ID", "0"))
 PROFILE = ""
 
 
 def db_rows(sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
-    if not DB_PATH.is_file():
-        return []
-    conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
-    conn.row_factory = sqlite3.Row
-    try:
-        return [dict(row) for row in conn.execute(sql, params).fetchall()]
-    finally:
-        conn.close()
+    if not sql.lstrip().upper().startswith("SELECT "):
+        raise ValueError("MCP only supports read queries")
+    parts = sql.split("?")
+    if len(parts) != len(params) + 1:
+        raise ValueError("Query parameter count mismatch")
+    statement = parts[0] + "".join(f":p{index}" + part for index, part in enumerate(parts[1:]))
+    with engine.connect() as connection:
+        return [dict(row) for row in connection.execute(text(statement), {f"p{index}": value for index, value in enumerate(params)}).mappings()]
 
 
 def envelope(items: list[dict[str, Any]], *, key: str) -> dict[str, Any]:

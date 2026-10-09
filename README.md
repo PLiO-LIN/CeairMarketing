@@ -8,7 +8,7 @@
 
 面向东方航空营销、产品、运营、审批和分析人员的生产级智能营销工作台。平台将航线经营、航班运行、用户画像、市场热点、活动产品和渠道回执连接为一条可治理的营销链路，通过 AI 智能域提供机会发现、客群洞察、产品匹配、内容生成和效果分析能力，同时保留人工审批、权限控制和全链路审计。
 
-> **当前版本**：`v2.7`　|　**部署形态**：Docker Compose + PostgreSQL　|　**后端**：FastAPI　|　**前端**：生产工作台 `apps/web-v32`
+> **当前版本**：`v3.15`　|　**部署形态**：Docker Compose + PostgreSQL　|　**后端**：FastAPI　|　**前端**：生产工作台 `apps/web-v32`
 
 [![Quality](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/quality.yml/badge.svg)](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/quality.yml)
 [![Deploy](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/deploy-production.yml)
@@ -114,7 +114,7 @@ AI 输出以建议、解释和可执行结果为主，关键动作保留人工�
 
 ## 界面预览
 
-![营销工作台](apps/web-v32/v32-final.png)
+![智慧营销首页](docs/screenshots/competition-home-v3.15.png)
 
 ![知识中心与本体工作台](docs/screenshots/ontology-workbench-v1.0.png)
 
@@ -159,6 +159,8 @@ node scripts/dev-web.mjs
 ```powershell
 docker compose up -d --build
 ```
+
+竞赛答辩可运行 `.\start-competition.ps1`（工作台 8781 / API 8801，独立本地数据库；竞赛账号 `competition` / `Competition@2026`），在独立的“竞赛演示（虚构数据）”工作区初始化上海—三亚案例，包含画像目录、机会、客群快照、产品包、内容草稿、活动版本、待审批任务和可检索知识。登录后选择该工作区。审批通过后生成批次与渠道任务，联调执行回流虚构指标；收入和 ROI 在没有交易依据时保留待回流。也可在 Compose 环境设置 `SEED_DEMO_BUSINESS_DATA=true`，默认关闭。详见 [竞赛演示与标准接口说明](docs/competition-readiness-v3.15.md)。
 
 生产工作台默认映射到 `http://localhost:8088`。
 

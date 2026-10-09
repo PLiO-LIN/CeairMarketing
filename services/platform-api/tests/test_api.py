@@ -207,10 +207,10 @@ def test_campaign_version_approval_flow() -> None:
         assert batch["status"] == "待执行"
         running = client.post(f"/api/execution-batches/{batch['id']}/status", headers=request_headers, json={"status": "执行中"})
         assert running.status_code == 200
-        assert running.json()["delivered_count"] > 0
+        assert running.json()["delivered_count"] == 0
         completed = client.post(f"/api/execution-batches/{batch['id']}/status", headers=request_headers, json={"status": "已完成"})
         assert completed.status_code == 200
-        assert completed.json()["delivered_count"] == completed.json()["target_size"]
+        assert completed.json()["delivered_count"] == 0
 
 
 def test_channel_tasks_are_created_and_feedback_is_aggregated() -> None:

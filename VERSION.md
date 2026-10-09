@@ -1,3 +1,17 @@
+## v3.15 - 2026-10-09
+
+- Aligned the home page with China Eastern's official site: full brand mark, two-row navigation, consistent spacing and restrained shadows.
+- Added workspace switching with a persisted selection and a full reload to clear previous-tenant state.
+- Removed static effect KPI claims and restored summary filters and funnel after the first execution.
+
+- Added an isolated, opt-in competition workspace with a restart-safe Shanghai–Sanya walkthrough, knowledge and persona catalog.
+- Kept execution batches behind approval; status changes no longer fabricate delivery metrics.
+- Persisted domain outputs and business context, with idempotent human acceptance into content/audience drafts and ontology recommendations.
+- Added tenant-scoped, validated upstream aggregate-audience and product-package sync interfaces and JSON import buttons.
+- Fixed AgentScope MCP database reads to use the configured SQLite/PostgreSQL connection.
+- Kept production databases demo-free by default through `SEED_DEMO_BUSINESS_DATA=false`.
+- Unified the README current-version label with the release history.
+
 ## v3.14 - 2026-08-31
 
 - Fixed market hotspot collection timeout risk by collecting configured domestic sources in parallel with bounded six-second source requests.

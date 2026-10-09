@@ -1,0 +1,15 @@
+{
+  "source_id": "product_platform",
+  "records": [
+    {
+      "external_id": "SANYA_BUNDLE_202611_V1",
+      "name": "上海—三亚出游产品包",
+      "product_type": "机票 + 辅营组合",
+      "description": "客票、预付费行李与优选座位组合，具体权益以产品规则为准。",
+      "eligibility": "适用航线 SHA-SYX；航班与库存由上游确认。",
+      "version": "V1",
+      "valid_from": "2026-11-01T00:00:00+08:00",
+      "valid_to": "2026-12-01T00:00:00+08:00"
+    }
+  ]
+}

@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     bootstrap_model_api_key: str = ""
     bootstrap_mineru_base_url: str = "https://mineru.net"
     bootstrap_mineru_api_key: str = ""
+    # Production stays free of demo business rows unless explicitly enabled.
+    seed_demo_business_data: bool = False
 
     # Resolve the repository env file independent of the process working directory.
     model_config = SettingsConfigDict(env_file=resolve_env_file(), extra="ignore")

@@ -1,0 +1,90 @@
+/* 首页沿用东航官网的品牌栏、蓝色导航、宽幅主视觉和红色主行动。 */
+body.dongdong-mode .topnav { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:66px 44px; height:110px; padding:0 clamp(18px,3vw,42px); gap:0; border:0; backdrop-filter:blur(10px); }
+body.dongdong-mode .topnav .brand { grid-area:1 / 1; min-width:0; gap:20px; }
+body.dongdong-mode .topnav .logo { flex:0 0 auto; width:auto; padding:0; overflow:visible; }
+body.dongdong-mode .topnav .logo img { width:176px; height:38px; object-fit:contain; }
+body.dongdong-mode .topnav .brand-text { border-left:1px solid rgba(42,95,174,.18); padding-left:20px; }
+body.dongdong-mode .topnav .brand b { color:#173f75; font-size:18px; letter-spacing:.2px; }
+body.dongdong-mode .topnav .brand-text span { color:#6684a4; white-space:nowrap; font-size:11px !important; }
+body.dongdong-mode .topnav .nav { grid-area:2 / 1 / 3 / -1; gap:28px; align-items:stretch; }
+body.dongdong-mode .topnav .nav .dongdong-entry, body.dongdong-mode .topnav .nav .menu-toggle { min-width:0; height:44px !important; padding:0 4px !important; border-radius:0; color:#244e88 !important; font-size:14px !important; background:transparent; box-shadow:none; }
+body.dongdong-mode .topnav .nav .dongdong-entry.active { border-bottom:2px solid #ce2038; }
+body.dongdong-mode .topnav .nav button:hover { background:rgba(42,95,174,.06); }
+body.dongdong-mode .topnav .nav .dongdong-entry > svg, body.dongdong-mode .topnav .menu-toggle > span > svg { display:none; }
+body.dongdong-mode .topnav .user { grid-area:1 / 2; padding-left:16px; max-width:360px; }
+body.dongdong-mode .topnav .user b { font-size:13px; color:#315b96; }
+body.dongdong-mode .topnav .user span { font-size:11px !important; color:#6684a4; }
+.workspace-switch { display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+.workspace-switch > span { display:none; }
+.workspace-switch select { max-width:174px; height:32px; padding:0 8px; border:1px solid #cedbec; border-radius:7px; background:#fff; color:#315b96; font-size:12px; }
+.feedback-data-note { margin-bottom:16px; padding:14px 18px; border:1px solid #d6e5f0; border-radius:10px; background:#f4f9fd; color:#315b78; }
+.feedback-data-note p { margin:6px 0 0; color:#637e92; font-size:14px; line-height:1.65; }
+body.dongdong-mode .topbar { height:46px; padding:0 clamp(18px,3vw,42px); background:rgba(255,255,255,.45) !important; border:0 !important; backdrop-filter:blur(8px); }
+body.dongdong-mode .crumb { gap:7px; }
+body.dongdong-mode .crumb-home, body.dongdong-mode .crumb-section { font-size:13px; }
+body.dongdong-mode .global-search { width:min(290px,26vw); height:32px; border:1px solid rgba(42,95,174,.18); border-radius:16px; background:rgba(255,255,255,.8); }
+body.dongdong-mode .global-search span { font-size:12px; }
+body.dongdong-mode .top-actions .btn.primary { color:#fff !important; border-color:#cb1e36; background:linear-gradient(100deg,#c51e37,#df5a42); box-shadow:none; }
+body.dongdong-mode .top-actions .btn.primary svg { color:#fff !important; }
+body.dongdong-mode .content { max-width:none; padding:0; }
+body.dongdong-mode .dongdong-view { margin:0; padding-bottom:70px; }
+body.dongdong-mode .dongdong-band { height:214px; }
+body.dongdong-mode .dongdong-inner { max-width:1160px; padding:0 28px; }
+body.dongdong-mode .dongdong-console { margin-top:0; }
+body.dongdong-mode .dongdong-card { border-radius:22px; box-shadow:0 16px 38px rgba(13,58,92,.16); }
+body.dongdong-mode .dongdong-card-head { padding:36px 32px 20px; }
+body.dongdong-mode .dongdong-card-title h1 { color:#163d6e; font-size:23px; }
+body.dongdong-mode .dongdong-card-title p { color:#70869b; font-size:13px !important; }
+body.dongdong-mode .dongdong-live { color:#315b96; background:#f3f7fd; border-color:#dce6f4; font-size:12px !important; white-space:nowrap; }
+body.dongdong-mode .dongdong-live i { background:#4a7bbd; }
+body.dongdong-mode .dongdong-tabs { box-shadow:0 8px 18px rgba(13,58,92,.18); }
+body.dongdong-mode .assistant-panel.is-docked form { padding:20px 32px 28px; }
+body.dongdong-mode .assistant-panel.is-docked form .btn { border:0; border-radius:24px; box-shadow:none; }
+body.dongdong-mode .dongdong-quick { max-width:1040px; margin:20px auto 0; padding:14px 20px; border:0; border-radius:0; box-shadow:none; background:transparent; }
+body.dongdong-mode .dongdong-chip { min-width:170px; color:#315b96; font-weight:400; font-size:14px !important; }
+body.dongdong-mode .dongdong-section { max-width:1040px; margin-top:34px; }
+body.dongdong-mode .dongdong-section-head { padding-bottom:16px; }
+body.dongdong-mode .dongdong-section-head h2 { color:#163d6e; }
+body.dongdong-mode .dongdong-cap-grid { gap:24px 40px; }
+body.dongdong-mode .dongdong-cap { border-top-color:#e6edf3; }
+body.dongdong-mode .assistant-fab { right:20px; bottom:24px; }
+@media(max-width:820px) {
+ body.dongdong-mode .topnav { grid-template-rows:56px 44px; height:100px; min-height:100px; padding:0 14px; }
+ body.dongdong-mode .topnav .logo img { width:140px; height:31px; }
+ body.dongdong-mode .topnav .brand { gap:14px; }
+ body.dongdong-mode .topnav .brand-text { display:grid; padding-left:14px; }
+ body.dongdong-mode .topnav .brand-text b { font-size:15px; }
+ body.dongdong-mode .topnav .brand-text span { font-size:9px !important; }
+ body.dongdong-mode .topnav .nav { display:flex; gap:22px; overflow:visible; }
+ body.dongdong-mode .topnav .nav > .dongdong-entry, body.dongdong-mode .topnav .nav > .menu-group { flex:0 1 auto; width:auto; }
+ body.dongdong-mode .topbar { height:50px; padding:0 14px; }
+ body.dongdong-mode .topbar .global-search { display:none; }
+ body.dongdong-mode .dongdong-band { height:160px; }
+ body.dongdong-mode .dongdong-inner { padding:0 16px; }
+ body.dongdong-mode .dongdong-section { padding-right:0; }
+ body.dongdong-mode .topnav .menu-group { position:static; }
+ body.dongdong-mode .topnav .submenu { top:100%; left:0; width:100%; transform:none; border-radius:0 0 12px 12px; }
+ body.dongdong-mode .topnav .menu-group.open .submenu { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ body.dongdong-mode .topnav .submenu button { white-space:nowrap; font-size:13px !important; }
+}
+@media(max-width:560px) {
+ body.dongdong-mode .topnav .nav { justify-content:space-between; gap:3px; }
+ body.dongdong-mode .topnav .nav .menu-toggle, body.dongdong-mode .topnav .nav .dongdong-entry, body.dongdong-mode .topnav .nav .dongdong-entry > span { font-size:12px !important; }
+ body.dongdong-mode .topnav .brand-text span { display:none; }
+ body.dongdong-mode .topbar .top-actions { gap:8px; }
+ .workspace-switch select { max-width:152px; height:30px; }
+ body.dongdong-mode .dongdong-band { height:128px; }
+ body.dongdong-mode .dongdong-inner { padding:0 12px; }
+ body.dongdong-mode .dongdong-tabs { width:100%; margin-bottom:-21px; padding:4px; justify-content:center; }
+ body.dongdong-mode .dongdong-tabs button { flex:1; padding:10px 2px; font-size:13px !important; }
+ body.dongdong-mode .dongdong-card-head { padding:32px 18px 18px; }
+ body.dongdong-mode .dongdong-card-title h1 { font-size:18px; }
+ body.dongdong-mode .dongdong-live { display:none; }
+ body.dongdong-mode .assistant-panel.is-docked form { gap:10px; padding:16px 18px 20px; }
+ body.dongdong-mode .assistant-panel.is-docked form textarea { font-size:14px; }
+ body.dongdong-mode .assistant-panel.is-docked form .btn { padding:0 16px; }
+ body.dongdong-mode .dongdong-quick { margin-top:18px; padding:10px 4px; }
+ body.dongdong-mode .dongdong-chip { min-width:0; font-size:12px !important; }
+ body.dongdong-mode .dongdong-section-head span, body.dongdong-mode .dongdong-link { font-size:12px !important; }
+ body.dongdong-mode .assistant-fab { right:16px; bottom:18px; }
+}

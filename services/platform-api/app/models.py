@@ -475,6 +475,11 @@ class AgentRunRequest(BaseModel):
     domain_id: str
     operator: str = ""
     provider_id: int | None = None
+    instruction: str = Field(default="", max_length=4000)
+    audience_package_id: int | None = Field(default=None, ge=1)
+    product_package_id: int | None = Field(default=None, ge=1)
+    channel: str = Field(default="App", max_length=40)
+    objective: str = Field(default="提升转化", max_length=160)
 
 
 class RuntimeEvent(BaseModel):
@@ -492,6 +497,8 @@ class AgentRun(BaseModel):
     status: Literal["completed", "needs_approval", "failed"]
     summary: str
     events: list[RuntimeEvent]
+    output: dict[str, Any] = Field(default_factory=dict)
+    applied_object: dict[str, Any] | None = None
 
 
 class AgentRunListItem(BaseModel):

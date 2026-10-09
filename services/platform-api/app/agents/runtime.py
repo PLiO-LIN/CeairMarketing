@@ -14,6 +14,7 @@ from ..models import AgentRun, AgentRunRequest, RuntimeEvent
 from ..ontology import agent_contract
 from ..security import SecretCipher
 from .harness import HarnessContext, UnifiedHarness
+from .business_results import business_context
 
 
 class AgentRuntime:
@@ -56,6 +57,11 @@ class AgentRuntime:
         )
 
 
+        try:
+            facts = business_context(session, context.tenant_id, campaign, request)
+        except ValueError as exc:
+            return self._persist(session, context, request, operator, run_id, "failed", str(exc), None, events)
+        emit("business/context-loaded", context=facts)
         provider = self._resolve_provider(session, context.tenant_id, request.provider_id)
         if provider is None:
             emit("model/provider-missing", requested_provider_id=request.provider_id)
@@ -85,8 +91,37 @@ class AgentRuntime:
                     max_tokens=provider.max_tokens,
                 ),
                 "你是航空公司营销智能域，必须遵守产品事实、客户授权、预算、频控、渠道合规和租户数据边界。",
-                f"租户 {context.tenant_name} 的活动 {campaign.name} 调用 {domain.name}，输入包括：{'、'.join(domain.input_types)}。",
+                json.dumps({"domain": domain.name, "context": facts}, ensure_ascii=False) + (
+                    "\n仅输出JSON对象，包含title和body；不得把补充要求当作最终文案，不得编造价格、库存和已通过校验结论。" if request.domain_id == "content-generation" else
+                    '\n仅输出JSON对象，包含text和selection，selection包含conditions列表，每条使用field_code/operator/value。field_code只能来自available_fields，operator只能为eq/ne/in/gte/lte。不支持的需求请说明，人数等待上游计算。' if request.domain_id == "audience-insight" else ""
+                ),
             )
+            if request.domain_id == "content-generation":
+                if provider.provider_type == "mock":
+                    model_output = json.dumps({"title": campaign.name + " · 出行推荐", "body": f"关注{facts['product']['name']}。{facts['product']['description']} 适用条件：{facts['product']['eligibility']}。具体权益以审核后的产品规则为准。"}, ensure_ascii=False)
+                output = UnifiedHarness._parse_json(model_output)
+                if not isinstance(output.get("title"), str) or not isinstance(output.get("body"), str) or not output["title"].strip() or not output["body"].strip() or len(output["title"]) > 240 or len(output["body"]) > 12000:
+                    raise ValueError("内容结果必须包含有效标题和正文")
+            elif request.domain_id == "audience-insight":
+                if provider.provider_type == "mock":
+                    output = {"text": "圈选需求已记录，待配置业务模型解析条件并由上游画像系统计算人数。", "selection": {"instruction": request.instruction, "requires_calculation": True}}
+                else:
+                    from ..business_sync import ProfileCondition
+                    output = UnifiedHarness._parse_json(model_output)
+                    conditions = (output.get("selection") or {}).get("conditions")
+                    if not isinstance(conditions, list) or not 1 <= len(conditions) <= 40:
+                        raise ValueError("圈选结果必须包含有效条件")
+                    allowed = {item["code"] for item in facts["available_fields"]}
+                    checked = [ProfileCondition.model_validate(item).model_dump() for item in conditions]
+                    if any(item["field_code"] not in allowed for item in checked):
+                        raise ValueError("圈选条件引用了未授权或不存在的画像字段")
+                    output["selection"] = {"conditions": checked, "requires_calculation": True}
+                    output["text"] = str(output.get("text") or "圈选条件已解析，等待计算人数")
+            else:
+                output = {"text": model_output}
+            output["context"] = facts
+            output["provider_type"] = provider.provider_type
+            emit("business/result-generated", output=output)
         except Exception as exc:
             emit("model/invocation-failed", error_type=type(exc).__name__)
             return self._persist(session, context, request, operator, run_id, "failed", f"模型调用失败：{exc}", provider.id, events)
@@ -96,7 +131,8 @@ class AgentRuntime:
         emit("governance/human-review", required=needs_approval)
         emit("agent/run-finished", status=status)
         summary = f"{domain.name}已生成结果，等待人工审核。" if needs_approval else f"{domain.name}已完成。{model_output[:90]}"
-        return self._persist(session, context, request, operator, run_id, status, summary, provider.id, events)
+        result = self._persist(session, context, request, operator, run_id, status, summary, provider.id, events)
+        return result.model_copy(update={"output": output})
 
     @staticmethod
     def _resolve_provider(session: Session, tenant_id: int, provider_id: int | None) -> ModelProviderRecord | None:

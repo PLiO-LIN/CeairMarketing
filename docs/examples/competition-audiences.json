@@ -1,0 +1,25 @@
+{
+  "source_id": "profile_platform",
+  "records": [
+    {
+      "external_id": "SH_FAMILY_202610",
+      "name": "上海家庭出游聚合客群",
+      "estimated_size": 1200,
+      "conditions": [
+        {
+          "field_code": "province",
+          "operator": "eq",
+          "value": "上海"
+        },
+        {
+          "field_code": "gender",
+          "operator": "in",
+          "value": [
+            "男",
+            "女"
+          ]
+        }
+      ]
+    }
+  ]
+}
