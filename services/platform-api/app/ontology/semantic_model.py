@@ -5,7 +5,7 @@ values remain configurable and can come from existing source systems, operator
 configuration, or agent suggestions.
 """
 
-SEMANTIC_MODEL_VERSION = "ceair-marketing-ontology-v1.1"
+SEMANTIC_MODEL_VERSION = "ceair-marketing-ontology-v1.2"
 
 OBJECT_TYPES = [
     {"id": "MarketSignal", "name": "市场信号", "description": "来自舆情、搜索热度、节假日和市场趋势的可追溯信号。", "module": "data"},
@@ -13,12 +13,12 @@ OBJECT_TYPES = [
     {"id": "Airport", "name": "机场", "description": "起降、中转和地面服务相关的机场对象。", "module": "aviation"},
     {"id": "Route", "name": "航线", "description": "由出发地、目的地和市场范围定义的航线经营对象。", "module": "aviation"},
     {"id": "Flight", "name": "航班", "description": "具体航班、航段、航班计划和运行状态。", "module": "aviation"},
-    {"id": "ProductLabel", "name": "Product label", "description": "Configurable label maintained by the product management platform.", "module": "product"},
-    {"id": "ProductGroup", "name": "Product group", "description": "Product management grouping for sellable activity products.", "module": "product"},
-    {"id": "FlightSegment", "name": "Flight segment", "description": "A single itinerary leg with airline, flight number, airports and schedule.", "module": "aviation"},
-    {"id": "Cabin", "name": "Cabin", "description": "Sellable cabin code and inventory level on a flight.", "module": "aviation"},
-    {"id": "Fare", "name": "Fare", "description": "Fare option with passenger type, taxes, price, change rules and product references.", "module": "product"},
-    {"id": "AncillaryProduct", "name": "Ancillary product", "description": "Optional service such as baggage, seat, lounge, insurance or Wi-Fi.", "module": "product"},
+    {"id": "ProductLabel", "name": "产品标签", "description": "由产品管理平台维护的可配置产品标签。", "module": "product"},
+    {"id": "ProductGroup", "name": "产品组", "description": "产品管理平台对可售营销产品的业务分组。", "module": "product"},
+    {"id": "FlightSegment", "name": "航段", "description": "包含航司、航班号、起降机场和时刻的单个行程航段。", "module": "aviation"},
+    {"id": "Cabin", "name": "舱位", "description": "航班可售舱位代码和库存观测，实际库存需上游核验。", "module": "aviation"},
+    {"id": "Fare", "name": "运价", "description": "包含旅客类型、税费、价格、退改规则和产品引用的运价选项。", "module": "product"},
+    {"id": "AncillaryProduct", "name": "辅营产品", "description": "行李、座位、贵宾室、保险或机上网络等附加服务。", "module": "product"},
     {"id": "MetricObservation", "name": "经营指标观测", "description": "客座率、正常率、库存、价格和营销指标的带时间观测值。", "module": "aviation"},
     {"id": "Opportunity", "name": "营销机会", "description": "基于事实、信号和规则形成的可经营机会候选或确认机会。", "module": "marketing"},
     {"id": "MarketingObjective", "name": "营销目标", "description": "将航线增收、客座率提升、辅营增长、会员活跃或客户保留转化为可衡量目标。", "module": "marketing"},
@@ -133,14 +133,19 @@ RELATION_TYPES = [
     {"id": "reviewed_by", "name": "由复盘形成", "from_types": ["Campaign", "MarketingCase", "AttributionResult"], "to_types": ["Review"]},
     {"id": "generates_recommendation", "name": "形成建议", "from_types": ["Review", "AgentRun"], "to_types": ["Recommendation"]},
     {"id": "updates_rule", "name": "更新规则建议", "from_types": ["Review", "Recommendation"], "to_types": ["BusinessRule"]},
-    {"id": "confirmed_by_human", "name": "经人工确认", "from_types": ["Recommendation", "Opportunity", "CampaignVersion", "AudienceSnapshot"], "to_types": ["HumanDecision"]},
-    {"id": "has_evidence", "name": "具有证据", "from_types": ["Opportunity", "Recommendation", "HumanDecision", "MetricObservation"], "to_types": ["Evidence"]},
+    {"id": "confirmed_by_human", "name": "经人工确认", "from_types": ["Recommendation", "Opportunity", "CampaignVersion", "AudienceSnapshot", "CustomerAggregate", "ContentAsset", "StrategyPlan", "TouchpointPlan", "ValueProposition", "Review"], "to_types": ["HumanDecision"]},
+    {"id": "has_evidence", "name": "具有证据", "from_types": ["Opportunity", "Recommendation", "HumanDecision", "MetricObservation", "AgentRun", "StrategyPlan", "Review", "ValueProposition"], "to_types": ["Evidence"]},
     {"id": "has_tag_attribute", "name": "具有可配置属性", "from_types": ["CustomerAggregate", "AudienceSnapshot", "Route", "Flight", "Product", "ProductPackage", "Campaign"], "to_types": ["ConfigurableAttribute"]},
     {"id": "contains_chunk", "name": "包含片段", "from_types": ["KnowledgeDocument"], "to_types": ["KnowledgeChunk"]},
     {"id": "supports_claim", "name": "支撑事实", "from_types": ["KnowledgeChunk", "Evidence"], "to_types": ["KnowledgeClaim", "Opportunity", "Recommendation", "BusinessRule"]},
     {"id": "evidence_for", "name": "提供业务证据", "from_types": ["KnowledgeChunk", "Evidence"], "to_types": ["Evidence", "MarketSignal", "Market", "Airport", "Route", "Flight", "MetricObservation", "Opportunity", "MarketingObjective", "CustomerNeed", "CustomerAggregate", "AudienceSnapshot", "Product", "ProductPackage", "ValueProposition", "StrategyPlan", "TouchpointPlan", "ContentAsset", "MarketingCase", "Campaign", "CampaignVersion", "ApprovalTask", "ExecutionBatch", "Feedback", "AttributionResult", "Review", "Recommendation", "BusinessRule"]},
     {"id": "claims_about", "name": "描述对象", "from_types": ["KnowledgeClaim"], "to_types": ["Market", "Airport", "Route", "Flight", "MetricObservation", "Product", "ProductPackage", "BusinessRule", "Opportunity", "MarketingObjective", "CustomerNeed", "ValueProposition", "StrategyPlan", "TouchpointPlan", "AttributionResult"]},
 ]
+
+RELATION_TYPES.extend([
+    {"id": "produces_object", "name": "形成业务对象", "from_types": ["AgentRun"], "to_types": ["Opportunity", "CustomerAggregate", "ValueProposition", "StrategyPlan", "TouchpointPlan", "ContentAsset", "Review", "Recommendation"]},
+    {"id": "supports_campaign", "name": "支撑活动决策", "from_types": ["Recommendation", "ValueProposition", "StrategyPlan", "TouchpointPlan", "AgentRun"], "to_types": ["Campaign"]},
+])
 
 ACTIONS = [
     {"id": "confirm_opportunity", "name": "确认营销机会", "requires": ["Opportunity", "Evidence"], "changes": ["Opportunity.status", "HumanDecision"]},

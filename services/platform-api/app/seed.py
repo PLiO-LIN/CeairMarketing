@@ -129,6 +129,8 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
                     config_json=json.dumps({"model_version": "vlm", "enable_table": True, "is_ocr": False}, ensure_ascii=False),
                 )
             )
+    session.flush()
+    normalize_default_models(session)
     session.commit()
 
 
@@ -198,7 +200,20 @@ def seed_persona_catalog(session: Session, tenant_id: int) -> None:
                 source_row=item["source_row"],
             )
         )
+    session.flush()
     session.commit()
+
+
+def normalize_default_models(session):
+    """Repair historical duplicate defaults while keeping one enabled default per tenant."""
+    records = list(session.scalars(select(ModelProviderRecord).order_by(ModelProviderRecord.id)))
+    for tenant_id in {record.tenant_id for record in records}:
+        tenant_records = [record for record in records if record.tenant_id == tenant_id]
+        enabled = [record for record in tenant_records if record.enabled]
+        defaults = [record for record in enabled if record.is_default]
+        winner = defaults[0] if len(defaults) == 1 else (next((record for record in defaults if record.provider_type != "mock"), None) or (enabled[0] if enabled else None))
+        for record in tenant_records:
+            record.is_default = record is winner
 
 
 def seed_demo_business_data(session: Session, tenant_id: int, user_id: int) -> None:
@@ -223,8 +238,8 @@ def seed_demo_business_data(session: Session, tenant_id: int, user_id: int) -> N
     if opportunity is None:
         session.add(OpportunityRecord(
             tenant_id=tenant_id, id="OPP-2026-0921", name="上海—三亚国庆早鸟",
-            market_scope="国内旅游", route="SHA-SYX", signal_summary="目的地搜索热度上升32%，提前预订窗口收窄，航班供给充足。",
-            status="待处理", score=92, estimated_audience=36420, estimated_revenue_yuan=0, owner="竞赛运营",
+            market_scope="国内旅游", route="SHA-SYX", signal_summary="模拟目的地搜索热度上升32%，客座率62%；实际库存需上游核验。",
+            status="已转活动", score=92, estimated_audience=36420, estimated_revenue_yuan=0, owner="竞赛运营",
         ))
 
     package = session.scalar(select(AudiencePackageRecord).where(AudiencePackageRecord.tenant_id == tenant_id, AudiencePackageRecord.external_id == "AUD-DEMO-SANYA"))
@@ -232,7 +247,7 @@ def seed_demo_business_data(session: Session, tenant_id: int, user_id: int) -> N
         package = AudiencePackageRecord(
             tenant_id=tenant_id, external_id="AUD-DEMO-SANYA", name="三亚高意向未购客群",
             selection_mode="ai-selection", tag_ids_json="[]",
-            expression_json=json.dumps({"route": "SHA-SYX", "journey_stage": "搜索未购", "price_sensitivity": "中高", "contact_permission": True}, ensure_ascii=False),
+            expression_json=json.dumps({"conditions": [{"field_code": "search_destination", "operator": "eq", "value": "三亚"}, {"field_code": "search_frequency_7d", "operator": "gte", "value": 2}, {"field_code": "decision_stage", "operator": "in", "value": ["比价期", "决策期"]}], "upstream_exclusions": ["已出票", "未授权", "营销疲劳"], "synthetic": True}, ensure_ascii=False),
             estimated_size=36420, status="可用", created_by=user_id,
         )
         session.add(package)
@@ -328,9 +343,13 @@ def seed_competition_workspace(session: Session, user_id: int) -> int:
         session.add(TenantMembershipRecord(tenant_id=tenant.id, user_id=user_id, role="admin"))
     if session.scalar(select(ModelProviderRecord.id).where(ModelProviderRecord.tenant_id == tenant.id)) is None:
         session.add(ModelProviderRecord(tenant_id=tenant.id, display_name="竞赛流程验证模型", provider_type="mock", model_name="ceair-governed-mock-v1", enabled=True, is_default=True))
+    session.flush()
+    normalize_default_models(session)
     session.commit()
     seed_persona_catalog(session, tenant.id)
     seed_demo_business_data(session, tenant.id, user_id)
+    from .competition_demo import seed_extended_demo
+    seed_extended_demo(session, tenant.id, user_id)
     return tenant.id
 
 

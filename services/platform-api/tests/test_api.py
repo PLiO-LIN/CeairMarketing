@@ -1,3 +1,4 @@
+from fixtures_business import approved_materials
 import json
 
 import pytest
@@ -186,10 +187,11 @@ def test_campaign_version_approval_flow() -> None:
         assert audience.status_code == 201
         snapshot = client.post(f"/api/audience-packages/{audience.json()['id']}/snapshots", headers=request_headers)
         assert snapshot.status_code == 201
+        materials = approved_materials(client, request_headers, "ACT-2026-0921", snapshot.json()["package_id"], ["App", "短信"])
         version = client.post(
             "/api/campaigns/ACT-2026-0921/versions",
             headers=request_headers,
-            json={"audience_snapshot_id": snapshot.json()["id"], "channels": ["App", "短信"], "budget_yuan": 320000, "status": "草稿"},
+            json={**materials, "audience_snapshot_id": snapshot.json()["id"], "channels": ["App", "短信"], "budget_yuan": 320000, "status": "草稿"},
         )
         assert version.status_code == 201
         assert version.json()["version"] == "V1"
@@ -225,10 +227,11 @@ def test_channel_tasks_are_created_and_feedback_is_aggregated() -> None:
             json={"name": "渠道回执客群", "selection_mode": "ai-selection", "tag_ids": [], "expression": {"route": "SHA-PEK"}, "estimated_size": 100, "status": "可用"},
         ).json()
         snapshot = client.post(f"/api/audience-packages/{audience['id']}/snapshots", headers=request_headers).json()
+        materials = approved_materials(client, request_headers, "ACT-2026-0921", audience["id"], ["东航App", "短信", "微信"])
         version = client.post(
             "/api/campaigns/ACT-2026-0921/versions",
             headers=request_headers,
-            json={"audience_snapshot_id": snapshot["id"], "channels": ["东航App", "短信", "微信"], "budget_yuan": 80000, "status": "草稿"},
+            json={**materials, "audience_snapshot_id": snapshot["id"], "channels": ["东航App", "短信", "微信"], "budget_yuan": 80000, "status": "草稿"},
         ).json()
         approval = client.post(f"/api/campaigns/ACT-2026-0921/versions/{version['id']}/approval", headers=request_headers).json()
         decision = client.post(f"/api/approvals/{approval['id']}/decision", headers=request_headers, json={"decision": "approve"})
@@ -280,7 +283,7 @@ def test_tenant_isolation_and_agent_runtime() -> None:
         response = client.post("/api/agent-runs", headers=headers(auth, hq["id"]), json={"campaign_id": "ACT-2026-0921", "domain_id": "product-match"})
         assert response.status_code == 200
         event_types = [event["event_type"] for event in response.json()["events"]]
-        assert "model/provider-selected" in event_types
+        assert "governance/guard-checked" in event_types
         assert "ontology/context-loaded" in event_types
 
 def test_import_builds_dynamic_graph() -> None:
@@ -445,7 +448,7 @@ def test_marketing_ontology_semantic_contract() -> None:
         status_response = client.get("/api/ontology/status", headers=request_headers)
         assert status_response.status_code == 200
         status = status_response.json()
-        assert status["semantic_model_version"] == "ceair-marketing-ontology-v1.1"
+        assert status["semantic_model_version"] == "ceair-marketing-ontology-v1.2"
         assert status["registered_instance_types"]["MarketSignal"] >= 1
         assert status["registered_instance_types"]["ConfigurableAttribute"] >= 1
 

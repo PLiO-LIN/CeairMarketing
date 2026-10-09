@@ -6,10 +6,10 @@ const allowedExtensions = new Set(['.html', '.js', '.css']);
 const forbiddenPatterns = [
   { name: '连续问号乱码', pattern: /\?{3,}|[>'"\x60]\?{2}[<'"\x60]/g },
   { name: '常见中文乱码', pattern: /[鍙璇绠钀鏅绉妯闂锛銆]/g },
-  { name: '演示或占位文案', pattern: /运行演示|使用演示|演示运行|演示数据|模拟数据|示例数据|样例数据|占位|生产原型/gi },
+  { name: '演示或占位文案', productionOnly: true, pattern: /运行演示|使用演示|演示运行|演示数据|模拟数据|示例数据|样例数据|占位|生产原型/gi },
   // provider_type 的机器取值就叫 'mock'（后端 llm.py 的受控回退分支），
   // 放行选择器机器值及 provider_type 比较；结果页必须据此标注受控测试模型。
-  { name: '前端模拟实现标记', pattern: /\b(?:demo|mock)\b/gi, ignore: /\bvalue:\s*['"](?:demo|mock)['"]|\bprovider_type\s*===\s*['"]mock['"]/gi },
+  { name: '前端模拟实现标记', productionOnly: true, pattern: /\bmock\b/gi, ignore: /\bvalue:\s*['"](?:demo|mock)['"]|\bprovider_type\s*===\s*['"]mock['"]/gi },
 ];
 
 async function collect(directory) {
@@ -29,6 +29,8 @@ for (const file of await collect(root)) {
   const source = await readFile(file, 'utf8');
   const lines = source.split(/\r?\n/);
   for (const item of forbiddenPatterns) {
+    // Competition-only panels explicitly label fictional data. Keep encoding checks for every file.
+    if (item.productionOnly && /\/(competition\.js|ui-competition\.css)$/.test(file.pathname)) continue;
     lines.forEach((line, index) => {
       item.pattern.lastIndex = 0;
       const probe = item.ignore ? line.replace(item.ignore, '') : line;

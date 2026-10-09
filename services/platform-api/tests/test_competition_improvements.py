@@ -28,16 +28,16 @@ def competition():
 def test_competition_seed_is_idempotent_isolated_and_approval_gated(competition):
     client, headers, _, hq = competition
     campaigns = client.get("/api/campaigns", headers=headers).json()
-    assert len(campaigns) == 1
-    assert len(client.get("/api/knowledge/documents", headers=headers).json()) == 1
-    assert len(client.get("/api/audience-packages", headers=headers).json()) == 1
-    assert client.get("/api/execution-batches", headers=headers).json() == []
-    approval = client.get("/api/approvals", headers=headers).json()[0]
+    assert len(campaigns) == 4
+    assert len(client.get("/api/knowledge/documents", headers=headers).json()) == 3
+    assert len(client.get("/api/audience-packages", headers=headers).json()) == 4
+    assert len(client.get("/api/execution-batches", headers=headers).json()) == 2
+    approval = next(a for a in client.get("/api/approvals", headers=headers).json() if a["campaign_id"]=="ACT-2026-0921")
     assert client.post(f"/api/approvals/{approval['id']}/decision", headers=hq, json={"decision": "approve"}).status_code == 404
     assert client.post(f"/api/approvals/{approval['id']}/decision", headers=headers, json={"decision": "approve"}).status_code == 200
     batches = client.get("/api/execution-batches", headers=headers).json()
-    assert len(batches) == 1
-    batch = batches[0]
+    assert len(batches) == 3
+    batch = next(b for b in batches if b["campaign_id"]=="ACT-2026-0921")
     paused = client.post(f"/api/execution-batches/{batch['id']}/status", headers=headers, json={"status": "已暂停"})
     assert paused.status_code == 200
     assert paused.json()["delivered_count"] == 0
@@ -56,8 +56,8 @@ def test_competition_seed_is_idempotent_isolated_and_approval_gated(competition)
 
 def test_content_result_survives_reads_and_acceptance_is_idempotent(competition):
     client, headers, provider, hq = competition
-    audience = client.get("/api/audience-packages", headers=headers).json()[0]
-    product = client.get("/api/product-packages", headers=headers).json()[0]
+    audience = next(a for a in client.get("/api/audience-packages", headers=headers).json() if a["external_id"]=="AUD-DEMO-SANYA")
+    product = next(p for p in client.get("/api/product-packages", headers=headers).json() if p["external_id"]=="PKG-DEMO-SANYA")
     before = client.get("/api/content-assets", headers=headers).json()
     response = client.post("/api/agent-runs", headers=headers, json={
         "campaign_id": "ACT-2026-0921", "domain_id": "content-generation", "provider_id": provider,

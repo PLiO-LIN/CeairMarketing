@@ -97,7 +97,7 @@
   };
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
   const channelOptions = [['App', '东航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
-  const domainLabels = { 'content-generation': '内容生成智能域', 'audience-insight': '客群洞察智能域', 'product-match': '产品匹配智能域', 'activity-orchestration': '活动编排智能域' };
+  const domainLabels = { 'opportunity-insight': '机会洞察智能域', 'content-generation': '内容生成智能域', 'audience-insight': '客群洞察智能域', 'product-match': '产品匹配智能域', 'activity-orchestration': '活动编排智能域', 'effect-analysis': '效果分析智能域' };
   // SQLite serializes persisted UTC timestamps without a timezone suffix.
   function businessTime(value, timeOnly = false) {
     const raw = String(value ?? '');
@@ -118,7 +118,7 @@
     approvals: [['pending','待我审批','处理产品、预算、内容与合规节点','inbox'],['history','审批记录','查询已处理节点和审批留痕','history']],
     execution: [['batches','执行批次','查看活动版本生成的执行批次','layers-3'],['channels','渠道任务','跟踪分发、送达和渠道状态','radio'],['receipts','回执与补偿','回流结果并处理失败任务','refresh-cw']],
     feedback: [['overview','效果总览','查看触达、点击、转化与收入','chart-no-axes-combined'],['attribution','转化归因','分析活动、客群、产品与渠道贡献','git-branch'],['learning','策略学习','沉淀复盘建议并更新营销关系','brain-circuit']],
-    graph: [['schema','本体结构','查看类、属性和关系定义','network'],['instances','本体实例','查看租户真实业务对象与关系','waypoints'],['documents','知识文档','管理进入知识底座的来源文档','book-open-text']],
+    graph: [['schema','本体结构','查看类、属性和关系定义','network'],['instances','本体实例','查看当前租户业务对象与关系','waypoints'],['documents','知识文档','管理进入知识底座的来源文档','book-open-text']],
     imports: [['upload','数据投递','拖入文档、表格和结构化文件','cloud-upload'],['queue','处理队列','查看解析、抽取、校验与入库进度','list-restart'],['history','处理记录','追溯历史批次和本体更新结果','history']],
     permissions: [['roles','角色权限','查看当前账号在工作区的授权','user-cog'],['audit','处理记录','追溯审批、数据导入与智能域运行','scroll-text']]
   };
@@ -233,6 +233,21 @@
     try { await loadTenantData(); }
     catch { toast('修改已保存，但列表刷新失败，请刷新页面查看；无需重复保存'); }
   }
+
+  window.ceairSaveVisual = async (asset, visual) => {
+    if (!canWrite()) throw new Error('当前角色无内容编辑权限');
+    // Keep approved references immutable. Every visual edit becomes a new reviewable draft.
+    const body = {
+      name: (asset.name + '·视觉草稿').slice(0,160), campaign_id: asset.campaign_id,
+      audience_package_id: asset.audience_package_id, product_package_id: asset.product_package_id,
+      channel: asset.channel, version: 'V1', status: '待审核', title: asset.title, body: asset.body,
+      generation_objective: asset.generation_objective || '提升转化', generated_by: 'visual-template',
+      generation_context: {...asset.generation_context, visual, derived_from: asset.external_id}
+    };
+    const saved = await request('/api/content-assets', {method:'POST',body:JSON.stringify(body)});
+    await loadTenantData(); toast('已另存为待审核视觉草稿：' + saved.name);
+    return saved;
+  };
 
   function editorValue(value, type) {
     if (type === 'json') {
@@ -973,7 +988,7 @@
     const rows = snapshots.map(item => `<tr><td><strong>${escapeHtml(displayText(item.external_id, `快照 #${item.id}`))}</strong><small>${escapeHtml(displayText(item.selection_logic, '已保存的客群圈选条件'))}</small></td><td>${Number(item.estimated_size || item.population || 0).toLocaleString('zh-CN')} 人</td><td>${escapeHtml(displayText(item.status, '已冻结'))}</td><td>${escapeHtml(item.frozen_at ? businessTime(item.frozen_at) : '暂无时间')}</td><td>${escapeHtml(displayText(item.created_by, '系统'))}</td></tr>`).join('');
     const layer = document.createElement('div');
     layer.className = 'production-modal';
-    layer.innerHTML = `<div class="production-modal-card audience-selection-modal"><div class="production-modal-head"><div><b>圈选记录</b><small>查看已保存的圈选条件与冻结快照</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="query-builder"><span class="query-label">当前圈选示例</span><span class="query-chip">目的地意向 = 三亚</span><span class="query-chip">近14天搜索 ≥ 2次</span><span class="query-chip">出票状态 = 未出票</span><span class="query-chip">排除营销疲劳</span><button class="btn ai" data-action="calculateAudience">计算人数</button></div><div class="catalog-section-head"><div><b>已保存圈选快照</b><span>快照是活动执行时使用的客群版本</span></div><span class="catalog-count">${snapshots.length} 条</span></div>${rows ? `<table class="table compact-table"><thead><tr><th>快照</th><th>人数</th><th>状态</th><th>冻结时间</th><th>创建人</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty-action">暂无圈选快照，完成 AI 圈选并冻结客群包后会出现在这里。</div>'}</div></div>`;
+    layer.innerHTML = `<div class="production-modal-card audience-selection-modal"><div class="production-modal-head"><div><b>圈选记录</b><small>查看已保存的圈选条件与冻结快照</small></div><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><div class="query-builder"><span class="query-label">当前圈选示例</span><span class="query-chip">目的地意向 = 三亚</span><span class="query-chip">近7天搜索 ≥ 2次</span><span class="query-chip">出票状态 = 未出票</span><span class="query-chip">排除营销疲劳</span><button class="btn ai" data-action="calculateAudience">计算人数</button></div><div class="catalog-section-head"><div><b>已保存圈选快照</b><span>快照是活动执行时使用的客群版本</span></div><span class="catalog-count">${snapshots.length} 条</span></div>${rows ? `<table class="table compact-table"><thead><tr><th>快照</th><th>人数</th><th>状态</th><th>冻结时间</th><th>创建人</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="empty-action">暂无圈选快照，完成 AI 圈选并冻结客群包后会出现在这里。</div>'}</div></div>`;
     document.body.appendChild(layer);
     bindProductionModal(layer);
     if (window.lucide) lucide.createIcons();
@@ -981,15 +996,18 @@
 
   function showAgentTrace(run){
     if(run?.output && Object.keys(run.output).length){showAgentResult(run);return;}
-    const events=run?.events||[]; const html='<div class="agent-trace"><div class="agent-trace-head"><i data-lucide="bot"></i><b>Agent\u6267\u884c\u8fc7\u7a0b</b><span>'+escapeHtml(cleanText(run?.status,'\u5df2\u5b8c\u6210'))+'</span></div><div class="agent-trace-list">'+(events.length?events.map((e,i)=>'<div class="agent-trace-item"><i>'+(i+1)+'</i><div><b>'+escapeHtml(cleanText(e.event_type,'\u5904\u7406\u6b65\u9aa4'))+'</b><small>'+businessTime(e.timestamp)+'</small><p>'+escapeHtml(JSON.stringify(e.payload||{}))+'</p></div></div>').join(''):'<div class="empty-action">\u672a\u8fd4\u56de\u6b65\u9aa4\u4e8b\u4ef6</div>')+'</div><div class="drawer-ai">'+escapeHtml(cleanText(run?.summary,'Agent\u5df2\u5b8c\u6210\u5904\u7406'))+'</div></div>';
+    const html=window.ceairTraceHTML(run)+'<p>'+escapeHtml(run.summary||'运行结束')+'</p>';
     const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>\u667a\u80fd\u57df\u8fc7\u7a0b\u8ffd\u8e2a</b><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body">'+html+'</div></div>';document.body.appendChild(layer);layer.addEventListener('click',e=>{if(e.target===layer||e.target.closest('[data-close]'))layer.remove();});if(window.lucide)lucide.createIcons();
   }
   function showAgentResult(run){
     const layer=document.createElement('div');layer.className='production-modal';
     const output=run.output||{}, text=output.body||output.text||run.summary;
-    const modelNote=output.provider_type==='mock'?'竞赛流程验证模型 · 受控测试结果，待人工确认':'模型建议 · 待人工确认';
-    layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>智能域结果</b><button class="icon-btn" data-close title="关闭"><i data-lucide="x"></i></button></div><div class="production-modal-body"><p class="toolbar-note">'+escapeHtml(modelNote)+'</p><h3>'+escapeHtml(output.title||domainLabels[run.domain_id]||'业务建议')+'</h3><p style="white-space:pre-wrap">'+escapeHtml(text)+'</p><details><summary>业务依据</summary><pre style="white-space:pre-wrap">'+escapeHtml(JSON.stringify(output.context||{},null,2))+'</pre></details><p data-result-state>'+escapeHtml(run.applied_object?'已保存：'+run.applied_object.label:'等待人工确认')+'</p><button class="btn primary" data-result-accept '+(run.applied_object||!canWrite()?'disabled':'')+'><i data-lucide="check"></i>确认并保存草稿</button></div></div>';
+    const modelNote=output.provider_type==='mock'?'竞赛流程验证模型 · 受控样例':output.execution==='deterministic-fallback'?'规则降级结果 · 模型调用失败':'模型建议';
+    const objectNames={ValueProposition:'价值主张',StrategyPlan:'策略计划',Review:'效果复盘',Recommendation:'机会建议',CustomerAggregate:'客群圈选',ContentAsset:'内容资产'};
+    const structured=output.structured||output.selection;
+    layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>'+escapeHtml(objectNames[output.object_type]||'智能域结果')+'</b><button class="btn" data-close>关闭</button></div><div class="production-modal-body"><p class="toolbar-note">'+escapeHtml(modelNote)+' · '+escapeHtml(run.applied_object?'已人工确认':'待人工确认')+'</p><h3>'+escapeHtml(output.title||domainLabels[run.domain_id]||'业务建议')+'</h3><p style="white-space:pre-wrap">'+escapeHtml(text)+'</p>'+(output.visual?'<button class="btn" data-output-visual>预览视觉模板</button>':'')+(structured?'<details open><summary>结构化业务对象</summary><pre>'+escapeHtml(JSON.stringify(structured,null,2))+'</pre></details>':'')+'<details><summary>业务依据</summary><pre>'+escapeHtml(JSON.stringify(output.context||{},null,2))+'</pre></details><details open><summary>运行过程与治理</summary>'+window.ceairTraceHTML(run)+'</details><p data-result-state>'+escapeHtml(run.applied_object?'已保存：'+run.applied_object.label:'等待人工确认')+'</p><button class="btn primary" data-result-accept '+(run.applied_object||!canWrite()||output.selection?.supported===false?'disabled':'')+'>确认并保存草稿</button></div></div>';
     document.body.appendChild(layer);bindProductionModal(layer);
+    q('[data-output-visual]',layer)?.addEventListener('click',()=>window.ceairOpenVisual({external_id:run.id,title:output.title,name:'智能体候选视觉',body:output.body,campaign_id:run.campaign_id,audience_package_id:output.context?.audience?.id,product_package_id:output.context?.product?.id,channel:output.context?.channel||'App',generation_context:{...output.context,visual:output.visual}}));
     q('[data-result-accept]',layer)?.addEventListener('click',async event=>{
       const button=event.currentTarget;button.disabled=true;
       try{const saved=await request('/api/agent-runs/'+encodeURIComponent(run.id)+'/accept',{method:'POST'});q('[data-result-state]',layer).textContent='已保存：'+saved.label;await loadTenantData();toast('结果已保存为草稿');}
@@ -1129,7 +1147,7 @@
       activeCampaigns: campaigns.filter(item => !/草稿|待修改|已完成|已归档|已取消|完成|归档|取消/.test(item.status || '')),
       visibleCampaigns: campaigns.filter(item => !/已归档|归档/.test(item.status || '')),
       openOpportunities: opportunities.filter(item => !/已转活动|已关闭|关闭/.test(item.status || '')),
-      pendingApprovals: approvals.filter(item => !/通过|驳回|拒绝/.test(item.status || ''))
+      pendingApprovals: approvals.filter(approvalIsPending)
     };
   }
 
@@ -1140,10 +1158,11 @@
       if (valueNode) valueNode.textContent = value;
       if (noteNode) { noteNode.textContent = note; noteNode.className = `trend${tone ? ` ${tone}` : ''}`; }
     };
-    const audienceSize = state.audiencePackages.reduce((sum, item) => sum + Number(item.estimated_size || 0), 0);
+    const usableAudiences=state.audiencePackages.filter(item=>['可用','已冻结'].includes(item.status));
+    const audienceSize = usableAudiences.reduce((sum, item) => sum + Number(item.estimated_size || 0), 0);
     setKpi('active', state.activeCampaigns.length.toLocaleString('zh-CN'), state.pendingApprovals.length ? `${state.pendingApprovals.length}个待审批` : '无待审批', state.pendingApprovals.length ? 'amber' : '');
     setKpi('opportunity', state.openOpportunities.length.toLocaleString('zh-CN'), '待人工评估的机会', state.openOpportunities.length ? '' : 'amber');
-    setKpi('audience', audienceSize.toLocaleString('zh-CN'), state.audiencePackages.length ? `${state.audiencePackages.length}个可引用客群包` : '暂无客群包', state.audiencePackages.length ? '' : 'amber');
+    setKpi('audience', audienceSize.toLocaleString('zh-CN'), usableAudiences.length ? `${usableAudiences.length}个可用包 · 规模合计未去重` : '暂无客群包', state.audiencePackages.length ? '' : 'amber');
     const revenueFields = ['attributed_revenue_yuan', 'revenue_yuan', 'converted_revenue_yuan'];
     const revenueSources = [...state.campaigns, ...state.channelTasks];
     const hasRevenue = revenueSources.some(item => revenueFields.some(key => Number(item[key]) > 0));
@@ -1264,7 +1283,7 @@
   function renderContents(){
     const table=q('#contents .table'); if(!table)return;
     const assets=tenantData.contentAssets||[];
-    const rows=assets.map(item=>`<tr class="${String(item.id)===String(selectedContentAssetId)?'selected-row':''}"><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.title||'')}</small></td><td>${escapeHtml(item.campaign_id||'未关联活动')}</td><td>${escapeHtml(item.channel)}</td><td>${escapeHtml(item.version)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td class="production-actions"><button class="btn" data-content-view="${item.id}">查看</button><button class="btn" data-content-edit="${item.id}">编辑</button><button class="btn danger" data-content-delete="${item.id}">删除</button></td></tr>`).join('');
+    const rows=assets.map(item=>`<tr class="${String(item.id)===String(selectedContentAssetId)?'selected-row':''}"><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.title||'')}</small></td><td>${escapeHtml(item.campaign_id||'未关联活动')}</td><td>${escapeHtml(item.channel)}</td><td>${escapeHtml(item.version)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td class="production-actions"><button class="btn" data-content-view="${item.id}">查看</button><button class="btn" data-content-visual="${item.id}">视觉</button>${["草稿","待审核"].includes(item.status)&&["admin","manager"].includes(activeTenant()?.role)?`<button class="btn" data-content-review="${item.id}">审核</button>`:""}<button class="btn" data-content-edit="${item.id}">编辑</button><button class="btn danger" data-content-delete="${item.id}">删除</button></td></tr>`).join('');
     table.innerHTML=`<tr><th>内容名称</th><th>活动</th><th>渠道</th><th>版本</th><th>状态</th><th>操作</th></tr>${rows||'<tr><td colspan="6"><div class="empty-action">暂无内容资产。请先选择活动、客群包、产品包和渠道，再生成内容。</div></td></tr>'}`;
     const selected=assets.find(item=>String(item.id)===String(selectedContentAssetId))||assets[0];
     if(selected)selectedContentAssetId=String(selected.id);
@@ -1397,8 +1416,16 @@
     const pending = approvalIsPending(approval);
     if (no) no.textContent = displayText(approval.external_id, `审批任务 #${approval.id}`);
     detail.dataset.title = displayText(campaign.name, approval.campaign_id);
-    detail.innerHTML = `<div class="approval-detail-hero"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><div><h3>${escapeHtml(displayText(campaign.name, approval.campaign_id))}</h3><p>${escapeHtml(approval.approver_role || '营销审批')} · ${escapeHtml(displayText(version?.version, campaign.version || '当前版本'))} · ${escapeHtml(displayText(approval.external_id, '审批任务'))}</p></div><span class="pill ${pending ? 'red' : 'blue'}">${escapeHtml(status)}</span></div><div class="approval-detail-grid"><div><b>活动阶段</b><span>${escapeHtml(displayText(campaign.stage, '未设置'))} · ${escapeHtml(displayText(campaign.status, '未设置'))}</span></div><div><b>负责人</b><span>${escapeHtml(displayText(campaign.owner, '未设置'))}</span></div><div><b>客群范围</b><span>${Number(audienceSize || 0).toLocaleString('zh-CN')} 人${audience ? ` · ${escapeHtml(audience.name || audience.package_name || '客群快照')}` : ''}</span></div><div><b>产品包</b><span>${escapeHtml(productName)}</span></div><div><b>预算</b><span>¥${Number(version?.budget_yuan ?? campaign.budget_yuan ?? 0).toLocaleString('zh-CN')}</span></div><div><b>触达渠道</b><span>${escapeHtml(channels.join('、') || '未配置')}</span></div></div><div class="approval-content-preview"><b>版本与内容</b><p>${version ? `版本 ${escapeHtml(version.version || '未命名')} · ${contents.length} 个内容资产 · ${escapeHtml(version.status || '未设置')}` : '版本详情暂不可用，请刷新后重试。'}</p>${contents.slice(0, 3).map(item => `<div class="approval-content-item"><span>${escapeHtml(item.channel || '渠道')}</span><b>${escapeHtml(displayText(item.title || item.name, '未命名内容'))}</b></div>`).join('')}</div><div class="approval-checks"><div class="approval-check"><i><i data-lucide="check"></i></i><span><b>客群快照关联</b><small>${audience ? '已绑定客群快照，可追溯冻结规模与生成时间' : '未绑定客群快照，请补充活动客群'}</small></span></div><div class="approval-check"><i><i data-lucide="${product ? 'check' : 'alert-circle'}"></i></i><span><b>产品版本关联</b><small>${product ? '已关联当前产品版本；实际价格、库存与权益仍需上游核验' : '未关联产品包，请补充活动产品'}</small></span></div><div class="approval-check"><i><i data-lucide="${channels.length ? 'check' : 'alert-circle'}"></i></i><span><b>渠道配置</b><small>${channels.length ? `已配置 ${channels.length} 个触达渠道` : '尚未配置触达渠道'}</small></span></div><div class="approval-check"><i><i data-lucide="${approval.comment ? 'message-square-check' : 'clock-3'}"></i></i><span><b>审批意见</b><small>${escapeHtml(approval.comment || (pending ? '等待审批人处理' : '暂无审批意见'))}</small></span></div></div>${pending ? '<div class="approval-actions"><button class="btn danger" data-production-approval-action="reject">退回修改</button><button class="btn primary" data-production-approval-action="approve">通过并进入执行</button></div>' : ''}`;
+    detail.innerHTML = `<div class="approval-detail-hero"><span class="approval-icon activity"><i data-lucide="megaphone"></i></span><div><h3>${escapeHtml(displayText(campaign.name, approval.campaign_id))}</h3><p>${escapeHtml(approval.approver_role || '营销审批')} · ${escapeHtml(displayText(version?.version, campaign.version || '当前版本'))} · ${escapeHtml(displayText(approval.external_id, '审批任务'))}</p></div><span class="pill ${pending ? 'red' : 'blue'}">${escapeHtml(status)}</span></div><div class="approval-detail-grid"><div><b>活动阶段</b><span>${escapeHtml(displayText(campaign.stage, '未设置'))} · ${escapeHtml(displayText(campaign.status, '未设置'))}</span></div><div><b>负责人</b><span>${escapeHtml(displayText(campaign.owner, '未设置'))}</span></div><div><b>客群范围</b><span>${Number(audienceSize || 0).toLocaleString('zh-CN')} 人${audience ? ` · ${escapeHtml(audience.name || audience.package_name || '客群快照')}` : ''}</span></div><div><b>产品包</b><span>${escapeHtml(productName)}</span></div><div><b>预算</b><span>¥${Number(version?.budget_yuan ?? campaign.budget_yuan ?? 0).toLocaleString('zh-CN')}</span></div><div><b>触达渠道</b><span>${escapeHtml(channels.join('、') || '未配置')}</span></div></div><div class="approval-content-preview"><b>版本与内容</b><p>${version ? `版本 ${escapeHtml(version.version || '未命名')} · ${contents.length} 个内容资产 · ${escapeHtml(version.status || '未设置')}` : '版本详情暂不可用，请刷新后重试。'}</p>${contents.slice(0, 3).map(item => `<div class="approval-content-item"><span>${escapeHtml(item.channel || '渠道')}</span><b>${escapeHtml(displayText(item.title || item.name, '未命名内容'))}</b></div>`).join('')}</div><div class="approval-checks"><div class="approval-check"><i><i data-lucide="check"></i></i><span><b>客群快照关联</b><small>${audience ? '已绑定客群快照，可追溯冻结规模与生成时间' : '未绑定客群快照，请补充活动客群'}</small></span></div><div class="approval-check"><i><i data-lucide="${product ? 'check' : 'alert-circle'}"></i></i><span><b>产品版本关联</b><small>${product ? '已关联当前产品版本；实际价格、库存与权益仍需上游核验' : '未关联产品包，请补充活动产品'}</small></span></div><div class="approval-check"><i><i data-lucide="${channels.length ? 'check' : 'alert-circle'}"></i></i><span><b>渠道配置</b><small>${channels.length ? `已配置 ${channels.length} 个触达渠道` : '尚未配置触达渠道'}</small></span></div><div class="approval-check"><i><i data-lucide="${approval.comment ? 'message-square-check' : 'clock-3'}"></i></i><span><b>审批意见</b><small>${escapeHtml(approval.comment || (pending ? '等待审批人处理' : '暂无审批意见'))}</small></span></div></div>${pending ? '<div class="approval-actions"><button class="btn danger" data-production-approval-action="reject">退回修改</button><button class="btn primary" data-production-approval-action="approve" disabled>通过并进入执行</button></div>' : ''}`;
     if (window.lucide) lucide.createIcons();
+    try {
+      const readiness=await request('/api/campaigns/'+encodeURIComponent(approval.campaign_id)+'/readiness?version_id='+approval.campaign_version_id);
+      if(String(selectedProductionApprovalId)!==String(approval.id))return;
+      q('.approval-checks',detail).innerHTML=readiness.checks.map(c=>'<div class="approval-check"><i><i data-lucide="'+(c.passed?'check':'alert-circle')+'"></i></i><span><b>'+escapeHtml(c.label)+' · '+(c.passed?'通过':'待补齐')+'</b><small>'+escapeHtml(c.detail)+'</small></span></div>').join('');
+      const approve=q('[data-production-approval-action="approve"]',detail);if(approve)approve.disabled=!readiness.ready;
+      if(window.lucide)lucide.createIcons();
+    }catch(error){q('.approval-checks',detail).textContent='校验加载失败：'+error.message;const approve=q('[data-production-approval-action="approve"]',detail);if(approve)approve.disabled=true;}
+
   }
 
   window.showProductionApprovalDetail = showProductionApprovalDetail;
@@ -1541,7 +1568,7 @@
     const channel=String(item.channel||'').toLowerCase();
     const title=escapeHtml(displayText(item.title||item.name,'\u4e1c\u822a\u8425\u9500\u6d3b\u52a8'));
     const body=escapeHtml(displayText(item.body,'\u6682\u65e0\u6b63\u6587')).replace(/\r?\n/g,'<br>');
-    const action='<button class="preview-cta">\u7acb\u5373\u67e5\u770b</button>';
+    const action='<button class="preview-cta" disabled title="演示预览">\u7acb\u5373\u67e5\u770b</button>';
     if(channel.includes('\u77ed\u4fe1')) return `<div class="channel-preview sms-preview"><div class="preview-device-bar"><span>China Mobile</span><span>Just now</span></div><div class="preview-sms-bubble"><b>${title}</b><p>${body}</p></div></div>`;
     if(channel.includes('\u5fae\u4fe1')||channel.includes('\u516c\u4f17\u53f7')) return `<div class="channel-preview wechat-preview"><div class="preview-wechat-head"><span class="preview-avatar">\u4e1c</span><b>\u4e2d\u56fd\u4e1c\u65b9\u822a\u7a7a</b><small>\u516c\u4f17\u53f7\u6d88\u606f</small></div><div class="preview-wechat-card"><b>${title}</b><p>${body}</p>${action}</div></div>`;
     if(channel.includes('app')||channel.includes('\u5c0f\u7a0b\u5e8f')) return `<div class="channel-preview app-preview"><div class="preview-app-head"><span>CEAir App</span><small>\u8425\u9500\u6d88\u606f</small></div><div class="preview-app-card"><span class="preview-app-tag">\u4e13\u5c5e\u63a8\u8350</span><h4>${title}</h4><p>${body}</p>${action}</div></div>`;
@@ -1700,6 +1727,7 @@
   async function renderOntologySchemaGraph(){
     const host=q('#ontologySchema'); if(!host)return;
     let model; try{model=await request('/api/ontology/semantic-model');}catch{model={object_types:[],relation_types:[]};}
+    if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
     const types=model.object_types||[], relations=model.relation_types||[];
     const W=220,H=116,cols=5,gx=258,gy=150,width=Math.max(1320,cols*gx+20),height=Math.max(760,Math.ceil(types.length/cols)*gy+36);
     const positions=new Map(types.map((item,index)=>[item.id,{x:18+(index%cols)*gx,y:18+Math.floor(index/cols)*gy}]));
@@ -1719,6 +1747,7 @@
   async function renderOntologySchemaGraphV2(){
     const host=q('#ontologySchema'); if(!host)return;
     let model; try{model=await request('/api/ontology/semantic-model');}catch{model={object_types:[],relation_types:[]};}
+    if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
     const types=model.object_types||[], relations=model.relation_types||[];
     if(!types.length){host.innerHTML='<div class="ontology-map-empty"><i data-lucide="network"></i><b>暂无本体结构</b><span>完成数据处理或配置语义模型后，这里会展示业务对象与关系。</span></div>';if(window.lucide)lucide.createIcons();return;}
     const moduleLabels={data:'数据来源',aviation:'航空业务',customer:'客户与客群',product:'产品与权益',strategy:'策略规划',marketing:'营销活动',governance:'治理审批',execution:'执行触达',measurement:'效果度量',agent:'智能体',knowledge:'知识底座',semantic:'语义配置'};
@@ -1747,8 +1776,10 @@
     const showDetail=item=>{const out=relations.filter(rel=>(rel.from_types||[]).includes(item.id)),input=relations.filter(rel=>(rel.to_types||[]).includes(item.id)),detail=q('#entityDetail');if(!detail)return;detail.innerHTML='<div class="entity-title"><b>'+escapeHtml(item.title)+'</b><span>本体类 · '+escapeHtml(item.id)+'</span></div><dl><dt>业务域</dt><dd>'+escapeHtml(moduleLabels[item.module]||item.module)+'</dd><dt>业务定义</dt><dd>'+escapeHtml(item.description||'暂无业务定义')+'</dd><dt>核心属性</dt><dd>'+((item.attributes||[]).map(value=>'<code>'+escapeHtml(value)+'</code>').join(' ')||'暂无属性定义')+'</dd></dl><div class="ai-result"><b>关系使用</b><p>出边 '+out.length+' 条 · 入边 '+input.length+' 条</p><p>'+escapeHtml(out.slice(0,5).map(rel=>(item.title)+' —'+(rel.name||rel.id)+'→ '+(rel.to_types||[]).join('/')).join('；')||'暂无出边关系')+'</p></div>';node.classed('is-selected',value=>value.id===item.id).classed('is-neighbor',value=>value.id!==item.id&&(connected.get(item.id)?.has(value.id)));};
     const applyFilter=()=>{const query=(q('[data-ontology-search]',host)?.value||'').trim().toLowerCase(),module=q('[data-ontology-module]',host)?.value||'all';const visible=new Set(nodes.filter(item=>{const hay=[item.id,item.title,item.description,item.module,...(item.attributes||[])].join(' ').toLowerCase();return (!query||hay.includes(query))&&(module==='all'||item.module===module);}).map(item=>item.id));node.classed('is-muted',item=>!visible.has(item.id));edge.classed('is-hidden',item=>!visible.has(item.source.id)||!visible.has(item.target.id));edgeLabel.classed('is-hidden',item=>!visible.has(item.source.id)||!visible.has(item.target.id));};
     node.on('click',(event,item)=>{event.stopPropagation();showDetail(item);}).on('keydown',(event,item)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showDetail(item);}}).call(d3.drag().on('start',(event,item)=>{if(!event.active)simulation.alphaTarget(.25).restart();item.fx=item.x;item.fy=item.y;}).on('drag',(event,item)=>{item.fx=event.x;item.fy=event.y;updateEdges();}).on('end',(event,item)=>{if(!event.active)simulation.alphaTarget(0);item.fx=null;item.fy=null;}));
-    const simulation=d3.forceSimulation(nodes).force('link',d3.forceLink(simLinks).id(item=>item.id).distance(150).strength(.55)).force('charge',d3.forceManyBody().strength(-430)).force('collide',d3.forceCollide().radius(112)).force('center',d3.forceCenter(width/2,height/2)).force('x',d3.forceX(width/2).strength(.045)).force('y',d3.forceY(height/2).strength(.045)).on('tick',()=>{node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);updateEdges();});
+    const simulation=window.ceairSchemaSimulation=d3.forceSimulation(nodes).force('link',d3.forceLink(simLinks).id(item=>item.id).distance(150).strength(.55)).force('charge',d3.forceManyBody().strength(-430)).force('collide',d3.forceCollide().radius(112)).force('center',d3.forceCenter(width/2,height/2)).force('x',d3.forceX(width/2).strength(.045)).force('y',d3.forceY(height/2).strength(.045)).on('tick',()=>{node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);updateEdges();});
     q('[data-ontology-search]',host)?.addEventListener('input',applyFilter);q('[data-ontology-module]',host)?.addEventListener('change',applyFilter);q('[data-ontology-reset]',host)?.addEventListener('click',()=>{q('[data-ontology-search]',host).value='';q('[data-ontology-module]',host).value='all';applyFilter();svg.transition().duration(350).call(zoom.transform,d3.zoomIdentity);node.classed('is-selected',false).classed('is-neighbor',false);});
+    simulation.stop();for(let tick=0;tick<150;tick++)simulation.tick();updateEdges();node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);
+    const minX=Math.min(...nodes.map(n=>n.x-95)),maxX=Math.max(...nodes.map(n=>n.x+95)),minY=Math.min(...nodes.map(n=>n.y-48)),maxY=Math.max(...nodes.map(n=>n.y+48));const scale=Math.min(1,(width-40)/(maxX-minX),(height-40)/(maxY-minY));const fit=d3.zoomIdentity.translate((width-scale*(maxX+minX))/2,(height-scale*(maxY+minY))/2).scale(scale);svg.call(zoom.transform,fit);
     if(nodes[0])showDetail(nodes[0]);applyFilter();
   }
 
@@ -1763,14 +1794,35 @@
   function renderDynamicGraph() {
     setupKnowledgeViews();
     const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return; canvas.innerHTML='';
-    const source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
+    let source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
+    let picker=q('[data-graph-case]');
+    if(!picker){picker=document.createElement('select');picker.dataset.graphCase='true';picker.setAttribute('aria-label','选择图谱活动');q('[data-instance-toolbar]')?.append(picker);picker.onchange=()=>{window.ceairSetChainCase?.(picker.value);renderDynamicGraph();};}
+    const selected=picker.value||(tenantData.demo?.enabled?'ACT-2026-0921':tenantData.campaigns[0]?.id)||'';
+    picker.innerHTML='<option value="all">全部本体对象</option>'+tenantData.campaigns.map(c=>'<option value="'+escapeHtml(c.id)+'">'+escapeHtml(c.name)+'</option>').join('');picker.value=selected;
+    if(selected!=='all'){
+      const ids=new Set(source.nodes.filter(n=>n.id===selected||n.attributes?.campaign_id===selected).map(n=>n.id));
+      for(let pass=0;pass<3;pass++)source.edges.forEach(e=>{const target=source.nodes.find(n=>n.id===e.target);if(ids.has(e.source)&&target&&(!target.attributes?.campaign_id||target.attributes.campaign_id===selected)&&!String(e.target).startsWith('ACT-'))ids.add(e.target);});
+      source={nodes:source.nodes.filter(n=>ids.has(n.id)),edges:source.edges.filter(e=>ids.has(e.source)&&ids.has(e.target))};
+    }
+    const search=q('#graphSearch'),typeSelect=q('#graphType');
+    const selectedType=typeSelect?.value||'all';
+    if(typeSelect){const names={Campaign:'活动',CampaignVersion:'活动版本',Opportunity:'机会',AudienceSnapshot:'冻结客群',ProductPackage:'产品包',ContentAsset:'内容',AgentRun:'智能体',Evidence:'证据',ExecutionBatch:'执行批次',Feedback:'反馈',Review:'复盘'};typeSelect.innerHTML='<option value="all">全部对象类型</option>'+[...new Set(tenantData.graph.nodes.map(n=>n.type))].map(t=>'<option value="'+escapeHtml(t)+'">'+escapeHtml(window.ceairOntologyLabels[t]||names[t]||t)+'</option>').join('');typeSelect.value=selectedType;typeSelect.onchange=()=>renderDynamicGraph();}
+    if(search)search.oninput=()=>renderDynamicGraph();
+    const term=(search?.value||'').trim().toLowerCase();
+    if(term||selectedType!=='all'){
+      const matches=new Set(source.nodes.filter(n=>(!term||[n.label,n.id,JSON.stringify(n.attributes)].join(' ').toLowerCase().includes(term))&&(selectedType==='all'||n.type===selectedType)).map(n=>n.id));
+      source={nodes:source.nodes.filter(n=>matches.has(n.id)),edges:source.edges.filter(e=>matches.has(e.source)&&matches.has(e.target))};
+    }
+    qa('[data-graph-filter]').forEach(button=>{button.onclick=()=>{if(search)search.value='';if(typeSelect)typeSelect.value='all';picker.value=button.dataset.graphFilter==='all'?'all':(tenantData.demo?.enabled?'ACT-2026-0921':tenantData.campaigns[0]?.id||'all');renderDynamicGraph();};});
+    if(!source.nodes.length){canvas.innerHTML='<div class="graph-empty">没有符合筛选条件的本体对象</div>';return;}
+    if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
     const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
-    const typeLabels={opportunity:'营销机会',audience:'客群',customer:'客户',product:'产品包',product_package:'产品包',content:'内容',campaign:'营销活动',channel:'渠道',flight:'航班',flight_segment:'航段',airport:'机场',route:'航线',fare:'运价',cabin:'舱位',result:'营销结果',entity:'业务对象'};
+    const typeLabels={opportunity:'营销机会',audience:'客群',customer:'客户',product:'产品包',product_package:'产品包',content:'内容',campaign:'营销活动',channel:'渠道',flight:'航班',flight_segment:'航段',airport:'机场',route:'航线',fare:'运价',cabin:'舱位',result:'营销结果',entity:'业务对象',audiencesnapshot:'冻结客群',customeraggregate:'聚合客群',productpackage:'产品包',contentasset:'内容资产',campaignversion:'活动版本',approvaltask:'审批任务',executionbatch:'执行批次',feedback:'渠道反馈',review:'效果复盘',agentRun:'智能体运行',agentrun:'智能体运行',evidence:'证据',marketsignal:'市场信号',knowledgedocument:'来源文档',knowledgechunk:'知识片段',strategyplan:'策略计划',touchpointplan:'触点计划',humandecision:'人工决策',valueproposition:'价值主张',customerneed:'旅客需求',recommendation:'机会建议'};
     const nodes=source.nodes.map(item=>({...item,title:displayText(item.label,'未命名对象'),type:String(item.type||'entity').toLowerCase(),typeLabel:typeLabels[String(item.type||'entity').toLowerCase()]||'业务对象',w:172,h:60}));
-    const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(item.relation,'关联')})); const neighbors=new Map(nodes.map(item=>[item.id,new Set()])); links.forEach(item=>{neighbors.get(item.source.id)?.add(item.target.id);neighbors.get(item.target.id)?.add(item.source.id);});
+    const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(({has_campaign_version:'包含版本',targets_audience:'面向客群',uses_product_package:'使用产品包',generates_content:'生成内容',requires_approval:'需要审批',confirmed_by_human:'人工确认',executes:'产生执行',uses_channel:'使用渠道',produces_feedback:'产生反馈',reviewed_by:'效果复盘',supports_campaign:'支撑活动',has_evidence:'具有证据',derived_from:'来源于',contains_chunk:'包含片段',has_strategy_plan:'策略方案',uses_touchpoint_plan:'触点计划',produces_object:'形成对象',evidence_for:'提供证据',addresses_opportunity:'响应机会'})[item.relation]||item.relation,'关联')})); const neighbors=new Map(nodes.map(item=>[item.id,new Set()])); links.forEach(item=>{neighbors.get(item.source.id)?.add(item.target.id);neighbors.get(item.target.id)?.add(item.source.id);});
     const svg=d3.select(canvas).append('svg').attr('width',width).attr('height',height), defs=svg.append('defs');
     defs.append('marker').attr('id','production-arrow').attr('viewBox','0 0 8 8').attr('refX',7).attr('refY',4).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,0 L8,4 L0,8 z').attr('fill','#93b2c4');
-    const root=svg.append('g'); svg.call(d3.zoom().scaleExtent([.55,2]).on('zoom',event=>root.attr('transform',event.transform)));
+    const root=svg.append('g'),zoom=d3.zoom().scaleExtent([.08,2]).on('zoom',event=>root.attr('transform',event.transform));svg.call(zoom);
     const edge=root.append('g').selectAll('path').data(links).join('path').attr('class','graph-edge').attr('marker-end','url(#production-arrow)');
     const labels=root.append('g').selectAll('text').data(links).join('text').attr('class','edge-label').text(item=>item.label);
     const node=root.append('g').selectAll('g').data(nodes).join('g').attr('class',item=>`graph-node dynamic ${item.type}`).call(d3.drag().on('start',(event,item)=>{if(!event.active)simulation.alphaTarget(.25).restart();item.fx=item.x;item.fy=item.y}).on('drag',(event,item)=>{item.fx=event.x;item.fy=event.y}).on('end',(event,item)=>{if(!event.active)simulation.alphaTarget(0);item.fx=null;item.fy=null}));
@@ -1786,13 +1838,17 @@
 <dt>数据来源</dt>
 <dd>${escapeHtml(displayText(item.source,'未知来源'))}</dd>
 <dt>置信度</dt>
-<dd>${Math.round((item.confidence||0)*100)}%</dd>
+<dd>${item.attributes?.confidence_status==='未评估'?'未评估':Math.round((item.confidence||0)*100)+'%'}</dd>
 </dl>
 <div class="ai-result">
 <b>对象属性（入库记录）</b>
 <p>${escapeHtml(Object.entries(item.attributes||{}).slice(0,6).map(([key,value])=>`${key}：${typeof value==='object'?JSON.stringify(value):value}`).join('；')||'暂无扩展属性')}</p>
 </div>`;});
-    const simulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(item=>item.id).distance(145).strength(.7)).force('charge',d3.forceManyBody().strength(-420)).force('collide',d3.forceCollide().radius(90)).force('center',d3.forceCenter(width/2,height/2)).on('tick',()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);labels.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);node.attr('transform',item=>`translate(${item.x},${item.y})`)});
+    const simulation=window.ceairGraphSimulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(item=>item.id).distance(145).strength(.7)).force('charge',d3.forceManyBody().strength(-420)).force('collide',d3.forceCollide().radius(90)).force('center',d3.forceCenter(width/2,height/2)).on('tick',()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);labels.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);node.attr('transform',item=>`translate(${item.x},${item.y})`)});
+    simulation.stop();for(let tick=0;tick<160;tick++)simulation.tick();
+    const bounds={minX:Math.min(...nodes.map(n=>n.x-90)),maxX:Math.max(...nodes.map(n=>n.x+90)),minY:Math.min(...nodes.map(n=>n.y-35)),maxY:Math.max(...nodes.map(n=>n.y+35))};
+    const scale=Math.min(.95,(width-30)/(bounds.maxX-bounds.minX),(height-30)/(bounds.maxY-bounds.minY));
+    svg.call(zoom.transform,d3.zoomIdentity.translate((width-scale*(bounds.maxX+bounds.minX))/2,(height-scale*(bounds.maxY+bounds.minY))/2).scale(scale));simulation.alpha(.03).restart();
     node.filter((_,index)=>index===0).dispatch('click');
   }
 
@@ -1926,6 +1982,8 @@
       if(button.dataset.audienceEdit){const item=(tenantData.audiencePackages||[]).find(value=>String(value.id)===String(button.dataset.audienceEdit));if(!item||!canWrite()||button.disabled)return;showAudiencePackageEditor(item);return;}
       if(button.dataset.audienceTagEdit){const item=(tenantData.audienceTags||[]).find(value=>String(value.id)===String(button.dataset.audienceTagEdit));if(!item||!canWrite())return;showAudienceTagEditor(item);return;}
       if(button.dataset.audienceSnapshot){if(!canWrite()||button.disabled)return;try{const result=await request(`/api/audience-packages/${button.dataset.audienceSnapshot}/snapshots`,{method:'POST'});toast('客群快照 '+result.version+' 已冻结，可用于活动执行');await loadTenantData();}catch(cause){toast(cause.message||'客群快照生成失败');}return;}      if(button.dataset.contentView){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentView));if(item){selectedContentAssetId=String(item.id);selectedPreviewChannel=item.channel||'App';renderContents();showContentDetail(item);}return;}
+      if(button.dataset.contentReview){const item=tenantData.contentAssets.find(a=>String(a.id)===button.dataset.contentReview);if(item)openBusinessEditor({title:'内容事实与渠道审核',item:{decision:'approve',comment:''},fields:[{name:'decision',label:'审核决定',type:'select',options:[{value:'approve',label:'核验后通过'},{value:'reject',label:'退回草稿'}]},{name:'comment',label:'审核说明',type:'textarea'}],save:async values=>{await request('/api/content-assets/'+item.id+'/review',{method:'POST',body:JSON.stringify(values)});await loadTenantData();}});return;}
+      if(button.dataset.contentVisual){const item=tenantData.contentAssets.find(a=>String(a.id)===button.dataset.contentVisual);if(item)window.ceairOpenVisual(item);return;}
       if(button.dataset.contentEdit){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentEdit));if(!item||!canWrite())return;showContentEditor(item);return;}
        if(button.dataset.channelFeedback){const item=(tenantData.channelTasks||[]).find(value=>String(value.id)===String(button.dataset.channelFeedback));if(!item||!canWrite())return;showChannelFeedbackEditor(item);return;}
       if(button.dataset.contentDelete){const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===String(button.dataset.contentDelete));if(!item||!canWrite()||!window.confirm('确认删除内容“'+item.name+'”？删除后不可恢复。'))return;try{await request(`/api/content-assets/${item.id}`,{method:'DELETE'});toast('内容已删除');await loadTenantData();}catch(cause){toast(cause.message||'内容删除失败');}return;}
@@ -2230,13 +2288,16 @@ function mountMarketingAssistantV2(){
   async function loadTenantData(){
     updateIdentity();
     const paths=['/api/campaigns','/api/graph','/api/imports','/api/data-pipelines','/api/model-providers','/api/agent-domains','/api/agent-runs','/api/opportunities','/api/opportunity-insight/sources','/api/opportunity-insight/runs','/api/audience-tags','/api/audience-packages','/api/persona-dimensions','/api/persona-segments','/api/product-packages','/api/product-catalog','/api/content-assets','/api/audience-snapshots','/api/approvals','/api/execution-batches','/api/channel-tasks','/api/knowledge/documents'];
-    const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents]=await Promise.all(paths.map(path=>request(path)));
+    paths.push('/api/competition/demo');
+    const [campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,demo]=await Promise.all(paths.map(path=>request(path)));
     let mineru=null;
     if(isTenantAdmin()){try{mineru=await request('/api/integrations/mineru');}catch{mineru=null;}}
-    tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary:{},mineru};
+    tenantData={campaigns,graph,imports,pipelines,providers,domains,runs,opportunities,opportunitySources,opportunityRuns,audienceTags,audiencePackages,personaDimensions,personaSegments,productPackages,productCatalog,contentAssets,audienceSnapshots,approvals,executionBatches,channelTasks,documents,effectSummary:{},mineru,demo};
     tenantDataReady=true;
     await loadEffectSummary();
     renderOpportunities();renderOpportunityInsightPanel();renderAudienceStructure();renderKnowledgeDocuments();renderCampaigns();renderDashboard();renderDongdongCapabilities();renderProducts();renderContents();renderApprovals();renderExecution();renderFeedback();renderDynamicGraph();renderPipelineQueue();renderImports();renderModels();renderMineru();renderPermissions();applyBusinessSubviewLayouts();applyWorkbenchFilters();
+    window.ceairCompetition?.render({demo,data:tenantData,request,showRun:showAgentTrace,runDomain:showDomainRequest});
+    if (q('#demoOntologyChain')) q('#demoOntologyChain').hidden=!demo.enabled || (businessSubviewState.get('graph')||'schema')!=='instances';
     const hasActive=pipelines.some(item=>['queued','running'].includes(item.status));
     clearTimeout(pipelinePollTimer);if(hasActive)pipelinePollTimer=setTimeout(()=>refreshPipelines().catch(()=>{}),1500);
     const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));

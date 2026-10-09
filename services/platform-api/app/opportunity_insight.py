@@ -111,7 +111,7 @@ def _agent_result(role: str, profile_id: str, run_id: str, tenant_id: int, promp
             result.update({key: parsed[key] for key in ("topic", "score", "summary") if key in parsed})
     except Exception as exc:
         result["model_error"] = type(exc).__name__
-    result["execution"] = "agentscope"
+    result["execution"] = "deterministic-fallback" if "model_error" in result else ("governed-mock" if config.provider_type == "mock" else "agentscope")
     result["events"] = events[-20:]
     return result
 

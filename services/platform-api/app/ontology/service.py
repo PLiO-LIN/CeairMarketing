@@ -13,21 +13,33 @@ from .semantic_model import SEMANTIC_MODEL_VERSION, object_type_ids, relation_ty
 
 def build_campaign_graph(session: Session, tenant_id: int, campaign_id: str | None = None, limit: int = 300) -> MarketingGraph:
     entity_query = select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id)
-    entities = list(session.scalars(entity_query.order_by(OntologyEntityRecord.id).limit(limit)))
+    entities = list(session.scalars(entity_query.order_by(OntologyEntityRecord.id)))
     if campaign_id:
         campaign = next((item for item in entities if item.external_id == campaign_id), None)
         if campaign is not None:
             all_relations = list(
                 session.scalars(select(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == tenant_id))
             )
-            connected_ids = {campaign.id}
-            for relation in all_relations:
-                if relation.source_entity_id == campaign.id or relation.target_entity_id == campaign.id:
-                    connected_ids.update({relation.source_entity_id, relation.target_entity_id})
-            for relation in all_relations:
-                if relation.source_entity_id in connected_ids or relation.target_entity_id in connected_ids:
-                    connected_ids.update({relation.source_entity_id, relation.target_entity_id})
-            entities = [item for item in entities if item.id in connected_ids]
+            by_id = {item.id: item for item in entities}
+            connected_ids = {item.id for item in entities if item.id == campaign.id or json.loads(item.attributes_json or "{}").get("campaign_id") == campaign_id}
+            for _ in range(4):
+                additions = set()
+                for relation in all_relations:
+                    target = by_id.get(relation.target_entity_id)
+                    source = by_id.get(relation.source_entity_id)
+                    if source is None or target is None:
+                        continue
+                    target_campaign = json.loads(target.attributes_json or "{}").get("campaign_id")
+                    if source.id in connected_ids and target.entity_type != "Campaign" and target_campaign in {None, campaign_id}:
+                        additions.add(target.id)
+                    if target.id in connected_ids and source.entity_type in {"KnowledgeDocument", "KnowledgeChunk", "KnowledgeClaim", "Evidence", "MarketSignal"}:
+                        additions.add(source.id)
+                connected_ids.update(additions)
+            entities = [item for item in entities if item.id in connected_ids][:limit]
+        else:
+            entities = []
+    else:
+        entities = entities[:limit]
     ids = {item.id for item in entities}
     relations = list(
         session.scalars(

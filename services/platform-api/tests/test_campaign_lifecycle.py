@@ -1,3 +1,4 @@
+from fixtures_business import complete_campaign
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -12,6 +13,7 @@ def test_campaign_creation_creates_version_and_mock_execution_closes_loop():
         created = client.post("/api/campaigns", headers=headers, json={"name": "Mock lifecycle campaign", "audience_size": 1000, "budget_yuan": 50000, "channels": ["App", "SMS"]})
         assert created.status_code == 201
         campaign_id = created.json()["id"]
+        complete_campaign(client, headers, campaign_id, created.json().get("channels") or (["App", "SMS"] if "Mock" in created.json()["name"] else ["东航App"]))
         versions = client.get(f"/api/campaigns/{campaign_id}/versions", headers=headers)
         assert versions.status_code == 200
         version = versions.json()[0]
@@ -36,6 +38,7 @@ def test_campaign_version_and_approval_boundaries_are_enforced():
         created = client.post("/api/campaigns", headers=headers, json={"name": "Boundary campaign", "audience_size": 100, "channels": ["东航App"]})
         assert created.status_code == 201
         campaign_id = created.json()["id"]
+        complete_campaign(client, headers, campaign_id, created.json().get("channels") or (["App", "SMS"] if "Mock" in created.json()["name"] else ["东航App"]))
         versions = client.get(f"/api/campaigns/{campaign_id}/versions", headers=headers).json()
         version_id = versions[0]["id"]
 

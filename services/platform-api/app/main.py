@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from .agents import AgentRuntime, MarketingCopilot
 from .agents.business_results import accept_result, read_result
+from .campaign_readiness import campaign_readiness
 from .business_sync import AudienceSyncRequest, ProductSyncRequest, sync_business
 from .auth import TenantContext, create_token, get_current_user, get_tenant_context, hash_password, require_admin, require_platform_admin, require_write, verify_password
 from .config import get_settings
@@ -104,6 +105,7 @@ from .models import (
     TenantSummary,
 )
 from .ontology import build_campaign_graph, graph_stats, semantic_model, semantic_status
+from .ontology.projection import sync_business_graph
 from .security import SecretCipher
 from .seed import seed_database, seed_competition_workspace, seed_opportunity_insight_sources, seed_persona_catalog, seed_tenant_data
 
@@ -149,7 +151,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title=settings.app_name, version="3.16.0", lifespan=lifespan)
+app = FastAPI(title=settings.app_name, version="3.17.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -531,6 +533,10 @@ def create_approval_task(campaign_id: str, version_id: int, context: TenantConte
         raise HTTPException(status_code=404, detail="活动版本不存在")
     if version.status not in {"草稿", "已退回"}:
         raise HTTPException(status_code=409, detail="当前版本不在可提交审批状态")
+    readiness = campaign_readiness(session, context.tenant_id, version)
+    if not readiness["ready"]:
+        failed = "；".join(item["label"] + "：" + item["detail"] for item in readiness["checks"] if not item["passed"])
+        raise HTTPException(status_code=409, detail="审批前置校验未通过：" + failed)
     existing = session.scalar(select(ApprovalTaskRecord).where(ApprovalTaskRecord.tenant_id == context.tenant_id, ApprovalTaskRecord.campaign_version_id == version.id, ApprovalTaskRecord.status == "待审批"))
     if existing is not None:
         raise HTTPException(status_code=409, detail="该版本已有待审批任务，请勿重复提交")
@@ -553,6 +559,10 @@ def decide_approval(approval_id: int, payload: ApprovalDecision, context: Tenant
         raise HTTPException(status_code=404, detail="审批任务不存在")
     if record.status != "待审批":
         raise HTTPException(status_code=409, detail="审批任务已处理")
+    if payload.decision == "approve":
+        checked_version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.id == record.campaign_version_id))
+        if not checked_version or not campaign_readiness(session, context.tenant_id, checked_version)["ready"]:
+            raise HTTPException(409, "版本前置条件已失效，请退回修改并补齐客群、产品与逐渠道审核内容")
     record.status = "已通过" if payload.decision == "approve" else "已退回"
     record.comment = payload.comment
     record.decided_by = context.user_id
@@ -884,11 +894,34 @@ def update_content_asset(asset_id: int, payload: ContentAssetBase, context: Tena
         raise HTTPException(status_code=422, detail="内容审核及发布状态不能通过编辑直接设置")
     values = payload.model_dump(exclude={"generated_by", "generation_context"})
     values["generation_context_json"] = json.dumps(payload.generation_context, ensure_ascii=False)
-    material_change = any(values[key] != getattr(record, key) for key in ("campaign_id", "audience_package_id", "product_package_id", "channel", "title", "body"))
+    material_change = any(values[key] != getattr(record, key) for key in ("campaign_id", "audience_package_id", "product_package_id", "channel", "title", "body", "generation_context_json"))
     if material_change and values["status"] not in {"草稿", "待审核", "停用"}:
         values["status"] = "草稿"
     for key, value in values.items():
         setattr(record, key, value)
+    session.commit()
+    session.refresh(record)
+    return record
+
+
+@app.post("/api/content-assets/{asset_id}/review", response_model=ContentAsset)
+def review_content_asset(asset_id: int, payload: ApprovalDecision, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    if context.role not in {"admin", "manager"}:
+        raise HTTPException(403, "仅营销经理或租户管理员可审核内容")
+    record = session.scalar(select(ContentAssetRecord).where(ContentAssetRecord.id == asset_id, ContentAssetRecord.tenant_id == context.tenant_id))
+    if record is None:
+        raise HTTPException(404, "内容资产不存在")
+    if record.status not in {"草稿", "待审核"}:
+        raise HTTPException(409, "内容不在待审核状态")
+    if payload.decision == "approve" and (not record.title.strip() or not record.body.strip()):
+        raise HTTPException(409, "内容标题和正文必须完整")
+    record.status = "已审核" if payload.decision == "approve" else "草稿"
+    metadata = json.loads(record.generation_context_json or "{}")
+    record.generation_context_json = json.dumps({**metadata, "review": {"operator": context.user_id, "decision": payload.decision, "comment": payload.comment, "decided_at": datetime.now(timezone.utc).isoformat()}}, ensure_ascii=False)
+    from .ontology.projection import put_entity, put_relation
+    asset = put_entity(session, context.tenant_id, record.external_id, "ContentAsset", record.name, {"campaign_id": record.campaign_id, "status": record.status})
+    decision = put_entity(session, context.tenant_id, f"CONTENT-DECISION-{uuid4().hex}", "HumanDecision", "内容审核 · " + record.status, metadata.get("review", {}) | {"operator": context.user_id, "decision": payload.decision, "comment": payload.comment, "campaign_id": record.campaign_id})
+    put_relation(session, context.tenant_id, asset, "confirmed_by_human", decision)
     session.commit()
     session.refresh(record)
     return record
@@ -899,6 +932,9 @@ def delete_content_asset(asset_id: int, context: TenantContext = Depends(require
     record = session.scalar(select(ContentAssetRecord).where(ContentAssetRecord.id == asset_id, ContentAssetRecord.tenant_id == context.tenant_id))
     if record is None:
         raise HTTPException(status_code=404, detail="内容资产不存在")
+    versions = session.scalars(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id)).all()
+    if any(asset_id in json.loads(version.content_asset_ids_json or "[]") for version in versions):
+        raise HTTPException(409, "内容已被活动版本引用，请先解除引用")
     session.delete(record)
     session.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -1380,6 +1416,35 @@ def run_agent_chat(payload: AgentChatRequest, context: TenantContext = Depends(r
 @app.get("/api/ontology/semantic-model")
 def ontology_semantic_model(_context: TenantContext = Depends(get_tenant_context)):
     return semantic_model()
+
+
+@app.get("/api/campaigns/{campaign_id}/readiness")
+def get_campaign_readiness(campaign_id: str, version_id: int | None = None, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    query = select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == context.tenant_id, CampaignVersionRecord.campaign_id == campaign_id)
+    if version_id is not None:
+        query = query.where(CampaignVersionRecord.id == version_id)
+    version = session.scalar(query.order_by(CampaignVersionRecord.id.desc()))
+    if version is None:
+        raise HTTPException(404, "活动版本不存在")
+    return {**campaign_readiness(session, context.tenant_id, version), "version_id": version.id, "version": version.version}
+
+
+@app.get("/api/competition/demo")
+def competition_demo_summary(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    from .competition_demo import DEMO_DATE, SIGNALS, PROFILE, TOUCHPOINTS, SCORE_COMPONENTS
+    tenant = session.get(TenantRecord, context.tenant_id)
+    if tenant.code != "CEA-COMPETITION":
+        return {"enabled": False}
+    campaigns = list(session.scalars(select(CampaignRecord).where(CampaignRecord.tenant_id == context.tenant_id)))
+    return {
+        "enabled": True, "synthetic": True, "business_date": DEMO_DATE.isoformat(),
+        "signals": SIGNALS, "profile": PROFILE, "touchpoints": TOUCHPOINTS,
+        "score_components": SCORE_COMPONENTS,
+        "cases": [{"id": c.id, "name": c.name, "stage": c.stage, "status": c.status, "version": c.version, "audience_size": c.audience_size} for c in campaigns],
+        "semantic_version": semantic_model()["version"],
+        "scoring": "需求热度40% + 搜索未购25% + 供给窗口20% + 产品适配15%；演示评分92",
+        "attribution": {"status": "待交易归因", "revenue": None, "roi": None, "missing": ["订单收入", "归因窗口", "去重客户键", "对照组或基线"]},
+    }
 
 
 @app.get("/api/agent-evaluations/summary")

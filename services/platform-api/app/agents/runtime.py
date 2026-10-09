@@ -14,7 +14,7 @@ from ..models import AgentRun, AgentRunRequest, RuntimeEvent
 from ..ontology import agent_contract
 from ..security import SecretCipher
 from .harness import HarnessContext, UnifiedHarness
-from .business_results import business_context
+from .business_results import business_context, structured_result
 
 
 class AgentRuntime:
@@ -62,6 +62,9 @@ class AgentRuntime:
         except ValueError as exc:
             return self._persist(session, context, request, operator, run_id, "failed", str(exc), None, events)
         emit("business/context-loaded", context=facts)
+        if request.domain_id == "product-match" and (not facts.get("product") or facts["product"]["status"] not in {"已审批", "已通过", "可用"}):
+            emit("governance/guard-checked", accepted=False, detail="产品版本未审批，库存与资格待核验")
+            return self._persist(session, context, request, operator, run_id, "failed", "产品未审批，无法形成可执行匹配；请补充产品资格与库存依据。", None, events)
         provider = self._resolve_provider(session, context.tenant_id, request.provider_id)
         if provider is None:
             emit("model/provider-missing", requested_provider_id=request.provider_id)
@@ -104,7 +107,9 @@ class AgentRuntime:
                     raise ValueError("内容结果必须包含有效标题和正文")
             elif request.domain_id == "audience-insight":
                 if provider.provider_type == "mock":
-                    output = {"text": "圈选需求已记录，待配置业务模型解析条件并由上游画像系统计算人数。", "selection": {"instruction": request.instruction, "requires_calculation": True}}
+                    matches = "三亚" in request.instruction or (not request.instruction and "三亚" in campaign.name)
+                    conditions = [{"field_code": "search_destination", "operator": "eq", "value": "三亚"}, {"field_code": "search_frequency_7d", "operator": "gte", "value": 2}] if matches else []
+                    output = {"object_type": "CustomerAggregate", "text": "受控规则样例仅支持三亚搜索客群，家庭属性仍需人工补齐。" if matches else "受控模型不支持解析此要求，请使用真实模型或人工配置条件。", "selection": {"conditions": conditions, "instruction": request.instruction, "requires_calculation": True, "supported": matches}}
                 else:
                     from ..business_sync import ProfileCondition
                     output = UnifiedHarness._parse_json(model_output)
@@ -118,15 +123,19 @@ class AgentRuntime:
                     output["selection"] = {"conditions": checked, "requires_calculation": True}
                     output["text"] = str(output.get("text") or "圈选条件已解析，等待计算人数")
             else:
-                output = {"text": model_output}
+                output = structured_result(request.domain_id, facts, model_output)
+            if request.domain_id == "content-generation":
+                output["visual"] = {"theme": "family", "headline": output["title"], "destination": (facts.get("audience") or {}).get("name", "出游推荐"), "benefit": (facts.get("product") or {}).get("description", ""), "mode": "可编辑模板，文字由当前模型生成"}
+            output["object_type"] = {"content-generation": "ContentAsset", "audience-insight": "CustomerAggregate"}.get(request.domain_id, output.get("object_type", "Recommendation"))
             output["context"] = facts
             output["provider_type"] = provider.provider_type
+            output["execution"] = "governed-mock" if provider.provider_type == "mock" else "model"
             emit("business/result-generated", output=output)
         except Exception as exc:
             emit("model/invocation-failed", error_type=type(exc).__name__)
             return self._persist(session, context, request, operator, run_id, "failed", f"模型调用失败：{exc}", provider.id, events)
         emit("tool/post-execute", outputs=domain.output_types, provenance=provider.display_name)
-        needs_approval = request.domain_id in {"activity-orchestration", "content-generation"}
+        needs_approval = True
         status = "needs_approval" if needs_approval else "completed"
         emit("governance/human-review", required=needs_approval)
         emit("agent/run-finished", status=status)

@@ -1,3 +1,12 @@
+## v3.17 - 2026-10-10
+
+- Added four competition cases, explicit simulated business date, aggregate persona changes, demand scoring evidence, import outcome examples, and channel timing rationale.
+- Added approval readiness gates and content review, including per-channel coverage and version-scoped checks.
+- Added typed agent candidates and human acceptance for value propositions, strategy touchpoints and reviews, with provenance and blocked traces.
+- Added transactional business-to-ontology projection, source documents and claims, activity-focused graphs, localized vocabulary, and narrow-screen layout.
+- Added home summary, case gallery, six-agent cards, readable traces, editable visual SVG drafts, and explicit attribution boundaries.
+- Added regression coverage for seed idempotency, tenant isolation, typed acceptance, graph synchronization, review gates, default-model repair and attribution constraints.
+
 ## v3.16 - 2026-10-09
 
 - Replaced the static campaign wizard with tenant-backed V1 draft configuration and a submit-for-approval action.

@@ -1,3 +1,4 @@
+from fixtures_business import complete_campaign
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -293,12 +294,11 @@ def test_content_edit_retains_provenance_and_requires_review_after_changes() -> 
 def test_approval_references_protect_product_and_content_from_in_place_edits() -> None:
     with TestClient(app) as client:
         headers = _auth_headers(client)
-        product = client.post("/api/product-packages", headers=headers, json={"name": "审批保护产品"}).json()
-        asset = client.post("/api/content-assets", headers=headers, json={"name": "审批保护内容", "body": "提交审核的正文"}).json()
         campaign = client.post("/api/campaigns", headers=headers, json={"name": "审批保护活动", "channels": ["App"]}).json()
+        materials = complete_campaign(client, headers, campaign["id"])
+        product = next(p for p in client.get('/api/product-packages',headers=headers).json() if p['id']==materials['product_package_id'])
+        asset = next(a for a in client.get('/api/content-assets',headers=headers).json() if a['id']==materials['content_asset_ids'][0])
         url = f"/api/campaigns/{campaign['id']}"
-        response = client.put(url, headers=headers, json={"name": campaign["name"], "product_package_id": product["id"], "content_asset_ids": [asset["id"]]})
-        assert response.status_code == 200
         version = client.get(url + "/versions", headers=headers).json()[0]
         assert client.post(url + f"/versions/{version['id']}/approval", headers=headers).status_code == 201
         assert client.put(f"/api/content-assets/{asset['id']}", headers=headers, json={**asset, "body": "不能绕过审批修改"}).status_code == 409

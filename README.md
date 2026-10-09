@@ -8,7 +8,9 @@
 
 面向东方航空营销、产品、运营、审批和分析人员的智能营销工作台。平台以用户画像和营销活动为主线，连接客群、产品、内容、审批与渠道结果，通过 AI 智能域提供业务建议，并保留人工确认、租户权限和业务处理记录。当前以竞赛演示和标准接口为目标，真实画像、可售校验与交易归因等待上游接入。
 
-> **当前版本**：`v3.16`　|　**部署形态**：Docker Compose + PostgreSQL / 本地 SQLite 排练　|　**后端**：FastAPI　|　**前端**：工作台 `apps/web-v32`
+> **当前版本**：`v3.17`　|　**部署形态**：Docker Compose + PostgreSQL / 本地 SQLite 排练　|　**后端**：FastAPI　|　**前端**：工作台 `apps/web-v32`
+
+竞赛排练说明：[v3.17 演示手卡](docs/demo-runbook-v3.17.md)。
 
 [![Quality](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/quality.yml/badge.svg)](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/quality.yml)
 [![Deploy](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/deploy-production.yml/badge.svg)](https://github.com/PLiO-LIN/CeairMarketing/actions/workflows/deploy-production.yml)

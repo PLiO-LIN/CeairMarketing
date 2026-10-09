@@ -63,12 +63,12 @@ def test_agent_chat_does_not_expose_provider_secrets() -> None:
 
 def test_all_six_marketing_domains_use_harness_and_governance() -> None:
     domains = {
-        "opportunity-insight": "completed",
-        "audience-insight": "completed",
-        "product-match": "completed",
+        "opportunity-insight": "needs_approval",
+        "audience-insight": "needs_approval",
+        "product-match": "needs_approval",
         "activity-orchestration": "needs_approval",
         "content-generation": "needs_approval",
-        "effect-analysis": "completed",
+        "effect-analysis": "needs_approval",
     }
     with TestClient(app) as client:
         auth, tenants = login(client)
@@ -76,7 +76,7 @@ def test_all_six_marketing_domains_use_harness_and_governance() -> None:
         headers = tenant_headers(auth, hq["id"])
 
         audience = client.post("/api/audience-packages", headers=headers, json={"name": "智能域测试客群", "status": "草稿", "expression": {"destination": "三亚"}}).json()
-        product = client.post("/api/product-packages", headers=headers, json={"name": "智能域测试产品", "description": "行李与选座组合"}).json()
+        product = client.post("/api/product-packages", headers=headers, json={"name": "智能域测试产品", "description": "行李与选座组合", "status": "已审批"}).json()
         for domain_id, expected_status in domains.items():
             response = client.post(
                 "/api/agent-runs",
