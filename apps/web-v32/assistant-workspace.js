@@ -62,7 +62,9 @@
         const seenTasks = new Set();
         for (const msg of value.messages) {
           const wrapper = document.createElement('div'); wrapper.className = 'assistant-message ' + msg.role + (msg.status === 'failed' ? ' has-error' : '');
-          wrapper.innerHTML = `<div class="${msg.role === 'assistant' ? 'assistant-live-body' : 'assistant-user-body'}"><div class="assistant-answer">${esc(msg.content)}</div><div class="assistant-ui-output"></div></div>`;
+          const bodyClass = msg.role === 'assistant' ? 'assistant-live-body' : 'assistant-user-body';
+          const output = msg.role === 'assistant' ? '<div class="assistant-ui-output"></div>' : '';
+          wrapper.innerHTML = `<div class="${bodyClass}"><div class="assistant-answer">${esc(msg.content)}</div>${output}</div>`;
           messages.append(wrapper); const answer = $('.assistant-answer', wrapper); if (msg.role === 'assistant') formatAnswer(answer, msg.content);
           if (msg.status === 'failed') answer.setAttribute('role', 'alert');
           if(msg.role==='assistant'&&msg.detail?.trace?.length)window.createAssistantProcess($('.assistant-live-body',wrapper)).restore(msg.detail.trace,msg.status==='failed');

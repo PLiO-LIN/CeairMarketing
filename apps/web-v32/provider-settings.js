@@ -129,7 +129,7 @@
       syncTenant(); const list = $('#modelTable'), host = $('#providerConfig'); if (!list || !host) return;
       const providers = api.providers(); if (!providers.some(p => p.id === selected)) selected = providers.find(p => p.is_default)?.id || providers[0]?.id;
       $('#modelCount').textContent = providers.length + ' 个';
-      list.innerHTML = providers.map(item => `<button class="provider-list-item ${item.id === selected ? 'is-selected' : ''}" type="button" data-select-provider="${item.id}" aria-pressed="${item.id === selected}">${logo(vendorFor(item))}<span><b>${esc(item.display_name)}</b><small>${esc(item.model_name)}</small></span><em>${item.is_default ? '默认' : item.enabled ? '启用' : '停用'}</em></button>`).join('');
+      list.innerHTML = providers.map(item => `<button class="provider-list-item ${item.id === selected ? 'is-selected' : ''}" type="button" data-select-provider="${item.id}" aria-pressed="${item.id === selected}" title="${esc(item.display_name)} · ${esc(item.model_name)}">${logo(vendorFor(item))}<span><b>${esc(item.display_name)}</b><small>${esc(item.model_name)}</small></span><em>${item.is_default ? '默认' : item.enabled ? '启用' : '停用'}</em></button>`).join('');
       list.onclick = e => { const button = e.target.closest('[data-select-provider]'); if (!button) return; const form = $('[data-provider-form]', host); if (form?.dataset.dirty === 'true') drafts.set(selected, read(form)); selected = Number(button.dataset.selectProvider); render(true); };
       const item = providers.find(p => p.id === selected);
       if (!item) { host.innerHTML = '<div class="provider-empty">添加模型服务后开始配置</div>'; return; }

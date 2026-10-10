@@ -181,6 +181,130 @@ body.preview-ui #marketingAssistant .assistant-fab::before, body.preview-ui #mar
 body.preview-ui #marketingAssistant .assistant-fab-mark { width: 36px; height: 36px; filter: none; animation: none; }
 body.preview-ui #marketingAssistant .assistant-fab > span { display: none; }
 
+/* 实时与历史消息采用相同的气泡结构，按内容收高。 */
+.assistant-panel .assistant-message.user,
+.assistant-panel .assistant-message.user > .assistant-user-body,
+.assistant-panel .assistant-message.user .assistant-answer {
+  min-height: 0;
+  height: auto;
+}
+.assistant-panel .assistant-message.user {
+  flex: 0 0 auto;
+  align-self: flex-end;
+  white-space: normal;
+}
+.assistant-panel .assistant-message.user > .assistant-user-body {
+  padding: 0;
+  border: 0;
+  background: transparent !important;
+  box-shadow: none;
+}
+.assistant-panel .assistant-message.user .assistant-answer {
+  white-space: pre-wrap;
+  color: inherit;
+}
+.assistant-panel .assistant-message.assistant,
+.assistant-panel .assistant-message.assistant > .assistant-live-body {
+  min-height: 0;
+  white-space: normal;
+}
+.assistant-panel .assistant-answer:empty { display: none; }
+
+/* 模型服务左栏收口长名称，任何厂商名都不能侵入右侧配置表单。 */
+body.preview-ui .provider-settings,
+body.preview-ui .provider-sidebar,
+body.preview-ui .provider-list,
+body.preview-ui .provider-list-item {
+  min-width: 0;
+  max-width: 100%;
+}
+body.preview-ui .provider-sidebar,
+body.preview-ui .provider-list {
+  overflow-x: hidden;
+}
+body.preview-ui .provider-list-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+body.preview-ui .provider-list-item > span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+body.preview-ui .provider-list-item em {
+  min-width: 0;
+  max-width: 42px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.preview-ui .provider-config,
+body.preview-ui .provider-config > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 首页沿用官网的白色收尾，内容结束后只保留必要呼吸空间，不露出灰色画布。 */
+html:has(body.dongdong-mode) {
+  background: #fff;
+}
+body.dongdong-mode {
+  min-height: 100vh;
+  background-color: #fff;
+}
+body.dongdong-mode .dongdong-view {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 156px);
+  padding-bottom: 0 !important;
+}
+body.dongdong-mode .dongdong-band { flex: 0 0 auto; }
+body.dongdong-mode .dongdong-inner {
+  flex: 0 0 auto;
+  width: 100%;
+  padding-bottom: 16px;
+}
+body.dongdong-mode .dongdong-quick {
+  margin-bottom: 0;
+}
+.dongdong-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 14px 24px;
+  min-height: 56px;
+  color: var(--ceair-muted);
+  font-size: 12px;
+  background: #fff;
+}
+.dongdong-footer::before, .dongdong-footer::after {
+  content: '';
+  width: min(18vw, 220px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #d2deec);
+}
+.dongdong-footer::after { transform: rotate(180deg); }
+.dongdong-footer svg { width: 18px; height: 18px; color: var(--ceair-blue); }
+.dongdong-footer a { color: var(--ceair-blue); text-decoration: none; }
+.dongdong-footer a:hover { text-decoration: underline; }
+@media (min-width: 1400px) {
+  body.dongdong-mode .dongdong-band { height: clamp(145px, calc(17vw - 72px), 330px); }
+}
+@media (max-width: 820px) {
+  body.dongdong-mode .dongdong-view { min-height: calc(100dvh - 156px); }
+}
+@media (max-width: 560px) {
+  body.dongdong-mode .dongdong-view { min-height: calc(100dvh - 164px); }
+  .dongdong-footer { gap: 8px; padding-inline: 16px; }
+  .dongdong-footer::before, .dongdong-footer::after { flex: 1; min-width: 0; }
+  .dongdong-footer span, .dongdong-footer a { white-space: nowrap; }
+}
+
 @media (max-width: 1180px) {
   body.preview-ui .content { padding-inline: 22px !important; }
   body.preview-ui .topbar { padding-inline: 22px; }

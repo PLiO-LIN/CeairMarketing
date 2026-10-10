@@ -1963,7 +1963,7 @@ function mountMarketingAssistantV2(){
       workspace.setTitle(message);
       panel.classList.add('has-conversation');
       q('.assistant-welcome',panel)?.remove();
-      if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div>'+escapeHtml(message)+'</div></div>');
+      if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div class="assistant-user-body"><div class="assistant-answer">'+escapeHtml(message)+'</div></div></div>');
       const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><div class="assistant-answer is-streaming" aria-live="polite"></div><div class="assistant-ui-output"></div></div>';if(!retryWrap)messages.appendChild(wrap);
       const answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap),process=window.createAssistantProcess(q('.assistant-live-body',wrap)),ui=workspace.renderer(q('.assistant-ui-output',wrap));messages.scrollTop=messages.scrollHeight;
       const acceptUI=message=>{try{ui.accept(message);}catch{if(!q('.assistant-ui-error',wrap)){const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';q('.assistant-ui-output',wrap).append(error);}}};
