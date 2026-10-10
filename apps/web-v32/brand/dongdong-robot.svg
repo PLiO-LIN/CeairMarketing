@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="东东机器人">
+  <defs><linearGradient id="blue" x2="0" y2="1"><stop stop-color="#235aab"/><stop offset="1" stop-color="#123872"/></linearGradient></defs>
+  <circle cx="48" cy="48" r="46" fill="#edf4ff"/>
+  <path d="M48 20v-6" stroke="#173f75" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="48" cy="12" r="5" fill="#ce2038"/>
+  <rect x="15" y="37" width="10" height="23" rx="5" fill="#ce2038"/>
+  <rect x="71" y="37" width="10" height="23" rx="5" fill="#ce2038"/>
+  <rect x="23" y="23" width="50" height="49" rx="17" fill="url(#blue)"/>
+  <rect x="29" y="31" width="38" height="31" rx="11" fill="#fff"/>
+  <circle cx="39" cy="44" r="4" fill="#173f75"/><circle cx="57" cy="44" r="4" fill="#173f75"/>
+  <path d="M40 54q8 6 16 0" fill="none" stroke="#ce2038" stroke-width="3" stroke-linecap="round"/>
+  <path d="M35 76h26" stroke="#173f75" stroke-width="7" stroke-linecap="round"/>
+  <path d="M38 68h20" stroke="#d9e8ff" stroke-width="3" stroke-linecap="round"/>
+</svg>

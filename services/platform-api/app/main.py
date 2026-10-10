@@ -1,7 +1,9 @@
 import json
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import queue
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -1371,6 +1373,7 @@ def run_agent(request: AgentRunRequest, context: TenantContext = Depends(require
 def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = Depends(require_write)):
     """SSE chat channel: harness events arrive before answer tokens."""
     events: queue.Queue[dict[str, object]] = queue.Queue()
+    request_id = uuid4().hex[:12]
 
     def worker() -> None:
         try:
@@ -1383,8 +1386,11 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
                     token_sink=lambda token: events.put({"type": "token", "text": token}),
                 )
                 events.put({"type": "result", "result": result.model_dump(mode="json")})
-        except Exception as exc:
-            events.put({"type": "error", "message": f"智能体运行失败：{exc}"})
+        except ValueError as exc:
+            events.put({"type": "error", "message": str(exc)})
+        except Exception:
+            logging.getLogger(__name__).exception("Agent chat failed (request %s)", request_id)
+            events.put({"type": "error", "message": f"智能体服务暂不可用，请稍后重试。参考编号：{request_id}"})
         finally:
             events.put({"type": "done"})
 
@@ -1395,8 +1401,16 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
 
     def stream():
         yield ": ceair-agent-stream\n\n"
+        deadline = time.monotonic() + 230
         while True:
-            item = events.get()
+            if time.monotonic() >= deadline:
+                yield encode("error", {"message": "智能体响应超时，请查看运行记录后重试。"})
+                break
+            try:
+                item = events.get(timeout=min(15, max(0.01, deadline - time.monotonic())))
+            except queue.Empty:
+                yield ": heartbeat\n\n"
+                continue
             kind = item.get("type")
             if kind == "trace":
                 yield encode("trace", item["item"])

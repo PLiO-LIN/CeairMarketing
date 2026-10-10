@@ -20,6 +20,8 @@ jobs:
         run: node scripts/check-production-copy.mjs
       - name: Check packaged browser assets
         run: node scripts/check-web-assets.mjs
+      - name: Verify agent chat streaming and failure recovery
+        run: node --test scripts/tests/agent-stream.test.cjs
       - name: Check whitespace
         run: git diff --check
 

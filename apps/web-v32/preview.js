@@ -13,6 +13,11 @@
   let sidebarToggle;
   let refreshTimer;
   let originalLogoSrc;
+  let lastActiveView;
+  const collapseKey = 'ceair-sidebar-groups';
+  let collapsed;
+  try { collapsed = JSON.parse(localStorage.getItem(collapseKey) || '{"planning":true,"execution":true,"governance":true}'); } catch { collapsed = {}; }
+  if (!collapsed || typeof collapsed !== 'object' || Array.isArray(collapsed)) collapsed = {};
 
   function query(selector, root = document) { return root.querySelector(selector); }
   function queryAll(selector, root = document) { return Array.from(root.querySelectorAll(selector)); }
@@ -25,7 +30,7 @@
     sidebar.className = 'preview-sidebar';
     sidebar.id = 'previewSidebar';
     sidebar.setAttribute('aria-label', '内页导航');
-    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="sparkles"></i><span>东东AI伙伴</span><small>回到智能营销首页</small></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><div class="preview-nav-label"><i data-lucide="${group.icon}"></i><span>${group.label}</span></div><div class="preview-nav-items">${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span>${view === 'campaigns' ? '<em class="preview-nav-count" data-preview-campaign-count>0</em>' : ''}</button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">张</span><div><b>营销运营中心</b><small>张琳 · 华东区域</small></div></div><span class="preview-local-label"><i data-lucide="shield-check"></i><span>本地工作台</span></span></div>`;
+    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="bot"></i><span>东东</span></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span>${view === 'campaigns' ? '<em class="preview-nav-count" data-preview-campaign-count>0</em>' : ''}</button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
     const app = query('.app');
     app?.insertBefore(sidebar, query('.main'));
     if (!sidebarToggle && app) {
@@ -102,6 +107,11 @@
 
   function updateActiveNav() {
     const active = query('.view.active')?.id || 'dongdong';
+    if (active !== lastActiveView) {
+      const group = query(`[data-preview-view="${active}"]`, sidebar)?.closest('.preview-nav-group');
+      if (group) setGroupExpanded(group, true);
+      lastActiveView = active;
+    }
     queryAll('[data-preview-view], .preview-home, .preview-topbar-home').forEach(button => {
       const selected = button.dataset.view === active;
       button.classList.toggle('active', selected);
@@ -109,7 +119,8 @@
     });
     queryAll('.preview-nav-group').forEach(group => group.classList.toggle('active', !!query(`.preview-nav-items [data-preview-view].active`, group)));
     const campaignCount = query('[data-view="campaigns"] .nav-count')?.textContent;
-    query('[data-preview-campaign-count]')?.replaceChildren(document.createTextNode(campaignCount || '0'));
+    const count = query('[data-preview-campaign-count]');
+    if (count && count.textContent !== (campaignCount || '0')) count.textContent = campaignCount || '0';
     const identity = query('.topnav .user');
     const tenant = query('.preview-tenant b', sidebar);
     const user = query('.preview-tenant small', sidebar);
@@ -120,6 +131,14 @@
     if (user.textContent !== userText) user.textContent = userText;
     const initial = identity?.dataset.displayName?.slice(0, 1) || '用';
     if (avatar.textContent !== initial) avatar.textContent = initial;
+  }
+
+  function setGroupExpanded(group, expanded) {
+    const button = query('[data-toggle-group]', group), items = query('.preview-nav-items', group);
+    button.setAttribute('aria-expanded', String(expanded));
+    items.hidden = !expanded;
+    collapsed[group.dataset.previewGroup] = !expanded;
+    try { localStorage.setItem(collapseKey, JSON.stringify(collapsed)); } catch { /* Navigation remains usable without storage. */ }
   }
 
   function refresh() {
@@ -149,6 +168,12 @@
     buildSidebar();
     buildPreviewControls();
     document.addEventListener('click', event => {
+      const groupToggle = event.target.closest('[data-toggle-group]');
+      if (groupToggle) {
+        event.preventDefault();
+        setGroupExpanded(groupToggle.closest('.preview-nav-group'), groupToggle.getAttribute('aria-expanded') !== 'true');
+        return;
+      }
       if (sidebar && sidebarToggle && sidebar.classList.contains('is-open') && !event.target.closest('#previewSidebar, .preview-sidebar-toggle')) {
         setSidebarOpen(false);
       }

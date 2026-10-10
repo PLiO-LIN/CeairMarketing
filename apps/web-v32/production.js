@@ -24,7 +24,7 @@
   let selectedPreviewChannel = 'App';
   const q = (selector, root = document) => root.querySelector(selector);
   const qa = (selector, root = document) => [...root.querySelectorAll(selector)];
-  function bindProductionModal(layer, { closeSelector = '[data-close]' } = {}) {
+  function bindProductionModal(layer, { closeSelector = '[data-close]', onClose } = {}) {
     if (!layer || layer.dataset.modalBound === 'true') return layer?.__closeProductionModal;
     const previousFocus = document.activeElement;
     let closed = false;
@@ -34,6 +34,7 @@
       layer.hidden = true;
       layer.setAttribute('aria-hidden', 'true');
       layer.remove();
+      onClose?.();
       if (previousFocus && typeof previousFocus.focus === 'function' && document.contains(previousFocus)) previousFocus.focus();
     };
     layer.dataset.modalBound = 'true';
@@ -129,12 +130,11 @@
     const selected=definitions.some(item=>item[0]===key)?key:definitions[0][0]; businessSubviewState.set(viewId,selected);
     qa('[data-business-subview]',view).forEach(button=>{const active=button.dataset.businessSubview===selected;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
     qa('[data-subview-panel]',view).forEach(element=>{element.hidden=!subviewContains(element,selected);}); view.dataset.activeSubview=selected;
-    const definition=definitions.find(item=>item[0]===selected),context=q('[data-subview-context]',view); if(context&&definition)context.textContent=definition[2];
     if(viewId==='audiences'){
       const list=q('#audiences [data-audience-list]');
       const heading=q('.panel-head h2',list),hint=q('.panel-head span',list);
       if(heading)heading.textContent=selected==='packages'?'客群包':'画像字段';
-      if(hint)hint.textContent=selected==='packages'?'可直接用于营销活动的组合客群':'用户画像平台同步的底层画像条件';
+      if(hint)hint.remove();
     }
     if(viewId==='graph'&&(selected==='schema'||selected==='instances')){const target=q(`[data-knowledge-view=${selected}]`,view);if(target&&!target.classList.contains('active'))target.click();}
     if(viewId==='graph'&&selected==='instances')requestAnimationFrame(()=>renderDynamicGraph());
@@ -143,7 +143,7 @@
   function ensureBusinessSubviewNavigation(viewId){
     const view=q('#'+viewId),definitions=businessSubviewDefinitions[viewId]; if(!view||!definitions)return;
     let nav=q(':scope > .business-subview-shell',view); if(!nav){nav=document.createElement('div');nav.className='business-subview-shell';nav.setAttribute('role','tablist');nav.setAttribute('aria-label',(q('.page-head h1',view)?.textContent||'业务')+'子页面');q(':scope > .page-head',view)?.insertAdjacentElement('afterend',nav);}
-    nav.innerHTML=`<div class=business-subview-tabs>${definitions.map(item=>`<button type=button role=tab data-business-subview=${item[0]}><i data-lucide=${item[3]}></i><span>${item[1]}</span></button>`).join('')}</div><p data-subview-context></p>`;
+    nav.innerHTML=`<div class=business-subview-tabs>${definitions.map(item=>`<button type=button role=tab data-business-subview=${item[0]}><i data-lucide=${item[3]}></i><span>${item[1]}</span></button>`).join('')}</div>`;
     activateBusinessSubview(viewId,businessSubviewState.get(viewId)||definitions[0][0],{silent:true});
     if(viewId==='approvals')renderApprovalHistoryPanel();
     if(viewId==='execution')renderExecutionBatchPanel();
@@ -584,7 +584,7 @@
 </i>租户与用户</button>`);
     const content = q('.content');
     if (!q('#imports')) content.insertAdjacentHTML('beforeend', `<section id="imports" class="view">
-<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1><p>\u6295\u9012\u6587\u6863\u3001\u8868\u683c\u548c\u7ed3\u6784\u5316\u6570\u636e\uff0c\u7cfb\u7edf\u81ea\u52a8\u89e3\u6790\u5e76\u66f4\u65b0\u77e5\u8bc6\u5e95\u5ea7</p></div><div class="page-actions"><button class="btn" id="syncNdcFlight"><i data-lucide="plane-takeoff"></i>同步 NDC24.1 模拟航班</button><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div></div>
+<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1></div><div class="page-actions"><button class="btn" id="syncNdcFlight"><i data-lucide="plane-takeoff"></i>同步 NDC24.1 模拟航班</button><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div></div>
 <div class="ingestion-workbench">
 <div class="panel ingestion-entry"><div class="panel-head"><h2>\u6295\u9012\u6570\u636e\u6587\u4ef6</h2><span>\u5355\u6587\u4ef6\u4e0d\u8d85\u8fc7 20MB</span></div><div class="panel-body">
 <div class="pipeline-dropzone" id="pipelineDropzone" tabindex="0" role="button" aria-label="\u9009\u62e9\u6216\u62d6\u62fd\u6587\u4ef6"><input id="pipelineFiles" type="file" multiple accept=".txt,.md,.json,.csv,.pdf,.png,.jpg,.jpeg,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.html"><span class="dropzone-icon"><i data-lucide="cloud-upload"></i></span><b>\u5c06\u6587\u4ef6\u62d6\u5230\u8fd9\u91cc</b><p>\u6216\u70b9\u51fb\u9009\u62e9\u6587\u4ef6\uff0c\u53ef\u4e00\u6b21\u6295\u9012\u591a\u4e2a</p><small>PDF / Word / Excel / PPT / CSV / JSON / TXT / \u56fe\u7247</small></div>
@@ -597,7 +597,6 @@
 <div class="page-head">
 <div>
 <h1>模型配置</h1>
-<p>为当前租户配置可替换的大模型服务，智能域运行时按租户选择模型</p>
 </div>
 </div>
 <div class="production-grid">
@@ -653,7 +652,6 @@
 <div class="page-head">
 <div>
 <h1>租户与用户</h1>
-<p>管理营销运营组织、账号、角色和数据权限边界</p>
 </div>
 </div>
 <div class="production-grid">
@@ -818,7 +816,7 @@
     const sources=tenantData.opportunitySources||[], runs=tenantData.opportunityRuns||[];
     const sourceRows=sources.map(item=>`<div class="insight-source-row"><label><input type="checkbox" data-insight-source value="${item.id}" ${item.enabled?'checked':''}><span><b>${escapeHtml(displayText(item.name,'未命名来源'))}</b><small>${escapeHtml(displayText(item.focus,'未配置关注点'))}</small></span></label><em>${escapeHtml(item.schedule||'manual')}</em><button class="btn compact" data-insight-source-edit="${item.id}">编辑</button><button class="btn compact danger" data-insight-source-delete="${item.id}">删除</button></div>`).join('');
     const runRows=runs.map(item=>`<tr><td><strong>${escapeHtml(item.id)}</strong><small>${escapeHtml(displayText(item.prompt,'未填写洞察要求'))}</small></td><td>${escapeHtml(item.current_stage)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td>${item.step_count||0}</td><td><button class="btn compact" data-insight-run-view="${item.id}">查看进度</button></td></tr>`).join('');
-    panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2><span>按业务人员配置的网站与关注点，汇聚多来源信号，形成可核验、可执行的营销机会</span></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕东航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button><span>选择来源后启动，任务会持续记录每一步进度</span></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
+    panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕东航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
     if(window.lucide)lucide.createIcons();
   }
   function renderKnowledgeDocuments(){
@@ -1178,7 +1176,7 @@
       const rows=state.visibleCampaigns.slice(0,8).map(item=>`<tr><td><strong>${escapeHtml(item.name)}</strong></td><td>${escapeHtml(item.stage||'未设置')}</td><td>${escapeHtml(item.owner||'未指定')}</td><td>${escapeHtml(item.version||'V1')}</td><td><span class='status ${statusClass(item.status)}'>${escapeHtml(item.status||'草稿')}</span></td><td class='action' data-open-campaign='${escapeHtml(item.name)}'>查看</td></tr>`).join('');
       table.innerHTML=`<thead><tr><th>活动</th><th>当前节点</th><th>负责人</th><th>版本</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows||`<tr><td colspan='6'>${dashboardEmpty('当前租户暂无活动','createCampaign','新建活动')}</td></tr>`}</tbody>`;
     }
-    const head=q('.panel-head span',panel);if(head)head.textContent=`${state.visibleCampaigns.length}个活动 · 当前用户可见范围`;
+    const head=q('.panel-head span',panel);if(head)head.textContent=`${state.visibleCampaigns.length} 个活动`;
   }
 
   function renderDashboardTodos(state) {
@@ -1201,7 +1199,7 @@
       const values=[...groups.entries()].sort((a,b)=>(b[1].score/b[1].count)-(a[1].score/a[1].count)).slice(0,6),max=Math.max(...values.map(([,v])=>v.score/v.count),1);
       bars.innerHTML=values.length?`${values.map(([name,value])=>{const score=value.score/value.count;return `<div><span>${escapeHtml(name)}</span><i><em style='width:${Math.round(score/max*100)}%'></em></i><b>${value.count}</b></div>`;}).join('')}`:dashboardEmpty('当前暂无机会数据','scanOpportunity','扫描机会');
     }
-    const head=q('.panel-head span',barsPanel);if(head)head.textContent=state.opportunities.length?`${state.opportunities.length}条机会 · 按市场范围聚合`:'当前租户暂无机会';
+    const head=q('.panel-head span',barsPanel);if(head)head.textContent=state.opportunities.length?`${state.opportunities.length} 条机会`:'当前租户暂无机会';
   }
 
   function renderDashboardHealth(state) {
@@ -1266,9 +1264,19 @@
     const objectives=['提升转化','促进出票','提升辅营购买','会员权益激活','航线淡季促销','企业客户线索转化'];
     const objectiveOptions=objectives.map(item=>`<option${item===contentGenerationContext.objective?' selected':''}>${item}</option>`).join('');
     const ready=Boolean(contentGenerationContext.campaign_id&&contentGenerationContext.audience_package_id&&contentGenerationContext.product_package_id&&contentGenerationContext.channel);
-    panel.innerHTML=`<div class="panel-head"><div><h2>生成上下文</h2><span>先确定活动、客群包、产品包和渠道，再生成可审核内容</span></div><span class="context-readiness ${ready?'ready':'pending'}">${ready?'配置完成':'待补齐必要信息'}</span></div><div class="panel-body"><form id="contentGenerationContextForm" class="content-context-form"><label><span>关联活动 <em>*</em></span><select name="campaign_id"><option value="">${campaigns.length?'请选择活动':'暂无活动，请先创建'}</option>${options(campaigns,item=>item.id,'campaign_id')}</select></label><label><span>目标客群包 <em>*</em></span><select name="audience_package_id"><option value="">${audiences.length?'请选择客群包':'暂无客群包，请先组合画像'}</option>${options(audiences,item=>item.id,'audience_package_id')}</select></label><label><span>活动产品包 <em>*</em></span><select name="product_package_id"><option value="">${products.length?'请选择产品包':'暂无产品包，请先创建'}</option>${options(products,item=>item.id,'product_package_id')}</select></label><label><span>目标渠道 <em>*</em></span><select name="channel">${channel}</select></label><label><span>内容目标</span><select name="objective">${objectiveOptions}</select></label><label class="context-instruction"><span>补充要求</span><input name="instruction" value="${escapeHtml(contentGenerationContext.instruction)}" placeholder="例如：突出行李权益，不使用最低价表述"/></label><button class="btn ai content-generate-trigger" type="button" data-action="generateContent" ${ready?'':'disabled'}><i data-lucide="wand-sparkles"></i>按当前上下文生成</button></form><div class="content-context-hint"><i data-lucide="info"></i><span>先查看生成结果与业务依据，人工确认后保存为内容草稿；随后可编辑、审核和按渠道预览。</span></div></div>`;
+    const contextHTML=`<div class="panel-head"><div><h2>生成配置</h2></div><span class="context-readiness ${ready?'ready':'pending'}">${ready?'配置完成':'待补齐必要信息'}</span></div><div class="panel-body"><form id="contentGenerationContextForm" class="content-context-form"><label><span>关联活动 <em>*</em></span><select name="campaign_id"><option value="">${campaigns.length?'请选择活动':'暂无活动，请先创建'}</option>${options(campaigns,item=>item.id,'campaign_id')}</select></label><label><span>目标客群包 <em>*</em></span><select name="audience_package_id"><option value="">${audiences.length?'请选择客群包':'暂无客群包，请先组合画像'}</option>${options(audiences,item=>item.id,'audience_package_id')}</select></label><label><span>活动产品包 <em>*</em></span><select name="product_package_id"><option value="">${products.length?'请选择产品包':'暂无产品包，请先创建'}</option>${options(products,item=>item.id,'product_package_id')}</select></label><label><span>目标渠道 <em>*</em></span><select name="channel">${channel}</select></label><label><span>内容目标</span><select name="objective">${objectiveOptions}</select></label><label class="context-instruction"><span>补充要求</span><input name="instruction" value="${escapeHtml(contentGenerationContext.instruction)}" placeholder="例如：突出行李权益，不使用最低价表述"/></label><button class="btn ai content-generate-trigger" type="button" data-action="generateContent" ${ready?'':'disabled'}><i data-lucide="wand-sparkles"></i>按当前上下文生成</button></form></div>`;
     panel.dataset.subviewPanel='assets tasks';
-    const form=q('#contentGenerationContextForm'); form?.addEventListener('change',()=>{contentContextValues();renderContentGenerationContext();});form?.addEventListener('input',()=>{contentContextValues();});
+    panel.innerHTML='<div class="panel-head"><h2>生成配置</h2><span class="context-readiness '+(ready?'ready':'pending')+'">'+(ready?'已配置':'待配置')+'</span><button class="btn" type="button" data-content-configure>配置与生成</button></div>';
+    q('[data-content-configure]',panel).onclick=()=>{
+      const layer=document.createElement('div');layer.className='production-modal content-config-modal';
+      layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>内容生成</b><button class="btn" type="button" data-close>关闭</button></div><div class="production-modal-body">'+contextHTML+'</div></div>';
+      document.body.append(layer);bindProductionModal(layer,{onClose:renderContentGenerationContext});
+      const form=q('#contentGenerationContextForm',layer);
+      const update=()=>{const values=contentContextValues();const valid=Boolean(values.campaign_id&&values.audience_package_id&&values.product_package_id&&values.channel);q('.content-generate-trigger',form).disabled=!valid;const state=q('.context-readiness',layer);state.textContent=valid?'已配置':'待配置';state.classList.toggle('ready',valid);state.classList.toggle('pending',!valid);};
+      form.addEventListener('change',update);form.addEventListener('input',update);
+      form.addEventListener('submit',event=>{event.preventDefault();const trigger=q('.content-generate-trigger',form);if(!trigger.disabled)trigger.click();});
+      if(window.lucide)lucide.createIcons();
+    };
     if(window.lucide)lucide.createIcons();
   }
   function renderContentPreview(item){
@@ -1283,7 +1291,7 @@
   function renderContents(){
     const table=q('#contents .table'); if(!table)return;
     const assets=tenantData.contentAssets||[];
-    const rows=assets.map(item=>`<tr class="${String(item.id)===String(selectedContentAssetId)?'selected-row':''}"><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.title||'')}</small></td><td>${escapeHtml(item.campaign_id||'未关联活动')}</td><td>${escapeHtml(item.channel)}</td><td>${escapeHtml(item.version)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td class="production-actions"><button class="btn" data-content-view="${item.id}">查看</button><button class="btn" data-content-visual="${item.id}">视觉</button>${["草稿","待审核"].includes(item.status)&&["admin","manager"].includes(activeTenant()?.role)?`<button class="btn" data-content-review="${item.id}">审核</button>`:""}<button class="btn" data-content-edit="${item.id}">编辑</button><button class="btn danger" data-content-delete="${item.id}">删除</button></td></tr>`).join('');
+    const rows=assets.map(item=>`<tr class="${String(item.id)===String(selectedContentAssetId)?'selected-row':''}"><td><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.title||'')}</small></td><td>${escapeHtml(item.campaign_id||'未关联活动')}</td><td>${escapeHtml(item.channel)}</td><td>${escapeHtml(item.version)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td class="production-actions"><button class="btn" data-content-view="${item.id}">查看</button><button class="btn" type="button" data-content-actions="${item.id}">更多</button></td></tr>`).join('');
     table.innerHTML=`<tr><th>内容名称</th><th>活动</th><th>渠道</th><th>版本</th><th>状态</th><th>操作</th></tr>${rows||'<tr><td colspan="6"><div class="empty-action">暂无内容资产。请先选择活动、客群包、产品包和渠道，再生成内容。</div></td></tr>'}`;
     const selected=assets.find(item=>String(item.id)===String(selectedContentAssetId))||assets[0];
     if(selected)selectedContentAssetId=String(selected.id);
@@ -1294,6 +1302,7 @@
   }
   async function generateContentFromContext(button){
     if(!canWrite())return;
+    if(!button.classList.contains('content-generate-trigger')){q('[data-content-configure]')?.click();return;}
     const context=contentContextValues();
     const missing=[];
     if(!context.campaign_id)missing.push('活动');
@@ -1304,6 +1313,7 @@
     const {campaign,audience,product,channel,objective,instruction}=contentContextSummary(context);
     if(!campaign||!audience||!product){toast('当前选择已失效，请重新选择活动、客群包和产品包');renderContentGenerationContext();return;}
     const label=button.querySelector('span')?.textContent||button.textContent||'按当前上下文生成';
+    q('.content-config-modal')?.__closeProductionModal?.();
     const previous=button.innerHTML;button.disabled=true;button.classList.add('is-loading');button.innerHTML='<i data-lucide="loader-circle" class="spin"></i>正在生成';
     const generationPanel=q('#contentGenerationPanel');
     if(generationPanel){generationPanel.innerHTML=`<div class="panel-head"><h2>任务进度</h2><span class="live-state is-active"><i></i>正在处理</span></div><div class="panel-body"><div class="content-progress"><div class="content-progress-head"><b>正在读取业务上下文</b><span>1/4</span></div><div class="content-progress-bar"><i style="width:22%"></i></div><ol><li class="active">读取活动：${escapeHtml(campaign.name)}</li><li>分析客群包：${escapeHtml(audience.name)}</li><li>校验产品包：${escapeHtml(product.name)}</li><li>生成 ${escapeHtml(channel)} 内容版本</li></ol></div></div>`;}
@@ -1755,7 +1765,7 @@
     const modules=[...new Set(types.map(item=>item.module||'semantic'))];
     const typeMap=new Map(types.map(item=>[item.id,item]));
     const links=[];relations.forEach(rel=>(rel.from_types||[]).forEach(from=>(rel.to_types||[]).forEach(to=>{if(typeMap.has(from)&&typeMap.has(to))links.push({source:from,target:to,label:rel.name||rel.id});})));
-    host.innerHTML='<div class="ontology-map-summary"><div><b>本体语义拓扑</b><span>按业务域组织对象类，点击任意节点聚焦上下游关系；节点属性与定义在右侧详情面板查看。</span></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象类、业务域或属性"></label><select data-ontology-module><option value="all">全部业务域</option>'+modules.map(item=>'<option value="'+escapeHtml(item)+'">'+escapeHtml(moduleLabels[item]||item)+'</option>').join('')+'</select><button type="button" class="btn" data-ontology-reset><i data-lucide="scan-search"></i>重置视图</button><span class="ontology-map-hint">拖动节点 · 滚轮缩放 · 点击聚焦</span></div><div class="ontology-map-legend">'+modules.map(item=>'<span><i style="background:'+colors[item]+'"></i>'+escapeHtml(moduleLabels[item]||item)+'</span>').join('')+'</div><div class="ontology-map-viewport"><svg class="ontology-map-canvas" viewBox="0 0 1240 690" role="img" aria-label="本体语义拓扑图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9bb6c6"></path></marker></defs><g class="ontology-map-root"><g class="ontology-map-edges"></g><g class="ontology-map-edge-labels"></g><g class="ontology-map-nodes"></g></g></svg></div>';
+    host.innerHTML='<div class="ontology-map-summary"><div><b>本体语义拓扑</b><span></span></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象类、业务域或属性"></label><select data-ontology-module><option value="all">全部业务域</option>'+modules.map(item=>'<option value="'+escapeHtml(item)+'">'+escapeHtml(moduleLabels[item]||item)+'</option>').join('')+'</select><button type="button" class="btn" data-ontology-reset><i data-lucide="scan-search"></i>重置视图</button><span class="ontology-map-hint">拖动节点 · 滚轮缩放 · 点击聚焦</span></div><div class="ontology-map-legend">'+modules.map(item=>'<span><i style="background:'+colors[item]+'"></i>'+escapeHtml(moduleLabels[item]||item)+'</span>').join('')+'</div><div class="ontology-map-viewport"><svg class="ontology-map-canvas" viewBox="0 0 1240 690" role="img" aria-label="本体语义拓扑图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9bb6c6"></path></marker></defs><g class="ontology-map-root"><g class="ontology-map-edges"></g><g class="ontology-map-edge-labels"></g><g class="ontology-map-nodes"></g></g></svg></div>';
     if(window.lucide)lucide.createIcons();
     const width=1240,height=690,svg=d3.select('.ontology-map-canvas',host),root=svg.select('.ontology-map-root'),edgeLayer=root.select('.ontology-map-edges'),labelLayer=root.select('.ontology-map-edge-labels'),nodeLayer=root.select('.ontology-map-nodes');
     const nodes=types.map(item=>({...item,title:item.name||item.id,module:item.module||'semantic',attributes:item.attributes||[]}));
@@ -2013,6 +2023,13 @@
       }
       if(button.dataset.action==='newAudience'){if(!canWrite())return;showAudiencePackageCreator();return;}
       if(button.dataset.action==='viewAudienceSnapshot'){showAudienceSelectionModal();return;}
+      if(button.dataset.contentActions){
+        const item=(tenantData.contentAssets||[]).find(value=>String(value.id)===button.dataset.contentActions);if(!item)return;
+        const layer=document.createElement('div');layer.className='production-modal';
+        layer.innerHTML=`<div class="production-modal-card content-actions-card"><div class="production-modal-head"><b>${escapeHtml(item.name)}</b><button class="btn" type="button" data-close>关闭</button></div><div class="production-modal-body content-secondary-actions"><button class="btn" type="button" data-content-visual="${item.id}">视觉</button>${["草稿","待审核"].includes(item.status)&&["admin","manager"].includes(activeTenant()?.role)?`<button class="btn" data-content-review="${item.id}">审核</button>`:""}<button class="btn" data-content-edit="${item.id}">编辑</button><button class="btn danger" type="button" data-content-delete="${item.id}">删除</button></div></div>`;
+        document.body.append(layer);bindProductionModal(layer);
+        layer.addEventListener('click',event=>{if(event.target.closest('[data-content-visual],[data-content-review],[data-content-edit],[data-content-delete]'))layer.__closeProductionModal();});return;
+      }
       if(button.dataset.action==='newContent'){if(!canWrite())return;showContentEditor({name:'',campaign_id:contentGenerationContext.campaign_id||null,channel:'App',version:'V1',status:'草稿',generated_by:'manual',title:'',body:''});return;}
       if(button.dataset.action==='refreshAudienceCatalog'){if(!canWrite())return;button.disabled=true;try{await loadTenantData();toast('\u753b\u50cf\u76ee\u5f55\u5df2\u540c\u6b65\uff1a'+(tenantData.personaDimensions||[]).length+'\u4e2a\u753b\u50cf\u7ef4\u5ea6');}catch(cause){toast(cause.message||'\u753b\u50cf\u540c\u6b65\u5931\u8d25');}finally{button.disabled=false;}return;}
        if(button.dataset.action==='newProvider'){if(!isTenantAdmin())return;showProviderCreateEditor();return;}
@@ -2047,18 +2064,18 @@ function mountMarketingAssistantV2(){
     if(q('#marketingAssistant')) q('#marketingAssistant').remove();
     const root=document.createElement('div');
     root.id='marketingAssistant';
-    root.innerHTML=`<button class="assistant-fab" title="打开东东" aria-label="打开东东"><img class="assistant-fab-mark" src="./brand/dongdong-3d.png" alt=""><span>东东</span></button>
+    root.innerHTML=`<button class="assistant-fab" title="打开东东" aria-label="打开东东"><img class="assistant-fab-mark" src="./brand/dongdong-robot.svg" alt=""><span>东东</span></button>
       <section class="assistant-panel" hidden aria-label="东东对话框">
         <header class="assistant-drag-handle">
-          <div class="assistant-title"><div><b>东东</b><small>东航智慧营销智能体</small></div></div>
+          <div class="assistant-title"><div><b>东东</b></div></div>
           <div class="assistant-header-actions">
-            <span class="assistant-live"><i></i>在线</span>
+            <span class="assistant-live" role="status"><i></i><span>就绪</span></span>
             <button type="button" class="icon-btn" data-assistant-collapse aria-label="折叠对话框" title="折叠"><i data-lucide="minus"></i></button>
             <button type="button" class="icon-btn" data-assistant-close aria-label="关闭对话框" title="关闭"><i data-lucide="x"></i></button>
           </div>
         </header>
         <div class="assistant-messages"></div>
-        <form><textarea name="message" rows="1" placeholder="输入你的营销任务或目标，交给东东" autocomplete="off"></textarea><button class="btn primary" type="submit"><i data-lucide="arrow-up"></i><span>发送</span></button></form>
+        <form><textarea name="message" rows="1" aria-label="营销任务" placeholder="输入营销任务" autocomplete="off" maxlength="12000"></textarea><button class="btn" type="button" data-assistant-stop hidden>停止等待</button><button class="btn primary" type="submit"><i data-lucide="arrow-up"></i><span>发送</span></button></form>
       </section>`;
     document.body.appendChild(root);
     const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),header=q('.assistant-drag-handle',root),messages=q('.assistant-messages',root),form=q('form',root),input=q('textarea',root),collapseButton=q('[data-assistant-collapse]',root);
@@ -2098,25 +2115,59 @@ function mountMarketingAssistantV2(){
     };
     const setCollapsed=collapsed=>{panel.classList.toggle('is-collapsed',collapsed);collapseButton.innerHTML='<i data-lucide="'+(collapsed?'chevron-up':'minus')+'"></i>';collapseButton.setAttribute('aria-label',collapsed?'展开对话框':'折叠对话框');collapseButton.title=collapsed?'展开':'折叠';if(window.lucide)lucide.createIcons();saveLayout();};
     const conversation=[];
-    const send=async message=>{
+    const submitButton=q('[type=submit]',form),stopButton=q('[data-assistant-stop]',form),live=q('.assistant-live',root);
+    let currentRequest,conversationId='';
+    const setLive=(text,error=false)=>{q('span',live).textContent=text;live.classList.toggle('is-error',error);const home=q('.dongdong-live');if(home){home.innerHTML='<i></i>'+escapeHtml(text);home.classList.toggle('is-error',error);}};
+    stopButton.addEventListener('click',()=>currentRequest?.abort());
+    const send=async (message,retryWrap=null)=>{
+      message=String(message||'').trim();
       if(!message||form.dataset.busy)return;
-      form.dataset.busy='1';input.disabled=true;conversation.push({role:'user',content:message});
-      messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div>'+escapeHtml(message)+'</div></div>');
-      const wrap=document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在分析业务上下文</b></div><details class="assistant-trace-details"><summary><b>执行过程</b><span>实时</span></summary><div class="assistant-trace-list"></div></details><p class="assistant-answer is-streaming"></p></div>';messages.appendChild(wrap);
+      if(!canWrite()){setLive('无对话权限',true);return;}
+      const requestTenantId=activeTenant()?.id;
+      form.dataset.busy='1';input.disabled=true;submitButton.disabled=true;stopButton.hidden=false;setLive('处理中');
+      currentRequest=new AbortController();
+      if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div>'+escapeHtml(message)+'</div></div>');
+      const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><details class="assistant-trace-details"><summary><b>执行过程</b><span>处理中</span></summary><div class="assistant-trace-list"></div></details><p class="assistant-answer is-streaming" aria-live="polite"></p></div>';if(!retryWrap)messages.appendChild(wrap);
       const traceList=q('.assistant-trace-list',wrap),answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap);messages.scrollTop=messages.scrollHeight;
+      let finalAnswer='';
       try{
-        const response=await fetch(`${mount}/api/agent-chat/stream`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`,'X-Tenant-ID':String(activeTenant()?.id||'')},body:JSON.stringify({message,domain_id:'marketing-copilot',history:conversation.slice(-12,-1)})});
-        if(!response.ok)throw new Error((await response.json().catch(()=>({}))).detail||'智能体连接失败');
-        const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='',finalAnswer='';
-        const handleFrame=frame=>{const lines=frame.split(/\r?\n/),event=(lines.find(line=>line.startsWith('event:'))||'event: message').slice(6).trim(),dataText=lines.filter(line=>line.startsWith('data:')).map(line=>line.slice(5).trim()).join('');if(!dataText)return;const value=JSON.parse(dataText);if(event==='trace'){addTrace(traceList,value);const status=q('.assistant-streaming b',wrap);if(status)status.textContent=value.event==='harness/model-started'&&value.mode==='stream'?'正在生成答复':'正在'+(traceLabel[value.event]||'处理业务步骤');}if(event==='token'){finalAnswer+=value.text||'';answer.textContent=finalAnswer;messages.scrollTop=messages.scrollHeight;}if(event==='complete'){streaming?.remove();answer.classList.remove('is-streaming');conversation.push({role:'assistant',content:finalAnswer||value.answer||''});const summary=q('.assistant-trace-details summary span',wrap);if(summary)summary.textContent='已完成';if(value.sources?.length)answer.insertAdjacentHTML('afterend','<div class="assistant-sources">已引用 '+value.sources.length+' 条业务依据</div>');}if(event==='error'){streaming?.remove();answer.classList.remove('is-streaming');answer.textContent=value.message||'智能体运行失败';}};
-        while(true){const part=await reader.read();buffer+=decoder.decode(part.value||new Uint8Array(),{stream:!part.done});const frames=buffer.split(/\r?\n\r?\n/);buffer=frames.pop()||'';frames.forEach(handleFrame);if(part.done)break;}if(buffer.trim())handleFrame(buffer);
-      }catch(err){streaming?.remove();answer.classList.remove('is-streaming');answer.textContent='请求失败：'+(err.message||'请稍后重试');}
-      finally{form.dataset.busy='';input.disabled=false;input.focus();messages.scrollTop=messages.scrollHeight;}
+        const result=await window.CeairAgentStream.chat(`${mount}/api/agent-chat/stream`,{
+          signal:currentRequest.signal,
+          headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`,'X-Tenant-ID':String(requestTenantId||'')},
+          payload:{message,conversation_id:conversationId,domain_id:'marketing-copilot',history:conversation.slice(-12)},
+          onEvent:(event,value)=>{
+            if(event==='trace'){addTrace(traceList,value);const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
+            if(event==='token'){finalAnswer+=value.text||'';answer.textContent=finalAnswer;messages.scrollTop=messages.scrollHeight;}
+          }
+        });
+        finalAnswer=result.answer||finalAnswer;
+        if(!finalAnswer)throw new Error('后台未返回答复，请重试。');
+        answer.textContent=finalAnswer;conversationId=result.conversation_id||conversationId;
+        conversation.push({role:'user',content:message},{role:'assistant',content:finalAnswer});
+        q('.assistant-trace-details summary span',wrap).textContent='已完成';setLive('就绪');
+        if(result.sources?.length){
+          const sourcesButton=document.createElement('button');sourcesButton.type='button';sourcesButton.className='btn assistant-sources';sourcesButton.textContent='业务依据（'+result.sources.length+'）';
+          sourcesButton.onclick=()=>{const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>业务依据</b><button class="btn" type="button" data-close>关闭</button></div><div class="production-modal-body">'+result.sources.map(source=>'<article class="assistant-source-item"><b>'+escapeHtml(source.title||source.id)+'</b><p>'+escapeHtml(source.excerpt||'')+'</p></article>').join('')+'</div></div>';document.body.append(layer);bindProductionModal(layer);};answer.after(sourcesButton);
+        }
+        if(activeTenant()?.id===requestTenantId){
+          try{await loadTenantData();}
+          catch{answer.insertAdjacentHTML('afterend','<div class="assistant-sync-error" role="alert">答复已完成，业务列表刷新失败。<button type="button" class="btn" data-refresh-business>刷新列表</button></div>');q('[data-refresh-business]',wrap).onclick=async e=>{e.target.disabled=true;try{await loadTenantData();q('.assistant-sync-error',wrap)?.remove();}catch(cause){toast(cause.message);}finally{e.target.disabled=false;}};}
+        }
+      }catch(err){
+        q('.assistant-trace-details summary span',wrap).textContent=err.code==='cancelled'?'已停止等待':'未完成';
+        answer.textContent=err.message||'智能体请求失败，请重试。';answer.setAttribute('role','alert');wrap.classList.add('has-error');setLive(err.code==='cancelled'?'就绪':'连接异常',err.code!=='cancelled');
+        if(err.status!==401&&err.code!=='cancelled'){
+          const retry=document.createElement('button');retry.type='button';retry.className='btn assistant-retry';retry.textContent='重试';retry.onclick=()=>send(message,wrap);answer.after(retry);
+        }
+        if(err.status===401)logout();
+      }
+      finally{streaming?.remove();answer.classList.remove('is-streaming');form.dataset.busy='';input.disabled=false;submitButton.disabled=false;stopButton.hidden=true;currentRequest=null;if(!panel.hidden)input.focus();messages.scrollTop=messages.scrollHeight;}
     };
     fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}panel.hidden=!panel.hidden;if(!panel.hidden){restoreLayout();setCollapsed(false);input.focus();}});
     q('[data-assistant-close]',root).addEventListener('click',()=>{panel.hidden=true;saveLayout();});
     collapseButton.addEventListener('click',()=>setCollapsed(!panel.classList.contains('is-collapsed')));
     qa('[data-assistant-suggest]',root).forEach(button=>button.addEventListener('click',()=>send(button.dataset.assistantSuggest)));
+    submitButton.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();form.requestSubmit();});
     form.addEventListener('submit',event=>{event.preventDefault();const value=input.value.trim();if(!value)return;input.value='';input.style.height='auto';send(value);});
     input.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();form.requestSubmit();}});
     input.addEventListener('input',()=>{input.style.height='auto';input.style.height=Math.min(input.scrollHeight,104)+'px';});
@@ -2144,9 +2195,9 @@ function mountMarketingAssistantV2(){
     const host=q('#dongdongCapabilityGrid');if(!host)return;
     const domains=tenantData.domains||[];
     const note=q('#dongdongCapabilityCount');
-    if(note)note.textContent=domains.length?`${domains.length} 个智能域 · 当前租户已启用`:'智能域按租户启用';
+    if(note)note.textContent=domains.length?`${domains.length} 个智能域`:'智能域按租户启用';
     if(!domains.length){host.innerHTML='<div class="dongdong-cap-empty">'+(tenantDataReady?'当前租户尚未启用智能域，请先在模型配置中接入大模型服务':'正在加载智能域')+'</div>';return;}
-    host.innerHTML=domains.map(item=>`<div class="dongdong-cap"><b>${escapeHtml(displayText(item.name,'智能域'))}</b><p>${escapeHtml(displayText(item.responsibility,''))}</p>${item.module?`<small>${escapeHtml(item.module)}</small>`:''}</div>`).join('');
+    host.innerHTML=domains.map(item=>`<div class="dongdong-cap"><b>${escapeHtml(displayText(item.name,'智能域'))}</b></div>`).join('');
   }
   const dongdongModes={
     opportunity:{placeholder:'想发现什么机会？例如：三亚航线国庆前的预售窗口',chips:[
@@ -2222,7 +2273,7 @@ function mountMarketingAssistantV2(){
       ...(tenantData.imports||[]).map(item=>({time:item.completed_at||item.created_at,label:'导入 '+item.file_name,status:item.status})),
       ...(tenantData.runs||[]).map(item=>({time:item.created_at,label:(domainLabels[item.domain_id]||item.domain_id)+' '+item.id,status:item.status}))
     ].sort((a,b)=>new Date(b.time)-new Date(a.time)).slice(0,20);
-    q('.permission-layout',view).innerHTML='<div class="panel" data-subview-panel="roles"><div class="panel-head"><h2>当前账号授权</h2><span>按租户成员关系生效</span></div><div class="panel-body"><p>'+escapeHtml(session.display_name)+' · '+escapeHtml(activeTenant().name)+' · '+escapeHtml(roleLabels[role]||role)+'</p><table class="table"><tr><th>操作范围</th><th>权限</th></tr>'+rules.map(([name,allowed])=>'<tr><td>'+name+'</td><td>'+ (allowed?'允许':'只读 / 无权限')+'</td></tr>').join('')+'</table><p>当前工作区仅展示聚合画像；账号角色由“租户与用户”维护。</p></div></div><div class="panel" data-subview-panel="audit"><div class="panel-head"><h2>业务处理记录</h2><span>当前租户 · 最近20条</span></div><div class="panel-body"><table class="table"><tr><th>对象与操作</th><th>状态</th><th>时间</th></tr>'+records.map(item=>'<tr><td>'+escapeHtml(item.label)+'</td><td>'+escapeHtml(item.status)+'</td><td>'+escapeHtml(item.time?businessTime(item.time):'待处理')+'</td></tr>').join('')+'</table></div></div>';
+    q('.permission-layout',view).innerHTML='<div class="panel" data-subview-panel="roles"><div class="panel-head"><h2>当前账号授权</h2></div><div class="panel-body"><p>'+escapeHtml(session.display_name)+' · '+escapeHtml(activeTenant().name)+' · '+escapeHtml(roleLabels[role]||role)+'</p><table class="table"><tr><th>操作范围</th><th>权限</th></tr>'+rules.map(([name,allowed])=>'<tr><td>'+name+'</td><td>'+ (allowed?'允许':'只读 / 无权限')+'</td></tr>').join('')+'</table><p>当前工作区仅展示聚合画像；账号角色由“租户与用户”维护。</p></div></div><div class="panel" data-subview-panel="audit"><div class="panel-head"><h2>业务处理记录</h2><span>当前租户 · 最近20条</span></div><div class="panel-body"><table class="table"><tr><th>对象与操作</th><th>状态</th><th>时间</th></tr>'+records.map(item=>'<tr><td>'+escapeHtml(item.label)+'</td><td>'+escapeHtml(item.status)+'</td><td>'+escapeHtml(item.time?businessTime(item.time):'待处理')+'</td></tr>').join('')+'</table></div></div>';
   }
   function applyWorkbenchFilters(){
     ['opportunities','audiences','products','contents','campaigns'].forEach(viewId=>{
@@ -2398,7 +2449,7 @@ function mountMarketingAssistantV2(){
   function lifecycleRailHTML() {
     const home = '<button type="button" class="life life-home" data-lifecycle="overview"><span>营销总览</span><small>生命周期全景</small></button>';
     const steps = lifecycleStages.map(([view, ord, label, hint]) =>
-      `<button type="button" class="life" data-lifecycle="${view}"><b>${ord}</b><span>${label}</span><small>${hint}</small></button>`
+      `<button type="button" class="life" data-lifecycle="${view}"><b>${ord}</b><span>${label}</span></button>`
     ).join('<i aria-hidden="true">›</i>');
     return `<div class="lifecycle" data-lifecycle-rail>${home}<i aria-hidden="true">›</i>${steps}</div>`;
   }
@@ -2763,7 +2814,7 @@ function mountMarketingAssistantV2(){
     const intro = document.createElement('div');
     intro.className = 'gs-workbench-intro';
     intro.hidden = true;
-    intro.innerHTML = '<div class="gs-eyebrow"><span></span>业务搜索</div><h2>全局业务对象检索</h2><p>从业务对象到知识片段，快速找到你需要的信息。</p>';
+    intro.innerHTML = '<div class="gs-eyebrow"><span></span>业务搜索</div><h2>全局业务对象检索</h2>';
     q('.gs-panel', host).prepend(intro);
     document.body.appendChild(host);
 

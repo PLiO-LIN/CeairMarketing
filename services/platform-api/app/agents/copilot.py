@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any, Callable
 from uuid import uuid4
@@ -204,15 +205,24 @@ class MarketingCopilot:
             selected.append("list_available_products")
         if any(word in message for word in ("流水线", "处理任务", "上传进度", "数据处理")):
             selected.append("inspect_data_pipeline")
-        return [{"tool": name, "result": harness.run_tool(name, lambda name=name: tools[name]({"query": message}))} for name in selected]
+        campaign_match = re.search(r"ACT-[A-Z0-9-]+", message.upper())
+        return [{"tool": name, "result": harness.run_tool(name, lambda name=name: tools[name]({"query": message, "campaign_id": campaign_match.group(0) if campaign_match else ""}))} for name in selected]
 
     @staticmethod
     def _mock_answer(message: str, observations: list[dict[str, Any]]) -> str:
         counts = {item["tool"]: item["result"].get("count", 0) for item in observations}
+        campaigns = next((item["result"].get("campaigns", []) for item in observations if item["tool"] == "inspect_campaign"), [])
+        if campaigns:
+            lines = ["当前工作区的活动记录（受控模型，读取后台数据）："]
+            lines.extend(f"• {item['name']}（{item['id']}）：{item['stage']} / {item['status']}，客群 {item['audience_size']:,} 人。" for item in campaigns)
+            return "\n".join(lines)
+        products = next((item["result"].get("items", []) for item in observations if item["tool"] == "list_available_products"), [])
+        if products:
+            return "当前可参考产品（受控模型，读取本体记录）：\n" + "\n".join(f"• {item['label']}（{item['id']}）" for item in products) + "\n可售价格、库存和资格以产品系统校验为准。"
         return (
-            f"已围绕“{message}”执行营销知识检索、本体关系查询和业务上下文核验。"
+            "已读取当前工作区的业务依据（受控模型）。"
             f"当前命中知识片段 {counts.get('search_marketing_knowledge', 0)} 条、本体对象 {counts.get('query_marketing_ontology', 0)} 个、"
-            f"可参考产品 {counts.get('list_available_products', 0)} 个。建议先打开右侧运行轨迹核对证据，再由业务人员确认客群、产品资格、预算和渠道合规后进入活动编排。"
+            f"可参考产品 {counts.get('list_available_products', 0)} 个。请补充活动编号或产品名称以查询具体记录。"
         )
 
     @staticmethod
@@ -244,12 +254,12 @@ class MarketingCopilot:
     @staticmethod
     def _inspect_campaign(session: Session, tenant_id: int, campaign_id: str, sources: list[dict[str, Any]]) -> dict[str, Any]:
         query = select(CampaignRecord).where(CampaignRecord.tenant_id == tenant_id)
-        campaign = session.scalar(query.where(CampaignRecord.id == campaign_id)) if campaign_id else session.scalar(query.order_by(CampaignRecord.id))
-        if campaign is None:
-            return {"count": 0, "campaign": None}
-        item = {"id": campaign.id, "name": campaign.name, "stage": campaign.stage, "status": campaign.status, "audience_size": campaign.audience_size, "product_package": campaign.product_package, "budget_yuan": campaign.budget_yuan, "roi_target": campaign.roi_target}
-        sources.append({"type": "campaign", "id": campaign.id, "title": campaign.name, "excerpt": f"{campaign.stage} / {campaign.status}"})
-        return {"count": 1, "campaign": item}
+        records = session.scalars(query.where(CampaignRecord.id == campaign_id) if campaign_id else query.order_by(CampaignRecord.id).limit(20)).all()
+        items = []
+        for campaign in records:
+            items.append({"id": campaign.id, "name": campaign.name, "stage": campaign.stage, "status": campaign.status, "audience_size": campaign.audience_size, "product_package": campaign.product_package, "budget_yuan": campaign.budget_yuan, "roi_target": campaign.roi_target})
+            sources.append({"type": "campaign", "id": campaign.id, "title": campaign.name, "excerpt": f"{campaign.stage} / {campaign.status}"})
+        return {"count": len(items), "campaign": items[0] if items else None, "campaigns": items}
 
     @staticmethod
     def _list_products(session: Session, tenant_id: int, query: str, sources: list[dict[str, Any]]) -> dict[str, Any]:

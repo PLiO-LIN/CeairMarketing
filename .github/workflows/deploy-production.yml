@@ -25,6 +25,8 @@ jobs:
         run: for file in apps/web-v32/*.js; do node --check "$file"; done
       - name: Check whitespace
         run: git diff --check
+      - name: Verify agent chat streaming and failure recovery
+        run: node --test scripts/tests/agent-stream.test.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
