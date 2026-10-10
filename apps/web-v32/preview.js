@@ -98,11 +98,12 @@
     if (window.lucide) window.lucide.createIcons({ root: actions });
   }
 
-  function updateLogo(isInner) {
+  function updateLogo(_isInner) {
     const logo = query('.brand .logo img');
     if (!logo) return;
     if (!originalLogoSrc) originalLogoSrc = logo.getAttribute('src');
-    logo.src = isInner ? './brand/ceair-symbol.svg' : originalLogoSrc;
+    // 内页沿用首页完整东航字标，避免在业务页切换成另一套品牌标识。
+    logo.src = originalLogoSrc;
   }
 
   function updateActiveNav() {

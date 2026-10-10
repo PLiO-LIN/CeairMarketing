@@ -1,0 +1,215 @@
+/* 东航品牌主题：共享首页的蓝、红、白；业务页保持紧凑工作台结构。最后加载。 */
+:root {
+  --ceair-blue: #29538e;
+  --ceair-blue-deep: #173f75;
+  --ceair-red: #cb1e36;
+  --ceair-red-hover: #b01a2f;
+  --ceair-ink: #24415f;
+  --ceair-muted: #647b94;
+  --ceair-line: #dce5ef;
+  --ceair-soft: #f3f7fc;
+  --ceair-canvas: #f7f9fc;
+  --wb-canvas: var(--ceair-canvas);
+  --wb-paper: #fff;
+  --wb-n-25: #fbfcfe;
+  --wb-n-50: var(--ceair-soft);
+  --wb-n-100: #e9eff6;
+  --wb-n-200: var(--ceair-line);
+  --wb-n-300: #bdcddd;
+  --wb-n-400: #8aa0b6;
+  --wb-n-500: #70859c;
+  --wb-n-600: var(--ceair-muted);
+  --wb-n-700: var(--ceair-ink);
+  --wb-n-800: #203e61;
+  --wb-n-900: var(--ceair-blue-deep);
+  --wb-n-950: #12355f;
+  --wb-th-bg: var(--ceair-soft);
+  --wb-th-fg: var(--ceair-ink);
+  --wb-th-fg-muted: var(--ceair-muted);
+  --wb-row-alt: #fbfcfe;
+  --wb-fam: var(--ceair-font);
+  --wb-fam-display: var(--ceair-font);
+  --wb-fam-num: var(--ceair-font);
+  --wb-cta: var(--ceair-red);
+  --wb-cta-hover: var(--ceair-red-hover);
+  --wb-shadow-sm: none;
+  --wb-shadow-card: none;
+  --wb-sticky-top: 132px;
+  --pv-blue-950: var(--ceair-blue-deep);
+  --pv-blue-900: var(--ceair-blue-deep);
+  --pv-blue-700: var(--ceair-blue);
+  --pv-blue-500: #4a7bbd;
+  --pv-ink: var(--ceair-ink);
+  --pv-muted: var(--ceair-muted);
+  --pv-line: var(--ceair-line);
+  --pv-line-soft: #edf1f6;
+  --pv-canvas: var(--ceair-canvas);
+  --pv-cyan: var(--ceair-blue);
+  --pv-shadow: none;
+  --pv-radius: 10px;
+}
+
+body.preview-ui { color: var(--ceair-ink); background: var(--ceair-canvas); font-size: 14px; }
+body.preview-ui .topnav { height: 66px; min-height: 66px; padding: 0 28px; background: #fff; box-shadow: none; gap: 20px; flex-wrap: nowrap; }
+body.preview-ui .topnav .brand { flex: 0 1 auto; height: 66px; gap: 20px; padding: 0; }
+body.preview-ui .topnav .brand .logo { flex: 0 0 auto; width: 176px; height: 38px; border: 0; padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
+body.preview-ui .topnav .brand .logo img { width: 176px; height: 38px; object-fit: contain; }
+body.preview-ui .topnav .brand-text { border-left: 1px solid var(--ceair-line); padding-left: 20px; gap: 3px; }
+body.preview-ui .topnav .brand-text b { color: var(--ceair-blue-deep); font-size: 18px; letter-spacing: .2px; }
+body.preview-ui .topnav .brand-text span { margin: 0; color: var(--ceair-muted); font-size: 11px !important; }
+body.preview-ui .topnav > .user { max-width: 360px; padding-left: 18px; }
+body.preview-ui .topnav > .user b { color: var(--ceair-blue); font-size: 13px; }
+body.preview-ui .topnav > .user span { color: var(--ceair-muted); font-size: 12px; }
+body.preview-ui .main { margin-left: 224px; padding-top: 66px; background: var(--ceair-canvas); }
+body.preview-ui .topbar { top: 66px; height: 54px; min-height: 54px; padding: 0 28px; box-shadow: none; background: #fff; }
+body.preview-ui .crumb, body.preview-ui .crumb strong { font-size: 13px !important; color: var(--ceair-muted); }
+body.preview-ui .crumb strong, body.preview-ui .crumb-home { color: var(--ceair-blue); font-weight: 500; }
+body.preview-ui .global-search { width: min(280px, 26vw); height: 34px; border-radius: 18px; background: var(--ceair-canvas); color: var(--ceair-muted); font-size: 12px; }
+body.preview-ui .global-search span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.preview-ui .preview-topbar-actions { display: none; }
+body.preview-ui .top-actions { margin-left: auto; }
+body.preview-ui .content { padding: 24px 28px 88px !important; }
+
+/* 浅色可折叠目录，与官网导航使用相同字号与品牌色。 */
+body.preview-ui .preview-sidebar { inset: 66px auto 0 0; width: 224px; border-right: 1px solid var(--ceair-line); background: #fff; color: var(--ceair-blue-deep); box-shadow: none; }
+body.preview-ui .preview-sidebar-head { padding: 14px 12px; border-bottom: 1px solid var(--ceair-line); display: grid; gap: 4px; }
+body.preview-ui .preview-home { grid-template-columns: 20px 1fr; gap: 10px; padding: 10px 12px; color: var(--ceair-blue); background: transparent; border-radius: 8px; }
+body.preview-ui .preview-home svg { grid-row: auto; width: 18px; color: var(--ceair-blue); }
+body.preview-ui .preview-home span { font-size: 14px !important; font-weight: 500; }
+body.preview-ui .preview-home:hover { background: var(--ceair-soft); }
+body.preview-ui .preview-home.active { color: var(--ceair-blue-deep); background: var(--ceair-soft); box-shadow: inset 3px 0 var(--ceair-red); }
+body.preview-ui .preview-sidebar-scroll { padding: 10px 12px; scrollbar-color: #c7d4e3 transparent; }
+body.preview-ui .preview-sidebar-scroll::-webkit-scrollbar-thumb { background: #c7d4e3; background-clip: padding-box; }
+body.preview-ui .preview-nav-group { margin-bottom: 6px; }
+body.preview-ui .preview-nav-label { color: var(--ceair-blue-deep); font-size: 14px !important; font-weight: 500; }
+body.preview-ui .preview-nav-label svg { width: 16px; color: var(--ceair-blue); }
+body.preview-ui .preview-nav-items { gap: 2px; }
+body.preview-ui .preview-nav-items button { min-height: 38px; padding-left: 34px; font-size: 14px !important; color: #536d88; border-radius: 8px; }
+body.preview-ui .preview-nav-items button svg { color: #6c86a2; width: 16px; }
+body.preview-ui .preview-nav-items button:hover { color: var(--ceair-blue); background: var(--ceair-soft); transform: none; }
+body.preview-ui .preview-nav-items button.active { color: var(--ceair-blue-deep); background: var(--ceair-soft); box-shadow: inset 3px 0 var(--ceair-red); font-weight: 500; }
+body.preview-ui .preview-nav-items button.active svg { color: var(--ceair-blue); }
+body.preview-ui .preview-sidebar-foot { border-top: 1px solid var(--ceair-line); padding: 14px 16px; }
+body.preview-ui .preview-tenant { margin-bottom: 0; }
+body.preview-ui .preview-avatar { background: #eaf1fb; color: var(--ceair-blue); }
+body.preview-ui .preview-tenant b { color: var(--ceair-blue-deep); font-size: 12px; }
+body.preview-ui .preview-tenant small { color: var(--ceair-muted); font-size: 12px !important; line-height: 1.5; }
+
+/* 收口历史放大的字号，正文 14、辅助 12、栏目 16、页面 22。 */
+body.preview-ui .view:not(.dongdong-view) { font-size: 14px; color: var(--ceair-ink); }
+body.preview-ui .view:not(.dongdong-view) .page-head { align-items: center; padding: 0; margin: 0 0 20px; min-height: 38px; }
+body.preview-ui .view:not(.dongdong-view) .page-head h1 { font-size: 22px !important; color: var(--ceair-blue-deep); font-weight: 600; letter-spacing: 0; }
+body.preview-ui .view:not(.dongdong-view) :is(p, label, dt, dd, li, input, select, textarea, button, .panel-body, .table, .table th, .table td, .v-table, .v-table th, .v-table td, .opportunity-table, .permission-table, .v-rail, .v-list, .detail-grid, .metric-list, .metric, .scope-box, .flow-step, .role-item b, .approval-node b, .approval-node span, .small-panel span, .small-panel em, .catalog-card-meta) { font-size: 14px !important; line-height: 1.6; }
+body.preview-ui .view:not(.dongdong-view) :is(h3, .panel-head h2, .catalog-section-head b, .catalog-summary b, .catalog-card strong, .catalog-detail-list b, .small-panel b, .detail-block h3, .graph-panel h2, .entity h2, .section-kicker, .insight-source-row b, .insight-agent-card b, .search-card h3, .pipeline-dropzone b, .pipeline-task-title b, .config-entry-card b) { font-size: 16px !important; font-weight: 600; color: var(--ceair-blue-deep); line-height: 1.5; }
+body.preview-ui .view:not(.dongdong-view) :is(small, .panel-head > span, .toolbar-note, .catalog-foot, .v-rail__note, .status, .pill, .tag, .package-source-tag, .insight-badge, .insight-source-row small, .insight-source-row em, .insight-agent-lane, .catalog-summary span, .catalog-summary-stats small, .pipeline-task-meta span, .pipeline-task-meta small, .search-card-meta, .search-card-type, .model-provider-id) { font-size: 12px !important; line-height: 1.5; }
+body.preview-ui .view:not(.dongdong-view) :is(.kpi > span, .v-kpi__label, .kpi .trend, .v-kpi__trend) { font-size: 13px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(.kpi b, .v-kpi__value) { font-size: 28px !important; color: var(--ceair-blue-deep); font-weight: 600; }
+
+body.preview-ui .view:not(.dongdong-view) :is(.panel, .kpi, .small-panel, .v-rail, .v-card, .demo-panel, .business-subview-shell, .toolbar-strip) { background: #fff; border: 1px solid var(--ceair-line); border-radius: 10px; box-shadow: none; }
+body.preview-ui .view:not(.dongdong-view) :is(.panel, .kpi):hover { box-shadow: none; }
+body.preview-ui .view:not(.dongdong-view) .panel-head { min-height: 50px; padding: 12px 18px; background: #fff; border-bottom: 1px solid #edf1f6; }
+body.preview-ui .view:not(.dongdong-view) .panel-head h2::before, body.preview-ui .view:not(.dongdong-view) .kpi::after { display: none; }
+body.preview-ui .view:not(.dongdong-view) .panel-body { padding: 18px; }
+body.preview-ui .view:not(.dongdong-view) .small-panel { min-height: 110px; padding: 18px; gap: 8px; }
+body.preview-ui .view:not(.dongdong-view) .business-subview-shell { padding: 0 12px; }
+body.preview-ui .view:not(.dongdong-view) .business-subview-tabs button { min-height: 42px; border: 0; background: transparent; color: var(--ceair-muted); }
+body.preview-ui .view:not(.dongdong-view) .business-subview-tabs button.active { color: var(--ceair-blue); background: transparent; box-shadow: inset 0 -2px var(--ceair-red); }
+body.preview-ui .view:not(.dongdong-view) .toolbar-strip { padding: 10px 12px; gap: 8px; min-height: 58px; flex-direction: row; justify-content: flex-start; }
+body.preview-ui .view:not(.dongdong-view) .toolbar-strip :is(input, select) { height: 36px; background: #fff; border-color: var(--ceair-line); }
+body.preview-ui .view:not(.dongdong-view) :is(.table th, .v-table th, .opportunity-table th, .permission-table th) { background: var(--ceair-soft) !important; color: #4d6682 !important; border-bottom-color: var(--ceair-line) !important; font-weight: 500; }
+body.preview-ui .view:not(.dongdong-view) :is(.table td, .v-table td) { padding: 12px; color: var(--ceair-ink); border-bottom-color: #edf1f6; }
+body.preview-ui .view:not(.dongdong-view) .table tr:hover td { background: #fafcff; }
+body.preview-ui .view:not(.dongdong-view) :is(.catalog-summary, .ai-result, .ai-suggestion, .drawer-ai, .insight-source-config, .insight-run-config) { background: var(--ceair-soft); border-color: var(--ceair-line); color: var(--ceair-ink); }
+body.preview-ui .view:not(.dongdong-view) :is(.catalog-card, .approval-item, .role-item, .search-card, .pipeline-task, .run-card, .hotspot-row) { border-color: var(--ceair-line); box-shadow: none; border-radius: 8px; }
+body.preview-ui .view:not(.dongdong-view) :is(.approval-item.active, .role-item.active, .v-facet.is-active) { background: var(--ceair-soft); border-color: #c4d5ea; color: var(--ceair-blue); box-shadow: inset 3px 0 var(--ceair-blue); }
+body.preview-ui .demo-case-grid article, body.preview-ui .demo-signal-grid article, body.preview-ui .demo-agent-grid article { background: #fafcff; border-color: var(--ceair-line); }
+body.preview-ui .demo-panel { padding: 18px; }
+body.preview-ui .demo-heading h2 { font-size: 16px !important; }
+body.preview-ui .view:not(.dongdong-view) :is(input, select, textarea) { font-weight: 400; }
+
+/* 同一套按钮与弹层同时用于首页入口和内页。语义警告、错误状态仍保留。 */
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) { color: var(--ceair-ink); }
+body.preview-ui .btn, body.preview-ui .icon-btn,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) :is(.btn, .icon-btn) { border-color: var(--ceair-line); border-radius: 8px; background: #fff; color: var(--ceair-blue); box-shadow: none; min-height: 36px; font-size: 14px !important; font-weight: 500; }
+body.preview-ui .btn:hover, body.preview-ui .icon-btn:hover,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) .btn:hover { background: var(--ceair-soft); border-color: #b7cbe4; transform: none; box-shadow: none; }
+body.preview-ui .btn.primary,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) .btn.primary,
+.production-login-form .btn.primary { background: var(--ceair-red); border-color: var(--ceair-red); color: #fff; box-shadow: none; }
+body.preview-ui .btn.primary:hover,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) .btn.primary:hover { background: var(--ceair-red-hover); border-color: var(--ceair-red-hover); color: #fff; }
+body.preview-ui .view:not(.dongdong-view) .btn.ai,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) .btn.ai { background: var(--ceair-soft); border-color: #c4d5ea; color: var(--ceair-blue); }
+body.preview-ui .btn.danger,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) .btn.danger { background: #fff; color: #a6273b; border-color: #edc9d0; }
+body.preview-ui :is(input, textarea, select):focus-visible,
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) :is(input, textarea, select):focus-visible { outline: 2px solid #a7c3e7; outline-offset: 2px; }
+body.preview-ui input[type=checkbox], body.preview-ui input[type=radio] { accent-color: var(--ceair-blue); }
+body :is(.production-modal-card, .modal, .drawer, .gs-panel) { background: #fff; border-color: var(--ceair-line); border-radius: 12px; box-shadow: 0 16px 50px #173f7526; }
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) :is(.production-modal-head, .modal-head, .drawer-head) { background: #fff; border-bottom-color: var(--ceair-line); }
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) :is(.production-modal-head b, .modal-head h2, .drawer-head h2, .gs-title) { font-size: 18px !important; color: var(--ceair-blue-deep); }
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) :is(p, label, dt, dd, li, span, b, em, input, select, textarea, button) { font-size: 14px !important; line-height: 1.6; }
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) :is(small, .business-editor-field > small, .production-modal-head small) { font-size: 12px !important; color: var(--ceair-muted); }
+body :is(.production-modal, .modal-layer, .drawer-layer, .gs-overlay) h3 { font-size: 16px !important; color: var(--ceair-blue-deep); }
+body :is(.production-modal, .modal-layer, .drawer-layer) :is(.production-modal-foot, .modal-foot, .drawer-foot) { background: #fff; border-top-color: var(--ceair-line); }
+
+/* 检索、图谱、模型配置与智能空间沿用同一白色工作区。 */
+body.preview-ui #search .search-hero { padding: 28px; border: 1px solid var(--ceair-line); border-radius: 10px; background: #fff; box-shadow: none; }
+body.preview-ui #search .search-hero::after, body.preview-ui #search .search-hero-bg, body.preview-ui #search .search-eyebrow, body.preview-ui #search .search-sub { display: none; }
+body.preview-ui #search .search-hero h1 { color: var(--ceair-blue-deep); font-size: 22px; font-weight: 600; }
+body.preview-ui #search .search-entry { margin: 0; border: 1px solid var(--ceair-line); border-radius: 10px; box-shadow: none; background: #fff; }
+body.preview-ui #search .search-entry .btn.primary { background: var(--ceair-red); border-color: var(--ceair-red); color: #fff; box-shadow: none; }
+body.preview-ui #search .search-pill { background: #fff; border-color: var(--ceair-line); color: var(--ceair-blue); }
+body.preview-ui #search .search-pill.is-active { background: var(--ceair-soft); color: var(--ceair-blue); border-color: #c4d5ea; }
+body.preview-ui #graph .graph-canvas { background-color: #fafcff; border-color: var(--ceair-line); box-shadow: none; }
+body.preview-ui #graph .entity { background: #fff; }
+body.preview-ui #graph .graph-toolbar button { border: 1px solid var(--ceair-line); border-radius: 6px; background: #fff; color: var(--ceair-blue); }
+body.preview-ui #graph .graph-toolbar button.active { background: var(--ceair-soft); border-color: #bfd1e8; color: var(--ceair-blue-deep); }
+body.preview-ui #audiences .catalog-summary { background: var(--ceair-soft); }
+body.preview-ui #audiences .catalog-summary::before { display: none; }
+body.preview-ui .provider-settings { border: 1px solid var(--ceair-line); border-radius: 10px; }
+body.preview-ui .provider-sidebar { background: #fafcff; border-right-color: var(--ceair-line); }
+body.preview-ui .provider-config { padding: 24px 28px; }
+body.preview-ui .provider-list-item.is-selected { background: var(--ceair-soft); border-color: #c4d5ea; box-shadow: inset 3px 0 var(--ceair-red); }
+body.smartspace-mode .smartspace-shell { border-color: var(--ceair-line); border-radius: 10px; box-shadow: none; }
+body.smartspace-mode .assistant-panel.is-docked { border-radius: 10px; }
+body.smartspace-mode .assistant-panel.is-docked .assistant-workspace-rail { background: #fafcff; }
+body.smartspace-mode .assistant-message.user { background: var(--ceair-soft) !important; color: var(--ceair-blue-deep) !important; }
+body.preview-ui #marketingAssistant .assistant-fab { width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 6px; border: 1px solid var(--ceair-line); border-radius: 50%; background: #fff; box-shadow: 0 3px 12px #173f751a; right: 20px !important; bottom: 20px !important; }
+body.preview-ui #marketingAssistant .assistant-fab::before, body.preview-ui #marketingAssistant .assistant-fab::after { display: none; }
+body.preview-ui #marketingAssistant .assistant-fab-mark { width: 36px; height: 36px; filter: none; animation: none; }
+body.preview-ui #marketingAssistant .assistant-fab > span { display: none; }
+
+@media (max-width: 1180px) {
+  body.preview-ui .content { padding-inline: 22px !important; }
+  body.preview-ui .topbar { padding-inline: 22px; }
+}
+@media (max-width: 820px) {
+  body.preview-ui .topnav { padding-inline: 16px; gap: 12px; }
+  body.preview-ui .topnav .brand { flex-basis: auto; gap: 14px; }
+  body.preview-ui .topnav .brand-text { display: grid; padding-left: 14px; }
+  body.preview-ui .topnav .brand-text b { font-size: 15px; }
+  body.preview-ui .topnav .brand-text span { display: none; }
+  body.preview-ui .topnav .brand .logo, body.preview-ui .topnav .brand .logo img { width: 140px; height: 31px; }
+  body.preview-ui .main { margin-left: 0; }
+  body.preview-ui .preview-sidebar-toggle { top: 77px; width: 36px; height: 36px; border-radius: 0 8px 8px 0; background: var(--ceair-blue); writing-mode: horizontal-tb; font-size: 12px; letter-spacing: 0; box-shadow: none; }
+  body.preview-ui .topbar { padding-left: 48px; padding-right: 16px; }
+  body.preview-ui .crumb { max-width: 42%; }
+  body.preview-ui .global-search { display: none; }
+  body.preview-ui .content { padding: 20px 16px 80px !important; }
+  body.preview-ui .view:not(.dongdong-view) .page-head { flex-wrap: wrap; gap: 12px; }
+  body.preview-ui .head-actions { margin-top: 0; flex-wrap: wrap; }
+}
+@media (max-width: 560px) {
+  body.preview-ui .topbar { height: 54px; align-items: center; padding-block: 0; }
+  body.preview-ui .crumb { max-width: 92px; }
+  body.preview-ui .top-actions { gap: 6px; }
+  body.preview-ui .workspace-switch select { max-width: 148px; }
+  body.preview-ui .view:not(.dongdong-view) .toolbar-strip :is(input, select) { min-width: 0; max-width: 100%; }
+  body.preview-ui .view:not(.dongdong-view) .toolbar-strip input { width: 100%; flex-basis: 100%; }
+  body.preview-ui #search .search-hero { padding: 20px 16px; }
+  body.preview-ui .provider-config { padding: 20px 16px; }
+  body.preview-ui .provider-model-field { flex-wrap: wrap; }
+  body.preview-ui .demo-heading { gap: 10px; }
+  body.preview-ui #marketingAssistant .assistant-fab { right: 14px !important; bottom: 14px !important; }
+}
