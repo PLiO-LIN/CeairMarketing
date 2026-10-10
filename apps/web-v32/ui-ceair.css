@@ -172,7 +172,8 @@ body.preview-ui .provider-sidebar { background: #fafcff; border-right-color: var
 body.preview-ui .provider-config { padding: 24px 28px; }
 body.preview-ui .provider-list-item.is-selected { background: var(--ceair-soft); border-color: #c4d5ea; box-shadow: inset 3px 0 var(--ceair-red); }
 body.smartspace-mode .smartspace-shell { border-color: var(--ceair-line); border-radius: 10px; box-shadow: none; }
-body.smartspace-mode .assistant-panel.is-docked { border-radius: 10px; }
+body.smartspace-mode .content { padding-bottom: 24px !important; }
+body.smartspace-mode .assistant-panel.is-docked { border-radius: 10px; height: calc(100dvh - 224px) !important; min-height: 400px; }
 body.smartspace-mode .assistant-panel.is-docked .assistant-workspace-rail { background: #fafcff; }
 body.smartspace-mode .assistant-message.user { background: var(--ceair-soft) !important; color: var(--ceair-blue-deep) !important; }
 body.preview-ui #marketingAssistant .assistant-fab { width: 48px; min-width: 48px; height: 48px; min-height: 48px; padding: 6px; border: 1px solid var(--ceair-line); border-radius: 50%; background: #fff; box-shadow: 0 3px 12px #173f751a; right: 20px !important; bottom: 20px !important; }
