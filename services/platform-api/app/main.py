@@ -1383,11 +1383,19 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
 
     def worker() -> None:
         conversation_id = ""
+        public_trace = []
+        ui_messages = []
+        def trace_sink(item):
+            public_trace.append(item)
+            events.put({"type": "trace", "item": item})
+        def ui_sink(item):
+            ui_messages.append(item)
+            events.put({"type": "a2ui", "item": item})
         def failed(message):
             if conversation_id:
                 try:
                     with SessionLocal() as failed_session:
-                        finish_turn(failed_session, context, conversation_id, message, failed=True)
+                        finish_turn(failed_session, context, conversation_id, message, {"trace": public_trace, "a2ui": ui_messages}, failed=True)
                 except Exception:
                     logging.getLogger(__name__).exception("Failed to persist chat failure")
             events.put({"type": "error", "message": message})
@@ -1400,10 +1408,11 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
                     worker_session,
                     context,
                     scoped_payload,
-                    event_sink=lambda item: events.put({"type": "trace", "item": item}),
+                    event_sink=trace_sink,
                     token_sink=lambda token: events.put({"type": "token", "text": token}),
+                    ui_sink=ui_sink,
                 )
-                finish_turn(worker_session, context, conversation_id, result.answer, result.model_dump(mode="json", exclude={"trace"}))
+                finish_turn(worker_session, context, conversation_id, result.answer, result.model_dump(mode="json"))
                 events.put({"type": "result", "result": result.model_dump(mode="json")})
         except (ValueError, LLMServiceError) as exc:
             failed(str(exc))
@@ -1435,6 +1444,8 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
             kind = item.get("type")
             if kind == "trace":
                 yield encode("trace", item["item"])
+            elif kind == "a2ui":
+                yield encode("a2ui", item["item"])
             elif kind == "conversation":
                 yield encode("conversation", {"conversation_id": item["id"]})
             elif kind == "token":
@@ -1476,7 +1487,7 @@ def run_agent_chat(payload: AgentChatRequest, context: TenantContext = Depends(r
     try:
         conversation_id, history = begin_turn(session, context, payload)
         result = copilot.run(session, context, payload.model_copy(update={"conversation_id": conversation_id, "history": history}))
-        finish_turn(session, context, conversation_id, result.answer, result.model_dump(mode="json", exclude={"trace"}))
+        finish_turn(session, context, conversation_id, result.answer, result.model_dump(mode="json"))
         return result
     except HTTPException:
         raise
@@ -1571,7 +1582,29 @@ def delete_assistant_memory(memory_id: int, context: TenantContext = Depends(req
 
 @app.get("/api/assistant/capabilities")
 def assistant_capabilities(_context: TenantContext = Depends(get_tenant_context)):
-    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution"]}
+    from .a2ui import CATALOG_ID, VERSION
+    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution"], "a2ui": {"version": VERSION, "supportedCatalogIds": [CATALOG_ID]}}
+
+
+@app.get("/api/assistant/ui-catalog")
+def assistant_ui_catalog(_context: TenantContext = Depends(get_tenant_context)):
+    from .a2ui import CATALOG
+    return CATALOG
+
+
+@app.post("/api/assistant/ui-action")
+def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_tenant_context)):
+    from .a2ui import ACTION_VALIDATOR
+    from jsonschema import ValidationError
+    try:
+        ACTION_VALIDATOR.validate(payload)
+    except ValidationError as exc:
+        raise HTTPException(422, "界面操作格式无效") from exc
+    action = payload.get("action", {})
+    pages = {"overview", "campaigns", "opportunities", "audiences", "products", "contents", "approvals", "execution", "feedback", "graph", "imports", "models", "tenants", "permissions"}
+    if action.get("name") != "open_page" or action.get("context", {}).get("page") not in pages:
+        raise HTTPException(422, "界面操作未授权")
+    return {"page": action["context"]["page"]}
 
 
 @app.get("/api/campaigns/{campaign_id}/readiness")

@@ -95,7 +95,10 @@ def statistics(session, context, metric):
     return {"type": "bar", "title": title, "labels": labels, "values": values, "unit": unit, "source": note, "metric": metric, "total": len(rows)}
 
 
-def build_tools(session, context, conversation_id, widgets, tasks, emit):
+def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink=None):
+    def publish(item, kind=None):
+        if ui_sink:
+            ui_sink(item, kind or item["type"])
     async def platform_api_catalog(keyword: str = ""):
         """Get registered platform operations and body schemas; use before preparing a task."""
         found = [op for op in catalog() if not keyword or keyword.lower() in json.dumps(op, ensure_ascii=False).lower()]
@@ -116,7 +119,8 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit):
             }
             if path in columns and isinstance(value, list) and not any(w.get("path") == path for w in widgets):
                 title, fields, page = columns[path]
-                widgets.append({"type": "table", "title": title, "columns": [label for key, label in fields], "rows": [[row.get(key, "") for key, label in fields] for row in value[:8]], "total": len(value), "path": path, "page": page})
+                card = {"type": "table", "title": title, "columns": [label for key, label in fields], "rows": [[row.get(key, "") for key, label in fields] for row in value[:8]], "total": len(value), "path": path, "page": page}
+                widgets.append(card); publish(card)
             return text_tool_result({"path": path, "count": len(value) if isinstance(value, list) else 1, "data": value[:40] if isinstance(value, list) else value, "sources": [{"type": "platform", "id": path, "title": "平台业务记录", "excerpt": "按当前工作区与用户权限实时查询"}]})
         except (HTTPException, ValueError) as exc:
             return text_tool_result({"ok": False, "error": getattr(exc, "detail", str(exc))})
@@ -125,7 +129,8 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit):
         """Calculate trusted BI charts from saved backend records. Metrics: campaigns, opportunities, audiences, products, contents, execution."""
         try:
             chart = statistics(session, context, metric)
-            if not any(w.get("metric") == metric for w in widgets): widgets.append(chart)
+            if not any(w.get("metric") == metric for w in widgets):
+                widgets.append(chart); publish(chart)
             return text_tool_result(chart)
         except ValueError as exc: return text_tool_result({"ok": False, "error": str(exc)})
 
@@ -149,6 +154,7 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit):
                 if errors: raise ValueError("任务参数未通过接口校验，请补充必填字段或修正取值")
             item = AssistantTaskRecord(id="TASK-" + uuid4().hex[:20], tenant_id=context.tenant_id, user_id=context.user_id, conversation_id=conversation_id, title=title[:160], method=method, path=path, payload_json=json.dumps(payload, ensure_ascii=False))
             session.add(item); session.commit(); result = task_view(item); tasks.append(result)
+            publish(result, "task")
             emit("assistant/task-prepared", {"task_id": item.id, "title": item.title})
             return text_tool_result(result)
         except (ValueError, json.JSONDecodeError) as exc: return text_tool_result({"ok": False, "error": str(exc)})
@@ -165,7 +171,7 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit):
         pages = {"overview": "营销总览", "campaigns": "活动中心", "opportunities": "机会洞察", "audiences": "客群画像", "products": "产品与权益", "contents": "内容工坊", "approvals": "审批与发布", "execution": "执行监控", "feedback": "效果复盘", "graph": "知识中心", "imports": "数据接入", "models": "模型配置", "tenants": "租户与用户", "permissions": "权限与审计"}
         if page not in pages: return text_tool_result({"ok": False, "error": "页面不存在"})
         card = {"type": "navigation", "title": pages[page], "page": page}
-        widgets.append(card); return text_tool_result(card)
+        widgets.append(card); publish(card); return text_tool_result(card)
 
     # These tools either read facts or prepare private tasks/preferences. Actual
     # business mutations only happen through the separately confirmed endpoint.

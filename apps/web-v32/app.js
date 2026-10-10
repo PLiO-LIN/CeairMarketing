@@ -1,5 +1,5 @@
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const titles={dongdong:'东东',overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',search:'智能检索',graph:'知识中心',permissions:'权限与审计'};
+const titles={dongdong:'东东',smartspace:'智能空间',overview:'营销总览',opportunities:'机会工作台',audiences:'客群工作台',products:'产品包工作台',contents:'内容工作台',campaigns:'营销活动中心',approvals:'审批中心',execution:'执行监控',feedback:'效果复盘',search:'智能检索',graph:'知识中心',permissions:'权限与审计'};
 let toastTimer=null,wizardStep=0,selectedDecision='approve',editingCampaignRow=null;const toastEl=$('#toast');
 function toast(t){if(!toastEl)return;toastEl.textContent=t;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2800)}
 function icons(){if(window.lucide)lucide.createIcons()}
@@ -11,8 +11,9 @@ function activate(view){
   if($('#crumbTitle'))$('#crumbTitle').textContent=titles[view]||titles.overview;
   if($('#activeTab'))$('#activeTab').textContent=titles[view]||titles.overview;
   if(view==='graph')requestAnimationFrame(()=>{if(window.graph&&typeof window.graph.resize==='function')window.graph.resize();});
-  if(window.dockDongdong)window.dockDongdong(view==='dongdong');
+  if(window.dockDongdong)window.dockDongdong(view);
   syncDongdongChrome();
+  window.scrollTo({top:0,behavior:'instant'});
 }
 window.activate = activate;
 document.addEventListener('click',event=>{
@@ -31,7 +32,7 @@ document.addEventListener('click',event=>{
     toggle.setAttribute('aria-expanded',String(expanded));
     return;
   }
-  const nav=event.target.closest('.nav button[data-view]');
+  const nav=event.target.closest('button[data-view]');
   if(nav){activate(nav.dataset.view);$$('.topnav .menu-group').forEach(g=>{g.classList.remove('open');g.querySelector('.menu-toggle')?.setAttribute('aria-expanded','false');});}
 });
 function bindTopnavHoverMenus(){
@@ -123,7 +124,9 @@ document.addEventListener('click',e=>{if(window.ceairProductionV32)return;const 
 /* 东东首页：实测顶部高度供主视觉对齐，并按滚动状态切换顶栏底色 */
 function syncDongdongChrome(){
   const home=!!document.querySelector('#dongdong.active');
+  const space=!!document.querySelector('#smartspace.active');
   document.body.classList.toggle('dongdong-mode',home);
+  document.body.classList.toggle('smartspace-mode',space);
   if(home){
     // 首页主视觉的接缝基准固定为 120px：桌面 78+64-22，窄屏由 CSS 调整到同一总高。
     document.documentElement.style.setProperty('--dd-head-h','120px');

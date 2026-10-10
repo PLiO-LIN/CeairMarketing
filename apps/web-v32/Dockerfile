@@ -1,7 +1,7 @@
 FROM nginx:1.28-alpine
 RUN apk add --no-cache apache2-utils
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY index.html styles.css ui-premium.css ui-production-v2.css ui-workbench.css ui-preview.css ui-home.css ui-competition.css ui-clean.css app.js agent-stream.js v31.js data.js v32.js competition.js assistant-workspace.js provider-settings.js production.js preview.js market-hotspots.js /usr/share/nginx/html/
+COPY index.html styles.css ui-premium.css ui-production-v2.css ui-workbench.css ui-preview.css ui-home.css ui-competition.css ui-clean.css app.js agent-stream.js v31.js data.js v32.js competition.js assistant-workspace.js assistant-a2ui.js assistant-process.js provider-settings.js production.js preview.js market-hotspots.js /usr/share/nginx/html/
 COPY vendor /usr/share/nginx/html/vendor
 COPY brand /usr/share/nginx/html/brand
 COPY docker-entrypoint-auth.sh /docker-entrypoint.d/20-auth.sh

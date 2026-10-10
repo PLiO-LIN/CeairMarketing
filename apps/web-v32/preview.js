@@ -8,7 +8,7 @@
     { key: 'execution', label: '活动执行', icon: 'workflow', items: [['approvals', '审批与发布', 'badge-check'], ['execution', '执行监控', 'activity'], ['feedback', '效果复盘', 'chart-no-axes-combined']] },
     { key: 'governance', label: '治理中心', icon: 'shield-check', items: [['search', '智能检索', 'search'], ['graph', '知识中心', 'brain-circuit'], ['permissions', '权限与审计', 'key']] },
   ];
-  const titleMap = { dongdong: '东东AI伙伴', overview: '营销总览', campaigns: '活动中心', opportunities: '机会工作台', audiences: '客群画像', products: '产品与权益', contents: '内容工坊', approvals: '审批与发布', execution: '执行监控', feedback: '效果复盘', search: '智能检索', graph: '知识中心', permissions: '权限与审计' };
+  const titleMap = { smartspace: '智能空间', dongdong: '东东AI伙伴', overview: '营销总览', campaigns: '活动中心', opportunities: '机会工作台', audiences: '客群画像', products: '产品与权益', contents: '内容工坊', approvals: '审批与发布', execution: '执行监控', feedback: '效果复盘', search: '智能检索', graph: '知识中心', permissions: '权限与审计' };
   let sidebar;
   let sidebarToggle;
   let refreshTimer;
@@ -30,7 +30,7 @@
     sidebar.className = 'preview-sidebar';
     sidebar.id = 'previewSidebar';
     sidebar.setAttribute('aria-label', '内页导航');
-    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="bot"></i><span>东东</span></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span></button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
+    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="bot"></i><span>东东首页</span></button><button class="preview-home" type="button" data-view="smartspace"><i data-lucide="messages-square"></i><span>智能空间</span></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span></button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
     const app = query('.app');
     app?.insertBefore(sidebar, query('.main'));
     if (!sidebarToggle && app) {

@@ -1931,26 +1931,7 @@ function mountMarketingAssistantV2(){
       </section>`;
     document.body.appendChild(root);
     const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),header=q('.assistant-drag-handle',root),messages=q('.assistant-messages',root),form=q('form',root),input=q('textarea',root),collapseButton=q('[data-assistant-collapse]',root);
-    const toolNames={search_marketing_knowledge:'营销知识检索',query_marketing_ontology:'本体关系查询',inspect_campaign:'活动状态查询',list_available_products:'产品包查询',inspect_data_pipeline:'数据处理进度查询',run_marketing_domain:'智能域调用',planner_conclusion:'生成业务结论',query_platform:'查询业务记录',platform_api_catalog:'选择业务能力',query_statistics:'生成统计图表',prepare_platform_task:'创建待确认任务',remember_preference:'保存偏好记忆',open_platform_page:'打开业务工作台'};
-    const traceLabel={'harness/context-loaded':'加载业务上下文','agent/planning':'规划下一步','agent/decision':'选择业务动作','harness/model-started':'调用大模型','harness/model-finished':'模型输出完成','harness/tool-started':'调用业务能力','harness/tool-finished':'业务能力返回','harness/tool-failed':'业务能力调用失败','harness/json-parsed':'解析执行计划','model/provider-fallback':'切换备用模型'};
-    const traceDetail=item=>{
-      if(item.event==='agent/planning') return '第 '+(item.step||1)+' 步 · '+(item.summary||'分析问题并选择下一步业务工具');
-      if(item.event==='agent/decision'){const action=toolNames[item.action]||item.action||'继续分析';return '第 '+(item.step||1)+' 步 · '+action+(item.reason?' · '+item.reason:'');}
-      if(item.event==='harness/context-loaded') return '已载入知识、本体、活动与授权工具上下文';
-      if(item.event==='harness/tool-started') return '正在调用：'+(toolNames[item.tool]||item.tool||'业务能力');
-      if(item.event==='harness/tool-finished') return '已完成：'+(toolNames[item.tool]||item.tool||'业务能力');
-      if(item.event==='harness/tool-failed') return (toolNames[item.tool]||item.tool||'业务能力')+'执行失败，请检查服务状态';
-      if(item.event==='harness/model-started') return item.mode==='stream'?'正在流式生成最终答复':'正在生成业务执行计划';
-      if(item.event==='harness/model-finished'){const tokens=item.total_tokens?(' · '+item.total_tokens+' tokens'):'';return (item.mode==='stream'?'最终答复生成完成':'执行计划生成完成')+tokens;}
-      if(item.event==='harness/json-parsed') return '执行计划已校验，可进入下一步';
-      if(item.event==='model/provider-fallback') return '主模型暂不可用，已切换备用模型';
-      return '步骤已完成';
-    };
-    const addTrace=(traceBox,item)=>{
-      const label=traceLabel[item.event]||'业务处理';
-      traceBox.insertAdjacentHTML('beforeend','<div class="assistant-trace-row"><span class="assistant-trace-dot"></span><div><b>'+escapeHtml(label)+'</b><small>'+businessTime(item.timestamp||Date.now(),true)+'</small><p>'+escapeHtml(traceDetail(item))+'</p></div></div>');
-      traceBox.scrollTop=traceBox.scrollHeight;
-    };
+    const traceLabel={'harness/context-loaded':'加载业务上下文','harness/model-started':'分析任务','harness/model-finished':'整理结果','harness/tool-started':'调用业务能力','harness/tool-failed':'工具返回错误','agent/plan':'执行计划'};
     const stateKey='ceair-marketing-assistant-layout-v2';
     const readLayout=()=>{try{return JSON.parse(localStorage.getItem(stateKey)||'{}')}catch{return {}}};
     const saveLayout=()=>{if(panel.classList.contains('is-docked'))return;const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();localStorage.setItem(stateKey,JSON.stringify({panel:{left:panelRect.left,top:panelRect.top,width:panelRect.width,height:panelRect.height},fab:{left:fabRect.left,top:fabRect.top},collapsed:panel.classList.contains('is-collapsed')}));};
@@ -1980,10 +1961,12 @@ function mountMarketingAssistantV2(){
       form.dataset.busy='1';input.disabled=true;submitButton.disabled=true;stopButton.hidden=false;setLive('处理中');
       currentRequest=new AbortController();
       workspace.setTitle(message);
+      panel.classList.add('has-conversation');
       q('.assistant-welcome',panel)?.remove();
       if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div>'+escapeHtml(message)+'</div></div>');
-      const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><details class="assistant-trace-details"><summary><b>执行过程</b><span>处理中</span></summary><div class="assistant-trace-list"></div></details><p class="assistant-answer is-streaming" aria-live="polite"></p></div>';if(!retryWrap)messages.appendChild(wrap);
-      const traceList=q('.assistant-trace-list',wrap),answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap);messages.scrollTop=messages.scrollHeight;
+      const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><div class="assistant-answer is-streaming" aria-live="polite"></div><div class="assistant-ui-output"></div></div>';if(!retryWrap)messages.appendChild(wrap);
+      const answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap),process=window.createAssistantProcess(q('.assistant-live-body',wrap)),ui=workspace.renderer(q('.assistant-ui-output',wrap));messages.scrollTop=messages.scrollHeight;
+      const acceptUI=message=>{try{ui.accept(message);}catch{if(!q('.assistant-ui-error',wrap)){const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';q('.assistant-ui-output',wrap).append(error);}}};
       let finalAnswer='';
       try{
         const result=await window.CeairAgentStream.chat(`${mount}/api/agent-chat/stream`,{
@@ -1991,7 +1974,8 @@ function mountMarketingAssistantV2(){
           headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`,'X-Tenant-ID':String(requestTenantId||'')},
           payload:{message,conversation_id:conversationId,domain_id:'marketing-copilot',history:conversation.slice(-12)},
           onEvent:(event,value)=>{
-            if(event==='trace'){addTrace(traceList,value);const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
+            if(event==='trace'){process.add(value);if(value.event==='harness/model-started'){finalAnswer='';answer.textContent='';}const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
+            if(event==='a2ui')acceptUI(value);
             if(event==='conversation'&&value.conversation_id){conversationId=value.conversation_id;}
             if(event==='token'){finalAnswer+=value.text||'';answer.textContent=finalAnswer;messages.scrollTop=messages.scrollHeight;}
           }
@@ -2001,9 +1985,9 @@ function mountMarketingAssistantV2(){
         answer.textContent=finalAnswer;conversationId=result.conversation_id||conversationId;
         workspace.formatAnswer(answer,finalAnswer);
         conversation.push({role:'user',content:message},{role:'assistant',content:finalAnswer});
-        q('.assistant-trace-details summary span',wrap).textContent='已完成';setLive('就绪');
-        if(result.widgets?.length) workspace.widgets(result.widgets, answer);
-        if(result.tasks?.length) result.tasks.forEach(task=>workspace.task(task, answer));
+        process.finish();setLive('就绪');
+        if(result.a2ui?.length){try{ui.restore(result.a2ui);}catch{if(!q('.assistant-ui-error',wrap))q('.assistant-ui-output',wrap).insertAdjacentHTML('beforeend','<div class="assistant-ui-error" role="alert">结果界面暂时无法显示，请查看文字答复。</div>');}}
+        else{if(result.widgets?.length) workspace.widgets(result.widgets, answer);if(result.tasks?.length) result.tasks.forEach(task=>workspace.task(task, answer));}
         if(result.sources?.length){
           const sourcesButton=document.createElement('button');sourcesButton.type='button';sourcesButton.className='btn assistant-sources';sourcesButton.textContent='业务依据（'+result.sources.length+'）';
           sourcesButton.onclick=()=>{const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>业务依据</b><button class="btn" type="button" data-close>关闭</button></div><div class="production-modal-body">'+result.sources.map(source=>'<article class="assistant-source-item"><b>'+escapeHtml(source.title||source.id)+'</b><p>'+escapeHtml(source.excerpt||'')+'</p></article>').join('')+'</div></div>';document.body.append(layer);bindProductionModal(layer);};answer.after(sourcesButton);
@@ -2014,7 +1998,7 @@ function mountMarketingAssistantV2(){
           catch{answer.insertAdjacentHTML('afterend','<div class="assistant-sync-error" role="alert">答复已完成，业务列表刷新失败。<button type="button" class="btn" data-refresh-business>刷新列表</button></div>');q('[data-refresh-business]',wrap).onclick=async e=>{e.target.disabled=true;try{await loadTenantData();q('.assistant-sync-error',wrap)?.remove();}catch(cause){toast(cause.message);}finally{e.target.disabled=false;}};}
         }
       }catch(err){
-        q('.assistant-trace-details summary span',wrap).textContent=err.code==='cancelled'?'已停止等待':'未完成';
+        process.finish(true);
         answer.textContent=err.message||'智能体请求失败，请重试。';answer.setAttribute('role','alert');wrap.classList.add('has-error');setLive(err.code==='cancelled'?'就绪':'回复失败',err.code!=='cancelled');
         if(err.status!==401&&err.code!=='cancelled'){
           const retry=document.createElement('button');retry.type='button';retry.className='btn assistant-retry';retry.textContent='重试';retry.onclick=()=>send(message,wrap);answer.after(retry);
@@ -2039,19 +2023,22 @@ function mountMarketingAssistantV2(){
     window.addEventListener('resize',()=>{const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();positionElement(panel,panelRect.left,panelRect.top);positionElement(fab,fabRect.left,fabRect.top);});
     restoreLayout();if(window.lucide)lucide.createIcons();
     const dockHost=q('#dongdongDock');
-    const setDocked=docked=>{
-      if(!dockHost)return;
-      if(docked){
-        const placeholder=dockHost.querySelector('.dongdong-chat-placeholder');if(placeholder)placeholder.remove();
-        dockHost.appendChild(panel);panel.classList.add('is-docked');panel.hidden=false;
+    const setDocked=view=>{
+      const target=view==='smartspace'?q('#smartSpaceDock'):view==='dongdong'?dockHost:null;
+      if(target){
+        const placeholder=target.querySelector('.dongdong-chat-placeholder');if(placeholder)placeholder.remove();
+        target.appendChild(panel);panel.classList.add('is-docked');panel.hidden=false;
+        panel.classList.remove('is-collapsed');
+        panel.classList.toggle('is-home-docked',view==='dongdong');
+        input.placeholder=view==='smartspace'?'输入任务，或查询业务数据':(dongdongModes[q('.dongdong-tabs .active')?.dataset.dongdongMode]?.placeholder||'输入营销任务');
       }else{
         /* docked 分支会强制 hidden=false，离开首页时必须收回，否则面板盖住内页内容 */
-        root.appendChild(panel);panel.classList.remove('is-docked');panel.hidden=true;restoreLayout();
+        root.appendChild(panel);panel.classList.remove('is-docked','is-home-docked');panel.hidden=true;restoreLayout();
       }
     };
-    window.dockDongdong=docked=>setDocked(Boolean(docked));
+    window.dockDongdong=view=>setDocked(view);
     window.dongdongAsk=send;
-    setDocked(Boolean(q('#dongdong.active')));
+    setDocked(q('#smartspace.active')?'smartspace':'dongdong');
   }
 
   function renderDongdongCapabilities(){

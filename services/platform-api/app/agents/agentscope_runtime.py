@@ -19,6 +19,7 @@ from typing import Any, Callable
 from pydantic import BaseModel, SecretStr
 
 from ..llm import LLMConfig, LLMResult, LLMServiceError
+from ..agent_process import public_value
 
 try:
     from agentscope.agent import Agent, ContextConfig, ReActConfig
@@ -33,6 +34,8 @@ try:
         TextBlockEndEvent,
         ThinkingBlockDeltaEvent,
         ToolCallStartEvent,
+        ToolCallDeltaEvent,
+        ToolCallEndEvent,
         ToolResultEndEvent,
         ToolResultStartEvent,
         ToolResultTextDeltaEvent,
@@ -154,6 +157,10 @@ class AgentScopeRuntime:
         self._emit_callback = emit
         self._record_usage = record_usage
         self._source_sink = source_sink
+        self._tool_inputs: dict[str, str] = {}
+        self._tool_names: dict[str, str] = {}
+        self._public_text: list[str] = []
+        self._round_has_tools = False
 
     def emit(self, event_type: str, **payload: Any) -> None:
         if self._emit_callback:
@@ -284,20 +291,33 @@ class AgentScopeRuntime:
         tool_result_buffers: dict[str, list[str]],
     ) -> None:
         if isinstance(event, ModelCallStartEvent):
-            self.emit("harness/model-started", model=event.model_name, framework="agentscope", version=AGENTSCOPE_VERSION)
+            self._public_text = []
+            self._round_has_tools = False
+            self.emit("harness/model-started", step_id=event.reply_id, model=event.model_name, summary="分析任务并选择下一步操作", framework="agentscope", version=AGENTSCOPE_VERSION)
         elif isinstance(event, ModelCallEndEvent):
             total = event.input_tokens + event.output_tokens
-            self.emit("harness/model-finished", model=event.metadata.get("model_name", "") if event.metadata else "", prompt_tokens=event.input_tokens, completion_tokens=event.output_tokens, total_tokens=total, framework="agentscope")
+            self.emit("harness/model-finished", step_id=event.reply_id, summary="已选择业务工具" if self._round_has_tools else "已整理回复", prompt_tokens=event.input_tokens, completion_tokens=event.output_tokens, total_tokens=total, framework="agentscope")
             if self._record_usage:
                 self._record_usage(LLMResult(content="", prompt_tokens=event.input_tokens, completion_tokens=event.output_tokens, total_tokens=total, model_name=str(event.metadata.get("model_name", "")) if event.metadata else ""))
         elif isinstance(event, TextBlockDeltaEvent):
+            self._public_text.append(event.delta)
             answer_parts.append(event.delta)
             if token_sink:
                 token_sink(event.delta)
         elif isinstance(event, ThinkingBlockDeltaEvent):
             pass  # Keep private reasoning out of user-visible traces.
         elif isinstance(event, ToolCallStartEvent):
+            self._round_has_tools = True
+            if self._public_text:
+                self.emit("agent/plan", summary=public_value("".join(self._public_text)))
+                self._public_text = []
+            self._tool_inputs[event.tool_call_id] = ""
+            self._tool_names[event.tool_call_id] = event.tool_call_name
             self.emit("harness/tool-started", tool=event.tool_call_name, tool_call_id=event.tool_call_id, framework="agentscope")
+        elif isinstance(event, ToolCallDeltaEvent):
+            self._tool_inputs[event.tool_call_id] = (self._tool_inputs.get(event.tool_call_id, "") + event.delta)[:16000]
+        elif isinstance(event, ToolCallEndEvent):
+            self.emit("harness/tool-input", tool_call_id=event.tool_call_id, arguments=public_value(self._tool_inputs.pop(event.tool_call_id, "")))
         elif isinstance(event, ToolResultStartEvent):
             tool_result_buffers[event.tool_call_id] = []
             self.emit("harness/tool-result-started", tool_call_id=event.tool_call_id, framework="agentscope")
@@ -305,12 +325,14 @@ class AgentScopeRuntime:
             tool_result_buffers.setdefault(event.tool_call_id, []).append(event.delta)
         elif isinstance(event, ToolResultEndEvent):
             raw = "".join(tool_result_buffers.pop(event.tool_call_id, []))
-            self.emit("harness/tool-finished", tool_call_id=event.tool_call_id, framework="agentscope")
+            try:
+                payload = json.loads(raw)
+            except (TypeError, ValueError):
+                payload = raw
+            state = str(getattr(event.state, "value", event.state))
+            failed = state in {"failed", "error", "rejected", "denied", "interrupted"} or isinstance(payload, dict) and (payload.get("ok") is False or bool(payload.get("error")))
+            self.emit("harness/tool-failed" if failed else "harness/tool-finished", tool=self._tool_names.pop(event.tool_call_id, ""), tool_call_id=event.tool_call_id, result=public_value(payload), status=state, framework="agentscope")
             if self._source_sink and raw:
-                try:
-                    payload = json.loads(raw)
-                except (TypeError, ValueError):
-                    payload = {}
                 for source in payload.get("sources", []) if isinstance(payload, dict) else []:
                     if isinstance(source, dict):
                         self._source_sink(source)

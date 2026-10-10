@@ -7,7 +7,7 @@
     rail.innerHTML = '<div class="assistant-workspace-head"><b>东东工作空间</b><button type="button" class="btn" data-new-chat>＋ 新对话</button></div><div class="assistant-history-tabs"><button type="button" class="active" data-history-tab="conversations">对话</button><button type="button" data-history-tab="tasks">任务</button><button type="button" data-history-tab="memories">记忆</button></div><div class="assistant-workspace-list" role="status"></div>';
     panel.insertBefore(rail, $('.assistant-messages'));
     const toolbar = document.createElement('div'); toolbar.className = 'assistant-workspace-toolbar';
-    toolbar.innerHTML = '<button class="btn" type="button" data-rail-toggle>历史与任务</button><b data-chat-title>新对话</b><span class="assistant-workspace-status" data-chat-status>就绪</span><button class="btn" type="button" data-new-chat>＋ 新对话</button>';
+    toolbar.innerHTML = '<button class="btn" type="button" data-rail-toggle>历史与任务</button><b data-chat-title>新对话</b><span class="assistant-workspace-status" data-chat-status>就绪</span><button class="btn" type="button" data-view="smartspace">智能空间</button><button class="btn" type="button" data-new-chat>＋ 新对话</button>';
     panel.insertBefore(toolbar, $('.assistant-messages'));
     const list = $('.assistant-workspace-list'), messages = $('.assistant-messages');
     let tab = 'conversations', revision = 0;
@@ -30,7 +30,8 @@
       }
       anchor.innerHTML = result; anchor.classList.add('assistant-formatted');
     }
-    function newChat() { if (api.busy()) return; api.setConversation('', []); messages.innerHTML = '<div class="assistant-welcome"><img src="./brand/dongdong-robot.svg" alt="东东"><h2>今天想完成什么营销任务？</h2><p>查询数据、分析统计，或创建一个任务。</p></div>'; $('[data-chat-title]').textContent = '新对话'; api.focus(); }
+    function newChat() { if (api.busy()) return; api.setConversation('', []); messages.innerHTML = '<div class="assistant-welcome"><img src="./brand/dongdong-robot.svg" alt="东东"><h2>开始一个营销任务</h2></div>'; $('[data-chat-title]').textContent = '新对话'; panel.classList.remove('has-conversation'); api.focus(); }
+    function renderer(host) { return window.createA2UIRenderer(host, { ...api, task }); }
     function widgets(items, anchor) {
       for (const item of items || []) {
         if (item.type === 'navigation') { const card = document.createElement('button'); card.className = 'btn assistant-widget'; card.type = 'button'; card.textContent = '打开' + item.title; card.onclick = () => api.navigate(item.page); anchor.after(card); continue; }
@@ -56,15 +57,23 @@
       if (api.busy()) return;
       try {
         const value = await request('/api/assistant/conversations/' + encodeURIComponent(id));
+        panel.classList.add('has-conversation');
         api.setConversation(value.id, value.messages.filter(m => m.status === 'completed').slice(-12)); $('[data-chat-title]').textContent = value.title; messages.innerHTML = '';
         const seenTasks = new Set();
         for (const msg of value.messages) {
           const wrapper = document.createElement('div'); wrapper.className = 'assistant-message ' + msg.role + (msg.status === 'failed' ? ' has-error' : '');
-          wrapper.innerHTML = `<div class="${msg.role === 'assistant' ? 'assistant-live-body' : 'assistant-user-body'}"><p class="assistant-answer">${esc(msg.content)}</p></div>`;
+          wrapper.innerHTML = `<div class="${msg.role === 'assistant' ? 'assistant-live-body' : 'assistant-user-body'}"><div class="assistant-answer">${esc(msg.content)}</div><div class="assistant-ui-output"></div></div>`;
           messages.append(wrapper); const answer = $('.assistant-answer', wrapper); if (msg.role === 'assistant') formatAnswer(answer, msg.content);
           if (msg.status === 'failed') answer.setAttribute('role', 'alert');
-          widgets(msg.detail?.widgets, answer);
-          for (const saved of msg.detail?.tasks || []) { task(value.tasks.find(t => t.id === saved.id) || saved, answer); seenTasks.add(saved.id); }
+          if(msg.role==='assistant'&&msg.detail?.trace?.length)window.createAssistantProcess($('.assistant-live-body',wrapper)).restore(msg.detail.trace,msg.status==='failed');
+          if(msg.detail?.a2ui?.length){
+            const ui=structuredClone(msg.detail.a2ui);
+            ui.forEach(message=>{const data=message.updateDataModel?.value?.content;if(data?.id&&data.id.startsWith('TASK-')){message.updateDataModel.value.content=value.tasks.find(t=>t.id===data.id)||data;seenTasks.add(data.id);}});
+            try{renderer($('.assistant-ui-output',wrapper)).restore(ui);}catch{const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';wrapper.append(error);}
+          }else{
+            widgets(msg.detail?.widgets, answer);
+            for (const saved of msg.detail?.tasks || []) { task(value.tasks.find(t => t.id === saved.id) || saved, answer); seenTasks.add(saved.id); }
+          }
         }
         const remaining = value.tasks.filter(item => !seenTasks.has(item.id));
         if (remaining.length) { const wrapper = document.createElement('div'); wrapper.className = 'assistant-message assistant'; wrapper.innerHTML = '<div class="assistant-live-body"><p class="assistant-answer">任务记录</p></div>'; messages.append(wrapper); remaining.forEach(item => task(item, $('.assistant-answer', wrapper))); }
@@ -92,6 +101,6 @@
       }
     });
     newChat(); refresh();
-    return { refresh, widgets, task, formatAnswer, newChat, setTitle: value => { if ($('[data-chat-title]').textContent === '新对话') $('[data-chat-title]').textContent = String(value).slice(0, 80); }, show: () => { panel.classList.toggle('show-history'); refresh(); } };
+    return { refresh, widgets, task, renderer, formatAnswer, newChat, setTitle: value => { if ($('[data-chat-title]').textContent === '新对话') $('[data-chat-title]').textContent = String(value).slice(0, 80); }, show: () => { api.navigate('smartspace'); panel.classList.add('show-history'); refresh(); } };
   };
 })();

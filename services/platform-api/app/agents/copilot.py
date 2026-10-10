@@ -19,6 +19,8 @@ from .agentscope_runtime import AgentScopeRuntime
 from .runtime import AgentRuntime
 from ..assistant_tools import build_tools
 from ..assistant_store import list_memories, refresh_task
+from ..a2ui import ReplySurfaces
+from ..agent_process import public_value
 
 
 class MarketingCopilot:
@@ -33,6 +35,7 @@ class MarketingCopilot:
         request: AgentChatRequest,
         event_sink: Callable[[dict[str, Any]], None] | None = None,
         token_sink: Callable[[str], None] | None = None,
+        ui_sink: Callable[[dict[str, Any]], None] | None = None,
     ) -> AgentChatResponse:
         trace: list[dict[str, Any]] = []
         sources: list[dict[str, Any]] = []
@@ -40,7 +43,7 @@ class MarketingCopilot:
         tasks: list[dict[str, Any]] = []
 
         def emit(event: str, payload: dict[str, Any]) -> None:
-            item = {"event": event, "timestamp": datetime.now(timezone.utc).isoformat(), **payload}
+            item = {"event": event, "timestamp": datetime.now(timezone.utc).isoformat(), **public_value(payload)}
             trace.append(item)
             if event_sink:
                 event_sink(item)
@@ -49,6 +52,7 @@ class MarketingCopilot:
         if provider is None:
             raise ValueError("当前租户未配置可用的大模型")
         run_id = f"CHAT-{uuid4().hex[:12].upper()}"
+        surfaces = ReplySurfaces(run_id, ui_sink)
         harness = UnifiedHarness(emit)
         harness.load_context(HarnessContext(
             tenant_id=context.tenant_id,
@@ -118,6 +122,8 @@ class MarketingCopilot:
             "current_tasks是本轮开始时后台读取的任务最新状态，优先于历史答复。不要把已完成任务描述为待确认。"
             "遇到文件上传、密码和模型密钥配置时，用open_platform_page展示对应工作台入口，凭据不得进入对话或任务参数。"
             "默认答复简洁，先结论再最多三条说明。已有图表或任务卡片时不要重复输出同一份表格或接口术语。问候仅一两句话。"
+            "答复不要展示API路径、内部任务ID和实现术语。任务参数、状态及操作交给任务卡片展示。"
+            "复杂任务在调用工具前可用一句话说明公开行动计划；每轮的解释是给用户看的动作说明，不输出内部推理。图表和任务卡由工具自动生成A2UI界面。"
         )
         current_tasks = session.scalars(select(AssistantTaskRecord).where(
             AssistantTaskRecord.tenant_id == context.tenant_id,
@@ -134,7 +140,7 @@ class MarketingCopilot:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             token_sink=token_sink,
-            python_tools=build_tools(session, context, request.conversation_id, widgets, tasks, emit),
+            python_tools=build_tools(session, context, request.conversation_id, widgets, tasks, emit, surfaces.add),
             use_mcp=True,
         )
         if provider.provider_type == "mock":
@@ -150,6 +156,7 @@ class MarketingCopilot:
             sources=self._deduplicate_sources(sources),
             widgets=widgets,
             tasks=tasks,
+            a2ui=surfaces.messages,
         )
 
     def _agent_loop(

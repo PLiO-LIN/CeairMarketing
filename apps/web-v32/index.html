@@ -6,7 +6,7 @@
 <link rel="icon" href="data:,"><link rel="stylesheet" href="./styles.css"><link rel="stylesheet" href="./ui-premium.css"><link rel="stylesheet" href="./ui-production-v2.css"><link rel="stylesheet" href="./ui-workbench.css"><link rel="stylesheet" href="./ui-preview.css?v=20261004-1"><script src="./vendor/lucide-0.468.0.min.js"></script><script src="./vendor/d3-7.9.0.min.js"></script>
 <link rel="stylesheet" href="./ui-home.css?v=20261009-1">
 <link rel="stylesheet" href="./ui-competition.css?v=20261010-1">
-<link rel="stylesheet" href="./ui-clean.css?v=20261010-2">
+<link rel="stylesheet" href="./ui-clean.css?v=20261010-3">
 </head>
 <body><div id="toast" class="toast" role="status" aria-live="polite"></div><header class="topnav"><div class="brand"><div class="logo"><img src="./brand/ceair-wordmark.svg" alt="中国东方航空 CHINA EASTERN" /></div><div class="brand-text"><b>东航智慧营销云</b><span>China Eastern AI Marketing Cloud</span></div></div><nav class="nav">
 <button class="dongdong-entry active" data-view="dongdong"><i data-lucide="sparkles"></i><span>东东AI伙伴</span></button>
@@ -22,11 +22,16 @@
 <div class="dongdong-inner">
 <div class="dongdong-console">
 <div class="dongdong-tabs" role="tablist" aria-label="营销任务类型"><button class="active" role="tab" aria-selected="true" aria-controls="dongdongDock" data-dongdong-mode="opportunity">机会洞察</button><button role="tab" aria-selected="false" aria-controls="dongdongDock" data-dongdong-mode="audience">客群圈选</button><button role="tab" aria-selected="false" aria-controls="dongdongDock" data-dongdong-mode="persona">旅客画像</button><button role="tab" aria-selected="false" aria-controls="dongdongDock" data-dongdong-mode="content">内容生成</button></div>
-<div class="dongdong-card"><div class="dongdong-card-head"><span class="dongdong-avatar"><img src="./brand/dongdong-robot.svg" alt="东东"></span><div class="dongdong-card-title"><h1>今天想完成什么营销任务？</h1></div><em class="dongdong-live"><i></i>AI 伙伴</em></div><div class="dongdong-chat" id="dongdongDock"><div class="dongdong-chat-placeholder"><i data-lucide="bot"></i><b>正在接入东东</b><span>登录后即可对话</span></div></div></div>
+<div class="dongdong-card"><div class="dongdong-card-head"><span class="dongdong-avatar"><img src="./brand/dongdong-robot.svg" alt="东东"></span><div class="dongdong-card-title"><h1>今天想完成什么营销任务？</h1></div><em class="dongdong-live"><i></i>AI 伙伴</em><button type="button" class="btn dongdong-space-entry" data-view="smartspace">进入智能空间</button></div><div class="dongdong-chat" id="dongdongDock"><div class="dongdong-chat-placeholder"><i data-lucide="bot"></i><b>正在接入东东</b><span>登录后即可对话</span></div></div></div>
 </div>
 <div class="dongdong-quick" id="dongdongQuick"></div>
-<div class="dongdong-section"><div class="dongdong-section-head"><h2>东东能做什么</h2><span id="dongdongCapabilityCount">智能域按租户启用</span><button class="dongdong-link" data-jump="overview"><i data-lucide="arrow-right"></i>进入营销总览</button></div><div class="dongdong-cap-grid" id="dongdongCapabilityGrid"><div class="dongdong-cap-empty">正在加载智能域</div></div></div>
+<div class="dongdong-section"><div class="dongdong-section-head"><h2>东东能做什么</h2><span id="dongdongCapabilityCount">智能域按租户启用</span></div><div class="dongdong-cap-grid" id="dongdongCapabilityGrid"><div class="dongdong-cap-empty">正在加载智能域</div></div></div>
 </div>
+</section>
+
+<section id="smartspace" class="view smartspace-view">
+<div class="smartspace-head"><div><span class="eyebrow">东东 AI 伙伴</span><h1>智能空间</h1></div><button class="btn" type="button" data-view="dongdong">返回首页</button></div>
+<div class="smartspace-shell"><div class="dongdong-chat" id="smartSpaceDock"><div class="dongdong-chat-placeholder"><i data-lucide="bot"></i><b>正在接入东东</b><span>登录后即可对话</span></div></div></div>
 </section>
 
 <section id="overview" class="view">
@@ -73,5 +78,5 @@
 <script src="./app.js"></script>
 <script src="./agent-stream.js"></script>
 <script src="./v31.js"></script>
-<script src="./data.js"></script><script src="./v32.js"></script><script src="./competition.js?v=20261010-2"></script><script src="./assistant-workspace.js"></script><script src="./provider-settings.js"></script><script src="./production.js"></script><script src="./preview.js"></script><script src="./market-hotspots.js"></script>
+<script src="./data.js"></script><script src="./v32.js"></script><script src="./competition.js?v=20261010-2"></script><script src="./assistant-process.js"></script><script src="./assistant-a2ui.js"></script><script src="./assistant-workspace.js"></script><script src="./provider-settings.js"></script><script src="./production.js"></script><script src="./preview.js"></script><script src="./market-hotspots.js"></script>
 </body></html>

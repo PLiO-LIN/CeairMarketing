@@ -698,6 +698,7 @@ class AgentChatResponse(BaseModel):
     sources: list[dict[str, Any]] = Field(default_factory=list)
     widgets: list[dict[str, Any]] = Field(default_factory=list)
     tasks: list[dict[str, Any]] = Field(default_factory=list)
+    a2ui: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class AssistantMemoryCreate(BaseModel):
