@@ -567,6 +567,15 @@ class ProviderModel(BaseModel):
     owned_by: str = ""
 
 
+class ModelDiscoveryRequest(BaseModel):
+    provider_id: int | None = None
+    provider_type: Literal["openai-compatible", "mock"] = "openai-compatible"
+    base_url: str = ""
+    model_name: str = ""
+    api_key: str = ""
+    timeout_seconds: int = Field(default=60, ge=5, le=300)
+
+
 class ProviderModelsResult(BaseModel):
     provider_id: int
     models: list[ProviderModel]
@@ -687,6 +696,12 @@ class AgentChatResponse(BaseModel):
     model_name: str
     trace: list[dict[str, Any]] = Field(default_factory=list)
     sources: list[dict[str, Any]] = Field(default_factory=list)
+    widgets: list[dict[str, Any]] = Field(default_factory=list)
+    tasks: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class AssistantMemoryCreate(BaseModel):
+    content: str = Field(min_length=1, max_length=1000)
 
 
 class OntologyNode(BaseModel):

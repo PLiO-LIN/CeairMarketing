@@ -18,7 +18,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, SecretStr
 
-from ..llm import LLMConfig, LLMResult
+from ..llm import LLMConfig, LLMResult, LLMServiceError
 
 try:
     from agentscope.agent import Agent, ContextConfig, ReActConfig
@@ -27,7 +27,10 @@ try:
         ModelCallEndEvent,
         ModelCallStartEvent,
         ReplyEndEvent,
+        RequireUserConfirmEvent,
+        RequireExternalExecutionEvent,
         TextBlockDeltaEvent,
+        TextBlockEndEvent,
         ThinkingBlockDeltaEvent,
         ToolCallStartEvent,
         ToolResultEndEvent,
@@ -39,6 +42,7 @@ try:
     from agentscope.mcp import MCPClient, StdioMCPConfig
     from agentscope.model import ChatModelBase, ChatResponse, ChatUsage, OpenAIChatModel
     from agentscope.tool import FunctionTool, Toolkit, ToolChunk
+    from agentscope.permission import PermissionBehavior, PermissionDecision
     from agentscope.workspace import LocalWorkspace
     AGENTSCOPE_VERSION = "2.0.8"
 except ImportError as exc:  # pragma: no cover - dependency is pinned in requirements
@@ -237,13 +241,10 @@ class AgentScopeRuntime:
                     react_config=ReActConfig(max_iters=8, structured_output_grace_iters=2, stop_on_reject=True),
                 )
                 self.emit("agentscope/agent-created", agent_id=profile_id, workspace=str(workspace_path), skill=profile.skill, mcp=profile.mcp if mcp_client else None)
-                answer_parts: list[str] = []
-                async for event in agent.reply_stream(UserMsg(name="营销平台", content=user_prompt), yield_final_msg=False):
-                    self._handle_event(event, answer_parts, token_sink, tool_result_buffers)
-                answer = "".join(answer_parts).strip()
-                if not answer:
-                    self.emit("agentscope/empty-reply", profile=profile_id)
-                return answer
+                return await self._consume_reply(
+                    agent.reply_stream(UserMsg(name="营销平台", content=user_prompt), yield_final_msg=True),
+                    token_sink, tool_result_buffers,
+                )
         finally:
             if mcp_client is not None:
                 await mcp_client.close()
@@ -291,11 +292,10 @@ class AgentScopeRuntime:
                 self._record_usage(LLMResult(content="", prompt_tokens=event.input_tokens, completion_tokens=event.output_tokens, total_tokens=total, model_name=str(event.metadata.get("model_name", "")) if event.metadata else ""))
         elif isinstance(event, TextBlockDeltaEvent):
             answer_parts.append(event.delta)
-            self.emit("agent/text-delta", text=event.delta, block_id=event.block_id)
             if token_sink:
                 token_sink(event.delta)
         elif isinstance(event, ThinkingBlockDeltaEvent):
-            self.emit("agent/thinking-delta", text=event.delta, block_id=event.block_id)
+            pass  # Keep private reasoning out of user-visible traces.
         elif isinstance(event, ToolCallStartEvent):
             self.emit("harness/tool-started", tool=event.tool_call_name, tool_call_id=event.tool_call_id, framework="agentscope")
         elif isinstance(event, ToolResultStartEvent):
@@ -323,9 +323,58 @@ class AgentScopeRuntime:
                 if token_sink:
                     token_sink(text)
 
+    async def _consume_reply(self, events, token_sink, tool_result_buffers) -> str:
+        """Keep the final message authoritative; a parked stream is not success."""
+        parts: list[str] = []
+        delta_blocks: set[str] = set()
+        final_text: str | None = None
+        finished_reason: str | None = None
+        model_reason = ""
+        async for event in events:
+            if isinstance(event, (RequireUserConfirmEvent, RequireExternalExecutionEvent)):
+                self.emit("agentscope/confirmation-required")
+                raise LLMServiceError("此操作需要人工确认，请在对应业务工作台发起并审核后继续。")
+            if isinstance(event, ModelCallStartEvent):
+                parts.clear()
+                delta_blocks.clear()
+            if isinstance(event, ModelCallEndEvent):
+                model_reason = str(getattr(event.finished_reason, "value", event.finished_reason))
+            if isinstance(event, TextBlockDeltaEvent):
+                delta_blocks.add(event.block_id)
+            if isinstance(event, TextBlockEndEvent) and event.text and event.block_id not in delta_blocks:
+                parts.append(event.text)
+                delta_blocks.add(event.block_id)
+                if token_sink:
+                    token_sink(event.text)
+            if isinstance(event, ReplyEndEvent):
+                finished_reason = str(getattr(event.finished_reason, "value", event.finished_reason))
+                if event.error or finished_reason != "completed":
+                    message = {
+                        "exceed_max_iters": "智能体达到处理轮数上限，请缩小问题范围后重试。",
+                        "interrupted": "智能体回复已中断，请重试。",
+                    }.get(finished_reason, "模型执行失败，请检查模型配置或稍后重试。")
+                    self.emit("agentscope/reply-failed", reason=finished_reason)
+                    raise LLMServiceError(message)
+            if isinstance(event, Msg):
+                final_text = event.get_text_content() or ""
+                if final_text and not parts and token_sink:
+                    token_sink(final_text)
+                continue
+            self._handle_event(event, parts, token_sink, tool_result_buffers)
+        if finished_reason is None:
+            raise LLMServiceError("智能体未正常完成回复，请重试或检查工具权限配置。")
+        answer = (final_text if final_text is not None else "".join(parts)).strip()
+        if not answer:
+            self.emit("agentscope/empty-reply", reason=model_reason)
+            if model_reason in {"length", "max_tokens"}:
+                raise LLMServiceError("模型输出额度已耗尽且未生成正文，请增加最大输出 Token 或选择非思考模型。")
+            raise LLMServiceError("模型未生成回复正文，请检查所选模型是否支持对话、工具调用和流式输出。")
+        return answer
 
-def make_tool(func: Callable[..., Any], *, name: str | None = None, description: str | None = None, read_only: bool = True) -> FunctionTool:
-    return FunctionTool(func, name=name, description=description, is_read_only=read_only)
+
+def make_tool(func: Callable[..., Any], *, name: str | None = None, description: str | None = None, read_only: bool = True, allow_internal: bool = False) -> FunctionTool:
+    permission = PermissionDecision(behavior=PermissionBehavior.ALLOW, message="平台授权的私有任务或偏好存储，不执行业务变更") if allow_internal else None
+    return FunctionTool(func, name=name, description=description, is_read_only=read_only, is_concurrency_safe=False, permission=permission)
 
 
 def text_tool_result(value: Any) -> ToolChunk:

@@ -470,43 +470,15 @@
     });
   }
 
-  function showProviderEditor(item) {
-    openBusinessEditor({
-      title: '编辑模型服务', subtitle: `${item.display_name} · API Key 留空表示保持原配置`, item,
-      fields: [
-        { name: 'display_name', label: '配置名称', type: 'text' },
-        { name: 'provider_type', label: '服务类型', type: 'select', options: [{ value: 'openai-compatible', label: 'OpenAI Compatible' }, { value: 'm' + 'ock', label: '内置受控' }] },
-        { name: 'base_url', label: '服务地址', type: 'url', required: false, placeholder: 'https://.../v1' },
-        { name: 'model_name', label: '默认模型名称', type: 'text' },
-        { name: 'api_key', label: 'API Key', type: 'password', required: false, placeholder: '留空表示保持当前 Key' },
-        { name: 'timeout_seconds', label: '超时（秒）', type: 'number', min: 5, max: 300 },
-        { name: 'temperature', label: 'Temperature', type: 'number', min: 0, max: 2, step: 0.1 },
-        { name: 'max_tokens', label: '最大输出 Token', type: 'number', min: 128, max: 32768 },
-        { name: 'enabled', label: '启用模型服务', type: 'checkbox' },
-        { name: 'is_default', label: '设为默认模型', type: 'checkbox' },
-      ],
-      save: async values => { if (!values.api_key) delete values.api_key; await request(`/api/model-providers/${item.id}`, { method: 'PUT', body: JSON.stringify(values) }); toast('模型服务配置已更新'); await refreshAfterBusinessSave(); renderModels(); }
-    });
+  let providerSettings = null;
+  function getProviderSettings() {
+    return providerSettings || (providerSettings = window.createProviderSettings({
+      request, escapeHtml, bindModal: bindProductionModal,
+      providers: () => tenantData.providers || [], tenant: () => activeTenant()?.id,
+      canEdit: isTenantAdmin, onSaved: refreshAfterBusinessSave, toast,
+    }));
   }
-
-  function showProviderCreateEditor() {
-    openBusinessEditor({
-      title: '新增模型服务', subtitle: 'OpenAI 兼容接口 · 保存后供当前租户智能域使用', item: { display_name: '', provider_type: 'openai-compatible', base_url: '', model_name: '', api_key: '', timeout_seconds: 60, temperature: 0.3, max_tokens: 2048, enabled: true, is_default: false },
-      fields: [
-        { name: 'display_name', label: '配置名称', type: 'text', placeholder: '例如：营销主模型' },
-        { name: 'provider_type', label: '服务类型', type: 'select', options: [{ value: 'openai-compatible', label: 'OpenAI Compatible' }, { value: 'mock', label: '内置受控' }] },
-        { name: 'base_url', label: '服务地址', type: 'url', required: false, placeholder: 'https://.../v1' },
-        { name: 'model_name', label: '默认模型名称', type: 'text', placeholder: '输入模型标识' },
-        { name: 'api_key', label: 'API Key', type: 'password', required: false, placeholder: '可留空，使用服务端预置密钥' },
-        { name: 'timeout_seconds', label: '超时（秒）', type: 'number', min: 5, max: 300 },
-        { name: 'temperature', label: 'Temperature', type: 'number', min: 0, max: 2, step: 0.1 },
-        { name: 'max_tokens', label: '最大输出 Token', type: 'number', min: 128, max: 32768 },
-        { name: 'enabled', label: '启用模型服务', type: 'checkbox' },
-        { name: 'is_default', label: '设为默认模型', type: 'checkbox' },
-      ],
-      save: async values => { await request('/api/model-providers', { method: 'POST', body: JSON.stringify(values) }); toast('模型服务已新增'); await refreshAfterBusinessSave(); renderModels(); }
-    });
-  }
+  function showProviderCreateEditor() { getProviderSettings().create(); }
 
   function showMineruEditor() {
     const item = tenantData.mineru || { base_url: 'https://mineru.net', api_key: '', enabled: false };
@@ -599,54 +571,11 @@
 <h1>模型配置</h1>
 </div>
 </div>
-<div class="production-grid">
-<div class="panel">
-<div class="panel-head">
-<h2>模型服务清单</h2>
-<span id="modelCount">0 个</span>
+<div id="providerSettings" class="provider-settings panel">
+<aside class="provider-sidebar"><div class="provider-sidebar-head"><h2>模型服务</h2><span id="modelCount"></span></div><div id="modelTable" class="provider-list"></div><button class="btn provider-add" type="button" data-action="newProvider">＋ 添加模型服务</button></aside>
+<div id="providerConfig" class="provider-config"></div>
 </div>
-<div class="panel-body">
-<div class="model-provider-list" id="modelTable" role="list" aria-label="模型服务清单">
-</div>
-</div>
-</div>
-<div class="panel">
-<div class="panel-head">
-<h2>新增模型服务</h2>
-<span>OpenAI 兼容接口</span>
-</div>
-<form class="production-form" id="modelForm">
-<label>配置名称<input name="display_name" required placeholder="例如：营销主模型">
-</label>
-<label>服务类型<select name="provider_type">
-<option value="openai-compatible">OpenAI Compatible</option>
-</select>
-</label>
-<label>服务地址<input name="base_url" placeholder="https://.../v1">
-</label>
-<label>模型名称<input name="model_name" required placeholder="输入模型标识">
-</label>
-<label>API Key<input name="api_key" type="password">
-</label>
-<label>
-<input name="is_default" type="checkbox">设为默认模型</label>
-<button class="btn primary">保存模型配置</button>
-</form>
-</div>
-<div class="panel model-detail-panel">
-<div class="panel-head"><h2>模型可用性与用量</h2><span id="modelDetailProvider">选择一个模型服务</span></div>
-<div class="panel-body" id="modelDetail"><div class="production-status">点击“可用模型”或“用量”查看实时信息。</div></div>
-</div>
-<div class="panel mineru-panel">
-<div class="panel-head"><h2>MinerU 文档解析</h2><span id="mineruState">未配置</span></div>
-<form class="production-form" id="mineruForm">
-<label>服务地址<input name="base_url" value="https://mineru.net"></label>
-<label>API Key<input name="api_key" type="password" placeholder="留空表示不修改"></label>
-<label><input name="enabled" type="checkbox">启用文档解析</label>
-<button class="btn primary">保存 MinerU 配置</button>
-</form>
-</div>
-</div>
+<div class="panel mineru-panel mineru-settings-row"><div class="panel-head"><h2>MinerU 文档解析</h2><span id="mineruState">未配置</span><button type="button" class="btn" data-action="editMineru">配置</button></div></div>
 </section>`);
     if (!q('#tenants')) content.insertAdjacentHTML('beforeend', `<section id="tenants" class="view">
 <div class="page-head">
@@ -696,45 +625,6 @@
   }
 
   function normalizeConfigurationEntries() {
-    const modelForm = q('#modelForm');
-    if (modelForm && !modelForm.dataset.normalized) {
-      modelForm.dataset.normalized = 'true';
-      const panel = modelForm.closest('.panel');
-      if (panel) {
-        panel.classList.add('model-create-panel');
-        modelForm.hidden = true;
-        const head = q('.panel-head', panel);
-        if (head) { q('h2', head).textContent = '新增模型服务'; q('span', head).textContent = '按需配置'; }
-        const body = document.createElement('div');
-        body.className = 'config-entry-body';
-        const card = document.createElement('div');
-        card.className = 'config-entry-card';
-        card.innerHTML = '<div class=config-entry-icon><i data-lucide=plug-zap></i></div><div><b>接入 OpenAI 兼容模型</b><p>配置服务地址、模型标识和密钥后，即可供智能域和营销助手调用。</p><small>支持租户级默认模型、模型发现和调用用量统计</small></div>';
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'btn primary config-entry-button'; button.dataset.action = 'newProvider';
-        button.innerHTML = '<i data-lucide=plus></i>新增模型服务';
-        body.append(card, button);
-        panel.append(body);
-      }
-    }
-    const mineruForm = q('#mineruForm');
-    if (mineruForm && !mineruForm.dataset.normalized) {
-      mineruForm.dataset.normalized = 'true';
-      const mineruPanel = mineruForm.closest('.mineru-panel');
-      if (mineruPanel) {
-        mineruForm.hidden = true;
-        const mineruBody = document.createElement('div');
-        mineruBody.className = 'config-entry-body';
-        const mineruCard = document.createElement('div');
-        mineruCard.className = 'config-entry-card';
-        mineruCard.innerHTML = '<div class=config-entry-icon><i data-lucide=file-scan></i></div><div><b>文档解析服务</b><p id=mineruSummary>用于 PDF、Word、PPT 和扫描件的结构化解析。</p><small>解析结果进入数据处理智能体，再由人工确认是否更新本体</small></div>';
-        const mineruButton = document.createElement('button');
-        mineruButton.type = 'button'; mineruButton.className = 'btn config-entry-button'; mineruButton.dataset.action = 'editMineru';
-        mineruButton.innerHTML = '<i data-lucide=settings-2></i>配置 MinerU';
-        mineruBody.append(mineruCard, mineruButton);
-        mineruPanel.append(mineruBody);
-      }
-    }
     const tenantForm = q('#tenantForm');
     if (tenantForm && !tenantForm.dataset.normalized) {
       tenantForm.dataset.normalized = 'true';
@@ -1061,7 +951,6 @@
     const audienceKpi = q('#overview [data-kpi-slot="audience"] b');
     if (activeKpi) activeKpi.textContent = campaigns.length;
     if (audienceKpi) audienceKpi.textContent = campaigns.reduce((sum,item)=>sum+item.audience_size,0).toLocaleString('zh-CN');
-    const navCount = q('[data-view="campaigns"] .nav-count'); if (navCount) navCount.textContent = campaigns.length;
     const rows = campaigns.map(item => `<tr>
 <td>${escapeHtml(item.id)}</td>
 <td>
@@ -1882,43 +1771,13 @@
   async function uploadPipelineFile(entry){entry.status='uploading';entry.progress=8;renderPipelineQueue();const form=new FormData();form.append('file',entry.file);try{const result=await request('/api/data-pipelines',{method:'POST',body:form},true);entry.job=result.job;entry.status='queued';entry.progress=10;await refreshPipelines();}catch(cause){entry.status='failed';entry.error=cause.message||'\u4e0a\u4f20\u5931\u8d25';renderPipelineQueue();}}
   function queuePipelineFiles(files){if(!canWrite()){toast('当前角色只有只读权限，不能上传数据');return;}const allowed=/\.(txt|md|json|csv|pdf|png|jpe?g|docx?|pptx?|xlsx?|html)$/i;[...files].forEach(file=>{const localId=Date.now()+'-'+Math.random().toString(16).slice(2);if(!allowed.test(file.name)){toast('\u4e0d\u652f\u6301\u6587\u4ef6\uff1a'+file.name);return;}if(file.size>20*1024*1024){toast('\u6587\u4ef6\u8d85\u8fc7 20MB\uff1a'+file.name);return;}const entry={localId,file,status:'queued',progress:0};pipelineFiles.set(localId,entry);uploadPipelineFile(entry);});}
 
-  async function showProviderModels(providerId) {
-    const provider=tenantData.providers.find(item=>item.id===providerId);
-    q('#modelDetailProvider').textContent=provider?.display_name||'模型服务';
-    q('#modelDetail').innerHTML='<div class="production-status">正在查询可用模型...</div>';
-    try {
-      const result=await request(`/api/model-providers/${providerId}/models`);
-      q('#modelDetail').innerHTML=result.models.length?`<div class="model-chip-grid">${result.models.map(item=>`<button type="button" class="model-chip" data-model-name="${escapeHtml(item.id)}"><b>${escapeHtml(item.id)}</b><span>${escapeHtml(item.owned_by||'OpenAI Compatible')}</span></button>`).join('')}</div>`:'<div class="production-status">服务商未返回可用模型。</div>';
-    } catch(cause) { q('#modelDetail').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`; }
-  }
-
-  async function showProviderUsage(providerId) {
-    const provider=tenantData.providers.find(item=>item.id===providerId);
-    q('#modelDetailProvider').textContent=provider?.display_name||'模型服务';
-    q('#modelDetail').innerHTML='<div class="production-status">正在统计调用量...</div>';
-    try {
-      const value=await request(`/api/model-providers/${providerId}/usage`);
-      q('#modelDetail').innerHTML=`<div class="usage-metrics"><div><span>请求次数</span><b>${value.request_count.toLocaleString()}</b></div><div><span>输入 Token</span><b>${value.prompt_tokens.toLocaleString()}</b></div><div><span>输出 Token</span><b>${value.completion_tokens.toLocaleString()}</b></div><div><span>总 Token</span><b>${value.total_tokens.toLocaleString()}</b></div></div>${value.by_model.length?`<table class="table usage-table"><tr><th>模型</th><th>请求</th><th>总 Token</th></tr>${value.by_model.map(item=>`<tr><td>${escapeHtml(cleanText(item.model_name, '\u6a21\u578b\u6807\u8bc6\u672a\u8fd4\u56de'))}</td><td>${item.request_count}</td><td>${item.total_tokens.toLocaleString()}</td></tr>`).join('')}</table>`:''} `;
-    } catch(cause) { q('#modelDetail').innerHTML=`<div class="production-status">${escapeHtml(cause.message)}</div>`; }
-  }
-
   function renderMineru() {
     const panel=q('.mineru-panel'); if(!panel) return;
-    panel.hidden=activeTenant()?.role!=='admin';
+    panel.hidden=!isTenantAdmin();
     const config=tenantData.mineru; if(!config) return;
-    const form=q('#mineruForm'); form.base_url.value=config.base_url||'https://mineru.net'; form.enabled.checked=!!config.enabled;
-    q('#mineruState').textContent=config.api_key_configured?(config.enabled?'已启用':'已配置未启用'):'未配置密钥';
+    q('#mineruState').textContent=config.api_key_configured?(config.enabled?'已启用':'已停用'):'未配置密钥';
   }
-  function renderModels() {
-    const list=q('#modelTable'); if (!list) return;
-    q('#modelCount').textContent=`${tenantData.providers.length} 个`;
-    list.innerHTML=tenantData.providers.map(item=>`<article class="model-provider-card" role="listitem">
-<div class="model-provider-main"><strong>${escapeHtml(item.display_name===['内置','演示模型'].join('')?'内置测试模型':item.display_name)}</strong><span class="model-provider-id">${escapeHtml(cleanText(item.model_name, '未返回模型名称'))}</span></div>
-<div class="model-provider-meta"><span><em>类型</em>${escapeHtml(cleanText(item.provider_type, 'OpenAI Compatible'))}</span><span><em>状态</em><b class="status ${item.enabled?'good':'warn'}">${item.enabled?'启用':'停用'}</b></span><span><em>默认</em>${item.is_default?'是':'否'}</span></div>
-<div class="production-actions model-provider-actions"><button class="btn" data-provider-edit="${item.id}">编辑</button><button class="btn" data-provider-test="${item.id}">测试</button><button class="btn" data-provider-models="${item.id}">可用模型</button><button class="btn" data-provider-usage="${item.id}">用量</button>${item.is_default?'':`<button class="btn" data-provider-default="${item.id}">设为默认</button>`}</div>
-</article>`).join('') || '<div class="empty-action">暂无模型服务，请先新增一个模型服务。</div>';
-  }
-
+  function renderModels() { if(q('#providerSettings')) getProviderSettings().render(); }
 
   async function loadPlatform() { if(!session.is_platform_admin) return; const [tenants,users]=await Promise.all([request('/api/platform/tenants'),request('/api/platform/users')]); q('#tenantCount').textContent=`${tenants.length} 个`; q('#userCount').textContent=`${users.length} 人`; q('#tenantTable').innerHTML=`<tr>
 <th>编码</th>
@@ -2035,11 +1894,6 @@
        if(button.dataset.action==='newProvider'){if(!isTenantAdmin())return;showProviderCreateEditor();return;}
        if(button.dataset.action==='editMineru'){if(!isTenantAdmin())return;showMineruEditor();return;}
        if(button.dataset.action==='newTenant'){if(!session?.is_platform_admin)return;showTenantCreateEditor();return;}
-       if(button.dataset.providerEdit){const item=(tenantData.providers||[]).find(value=>Number(value.id)===Number(button.dataset.providerEdit));if(!item||!isTenantAdmin())return;showProviderEditor(item);return;}
-       if(button.dataset.providerTest){const result=await request(`/api/model-providers/${button.dataset.providerTest}/test`,{method:'POST'});toast(result.message||'模型连接正常');}
-      if(button.dataset.providerModels){await showProviderModels(Number(button.dataset.providerModels));}
-      if(button.dataset.providerUsage){await showProviderUsage(Number(button.dataset.providerUsage));}
-      if(button.dataset.providerDefault){await request(`/api/model-providers/${button.dataset.providerDefault}/default`,{method:'POST'});toast('默认模型已更新');await loadTenantData();renderModels();}
        const agentMap={scanOpportunity:'opportunity-insight',naturalAudience:'audience-insight',calculateAudience:'audience-insight',useProduct:'product-match',aiOrchestrate:'activity-orchestration',generateReview:'effect-analysis'};
        if(button.dataset.action==='generateContent'){await generateContentFromContext(button);return;}
        const domain=agentMap[button.dataset.action];
@@ -2055,8 +1909,6 @@
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
     q('#refreshPipelines')?.addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
     q('#syncNdcFlight')?.addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcFlight');button.disabled=true;try{const result=await request('/api/ndc/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
-     q('#modelForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
-    q('#mineruForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
     q('#tenantForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
 
@@ -2067,7 +1919,7 @@ function mountMarketingAssistantV2(){
     root.innerHTML=`<button class="assistant-fab" title="打开东东" aria-label="打开东东"><img class="assistant-fab-mark" src="./brand/dongdong-robot.svg" alt=""><span>东东</span></button>
       <section class="assistant-panel" hidden aria-label="东东对话框">
         <header class="assistant-drag-handle">
-          <div class="assistant-title"><div><b>东东</b></div></div>
+          <div class="assistant-title"><div><b>东东</b><button class="assistant-history-button" type="button" data-assistant-history>历史</button></div></div>
           <div class="assistant-header-actions">
             <span class="assistant-live" role="status"><i></i><span>就绪</span></span>
             <button type="button" class="icon-btn" data-assistant-collapse aria-label="折叠对话框" title="折叠"><i data-lucide="minus"></i></button>
@@ -2079,7 +1931,7 @@ function mountMarketingAssistantV2(){
       </section>`;
     document.body.appendChild(root);
     const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),header=q('.assistant-drag-handle',root),messages=q('.assistant-messages',root),form=q('form',root),input=q('textarea',root),collapseButton=q('[data-assistant-collapse]',root);
-    const toolNames={search_marketing_knowledge:'营销知识检索',query_marketing_ontology:'本体关系查询',inspect_campaign:'活动状态查询',list_available_products:'产品包查询',inspect_data_pipeline:'数据处理进度查询',run_marketing_domain:'智能域调用',planner_conclusion:'生成业务结论'};
+    const toolNames={search_marketing_knowledge:'营销知识检索',query_marketing_ontology:'本体关系查询',inspect_campaign:'活动状态查询',list_available_products:'产品包查询',inspect_data_pipeline:'数据处理进度查询',run_marketing_domain:'智能域调用',planner_conclusion:'生成业务结论',query_platform:'查询业务记录',platform_api_catalog:'选择业务能力',query_statistics:'生成统计图表',prepare_platform_task:'创建待确认任务',remember_preference:'保存偏好记忆',open_platform_page:'打开业务工作台'};
     const traceLabel={'harness/context-loaded':'加载业务上下文','agent/planning':'规划下一步','agent/decision':'选择业务动作','harness/model-started':'调用大模型','harness/model-finished':'模型输出完成','harness/tool-started':'调用业务能力','harness/tool-finished':'业务能力返回','harness/tool-failed':'业务能力调用失败','harness/json-parsed':'解析执行计划','model/provider-fallback':'切换备用模型'};
     const traceDetail=item=>{
       if(item.event==='agent/planning') return '第 '+(item.step||1)+' 步 · '+(item.summary||'分析问题并选择下一步业务工具');
@@ -2115,9 +1967,10 @@ function mountMarketingAssistantV2(){
     };
     const setCollapsed=collapsed=>{panel.classList.toggle('is-collapsed',collapsed);collapseButton.innerHTML='<i data-lucide="'+(collapsed?'chevron-up':'minus')+'"></i>';collapseButton.setAttribute('aria-label',collapsed?'展开对话框':'折叠对话框');collapseButton.title=collapsed?'展开':'折叠';if(window.lucide)lucide.createIcons();saveLayout();};
     const conversation=[];
+    let workspace;
     const submitButton=q('[type=submit]',form),stopButton=q('[data-assistant-stop]',form),live=q('.assistant-live',root);
     let currentRequest,conversationId='';
-    const setLive=(text,error=false)=>{q('span',live).textContent=text;live.classList.toggle('is-error',error);const home=q('.dongdong-live');if(home){home.innerHTML='<i></i>'+escapeHtml(text);home.classList.toggle('is-error',error);}};
+    const setLive=(text,error=false)=>{q('span',live).textContent=text;live.classList.toggle('is-error',error);const toolbar=q('[data-chat-status]',panel);if(toolbar){toolbar.textContent=text;toolbar.classList.toggle('is-error',error);}const home=q('.dongdong-live');if(home){home.innerHTML='<i></i>'+escapeHtml(text);home.classList.toggle('is-error',error);}};
     stopButton.addEventListener('click',()=>currentRequest?.abort());
     const send=async (message,retryWrap=null)=>{
       message=String(message||'').trim();
@@ -2126,6 +1979,8 @@ function mountMarketingAssistantV2(){
       const requestTenantId=activeTenant()?.id;
       form.dataset.busy='1';input.disabled=true;submitButton.disabled=true;stopButton.hidden=false;setLive('处理中');
       currentRequest=new AbortController();
+      workspace.setTitle(message);
+      q('.assistant-welcome',panel)?.remove();
       if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div>'+escapeHtml(message)+'</div></div>');
       const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><details class="assistant-trace-details"><summary><b>执行过程</b><span>处理中</span></summary><div class="assistant-trace-list"></div></details><p class="assistant-answer is-streaming" aria-live="polite"></p></div>';if(!retryWrap)messages.appendChild(wrap);
       const traceList=q('.assistant-trace-list',wrap),answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap);messages.scrollTop=messages.scrollHeight;
@@ -2137,33 +1992,41 @@ function mountMarketingAssistantV2(){
           payload:{message,conversation_id:conversationId,domain_id:'marketing-copilot',history:conversation.slice(-12)},
           onEvent:(event,value)=>{
             if(event==='trace'){addTrace(traceList,value);const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
+            if(event==='conversation'&&value.conversation_id){conversationId=value.conversation_id;}
             if(event==='token'){finalAnswer+=value.text||'';answer.textContent=finalAnswer;messages.scrollTop=messages.scrollHeight;}
           }
         });
         finalAnswer=result.answer||finalAnswer;
         if(!finalAnswer)throw new Error('后台未返回答复，请重试。');
         answer.textContent=finalAnswer;conversationId=result.conversation_id||conversationId;
+        workspace.formatAnswer(answer,finalAnswer);
         conversation.push({role:'user',content:message},{role:'assistant',content:finalAnswer});
         q('.assistant-trace-details summary span',wrap).textContent='已完成';setLive('就绪');
+        if(result.widgets?.length) workspace.widgets(result.widgets, answer);
+        if(result.tasks?.length) result.tasks.forEach(task=>workspace.task(task, answer));
         if(result.sources?.length){
           const sourcesButton=document.createElement('button');sourcesButton.type='button';sourcesButton.className='btn assistant-sources';sourcesButton.textContent='业务依据（'+result.sources.length+'）';
           sourcesButton.onclick=()=>{const layer=document.createElement('div');layer.className='production-modal';layer.innerHTML='<div class="production-modal-card"><div class="production-modal-head"><b>业务依据</b><button class="btn" type="button" data-close>关闭</button></div><div class="production-modal-body">'+result.sources.map(source=>'<article class="assistant-source-item"><b>'+escapeHtml(source.title||source.id)+'</b><p>'+escapeHtml(source.excerpt||'')+'</p></article>').join('')+'</div></div>';document.body.append(layer);bindProductionModal(layer);};answer.after(sourcesButton);
         }
         if(activeTenant()?.id===requestTenantId){
+          await workspace.refresh();
           try{await loadTenantData();}
           catch{answer.insertAdjacentHTML('afterend','<div class="assistant-sync-error" role="alert">答复已完成，业务列表刷新失败。<button type="button" class="btn" data-refresh-business>刷新列表</button></div>');q('[data-refresh-business]',wrap).onclick=async e=>{e.target.disabled=true;try{await loadTenantData();q('.assistant-sync-error',wrap)?.remove();}catch(cause){toast(cause.message);}finally{e.target.disabled=false;}};}
         }
       }catch(err){
         q('.assistant-trace-details summary span',wrap).textContent=err.code==='cancelled'?'已停止等待':'未完成';
-        answer.textContent=err.message||'智能体请求失败，请重试。';answer.setAttribute('role','alert');wrap.classList.add('has-error');setLive(err.code==='cancelled'?'就绪':'连接异常',err.code!=='cancelled');
+        answer.textContent=err.message||'智能体请求失败，请重试。';answer.setAttribute('role','alert');wrap.classList.add('has-error');setLive(err.code==='cancelled'?'就绪':'回复失败',err.code!=='cancelled');
         if(err.status!==401&&err.code!=='cancelled'){
           const retry=document.createElement('button');retry.type='button';retry.className='btn assistant-retry';retry.textContent='重试';retry.onclick=()=>send(message,wrap);answer.after(retry);
         }
         if(err.status===401)logout();
+        else await workspace.refresh();
       }
       finally{streaming?.remove();answer.classList.remove('is-streaming');form.dataset.busy='';input.disabled=false;submitButton.disabled=false;stopButton.hidden=true;currentRequest=null;if(!panel.hidden)input.focus();messages.scrollTop=messages.scrollHeight;}
     };
+    workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
     fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}panel.hidden=!panel.hidden;if(!panel.hidden){restoreLayout();setCollapsed(false);input.focus();}});
+    q('[data-assistant-history]',root).addEventListener('click',()=>workspace.show());
     q('[data-assistant-close]',root).addEventListener('click',()=>{panel.hidden=true;saveLayout();});
     collapseButton.addEventListener('click',()=>setCollapsed(!panel.classList.contains('is-collapsed')));
     qa('[data-assistant-suggest]',root).forEach(button=>button.addEventListener('click',()=>send(button.dataset.assistantSuggest)));
@@ -2217,6 +2080,7 @@ function mountMarketingAssistantV2(){
       {icon:'message-square-text',label:'公众号改写',prompt:'把已通过审核的短信文案改写成微信公众号版本'},
       {icon:'badge-check',label:'事实与敏感词',prompt:'检查现有内容里的敏感词与产品事实偏差'}]}
   };
+
   function renderDongdongChips(mode){
     const host=q('#dongdongQuick');if(!host)return;
     const config=dongdongModes[mode]||dongdongModes.opportunity;
@@ -2429,85 +2293,6 @@ function mountMarketingAssistantV2(){
     await loadTenantData();
     return Object.assign({}, campaign, { missingBindings: binding.missing });
   };
-  /* ── 活动生命周期导轨 ──────────────────────────────────────────────────
-     原来只在 #overview 出现，点任意阶段整页跳走且无回途，且 .life.active
-     是写死在 01 上的静态类（跳回来仍亮着 01）。改成跨 8 个视图常驻：
-     首位是"营销总览"回退格，当前阶段真正高亮，可在 01→07 之间直接横走。 */
-  const lifecycleStages = [
-    ['opportunities', '01', '机会', '舆情热点 + 航线运行'],
-    ['audiences', '02', '客群', '画像组合 + AI圈选'],
-    ['products', '03', '产品', '引用活动产品包'],
-    ['contents', '04', '内容', '生成并审核'],
-    ['approvals', '05', '审批', '预算与合规决策'],
-    ['execution', '06', '执行', '分发与状态回传'],
-    ['feedback', '07', '复盘', '转化与策略学习']
-  ];
-
-  /* 导轨结构只生成一次（不带状态），高亮由 syncLifecycleRails 单独负责。
-     之前每次导航都 outerHTML 整块重建：会作废缓存的 DOM 引用（自动化定位失效）、
-     丢掉键盘焦点，还每跳一次白重建 8×16 个节点。 */
-  function lifecycleRailHTML() {
-    const home = '<button type="button" class="life life-home" data-lifecycle="overview"><span>营销总览</span><small>生命周期全景</small></button>';
-    const steps = lifecycleStages.map(([view, ord, label, hint]) =>
-      `<button type="button" class="life" data-lifecycle="${view}"><b>${ord}</b><span>${label}</span></button>`
-    ).join('<i aria-hidden="true">›</i>');
-    return `<div class="lifecycle" data-lifecycle-rail>${home}<i aria-hidden="true">›</i>${steps}</div>`;
-  }
-
-  function currentLifecycleView() {
-    const active = qa('.view.active')[0];
-    return active ? active.id : '';
-  }
-
-  function ensureLifecycleRails() {
-    const overview = q('#overview');
-    if (overview && !q('[data-lifecycle-rail]', overview)) {
-      const stale = q('.lifecycle', overview);
-      if (stale) stale.outerHTML = lifecycleRailHTML();
-    }
-    lifecycleStages.forEach(([view]) => {
-      const host = q('#' + view); if (!host) return;
-      if (q(':scope > [data-lifecycle-rail]', host)) return;
-      q(':scope > .page-head', host)?.insertAdjacentHTML('afterend', lifecycleRailHTML());
-    });
-  }
-
-  let lifecycleActive = '';
-  function syncLifecycleRails(active) {
-    const view = active || currentLifecycleView();
-    if (!view || view === lifecycleActive) return;
-    lifecycleActive = view;
-    qa('[data-lifecycle]').forEach(cell => {
-      const on = cell.dataset.lifecycle === view;
-      cell.classList.toggle('active', on);
-      if (!on) { cell.removeAttribute('aria-current'); return; }
-      cell.setAttribute('aria-current', view === 'overview' ? 'page' : 'step');
-    });
-  }
-
-  function mountLifecycleRails() {
-    ensureLifecycleRails();
-    syncLifecycleRails(currentLifecycleView());
-    document.addEventListener('click', event => {
-      const cell = event.target.closest('[data-lifecycle]');
-      if (!cell) return;
-      event.preventDefault();
-      const target = cell.dataset.lifecycle;
-      if (typeof activate === 'function' && target !== currentLifecycleView()) activate(target);
-      syncLifecycleRails(target);
-    });
-    /* 观察 8 个视图自身的 class 变化：顶栏导航、东东快捷入口、检索跳转等
-       任何来源的切换都会同步高亮，不需要逐一挂钩子。只观察 section 的 class，
-       而 sync 改的是按钮的 class，因此不会自激。 */
-    if (typeof MutationObserver === 'function') {
-      const observer = new MutationObserver(() => syncLifecycleRails(currentLifecycleView()));
-      ['overview', ...lifecycleStages.map(stage => stage[0])].forEach(view => {
-        const host = q('#' + view);
-        if (host) observer.observe(host, { attributes: true, attributeFilter: ['class'] });
-      });
-    }
-  }
-
   /* ── 全域检索 ────────────────────────────────────────────────────────────
      只接 /api/knowledge/search 会让本页在知识文档为空的库上永久空白，
      因此同时索引已在内存里的业务对象；知识片段一旦有数据就自动多出一类结果。 */
@@ -2912,7 +2697,6 @@ function mountMarketingAssistantV2(){
     try{injectNavigation();}catch(cause){console.error('导航扩展失败',cause);}
     try{bindProductionActions();}catch(cause){console.error('生产功能绑定失败',cause);}
     try{await loadTenantData();}catch(cause){console.error('租户数据加载失败',cause);const capabilities=q('#dongdongCapabilityGrid');if(capabilities)capabilities.innerHTML='<div class="dongdong-cap-empty">业务数据加载失败，请检查本地 API 后刷新页面</div>';toast(cause.message||'租户数据加载失败，请稍后重试');}
-    try{mountLifecycleRails();}catch(cause){console.error('生命周期导轨挂载失败',cause);}
     try{mountSearchModule();}catch(cause){console.error('检索模块挂载失败',cause);}
     if(window.lucide)lucide.createIcons();
   }

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import re
 from datetime import datetime, timezone
@@ -11,13 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import TenantContext
-from ..db_models import CampaignRecord, DataPipelineJobRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord
+from ..db_models import AssistantTaskRecord, CampaignRecord, DataPipelineJobRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord
 from ..llm import LLMConfig
 from ..models import AgentChatRequest, AgentChatResponse, AgentRunRequest
 from ..security import SecretCipher
 from .harness import HarnessContext, UnifiedHarness
-from .agentscope_runtime import AgentScopeRuntime, make_tool, text_tool_result
+from .agentscope_runtime import AgentScopeRuntime
 from .runtime import AgentRuntime
+from ..assistant_tools import build_tools
+from ..assistant_store import list_memories, refresh_task
 
 
 class MarketingCopilot:
@@ -35,6 +36,8 @@ class MarketingCopilot:
     ) -> AgentChatResponse:
         trace: list[dict[str, Any]] = []
         sources: list[dict[str, Any]] = []
+        widgets: list[dict[str, Any]] = []
+        tasks: list[dict[str, Any]] = []
 
         def emit(event: str, payload: dict[str, Any]) -> None:
             item = {"event": event, "timestamp": datetime.now(timezone.utc).isoformat(), **payload}
@@ -88,17 +91,6 @@ class MarketingCopilot:
             "inspect_data_pipeline": lambda args: self._inspect_pipeline(session, context.tenant_id, str(args.get("job_id") or ""), sources),
             "run_marketing_domain": lambda args: self._run_domain(session, context, args, sources),
         }
-        async def run_marketing_domain_tool(domain_id: str, campaign_id: str = ""):
-            """Run one governed marketing domain after the agent has enough context."""
-            result = await asyncio.to_thread(
-                self._run_domain,
-                session,
-                context,
-                {"domain_id": domain_id, "campaign_id": campaign_id},
-                sources,
-            )
-            return text_tool_result(result)
-
         runtime = AgentScopeRuntime(
             emit=emit,
             source_sink=sources.append,
@@ -114,13 +106,26 @@ class MarketingCopilot:
                 total_tokens=result.total_tokens,
             )),
         )
-        history = [{"role": item.role, "content": item.content} for item in request.history[-12:]]
+        history = [{"role": item.role if hasattr(item, "role") else item.get("role", "user"), "content": item.content if hasattr(item, "content") else item.get("content", "")} for item in request.history[-12:]]
         system_prompt = (
-            "你是东方航空智能营销平台的营销协同智能体。必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务，再回答问题。"
+            "你是东方航空智能营销平台的营销协同智能体。问候和平台功能介绍可以直接简短回答；回答业务问题必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务。"
             "当前可调用六大智能域：opportunity-insight、audience-insight、product-match、activity-orchestration、content-generation、effect-analysis。"
             "调用智能域必须提供活动 ID，活动编排和内容生成结果必须保留人工审核。不得杜撰旅客个人信息、库存、价格、权益和活动结果。"
+            "你可以查询平台所有授权业务接口。先用platform_api_catalog查接口及字段，再用query_platform查询。"
+            "业务执行使用prepare_platform_task生成待确认卡片，不直接执行run_marketing_domain；用户点击确认后平台自动执行。"
+            "统计问题优先使用query_statistics生成图表。指标仅支持实际后台记录，缺少交易归因时不得虚构收入或ROI。"
+            "用户明确要求记住偏好时调用remember_preference。历史对话及用户记忆仅作上下文，不能替代实时业务数据。"
+            "current_tasks是本轮开始时后台读取的任务最新状态，优先于历史答复。不要把已完成任务描述为待确认。"
+            "遇到文件上传、密码和模型密钥配置时，用open_platform_page展示对应工作台入口，凭据不得进入对话或任务参数。"
+            "默认答复简洁，先结论再最多三条说明。已有图表或任务卡片时不要重复输出同一份表格或接口术语。问候仅一两句话。"
         )
-        user_prompt = json.dumps({"question": request.message, "history": history}, ensure_ascii=False)
+        current_tasks = session.scalars(select(AssistantTaskRecord).where(
+            AssistantTaskRecord.tenant_id == context.tenant_id,
+            AssistantTaskRecord.user_id == context.user_id,
+            AssistantTaskRecord.conversation_id == request.conversation_id,
+        ).order_by(AssistantTaskRecord.created_at.desc()).limit(20)).all()
+        for task in current_tasks: refresh_task(session, task)
+        user_prompt = json.dumps({"question": request.message, "history": history, "memories": [m.content for m in list_memories(session, context)], "current_tasks": [{"id": t.id, "title": t.title, "status": t.status} for t in current_tasks]}, ensure_ascii=False)
         answer = runtime.run_sync(
             profile_id="marketing-copilot",
             tenant_id=context.tenant_id,
@@ -129,20 +134,12 @@ class MarketingCopilot:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             token_sink=token_sink,
-            python_tools=[make_tool(
-                run_marketing_domain_tool,
-                name="run_marketing_domain",
-                description="调用受治理的东航营销智能域",
-                read_only=False,
-            )],
+            python_tools=build_tools(session, context, request.conversation_id, widgets, tasks, emit),
             use_mcp=True,
         )
-        if provider.provider_type == "mock" and not answer.strip():
-            emit("agentscope/mock-fallback", {"reason": "empty-final-reply"})
+        if provider.provider_type == "mock":
             observations = self._mock_observations(harness, tools, request.message)
             answer = self._mock_answer(request.message, observations)
-            if token_sink:
-                token_sink(answer)
         session.commit()
         return AgentChatResponse(
             conversation_id=request.conversation_id or f"CONV-{uuid4().hex[:10].upper()}",
@@ -151,6 +148,8 @@ class MarketingCopilot:
             model_name=provider.model_name,
             trace=trace,
             sources=self._deduplicate_sources(sources),
+            widgets=widgets,
+            tasks=tasks,
         )
 
     def _agent_loop(

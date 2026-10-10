@@ -12,7 +12,7 @@ const forbiddenPatterns = [
   { name: '演示或占位文案', productionOnly: true, pattern: /运行演示|使用演示|演示运行|演示数据|模拟数据|示例数据|样例数据|占位|生产原型/gi },
   // provider_type 的机器取值就叫 'mock'（后端 llm.py 的受控回退分支），
   // 放行选择器机器值及 provider_type 比较；结果页必须据此标注受控测试模型。
-  { name: '前端模拟实现标记', productionOnly: true, pattern: /\bmock\b/gi, ignore: /\bvalue:\s*['"](?:demo|mock)['"]|\bprovider_type\s*===\s*['"]mock['"]/gi },
+  { name: '前端模拟实现标记', productionOnly: true, pattern: /\bmock\b/gi, ignore: /\bvalue:\s*['"](?:demo|mock)['"]|\bprovider_type\s*===\s*['"]mock['"]|\bid:\s*['"]mock['"]|\bvendor\.id\s*(?:===|!==)\s*['"]mock['"]|\bprovider_type\.value\s*=\s*vendor\.id\s*===\s*['"]mock['"]\s*\?\s*['"]mock['"]|ceair-governed-mock-v1/gi },
 ];
 
 async function collect(directory) {

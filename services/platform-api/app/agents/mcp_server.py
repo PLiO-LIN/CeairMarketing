@@ -16,6 +16,7 @@ import sys
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -51,7 +52,7 @@ server = FastMCP(
 )
 
 
-@server.tool()
+@server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
 def search_marketing_knowledge(query: str = "", limit: int = 8) -> dict[str, Any]:
     """Search tenant knowledge chunks by simple lexical matching."""
     terms = [part.lower() for part in query.replace("，", " ").replace("。", " ").split() if len(part) > 1]
@@ -73,7 +74,7 @@ def search_marketing_knowledge(query: str = "", limit: int = 8) -> dict[str, Any
     return result
 
 
-@server.tool()
+@server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
 def query_marketing_ontology(query: str = "", limit: int = 12) -> dict[str, Any]:
     """Find tenant ontology entities and connected relation facts."""
     terms = [part.lower() for part in query.replace("，", " ").split() if len(part) > 1]
@@ -97,7 +98,7 @@ def query_marketing_ontology(query: str = "", limit: int = 12) -> dict[str, Any]
     return result
 
 
-@server.tool()
+@server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
 def list_available_products(query: str = "", limit: int = 12) -> dict[str, Any]:
     """List product-like ontology instances available to the tenant."""
     types = ("Product", "ProductPackage", "ProductGroup", "ProductLabel", "Fare", "AncillaryProduct", "Coupon", "MemberBenefit", "IntermodalProduct")
@@ -116,7 +117,7 @@ def list_available_products(query: str = "", limit: int = 12) -> dict[str, Any]:
     return result
 
 
-@server.tool()
+@server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
 def inspect_campaign(campaign_id: str = "") -> dict[str, Any]:
     """Inspect one tenant campaign and its current lifecycle state."""
     sql = "SELECT id, name, stage, status, audience_size, product_package, budget_yuan, roi_target FROM campaigns WHERE tenant_id = ?"
@@ -133,7 +134,7 @@ def inspect_campaign(campaign_id: str = "") -> dict[str, Any]:
     return result
 
 
-@server.tool()
+@server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
 def inspect_data_pipeline(job_id: str = "") -> dict[str, Any]:
     """Inspect the most recent tenant data processing job."""
     sql = "SELECT id, file_name, status, current_stage, total_entities, total_relations, result_json FROM data_pipeline_jobs WHERE tenant_id = ?"
@@ -155,7 +156,7 @@ def inspect_data_pipeline(job_id: str = "") -> dict[str, Any]:
     return result
 
 
-@server.tool()
+@server.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
 def get_ontology_schema(query: str = "") -> dict[str, Any]:
     """Return the registered semantic model summary for data processing."""
     from app.ontology.semantic_model import semantic_model
@@ -185,7 +186,7 @@ def main() -> None:
     # Decorators register on the module-level server at import time. The
     # runtime server is rebuilt above, so re-register the functions.
     for function in (search_marketing_knowledge, query_marketing_ontology, list_available_products, inspect_campaign, inspect_data_pipeline, get_ontology_schema):
-        server.add_tool(function)
+        server.add_tool(function, annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False))
     server.run("stdio")
 
 

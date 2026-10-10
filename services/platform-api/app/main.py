@@ -18,7 +18,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .agents import AgentRuntime, MarketingCopilot
+from .agents.agentscope_runtime import AgentScopeRuntime
 from .agents.business_results import accept_result, read_result
+from .assistant_store import begin_turn, finish_turn, scoped_conversation, task_view, refresh_task, list_memories, remember
+from .assistant_tools import call_platform, catalog
+from .db_models import AssistantConversationRecord, AssistantMessageRecord, AssistantTaskRecord, AssistantMemoryRecord
 from .campaign_readiness import campaign_readiness
 from .business_sync import AudienceSyncRequest, ProductSyncRequest, sync_business
 from .auth import TenantContext, create_token, get_current_user, get_tenant_context, hash_password, require_admin, require_approver, require_platform_admin, require_write, verify_password
@@ -32,7 +36,7 @@ from .market_hotspots import collect_source, confirm_hotspot_ontology, create_op
 from .opportunity_insight import launch_opportunity_insight
 from .mock_business import channel_delivery, flight_operations, market_signals, product_catalog, profile_summary
 from .imports import import_file
-from .llm import LLMClient, LLMConfig
+from .llm import LLMClient, LLMConfig, LLMServiceError
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
 from .models import (
     AgentRun,
@@ -78,6 +82,8 @@ from .models import (
     ModelProviderCreate,
     ModelProviderUpdate,
     ProviderModelsResult,
+    ModelDiscoveryRequest,
+    AssistantMemoryCreate,
     ProviderTestResult,
     ProviderUsageResult,
     DataPipelineCreateResult,
@@ -1376,21 +1382,36 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
     request_id = uuid4().hex[:12]
 
     def worker() -> None:
+        conversation_id = ""
+        def failed(message):
+            if conversation_id:
+                try:
+                    with SessionLocal() as failed_session:
+                        finish_turn(failed_session, context, conversation_id, message, failed=True)
+                except Exception:
+                    logging.getLogger(__name__).exception("Failed to persist chat failure")
+            events.put({"type": "error", "message": message})
         try:
             with SessionLocal() as worker_session:
+                conversation_id, history = begin_turn(worker_session, context, payload)
+                scoped_payload = payload.model_copy(update={"conversation_id": conversation_id, "history": history})
+                events.put({"type": "conversation", "id": conversation_id})
                 result = copilot.run(
                     worker_session,
                     context,
-                    payload,
+                    scoped_payload,
                     event_sink=lambda item: events.put({"type": "trace", "item": item}),
                     token_sink=lambda token: events.put({"type": "token", "text": token}),
                 )
+                finish_turn(worker_session, context, conversation_id, result.answer, result.model_dump(mode="json", exclude={"trace"}))
                 events.put({"type": "result", "result": result.model_dump(mode="json")})
-        except ValueError as exc:
-            events.put({"type": "error", "message": str(exc)})
+        except (ValueError, LLMServiceError) as exc:
+            failed(str(exc))
+        except HTTPException as exc:
+            failed(str(exc.detail))
         except Exception:
             logging.getLogger(__name__).exception("Agent chat failed (request %s)", request_id)
-            events.put({"type": "error", "message": f"智能体服务暂不可用，请稍后重试。参考编号：{request_id}"})
+            failed(f"智能体服务暂不可用，请稍后重试。参考编号：{request_id}")
         finally:
             events.put({"type": "done"})
 
@@ -1414,6 +1435,8 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
             kind = item.get("type")
             if kind == "trace":
                 yield encode("trace", item["item"])
+            elif kind == "conversation":
+                yield encode("conversation", {"conversation_id": item["id"]})
             elif kind == "token":
                 yield encode("token", {"text": item["text"]})
             elif kind == "result":
@@ -1451,16 +1474,104 @@ def list_agent_runs(context: TenantContext = Depends(get_tenant_context), sessio
 @app.post("/api/agent-chat", response_model=AgentChatResponse)
 def run_agent_chat(payload: AgentChatRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
     try:
-        return copilot.run(session, context, payload)
+        conversation_id, history = begin_turn(session, context, payload)
+        result = copilot.run(session, context, payload.model_copy(update={"conversation_id": conversation_id, "history": history}))
+        finish_turn(session, context, conversation_id, result.answer, result.model_dump(mode="json", exclude={"trace"}))
+        return result
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except LLMServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"智能体运行失败：{exc}") from exc
+        request_id = uuid4().hex[:12]
+        logging.getLogger(__name__).exception("Agent chat failed (request %s)", request_id)
+        raise HTTPException(status_code=502, detail=f"智能体服务暂不可用，请稍后重试。参考编号：{request_id}") from exc
 
 
 @app.get("/api/ontology/semantic-model")
 def ontology_semantic_model(_context: TenantContext = Depends(get_tenant_context)):
     return semantic_model()
+
+
+@app.get("/api/assistant/conversations")
+def assistant_conversations(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    items = session.scalars(select(AssistantConversationRecord).where(AssistantConversationRecord.tenant_id == context.tenant_id, AssistantConversationRecord.user_id == context.user_id).order_by(AssistantConversationRecord.updated_at.desc()).limit(100)).all()
+    return [{"id": c.id, "title": c.title, "updated_at": c.updated_at} for c in items]
+
+
+@app.get("/api/assistant/conversations/{conversation_id}")
+def assistant_conversation(conversation_id: str, context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    conversation = scoped_conversation(session, context, conversation_id)
+    messages = session.scalars(select(AssistantMessageRecord).where(AssistantMessageRecord.conversation_id == conversation.id).order_by(AssistantMessageRecord.id).limit(500)).all()
+    tasks = session.scalars(select(AssistantTaskRecord).where(AssistantTaskRecord.conversation_id == conversation.id)).all()
+    for task in tasks: refresh_task(session, task)
+    session.commit()
+    return {"id": conversation.id, "title": conversation.title, "messages": [{"role": m.role, "content": m.content, "status": m.status, "detail": json.loads(m.detail_json), "created_at": m.created_at} for m in messages], "tasks": [task_view(t) for t in tasks]}
+
+
+@app.get("/api/assistant/tasks")
+def assistant_tasks(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    items = session.scalars(select(AssistantTaskRecord).where(AssistantTaskRecord.tenant_id == context.tenant_id, AssistantTaskRecord.user_id == context.user_id).order_by(AssistantTaskRecord.created_at.desc()).limit(100)).all()
+    for item in items: refresh_task(session, item)
+    session.commit()
+    return [task_view(t) for t in items]
+
+
+@app.post("/api/assistant/tasks/{task_id}/confirm")
+async def confirm_assistant_task(task_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    item = session.scalar(select(AssistantTaskRecord).where(AssistantTaskRecord.id == task_id, AssistantTaskRecord.tenant_id == context.tenant_id, AssistantTaskRecord.user_id == context.user_id))
+    if item is None: raise HTTPException(404, "任务不存在或无权访问")
+    if item.status != "pending_confirmation": raise HTTPException(409, "任务已处理，请刷新任务记录")
+    claimed = session.execute(update(AssistantTaskRecord).where(AssistantTaskRecord.id == item.id, AssistantTaskRecord.status == "pending_confirmation").values(status="running"))
+    if claimed.rowcount != 1: raise HTTPException(409, "任务已在执行")
+    session.commit()
+    try:
+        result = await call_platform(context, item.method, item.path, body=json.loads(item.payload_json))
+        item.status = "failed" if isinstance(result, dict) and (result.get("status") == "failed" or result.get("ok") is False) else "completed"
+        if item.path == "/api/opportunity-insight/runs" and isinstance(result, dict) and result.get("status") in {"queued", "running"}: item.status = "running"
+        item.result_json = json.dumps(result, ensure_ascii=False, default=str)
+    except HTTPException as exc:
+        item.status = "failed"; item.result_json = json.dumps({"error": exc.detail, "status_code": exc.status_code}, ensure_ascii=False)
+    except Exception:
+        logging.getLogger(__name__).exception("Assistant task %s failed", task_id)
+        item.status = "failed"; item.result_json = json.dumps({"error": "任务执行失败，请查看业务工作台后重试"}, ensure_ascii=False)
+    session.commit(); session.refresh(item)
+    return task_view(item)
+
+
+@app.post("/api/assistant/tasks/{task_id}/cancel")
+def cancel_assistant_task(task_id: str, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    item = session.scalar(select(AssistantTaskRecord).where(AssistantTaskRecord.id == task_id, AssistantTaskRecord.tenant_id == context.tenant_id, AssistantTaskRecord.user_id == context.user_id))
+    if item is None: raise HTTPException(404, "任务不存在或无权访问")
+    changed = session.execute(update(AssistantTaskRecord).where(AssistantTaskRecord.id == item.id, AssistantTaskRecord.status == "pending_confirmation").values(status="cancelled"))
+    if changed.rowcount != 1: raise HTTPException(409, "只能取消尚未确认的任务")
+    session.commit(); session.refresh(item); return task_view(item)
+
+
+@app.get("/api/assistant/memories")
+def assistant_memories(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
+    return [{"id": m.id, "content": m.content, "created_at": m.created_at} for m in list_memories(session, context)]
+
+
+@app.post("/api/assistant/memories", status_code=201)
+def add_assistant_memory(payload: AssistantMemoryCreate, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    try: result = remember(session, context, payload.content)
+    except ValueError as exc: raise HTTPException(422, str(exc)) from exc
+    session.commit(); return result
+
+
+@app.delete("/api/assistant/memories/{memory_id}", status_code=204)
+def delete_assistant_memory(memory_id: int, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    item = session.scalar(select(AssistantMemoryRecord).where(AssistantMemoryRecord.id == memory_id, AssistantMemoryRecord.tenant_id == context.tenant_id, AssistantMemoryRecord.user_id == context.user_id))
+    if item is None: raise HTTPException(404, "记忆不存在")
+    session.delete(item); session.commit()
+
+
+@app.get("/api/assistant/capabilities")
+def assistant_capabilities(_context: TenantContext = Depends(get_tenant_context)):
+    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution"]}
 
 
 @app.get("/api/campaigns/{campaign_id}/readiness")
@@ -2075,17 +2186,48 @@ def set_default_provider(provider_id: int, context: TenantContext = Depends(requ
 @app.post("/api/model-providers/{provider_id}/test", response_model=ProviderTestResult)
 def test_model_provider(provider_id: int, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
     record = scoped_provider(session, context.tenant_id, provider_id)
+    tool_calls = []
     try:
-        result = llm_client.generate_result(
-            LLMConfig(record.provider_type, record.base_url, record.model_name, cipher.decrypt(record.encrypted_api_key), record.timeout_seconds, record.temperature, min(record.max_tokens, 256)),
-            "你是东方航空智能营销平台的模型连通性检测助手。",
-            "仅回复：模型连接正常。",
+        answer = AgentScopeRuntime(emit=lambda event, payload: tool_calls.append(payload.get("tool", "")) if event == "harness/tool-started" else None, record_usage=lambda result: session.add(ModelUsageRecord(
+            tenant_id=context.tenant_id, provider_id=record.id, request_type="connectivity-test",
+            model_name=result.model_name or record.model_name, prompt_tokens=result.prompt_tokens,
+            completion_tokens=result.completion_tokens, total_tokens=result.total_tokens,
+        ))).run_sync(
+            profile_id="marketing-copilot", tenant_id=context.tenant_id, run_id="MODEL-TEST",
+            config=LLMConfig(record.provider_type, record.base_url, record.model_name, cipher.decrypt(record.encrypted_api_key), record.timeout_seconds, record.temperature, record.max_tokens),
+            system_prompt="你是模型检测助手。只查询当前租户的本体，不调用其他智能域，不修改业务数据。",
+            user_prompt="请调用只读本体查询工具一次，然后仅回复：模型对话与工具调用正常。",
+            use_mcp=True,
         )
+        if not any(name.startswith("mcp__") for name in tool_calls):
+            raise LLMServiceError("模型能生成正文，但未完成只读工具调用检测，请选择支持工具调用的对话模型。")
+    except LLMServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"模型连接失败：{exc}") from exc
-    session.add(ModelUsageRecord(tenant_id=context.tenant_id, provider_id=record.id, request_type="connectivity-test", model_name=result.model_name or record.model_name, prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, total_tokens=result.total_tokens))
+        logging.getLogger(__name__).exception("Provider test failed for provider %s", record.id)
+        raise HTTPException(status_code=502, detail="模型测试失败，请检查服务地址、密钥、模型标识及工具调用支持。") from exc
     session.commit()
-    return ProviderTestResult(ok=True, provider=record.display_name, model=result.model_name or record.model_name, message=result.content[:160])
+    return ProviderTestResult(ok=True, provider=record.display_name, model=record.model_name, message="模型对话、流式回复与只读工具调用检测通过。")
+
+
+@app.post("/api/model-providers/discover")
+def discover_draft_models(payload: ModelDiscoveryRequest, context: TenantContext = Depends(require_admin), session: Session = Depends(get_session)):
+    """Discover using an unsaved form; never persist or return its credentials."""
+    key = payload.api_key
+    if payload.provider_id is not None:
+        record = scoped_provider(session, context.tenant_id, payload.provider_id)
+        # A saved key is only reusable against its saved host.
+        if not key and payload.base_url.rstrip("/") == record.base_url.rstrip("/"):
+            key = cipher.decrypt(record.encrypted_api_key)
+    if payload.provider_type != "mock" and not payload.base_url.strip():
+        raise HTTPException(status_code=422, detail="请先填写服务地址")
+    try:
+        models = llm_client.list_models(LLMConfig(payload.provider_type, payload.base_url, payload.model_name, key, payload.timeout_seconds, 0.3, 2048))
+    except LLMServiceError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="获取模型失败，请检查连接配置") from exc
+    return {"models": models}
 
 
 @app.get("/api/model-providers/{provider_id}/models", response_model=ProviderModelsResult)

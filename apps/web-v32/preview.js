@@ -30,7 +30,7 @@
     sidebar.className = 'preview-sidebar';
     sidebar.id = 'previewSidebar';
     sidebar.setAttribute('aria-label', '内页导航');
-    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="bot"></i><span>东东</span></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span>${view === 'campaigns' ? '<em class="preview-nav-count" data-preview-campaign-count>0</em>' : ''}</button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
+    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="bot"></i><span>东东</span></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span></button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
     const app = query('.app');
     app?.insertBefore(sidebar, query('.main'));
     if (!sidebarToggle && app) {
@@ -118,9 +118,6 @@
       button.setAttribute('aria-current', selected ? 'page' : 'false');
     });
     queryAll('.preview-nav-group').forEach(group => group.classList.toggle('active', !!query(`.preview-nav-items [data-preview-view].active`, group)));
-    const campaignCount = query('[data-view="campaigns"] .nav-count')?.textContent;
-    const count = query('[data-preview-campaign-count]');
-    if (count && count.textContent !== (campaignCount || '0')) count.textContent = campaignCount || '0';
     const identity = query('.topnav .user');
     const tenant = query('.preview-tenant b', sidebar);
     const user = query('.preview-tenant small', sidebar);
