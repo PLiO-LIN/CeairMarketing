@@ -28,6 +28,8 @@ The deployment user must be able to:
 
 The first production setup must create `/opt/ceair-marketing/.env` with values based on `.env.example`, including the production database password, token secret, encryption key, admin password, and basic-auth password.
 
+The platform page and its static assets load directly into the application sign-in screen. Business APIs require the platform Bearer token, tenant context and role checks. Nginx Basic authentication remains enabled for `/docs` and `/openapi.json`, using `BASIC_AUTH_USER` and `BASIC_AUTH_PASSWORD`.
+
 ## Rollback
 
 To roll back, stop the pipeline and point the symlink to a previous release, then restart Compose:
