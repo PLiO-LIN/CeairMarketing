@@ -6,7 +6,6 @@ import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
-from urllib.request import Request, urlopen
 from uuid import uuid4
 
 from sqlalchemy import select
@@ -16,6 +15,7 @@ from .database import SessionLocal
 from .db_models import ModelProviderRecord, OpportunityInsightRunRecord, OpportunityInsightSourceRecord, OpportunityRecord
 from .llm import LLMConfig
 from .security import SecretCipher
+from .url_security import UnsafeUrlError, safe_fetch
 
 
 def _now():
@@ -34,6 +34,8 @@ def _append_step(run_id: str, tenant_id: int, step: dict) -> None:
         run = session.scalar(select(OpportunityInsightRunRecord).where(OpportunityInsightRunRecord.id == run_id, OpportunityInsightRunRecord.tenant_id == tenant_id))
         if run is None:
             return
+        if run.status == "cancelled":
+            return
         steps = _json(run.steps_json, [])
         steps.append({"timestamp": _now().isoformat(), **step})
         run.steps_json = json.dumps(steps[-120:], ensure_ascii=False)
@@ -45,6 +47,8 @@ def _set_run(run_id: str, tenant_id: int, **values) -> None:
     with SessionLocal() as session:
         run = session.scalar(select(OpportunityInsightRunRecord).where(OpportunityInsightRunRecord.id == run_id, OpportunityInsightRunRecord.tenant_id == tenant_id))
         if run is None:
+            return
+        if run.status == "cancelled":
             return
         for key, value in values.items():
             if key in {"source_ids", "steps", "result"}:
@@ -60,16 +64,22 @@ def _fetch_source(source: OpportunityInsightSourceRecord) -> dict:
         evidence["text"] = source.focus or source.name
         return evidence | {"status": "metadata-only"}
     try:
-        request = Request(source.source_url, headers={"User-Agent": "CeairMarketingOpportunityAgent/1.0"})
-        with urlopen(request, timeout=8) as response:
-            raw = response.read(1_000_000)
-            charset = response.headers.get_content_charset() or "utf-8"
-        page = raw.decode(charset, errors="ignore")
+        fetched = safe_fetch(
+            source.source_url,
+            headers={"User-Agent": "CeairMarketingOpportunityAgent/1.0"},
+            timeout=8,
+            max_bytes=1_000_000,
+        )
+        page = fetched.body.decode(fetched.charset, errors="ignore")
         title_match = re.search(r"<title[^>]*>(.*?)</title>", page, re.I | re.S)
         title = html.unescape(re.sub(r"\s+", " ", title_match.group(1)).strip()) if title_match else source.name
         text = html.unescape(re.sub(r"<[^>]+>", " ", page))
         text = re.sub(r"\s+", " ", text).strip()
-        evidence.update({"title": title[:240], "text": text[:6000], "status": "fetched"})
+        evidence.update({"title": title[:240], "text": text[:6000], "status": "fetched", "final_url": fetched.url})
+    except UnsafeUrlError as exc:
+        # A refused address is a security decision, not an outage: keep the
+        # fallback text but flag it so operators can tell the two apart.
+        evidence.update({"text": source.focus or source.name, "status": "fallback", "blocked": True, "error": type(exc).__name__, "reason": str(exc)})
     except Exception as exc:
         evidence.update({"text": source.focus or source.name, "status": "fallback", "error": type(exc).__name__})
     return evidence

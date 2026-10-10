@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any
 from urllib.parse import urldefrag, urlsplit, urlunsplit
-from urllib.request import Request, urlopen
+from .url_security import safe_fetch
 from xml.etree import ElementTree
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -74,8 +74,13 @@ def parse_feed(payload, source_name, source_url, source_type="rss"):
     return rows
 
 def fetch_feed(source_name, source_url, source_type="rss", timeout=20):
-    req=Request(source_url, headers={"User-Agent":"CeairMarketing/1.0 hotspot-ingestor"})
-    with urlopen(req, timeout=timeout) as response: return parse_feed(response.read(), source_name, source_url, source_type)
+    payload = safe_fetch(
+        source_url,
+        headers={"User-Agent": "CeairMarketing/1.0 hotspot-ingestor"},
+        timeout=timeout,
+        max_bytes=2_000_000,
+    )
+    return parse_feed(payload.body, source_name, source_url, source_type)
 
 def classify_hotspot(title, content):
     text=f"{title} {content}".lower(); topics=[t for t, words in TOPIC_RULES.items() if any(w.lower() in text for w in words)]; keywords=sorted([w for w in AVIATION_KEYWORDS if w.lower() in text], key=lambda x:(-len(x),x)); relevance=min(.98,.16+min(.56,len(keywords)*.08)+(.16 if topics else 0)); trend=min(.95,.30+len(topics)*.11+len(keywords)*.035); risk="high" if any(w in text for w in ("\u5ef6\u8bef","\u53d6\u6d88","\u4e8b\u6545","\u6295\u8bc9")) else "medium" if any(w in text for w in ("\u4ef7\u683c","\u7968\u4ef7","\u4fc3\u9500","\u589e\u957f","\u70ed\u70b9")) else "low"; relevant=relevance>=.52

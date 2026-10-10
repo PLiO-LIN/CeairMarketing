@@ -16,7 +16,7 @@ def resolve_env_file() -> str | None:
 
 
 class Settings(BaseSettings):
-    app_name: str = "China Eastern Intelligent Marketing Platform API"
+    app_name: str = "China Eastern AI Marketing Cloud API"
     environment: str = "development"
     database_url: str = "sqlite:///./ceair-marketing.db"
     encryption_key: str = ""

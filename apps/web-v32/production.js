@@ -2038,14 +2038,9 @@
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
     q('#refreshPipelines')?.addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
     q('#syncNdcFlight')?.addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcFlight');button.disabled=true;try{const result=await request('/api/ndc/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
-     q('#opportunitySourceForm')?.addEventListener('submit',async event=>{event.preventDefault();if(!canWrite())return;const form=event.currentTarget;const values=Object.fromEntries(new FormData(form));values.max_pages=5;values.enabled=true;const sourceId=values.source_id;delete values.source_id;try{await request(sourceId?'/api/opportunity-insight/sources/'+sourceId:'/api/opportunity-insight/sources',{method:sourceId?'PUT':'POST',body:JSON.stringify(values)});form.reset();form.elements.source_id.value='';toast(sourceId?'洞察来源已更新':'洞察来源已新增');await loadTenantData();}catch(cause){toast(cause.message||'来源保存失败');}});
      q('#modelForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.enabled=true;values.is_default=!!values.is_default;values.timeout_seconds=60;values.temperature=.3;values.max_tokens=2048;await request('/api/model-providers',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('模型配置已保存');await loadTenantData();renderModels();});
     q('#mineruForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));await request('/api/integrations/mineru',{method:'PUT',body:JSON.stringify({display_name:'MinerU 文档解析',base_url:values.base_url||'https://mineru.net',api_key:values.api_key||'',enabled:!!values.enabled,config:{model_version:'vlm',enable_table:true,is_ocr:false}})});event.currentTarget.api_key.value='';toast('MinerU 配置已保存');await loadTenantData();});
     q('#tenantForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
-  }
-
-  function mountMarketingAssistantLegacy(){
-    if(q('#marketingAssistant'))return; const root=document.createElement('div');root.id='marketingAssistant';root.innerHTML='<button class="assistant-fab" title="\u003f\u003f\u003f\u003f\u003f\u003f"><i data-lucide="bot"></i><span>\u003f\u003f\u003f\u003f</span></button><section class="assistant-panel" hidden><header><b>\u003f\u003f\u003f\u003f\u003f\u003f</b><button class="icon-btn" data-assistant-close aria-label="\u003f\u003f"><i data-lucide="x"></i></button></header><div class="assistant-messages"><div class="assistant-message assistant">\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f</div></div><form><input name="message" placeholder="\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f" autocomplete="off"><button class="btn primary">\u003f\u003f</button></form></section>';document.body.appendChild(root);const fab=q('.assistant-fab',root),panel=q('.assistant-panel',root),messages=q('.assistant-messages',root);fab.addEventListener('click',()=>{panel.hidden=!panel.hidden;if(!panel.hidden)q('input',root).focus();});q('[data-assistant-close]',root).addEventListener('click',()=>panel.hidden=true);q('form',root).addEventListener('submit',async e=>{e.preventDefault();const input=q('input',root),message=input.value.trim();if(!message)return;messages.insertAdjacentHTML('beforeend','<div class="assistant-message user">'+escapeHtml(message)+'</div>');input.value='';messages.insertAdjacentHTML('beforeend','<div class="assistant-message assistant pending">\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u003f\u002e\u002e\u002e</div>');const pending=messages.lastElementChild;try{const result=await request('/api/agent-chat',{method:'POST',body:JSON.stringify({message,domain_id:'marketing-copilot',history:[]})});pending.classList.remove('pending');pending.innerHTML=escapeHtml(cleanText(result.answer,'\u0041\u0067\u0065\u006e\u0074\u003f\u003f\u003f\u003f\u003f\u003f\u003f'))+(result.trace?.length?'<details><summary>\u003f\u003f\u003f\u003f\u003f\u003f</summary><pre>'+escapeHtml(JSON.stringify(result.trace,null,2))+'</pre></details>':'');}catch(err){pending.classList.remove('pending');pending.textContent='\u003f\u003f\u003f\u003f\u003f'+(err.message||'\u003f\u003f\u003f\u003f\u003f\u003f\u003f');}});if(window.lucide)lucide.createIcons();
   }
 
 function mountMarketingAssistantV2(){
@@ -2204,7 +2199,6 @@ function mountMarketingAssistantV2(){
     });
   }
 
-  window.createProductionCampaign = async function(name) { return request("/api/campaigns", {method: "POST", body: JSON.stringify({name: name, stage: "机会"})}); };
   function downloadBusinessJson(name,payload){
     const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=name+'-'+new Date().toISOString().slice(0,10)+'.json';link.click();
@@ -2303,6 +2297,87 @@ function mountMarketingAssistantV2(){
     const hasInsight=opportunityRuns.some(item=>['queued','running'].includes(item.status));
     clearTimeout(opportunityPollTimer);if(hasInsight)opportunityPollTimer=setTimeout(()=>loadTenantData().catch(()=>{}),1500);
   }
+
+  /* ── 向导提交载荷 ──────────────────────────────────────────────────────
+     第 2/3 步是静态卡片，没有可绑定的表单字段，因此这里按卡片标题回查后端对象。
+     回查不到就明确留空，并把缺少的部分回传给提示，不再默认取列表第一项冒充已绑定。 */
+  const wizardSqueeze = value => String(value || '').replace(/\s+/g, '');
+  function wizardSelectedTitles(rootSelector) {
+    return qa(rootSelector).map(el => (el.querySelector('b')?.textContent || '').trim()).filter(Boolean);
+  }
+  function wizardMatch(items, titles) {
+    return (items || []).find(item => {
+      const name = wizardSqueeze(item.name);
+      if (!name) return false;
+      return titles.some(title => { const value = wizardSqueeze(title); return value.includes(name) || name.includes(value); });
+    }) || null;
+  }
+  function wizardChannels() {
+    const channels = qa('#campaignModal input[type=\"checkbox\"]:checked')
+      .map(input => input.closest('label')?.querySelector('span')?.textContent?.trim()).filter(Boolean);
+    return channels.length ? channels : ['App'];
+  }
+  function collectCampaignBindings() {
+    const titles = wizardSelectedTitles('#campaignModal .selection-box.selected');
+    const packages = tenantData.audiencePackages || [];
+    const snapshots = tenantData.audienceSnapshots || [];
+    const audiencePackage = wizardMatch(packages, titles);
+    const product = wizardMatch(tenantData.productPackages || [], titles);
+    const snapshot = audiencePackage
+      ? (snapshots.filter(item => item.package_id === audiencePackage.id).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))[0] || null)
+      : null;
+    const contentTitles = wizardSelectedTitles('#campaignModal .content-option.selected');
+    const contentIds = (tenantData.contentAssets || []).filter(item => wizardSqueeze(item.name) && contentTitles.some(title => {
+      const value = wizardSqueeze(title); const name = wizardSqueeze(item.name);
+      return value.includes(name) || name.includes(value);
+    })).map(item => item.id);
+    const missing = [];
+    if (!snapshot) missing.push('客群快照');
+    if (!product) missing.push('产品包');
+    if (!contentIds.length) missing.push('内容资产');
+    return {
+      snapshot,
+      product,
+      contentIds,
+      missing,
+      audienceSize: snapshot?.estimated_size || 0,
+      budget: Number(document.querySelector('#campaignBudget')?.value || 0) || 0,
+      roiTarget: Number(document.querySelector('#campaignRoi')?.value || 0) || 0,
+    };
+  }
+  function campaignPayload(name) {
+    const binding = collectCampaignBindings();
+    return {
+      payload: {
+        name,
+        stage: '创建',
+        audience_snapshot_id: binding.snapshot?.id || null,
+        product_package_id: binding.product?.id || null,
+        audience_size: binding.audienceSize,
+        product_package: binding.product?.name || '',
+        budget_yuan: binding.budget,
+        roi_target: binding.roiTarget,
+        channels: wizardChannels(),
+        content_asset_ids: binding.contentIds,
+      },
+      binding,
+    };
+  }
+  window.saveProductionCampaignDraft = async function(name) {
+    const { payload, binding } = campaignPayload(name);
+    const campaign = await request('/api/campaigns', {method:'POST', body: JSON.stringify(payload)});
+    await loadTenantData();
+    return Object.assign({}, campaign, { missingBindings: binding.missing });
+  };
+  window.createProductionCampaign = async function(name) {
+    const { payload, binding } = campaignPayload(name);
+    const campaign = await request('/api/campaigns', {method:'POST', body: JSON.stringify(payload)});
+    const versions = await request(`/api/campaigns/${encodeURIComponent(campaign.id)}/versions`);
+    const version = versions[0];
+    if (version) await request(`/api/campaigns/${encodeURIComponent(campaign.id)}/versions/${version.id}/approval`, {method:'POST'});
+    await loadTenantData();
+    return Object.assign({}, campaign, { missingBindings: binding.missing });
+  };
   /* ── 活动生命周期导轨 ──────────────────────────────────────────────────
      原来只在 #overview 出现，点任意阶段整页跳走且无回途，且 .life.active
      是写死在 01 上的静态类（跳回来仍亮着 01）。改成跨 8 个视图常驻：
