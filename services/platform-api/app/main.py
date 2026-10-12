@@ -36,6 +36,7 @@ from .market_hotspots import collect_source, confirm_hotspot_ontology, create_op
 from .opportunity_insight import launch_opportunity_insight
 from .mock_business import channel_delivery, flight_operations, market_signals, product_catalog, profile_summary
 from .imports import import_file
+from .datasets import router as datasets_router
 from .llm import LLMClient, LLMConfig, LLMServiceError
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
 from .models import (
@@ -160,7 +161,8 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title=settings.app_name, version="3.17.0", lifespan=lifespan)
+app = FastAPI(title=settings.app_name, version="3.18.0", lifespan=lifespan)
+app.include_router(datasets_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -1583,7 +1585,7 @@ def delete_assistant_memory(memory_id: int, context: TenantContext = Depends(req
 @app.get("/api/assistant/capabilities")
 def assistant_capabilities(_context: TenantContext = Depends(get_tenant_context)):
     from .a2ui import CATALOG_ID, VERSION
-    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution"], "a2ui": {"version": VERSION, "supportedCatalogIds": [CATALOG_ID]}}
+    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution", "datasets", "customer_segments"], "a2ui": {"version": VERSION, "supportedCatalogIds": [CATALOG_ID]}}
 
 
 @app.get("/api/assistant/ui-catalog")
@@ -1928,9 +1930,10 @@ def mock_product_catalog(_context: TenantContext = Depends(get_tenant_context)):
 
 
 @app.get("/api/product-catalog")
-def product_catalog_view(_context: TenantContext = Depends(get_tenant_context)):
+def product_catalog_view(_context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     """Expose the product-management catalog through the production-facing contract."""
-    return product_catalog()
+    from .datasets import imported_product_catalog
+    return imported_product_catalog(session, _context.tenant_id) or product_catalog()
 
 
 @app.post("/api/integrations/profile/audiences")

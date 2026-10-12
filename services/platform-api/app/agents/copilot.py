@@ -247,12 +247,19 @@ class MarketingCopilot:
 
     @staticmethod
     def _query_ontology(session: Session, tenant_id: int, query: str, sources: list[dict[str, Any]]) -> dict[str, Any]:
-        entities = session.scalars(select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id).order_by(OntologyEntityRecord.updated_at.desc()).limit(400)).all()
         terms = [item.lower() for item in query.replace("，", " ").split() if len(item) > 1]
-        matched = [item for item in entities if not terms or any(term in item.label.lower() for term in terms)][:12]
+        entity_query = select(OntologyEntityRecord).where(OntologyEntityRecord.tenant_id == tenant_id)
+        if terms:
+            from sqlalchemy import or_
+            entity_query = entity_query.where(or_(*[condition for term in terms for condition in (
+                OntologyEntityRecord.label.contains(term, autoescape=True),
+                OntologyEntityRecord.external_id.contains(term, autoescape=True))]))
+        matched = session.scalars(entity_query.order_by(OntologyEntityRecord.updated_at.desc()).limit(12)).all()
         ids = {item.id for item in matched}
-        relations = session.scalars(select(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == tenant_id)).all()
-        relation_items = [{"source_id": item.source_entity_id, "relation": item.relation_type, "target_id": item.target_entity_id, "evidence": item.evidence[:160]} for item in relations if item.source_entity_id in ids or item.target_entity_id in ids][:20]
+        relations = session.scalars(select(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == tenant_id,
+            (OntologyRelationRecord.source_entity_id.in_(ids)) | (OntologyRelationRecord.target_entity_id.in_(ids)))
+            .order_by(OntologyRelationRecord.id).limit(20)).all()
+        relation_items = [{"source_id": item.source_entity_id, "relation": item.relation_type, "target_id": item.target_entity_id, "evidence": item.evidence[:160]} for item in relations]
         items = [{"id": item.external_id, "type": item.entity_type, "label": item.label, "confidence": item.confidence} for item in matched]
         sources.extend({"type": "ontology", "id": item["id"], "title": item["label"], "excerpt": item["type"]} for item in items)
         return {"count": len(items), "entities": items, "relations": relation_items}

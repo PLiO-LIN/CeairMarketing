@@ -9,7 +9,7 @@ import httpx
 from fastapi import HTTPException
 from sqlalchemy import select
 from .auth import create_token
-from .db_models import AssistantTaskRecord, CampaignRecord, OpportunityRecord, AudiencePackageRecord, ProductPackageRecord, ContentAssetRecord, ExecutionBatchRecord, ChannelTaskRecord
+from .db_models import AssistantTaskRecord, CampaignRecord, OpportunityRecord, AudiencePackageRecord, ProductPackageRecord, ContentAssetRecord, ExecutionBatchRecord, ChannelTaskRecord, DatasetRecord
 from .assistant_store import task_view, remember
 from .agents.agentscope_runtime import make_tool, text_tool_result
 
@@ -22,7 +22,7 @@ BUSINESS_PREFIXES = (
     "/api/data-pipelines", "/api/data-sources", "/api/integrations/profile", "/api/integrations/products",
     "/api/model-providers", "/api/ndc/sync-flight-products",
     "/api/platform/tenants", "/api/platform/users", "/api/imports",
-    "/api/audit-logs", "/api/agent-evaluations",
+    "/api/audit-logs", "/api/agent-evaluations", "/api/datasets",
     "/api/mock/flight-operations", "/api/mock/profile-summary", "/api/mock/market-signals",
     "/api/assistant/tasks", "/api/assistant/conversations", "/api/assistant/memories",
 )
@@ -71,6 +71,17 @@ async def call_platform(context, method, path, body=None, params=None):
 
 
 def statistics(session, context, metric):
+    if metric == "datasets":
+        rows = list(session.scalars(select(DatasetRecord).where(DatasetRecord.tenant_id == context.tenant_id)))
+        return {"type": "bar", "title": "数据目录记录数", "labels": [r.name for r in rows], "values": [r.row_count for r in rows],
+            "unit": "行", "source": "不同业务粒度的表记录，不可相加为旅客数；来源和模拟标识见数据目录", "metric": metric, "total": len(rows)}
+    if metric == "customer_segments":
+        dataset = session.scalar(select(DatasetRecord).where(DatasetRecord.tenant_id == context.tenant_id,
+            DatasetRecord.name == "客户画像").order_by(DatasetRecord.id.desc()).limit(1))
+        if dataset is None: raise ValueError("当前工作区未导入客户画像")
+        counts = json.loads(dataset.metadata_json).get("statistics", {}).get("segment_counts", {})
+        return {"type": "bar", "title": "客户分群", "labels": list(counts), "values": list(counts.values()), "unit": "人",
+            "source": dataset.dataset_key + "；模拟客户、互斥分群、去重客户", "metric": metric, "total": sum(counts.values())}
     tables = {
         "campaigns": (CampaignRecord, "活动阶段分布", "stage"),
         "opportunities": (OpportunityRecord, "机会状态分布", "status"),
@@ -80,7 +91,7 @@ def statistics(session, context, metric):
         "execution": (ChannelTaskRecord, "渠道送达量", "delivered_count"),
     }
     if metric not in tables:
-        raise ValueError("统计指标可选 campaigns/opportunities/audiences/products/contents/execution")
+        raise ValueError("统计指标可选 campaigns/opportunities/audiences/products/contents/execution/datasets/customer_segments")
     model, title, field = tables[metric]
     rows = session.scalars(select(model).where(model.tenant_id == context.tenant_id)).all()
     if metric == "audiences":
@@ -116,6 +127,7 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
                 "/api/content-assets": ("内容记录", [("name", "内容"), ("channel", "渠道"), ("status", "状态")], "contents"),
                 "/api/agent-runs": ("历史智能任务", [("domain_id", "智能域"), ("status", "状态"), ("summary", "摘要")], "campaigns"),
                 "/api/data-pipelines": ("数据处理任务", [("file_name", "文件"), ("status", "状态"), ("current_stage", "阶段")], "imports"),
+                "/api/datasets": ("数据目录", [("name", "数据集"), ("row_count", "记录数"), ("data_mode", "口径")], "imports"),
             }
             if path in columns and isinstance(value, list) and not any(w.get("path") == path for w in widgets):
                 title, fields, page = columns[path]
@@ -126,7 +138,7 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
             return text_tool_result({"ok": False, "error": getattr(exc, "detail", str(exc))})
 
     async def query_statistics(metric: str = "campaigns"):
-        """Calculate trusted BI charts from saved backend records. Metrics: campaigns, opportunities, audiences, products, contents, execution."""
+        """Calculate trusted BI charts from saved backend records. Metrics: campaigns, opportunities, audiences, products, contents, execution, datasets, customer_segments."""
         try:
             chart = statistics(session, context, metric)
             if not any(w.get("metric") == metric for w in widgets):

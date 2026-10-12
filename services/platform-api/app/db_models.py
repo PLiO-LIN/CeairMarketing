@@ -462,6 +462,42 @@ class ImportJobRecord(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class DatasetRecord(Base):
+    """Tenant-owned, immutable version of an imported structured dataset."""
+    __tablename__ = "datasets"
+    __table_args__ = (UniqueConstraint("tenant_id", "dataset_key", name="uq_dataset_tenant_key"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    dataset_key: Mapped[str] = mapped_column(String(100))
+    name: Mapped[str] = mapped_column(String(120))
+    row_count: Mapped[int] = mapped_column(Integer, default=0)
+    grain: Mapped[str] = mapped_column(Text, default="")
+    source: Mapped[str] = mapped_column(String(160), default="")
+    data_mode: Mapped[str] = mapped_column(String(80), default="")
+    description: Mapped[str] = mapped_column(Text, default="")
+    usage: Mapped[str] = mapped_column(Text, default="")
+    schema_json: Mapped[str] = mapped_column(Text, default="[]")
+    metadata_json: Mapped[str] = mapped_column(Text, default="{}")
+    import_job_id: Mapped[str] = mapped_column(ForeignKey("import_jobs.id"))
+    imported_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class DatasetRowRecord(Base):
+    """Full source records; indexed identifiers support bounded agent queries."""
+    __tablename__ = "dataset_rows"
+    __table_args__ = (UniqueConstraint("dataset_id", "record_key", name="uq_dataset_row_key"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id", ondelete="CASCADE"), index=True)
+    dataset_id: Mapped[int] = mapped_column(ForeignKey("datasets.id", ondelete="CASCADE"), index=True)
+    record_key: Mapped[str] = mapped_column(String(160))
+    source_id: Mapped[str] = mapped_column(String(80), default="")
+    data_mode: Mapped[str] = mapped_column(String(80), default="")
+    route_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    flight_id: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
+    customer_id: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
+    payload_json: Mapped[str] = mapped_column(Text)
+
+
 class DataPipelineJobRecord(Base):
     __tablename__ = "data_pipeline_jobs"
 

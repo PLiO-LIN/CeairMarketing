@@ -390,7 +390,7 @@ class AudienceTag(AudienceTagBase):
 
 class AudiencePackageBase(BaseModel):
     name: str = Field(min_length=2, max_length=160)
-    selection_mode: Literal["tag-combination", "ai-selection"] = "tag-combination"
+    selection_mode: Literal["tag-combination", "ai-selection", "expression"] = "tag-combination"
     tag_ids: list[int] = Field(default_factory=list)
     expression: dict[str, Any] = Field(default_factory=dict)
     estimated_size: int = Field(default=0, ge=0)

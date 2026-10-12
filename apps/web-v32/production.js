@@ -411,7 +411,7 @@
     const tagOptions = (tenantData.audienceTags || []).filter(tag => tag.enabled || (item.tag_ids || []).includes(tag.id)).map(tag => ({ value: tag.id, label: `${tag.name} · ${tag.enabled ? (tag.category || '画像标签') : '已停用'}` }));
     return [
       { name: 'name', label: '客群包名称', type: 'text', placeholder: '例如：暑期亲子出行转化包' },
-      { name: 'selection_mode', label: '组合方式', type: 'select', options: [{ value: 'tag-combination', label: '画像条件组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }] },
+      { name: 'selection_mode', label: '组合方式', type: 'select', options: [{ value: 'tag-combination', label: '画像条件组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }, { value: 'expression', label: '源数据条件' }] },
       { name: 'estimated_size', label: '预计客群规模', type: 'number', min: 0 },
       { name: 'status', label: '客群包状态', type: 'select', options: ['草稿', '可用', '停用'] },
       { name: 'dimension_ids', label: '组合画像字段', type: 'multiselect', required: false, options: audienceDimensionOptions(), help: '从职业、性别、年龄、地域、订单、航线等底层画像字段中选择组合条件。' },
@@ -556,7 +556,7 @@
 </i>租户与用户</button>`);
     const content = q('.content');
     if (!q('#imports')) content.insertAdjacentHTML('beforeend', `<section id="imports" class="view">
-<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1></div><div class="page-actions"><button class="btn" id="syncNdcFlight"><i data-lucide="plane-takeoff"></i>同步 NDC24.1 模拟航班</button><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div></div>
+<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1></div><div class="page-actions"><button class="btn" id="datasetCatalog">数据目录</button><button class="btn" id="syncNdcFlight"><i data-lucide="plane-takeoff"></i>同步 NDC24.1 模拟航班</button><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div></div>
 <div class="ingestion-workbench">
 <div class="panel ingestion-entry"><div class="panel-head"><h2>\u6295\u9012\u6570\u636e\u6587\u4ef6</h2><span>\u5355\u6587\u4ef6\u4e0d\u8d85\u8fc7 20MB</span></div><div class="panel-body">
 <div class="pipeline-dropzone" id="pipelineDropzone" tabindex="0" role="button" aria-label="\u9009\u62e9\u6216\u62d6\u62fd\u6587\u4ef6"><input id="pipelineFiles" type="file" multiple accept=".txt,.md,.json,.csv,.pdf,.png,.jpg,.jpeg,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.html"><span class="dropzone-icon"><i data-lucide="cloud-upload"></i></span><b>\u5c06\u6587\u4ef6\u62d6\u5230\u8fd9\u91cc</b><p>\u6216\u70b9\u51fb\u9009\u62e9\u6587\u4ef6\uff0c\u53ef\u4e00\u6b21\u6295\u9012\u591a\u4e2a</p><small>PDF / Word / Excel / PPT / CSV / JSON / TXT / \u56fe\u7247</small></div>
@@ -834,7 +834,7 @@
     const packageRows = packages.map(item => {
       const protectedPackage = ['已冻结', '已使用', '执行中', '已归档'].includes(item.status);
       const dimensionCount = expressionDimensionIds(item).length;
-      const composition = [dimensionCount ? `${dimensionCount} 项画像` : '', (item.tag_ids || []).length ? `${item.tag_ids.length} 个标签` : '', item.selection_mode === 'ai-selection' ? 'AI 条件' : '规则组合'].filter(Boolean).join(' + ');
+      const composition = [dimensionCount ? `${dimensionCount} 项画像` : '', (item.tag_ids || []).length ? `${item.tag_ids.length} 个标签` : '', item.selection_mode === 'ai-selection' ? 'AI 条件' : item.selection_mode === 'expression' ? '源数据条件' : '规则组合'].filter(Boolean).join(' + ');
       return `<tr>
         <td><strong>${escapeHtml(displayText(item.name, '未命名客群包'))}</strong><small>${escapeHtml(displayText(item.external_id, 'PACKAGE'))} <span class="package-source-tag created">已创建</span></small></td>
         <td>${Number(item.estimated_size || 0).toLocaleString('zh-CN')} 人</td>
@@ -1113,8 +1113,17 @@
     let baseCatalog=q('#productCatalog');
     if(!baseCatalog){baseCatalog=document.createElement('div');baseCatalog.id='productCatalog';baseCatalog.className='base-product-catalog';body.insertBefore(baseCatalog,table);}
     const baseProducts=tenantData.productCatalog?.products||[];
-    baseCatalog.innerHTML=`<div class="catalog-section-head"><div><b>基础产品目录</b><span>来自产品管理平台的可售产品，是产品包组合和活动匹配的底层对象</span></div><span class="catalog-count">${baseProducts.length} 个</span></div><div class="catalog-grid product-catalog-grid">${baseProducts.map(item=>`<div class="catalog-card product-card"><div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="ticket"></i></span><span class="status good">可引用</span></div><strong>${escapeHtml(displayText(item.name,'未命名产品'))}</strong><small>${escapeHtml(displayText(item.category,'航空产品'))} · ${escapeHtml(displayText(item.code,'产品编码'))}</small><div class="catalog-card-meta"><span>${(item.benefits||[]).length} 项权益</span><button class="btn" data-product-catalog-view="${escapeHtml(item.code)}">查看产品</button></div></div>`).join('')||'<div class="empty-action">暂无基础产品，可从产品管理平台同步</div>'}</div>`;
-    q('.catalog-section-head span',baseCatalog).textContent='联调产品目录；实际价格、库存与权益等待上游核验';
+    const previewProducts=baseProducts.slice(0,6);
+    baseCatalog.innerHTML=`<div class="catalog-section-head"><div><b>基础产品目录</b><span>来自产品管理平台的可售产品，是产品包组合和活动匹配的底层对象</span></div><span class="catalog-count">${baseProducts.length} 个</span></div><div class="catalog-grid product-catalog-grid">${previewProducts.map(item=>`<div class="catalog-card product-card"><div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="ticket"></i></span><span class="status">${escapeHtml(item.status||"待核验")}</span></div><strong>${escapeHtml(displayText(item.name,'未命名产品'))}</strong><small>${escapeHtml(displayText(item.category,'航空产品'))} · ${escapeHtml(displayText(item.code,'产品编码'))}</small><div class="catalog-card-meta"><span>${(item.benefits||[]).length} 项权益</span><button class="btn" data-product-catalog-view="${escapeHtml(item.code)}">查看产品</button></div></div>`).join('')||'<div class="empty-action">暂无基础产品，可从产品管理平台同步</div>'}</div>`;
+    q('.catalog-section-head span',baseCatalog).textContent=tenantData.productCatalog?.source||'产品目录';
+    if(baseProducts.length>6){
+      const more=document.createElement('button');more.className='btn';more.textContent='全部产品（'+baseProducts.length+'）';
+      more.onclick=()=>{
+        const layer=dataDialog('基础产品目录',`<div class="dataset-table-scroll"><table class="table"><tr><th>产品</th><th>类别</th><th>口径</th><th></th></tr>${baseProducts.map((p,i)=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category)}</td><td>${escapeHtml(p.data_mode||p.source||p.status)}</td><td><button class="btn" data-catalog-index="${i}">查看</button></td></tr>`).join('')}</table></div>`);
+        qa('[data-catalog-index]',layer).forEach(button=>button.onclick=()=>showBaseProductDetail(baseProducts[Number(button.dataset.catalogIndex)]));
+      };q('.catalog-section-head',baseCatalog).append(more);
+    }
+    qa('[data-product-catalog-view]',baseCatalog).forEach(button=>button.onclick=()=>{const item=baseProducts.find(p=>p.code===button.dataset.productCatalogView);if(item)showBaseProductDetail(item);});
     const services=q('#products > .grid3');
     if(services)services.innerHTML='<div class="small-panel"><b>产品资格</b><span>价格、库存、航班与权益</span><em>等待上游可售校验</em></div><div class="small-panel"><b>标准接口</b><span>产品包导入、版本与来源追踪</span><em>可通过同步业务数据导入</em></div><div class="small-panel"><b>履约回流</b><span>购买、使用与异常状态</span><em>等待实际履约系统接入</em></div>';
     if(window.lucide)lucide.createIcons();
@@ -1501,7 +1510,7 @@
     writeAudienceDetail(displayText(item.segment_name, '预置客群包'), `${displayText(item.segment_code, 'PRESET')} · 预置客群包组合`, `<div class="campaign-detail-summary"><span><b>客群包类型</b>${escapeHtml(displayText(item.primary_persona_name, '未分类'))}</span><span><b>画像条件</b>${item.rules?.length || 0} 项</span><span><b>推荐触达</b>${escapeHtml((item.recommended_channels || []).join('、') || '待配置')}</span></div><section class="detail-block"><h3>组合画像条件</h3><ul class="catalog-detail-list">${rules || '<li><span>暂无明细条件</span></li>'}</ul></section><section class="detail-block"><h3>推荐产品与使用方式</h3><p>${escapeHtml((item.recommended_products || []).join('、') || '可在活动中继续匹配产品包')}。该预置客群包由多个底层画像字段组合而成，运营人员可以据此新建租户客群包并继续调整条件。</p></section>`);
   }  function showBaseProductDetail(item){
     const layer=document.createElement('div'); layer.className='production-modal';
-    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.name,'\u57fa\u7840\u4ea7\u54c1'))}</b><small>${escapeHtml(displayText(item.code,'\u4ea7\u54c1\u7f16\u7801'))} · \u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0</small></div><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>\u4ea7\u54c1\u7c7b\u522b</b>${escapeHtml(displayText(item.category,'\u822a\u7a7a\u4ea7\u54c1'))}</span><span><b>\u6743\u76ca\u9879</b>${(item.benefits||[]).length} \u9879</span></div><section><h3>\u9002\u7528\u6761\u4ef6</h3><p>${escapeHtml(displayText(item.eligibility,'\u4ee5\u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0\u5b9e\u9645\u8d44\u683c\u89c4\u5219\u4e3a\u51c6'))}</p></section><section><h3>\u5305\u542b\u6743\u76ca</h3><ul class="catalog-detail-list">${(item.benefits||[]).map(value=>`<li><span>${escapeHtml(value)}</span><small>\u53ef\u88ab\u4ea7\u54c1\u5305\u7ec4\u5408</small></li>`).join('')||'<li><span>\u6682\u65e0\u6743\u76ca\u660e\u7ec6</span></li>'}</ul></section></div></div>`;
+    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.name,'\u57fa\u7840\u4ea7\u54c1'))}</b><small>${escapeHtml(displayText(item.code,'\u4ea7\u54c1\u7f16\u7801'))} · ${escapeHtml(item.data_mode||item.source||"产品目录")}</small></div><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>\u4ea7\u54c1\u7c7b\u522b</b>${escapeHtml(displayText(item.category,'\u822a\u7a7a\u4ea7\u54c1'))}</span><span><b>\u6743\u76ca\u9879</b>${(item.benefits||[]).length} \u9879</span></div><section><h3>\u9002\u7528\u6761\u4ef6</h3><p>${escapeHtml(displayText(item.eligibility,'\u4ee5\u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0\u5b9e\u9645\u8d44\u683c\u89c4\u5219\u4e3a\u51c6'))}</p></section><section><h3>\u5305\u542b\u6743\u76ca</h3><ul class="catalog-detail-list">${(item.benefits||[]).map(value=>`<li><span>${escapeHtml(value)}</span><small>\u53ef\u88ab\u4ea7\u54c1\u5305\u7ec4\u5408</small></li>`).join('')||'<li><span>\u6682\u65e0\u6743\u76ca\u660e\u7ec6</span></li>'}</ul></section></div></div>`;
     document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();}); if(window.lucide)lucide.createIcons();
   }
   function showProductDetail(item){
@@ -1690,14 +1699,89 @@
     qa('[data-knowledge-view]').forEach(button=>button.addEventListener('click',()=>{const mode=button.dataset.knowledgeView;qa('[data-knowledge-view]').forEach(item=>item.classList.toggle('active',item===button));schema.hidden=mode!=='schema';canvas.hidden=mode!=='instances';const bar=q('[data-instance-toolbar]');if(bar)bar.hidden=mode!=='instances';if(mode==='instances')renderDynamicGraph();else renderOntologySchemaGraphV2();})); renderOntologySchemaGraphV2();
   }
 
+  function dataDialog(title, html) {
+    const layer=document.createElement('div');layer.className='production-modal dataset-modal';
+    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><b>${escapeHtml(title)}</b><button class="btn" data-close>关闭</button></div><div class="production-modal-body">${html}</div></div>`;
+    document.body.append(layer);bindProductionModal(layer);return layer;
+  }
+  async function showDatasetCatalog() {
+    const layer=dataDialog('数据目录','<p>正在加载…</p>'),body=q('.production-modal-body',layer);
+    try {
+      const rows=await request('/api/datasets');
+      if(!layer.isConnected)return;
+      body.innerHTML=`<div class="catalog-section-head"><b>${rows.length} 个数据集 · ${rows.reduce((n,r)=>n+r.row_count,0).toLocaleString('zh-CN')} 条源记录</b><button class="btn" data-open-ontology>检索本体</button></div><div class="dataset-table-scroll"><table class="table"><thead><tr><th>数据集</th><th>记录数</th><th>来源</th><th>口径</th><th></th></tr></thead><tbody>${rows.map(row=>`<tr><td><b>${escapeHtml(row.name)}</b></td><td>${row.row_count.toLocaleString('zh-CN')}</td><td>${escapeHtml(row.source)}</td><td>${escapeHtml(row.data_mode)}</td><td><button class="btn" data-dataset="${escapeHtml(row.dataset_key)}">查看明细</button></td></tr>`).join('')||'<tr><td colspan="5">暂无已导入数据</td></tr>'}</tbody></table></div>`;
+      q('[data-open-ontology]',body).onclick=()=>showOntologyCatalog();
+      qa('[data-dataset]',body).forEach(button=>button.onclick=()=>showDatasetRows(button.dataset.dataset));
+    }catch(error){body.textContent=error.message;}
+  }
+  async function showDatasetRows(datasetKey) {
+    const layer=dataDialog('数据明细','<p>正在加载…</p>'),body=q('.production-modal-body',layer);
+    let offset=0,params={},sequence=0;
+    const fetchRows=async()=>{
+      const current=++sequence;
+      try{
+        const query=new URLSearchParams({...params,offset,limit:20});
+        const result=await request('/api/datasets/'+encodeURIComponent(datasetKey)+'/rows?'+query);
+        if(!layer.isConnected||current!==sequence)return;
+        const d=result.dataset,fields=d.fields;
+        body.innerHTML=`<div class="catalog-section-head"><b>${escapeHtml(d.name)} · ${result.total.toLocaleString('zh-CN')} 条</b><span>${escapeHtml(d.data_mode)}</span></div><details><summary>字段、用途与来源</summary><p>${escapeHtml(d.source)} · ${escapeHtml(d.grain)}</p><p>${escapeHtml(d.usage)}</p><p>${escapeHtml(d.description)}</p><p>版本：${escapeHtml(d.dataset_key)} · 主键：${escapeHtml(d.metadata.pk)}</p><div class="dataset-table-scroll"><table class="table"><tr><th>字段</th><th>名称</th><th>类型</th></tr>${fields.map(f=>`<tr><td>${escapeHtml(f.code)}</td><td>${escapeHtml(f.label)}</td><td>${escapeHtml(f.type)}</td></tr>`).join('')}</table></div></details><form data-row-search class="dataset-search"><select name="field"><option value="record_key">主键</option><option value="route_id">航线 ID</option><option value="flight_id">航班 ID</option><option value="customer_id">客户 ID</option></select><input name="value" placeholder="输入完整 ID" value="${escapeHtml(Object.values(params)[0]||'')}"><button class="btn" type="submit">查询</button><button class="btn" type="button" data-reset>重置</button></form><div class="dataset-table-scroll"><table class="table dataset-detail-table"><thead><tr>${fields.map(f=>`<th>${escapeHtml(f.label||f.code)}</th>`).join('')}<th></th></tr></thead><tbody>${result.rows.map((row,i)=>`<tr>${fields.map(f=>`<td title="${escapeHtml(row[f.code])}">${escapeHtml(row[f.code]===null?'—':typeof row[f.code]==='object'?JSON.stringify(row[f.code]):row[f.code])}</td>`).join('')}<td><button class="btn" data-row-detail="${i}">完整记录</button></td></tr>`).join('')||`<tr><td colspan="${fields.length+1}">无匹配记录</td></tr>`}</tbody></table></div><div class="dataset-pagination"><button class="btn" data-prev ${offset===0?'disabled':''}>上一页</button><span>${result.total?offset+1:0}–${Math.min(offset+20,result.total)} / ${result.total.toLocaleString('zh-CN')}</span><button class="btn" data-next ${offset+20>=result.total?'disabled':''}>下一页</button></div>`;
+        q('[data-row-search]',body).onsubmit=event=>{event.preventDefault();const f=new FormData(event.target),value=String(f.get('value')).trim();params=value?{[f.get('field')]:value}:{};offset=0;fetchRows();};
+        q('[data-reset]',body).onclick=()=>{params={};offset=0;fetchRows();};
+        q('[data-prev]',body).onclick=()=>{offset=Math.max(0,offset-20);fetchRows();};
+        q('[data-next]',body).onclick=()=>{offset+=20;fetchRows();};
+        qa('[data-row-detail]',body).forEach(button=>button.onclick=()=>dataDialog('完整源记录',`<pre class="dataset-record">${escapeHtml(JSON.stringify(result.rows[Number(button.dataset.rowDetail)],null,2))}</pre>`));
+      }catch(error){if(current===sequence)body.textContent=error.message;}
+    };await fetchRows();
+  }
+  async function showOntologyCatalog() {
+    const objectLabels={Airport:'机场',Flight:'航班',FlightSegment:'航段',Cabin:'舱位',Fare:'报价',Product:'产品',AncillaryProduct:'辅营产品',MetricObservation:'指标观测',AttributionResult:'归因结果'};
+    const relationLabels={has_fare:'提供报价',uses_product:'适用产品',has_cabin:'包含舱位',has_segment:'包含航段',operates_on:'运营航线',departs_from:'出发机场',arrives_at:'到达机场',has_metric:'指标观测',produces_feedback:'产生反馈',produces_attribution:'产生归因',attributes_to:'归因对象',includes_ancillary:'包含辅营',targets_audience:'面向客群',uses_product_package:'使用产品包',has_campaign_version:'包含活动版本',generates_content:'生成内容'};
+    const layer=dataDialog('本体对象检索','<form class="dataset-search" data-entity-search><input name="q" placeholder="名称或对象 ID"><input name="entity_type" placeholder="对象类型，如 Flight / Fare"><button class="btn">查询</button></form><div data-entity-results>正在加载…</div>');
+    const host=q('[data-entity-results]',layer);let offset=0,params={},sequence=0;
+    const fetchEntities=async()=>{
+      const current=++sequence;
+      try{
+        const result=await request('/api/ontology/entities?'+new URLSearchParams({...params,offset,limit:20}));
+        if(!layer.isConnected||current!==sequence)return;
+        host.innerHTML=`<div class="dataset-table-scroll"><table class="table"><tr><th>对象</th><th>类型</th><th>来源</th><th></th></tr>${result.rows.map(row=>`<tr><td><b>${escapeHtml(row.label)}</b><small>${escapeHtml(row.external_id)}</small></td><td>${escapeHtml(window.ceairOntologyLabels?.[row.type]||objectLabels[row.type]||row.type)}</td><td>${escapeHtml(row.source)}</td><td><button class="btn" data-entity-id="${escapeHtml(row.external_id)}">关系与属性</button></td></tr>`).join('')||'<tr><td colspan="4">无匹配对象</td></tr>'}</table></div><div class="dataset-pagination"><button class="btn" data-prev ${offset===0?'disabled':''}>上一页</button><span>${result.total?offset+1:0}–${Math.min(offset+20,result.total)} / ${result.total.toLocaleString('zh-CN')}</span><button class="btn" data-next ${offset+20>=result.total?'disabled':''}>下一页</button></div>`;
+        q('[data-prev]',host).onclick=()=>{offset=Math.max(0,offset-20);fetchEntities();};q('[data-next]',host).onclick=()=>{offset+=20;fetchEntities();};
+        qa('[data-entity-id]',host).forEach(button=>button.onclick=async()=>{
+          const detail=dataDialog('关系与属性','<p>正在加载…</p>'),area=q('.production-modal-body',detail);
+          try{
+            const neighborhood=await request('/api/ontology/entities/'+encodeURIComponent(button.dataset.entityId)+'/neighbors');
+            const node=neighborhood.nodes.find(n=>n.external_id===button.dataset.entityId);
+            if(!detail.isConnected)return;
+            const labels=Object.fromEntries(neighborhood.nodes.map(n=>[n.external_id,n.label]));
+            area.innerHTML=`<h3>${escapeHtml(node.label)}</h3><p>${escapeHtml(node.source)} · ${escapeHtml(node.external_id)}</p><details open><summary>对象属性</summary><pre class="dataset-record">${escapeHtml(JSON.stringify(node.attributes,null,2))}</pre></details><h3>关联关系 · ${neighborhood.total_relations.toLocaleString('zh-CN')}</h3><div class="dataset-table-scroll"><table class="table"><tr><th>起点</th><th>关系</th><th>终点</th><th>证据</th></tr>${neighborhood.edges.map(e=>`<tr><td>${escapeHtml(labels[e.source])}</td><td>${escapeHtml(relationLabels[e.relation]||e.relation)}</td><td>${escapeHtml(labels[e.target])}</td><td>${escapeHtml(e.evidence)}</td></tr>`).join('')}</table></div>${neighborhood.total_relations>neighborhood.edges.length?'<p>当前展示前 40 条关系；其余可通过标准邻接查询接口分页查看。</p>':''}${node.attributes.dataset_key?'<button class="btn" data-source-rows>查看来源数据</button>':''}`;
+            q('[data-source-rows]',area)?.addEventListener('click',()=>showDatasetRows(node.attributes.dataset_key));
+          }catch(error){area.textContent=error.message;}
+        });
+      }catch(error){if(current===sequence)host.textContent=error.message;}
+    };
+    q('[data-entity-search]',layer).onsubmit=event=>{event.preventDefault();params=Object.fromEntries([...new FormData(event.target)].filter(([,v])=>String(v).trim()));offset=0;fetchEntities();};await fetchEntities();
+  }
+
   function renderDynamicGraph() {
     setupKnowledgeViews();
+    const toolbar=q('[data-instance-toolbar]');
+    if(toolbar&&!q('[data-ontology-catalog]',toolbar)){
+      const button=document.createElement('button');button.className='btn';button.dataset.ontologyCatalog='true';button.textContent='检索本体对象';
+      button.onclick=()=>showOntologyCatalog();toolbar.append(button);
+    }
     const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return; canvas.innerHTML='';
     let source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
     let picker=q('[data-graph-case]');
     if(!picker){picker=document.createElement('select');picker.dataset.graphCase='true';picker.setAttribute('aria-label','选择图谱活动');q('[data-instance-toolbar]')?.append(picker);picker.onchange=()=>{window.ceairSetChainCase?.(picker.value);renderDynamicGraph();};}
     const selected=picker.value||(tenantData.demo?.enabled?'ACT-2026-0921':tenantData.campaigns[0]?.id)||'';
     picker.innerHTML='<option value="all">全部本体对象</option>'+tenantData.campaigns.map(c=>'<option value="'+escapeHtml(c.id)+'">'+escapeHtml(c.name)+'</option>').join('');picker.value=selected;
+    if(selected!=='all'&&tenantData.graph.campaign_id!==selected){
+      canvas.innerHTML='<div class="graph-empty">正在加载活动关系…</div>';
+      request('/api/campaigns/'+encodeURIComponent(selected)+'/graph').then(graph=>{if(picker.value===selected){tenantData.graph=graph;renderDynamicGraph();}}).catch(error=>{canvas.textContent=error.message;});return;
+    }
+    if(selected==='all'&&tenantData.graph.campaign_id){
+      canvas.innerHTML='<div class="graph-empty">正在加载本体概览…</div>';
+      request('/api/graph').then(graph=>{if(picker.value==='all'){tenantData.graph=graph;renderDynamicGraph();}}).catch(error=>{canvas.textContent=error.message;});return;
+    }
     if(selected!=='all'){
       const ids=new Set(source.nodes.filter(n=>n.id===selected||n.attributes?.campaign_id===selected).map(n=>n.id));
       for(let pass=0;pass<3;pass++)source.edges.forEach(e=>{const target=source.nodes.find(n=>n.id===e.target);if(ids.has(e.source)&&target&&(!target.attributes?.campaign_id||target.attributes.campaign_id===selected)&&!String(e.target).startsWith('ACT-'))ids.add(e.target);});
@@ -1758,11 +1842,11 @@
   function renderImports() {
     const table=q('#importTable'); if(!table)return;
     const pipelines=tenantData.pipelines||[];
-    const syncs=(tenantData.imports||[]).filter(item=>['audience','product'].includes(item.dataset_type));
+    const syncs=(tenantData.imports||[]).filter(item=>['audience','product','bundle'].includes(item.dataset_type));
     q('#importCount').textContent=(pipelines.length+syncs.length)+' 个批次';
     const rows=[
       ...pipelines.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:'业务对象 '+item.accepted_entities+' · 关系 '+item.accepted_relations+(item.rejected_items?' · 待复核 '+item.rejected_items:''),error:item.error_message})),
-      ...syncs.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:(item.dataset_type==='audience'?'聚合客群':'产品包')+' · 接收 '+item.accepted_rows+' / '+item.total_rows+' 条',error:item.rejected_rows?'待复核 '+item.rejected_rows+' 条':''}))
+      ...syncs.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:(item.dataset_type==='bundle'?'数据集与本体':item.dataset_type==='audience'?'聚合客群':'产品包')+' · 接收 '+Number(item.accepted_rows).toLocaleString('zh-CN')+' / '+Number(item.total_rows).toLocaleString('zh-CN')+' 条',error:item.rejected_rows?'待复核 '+item.rejected_rows+' 条':''}))
     ].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
     table.innerHTML='<tr><th>文件 / 来源</th><th>格式</th><th>处理结果</th><th>状态</th><th>完成时间（北京时间）</th></tr>'+(rows.length?rows.map(item=>'<tr><td><strong>'+escapeHtml(item.name)+'</strong><small>'+escapeHtml(item.id)+'</small></td><td>'+escapeHtml(String(item.format||'').toUpperCase())+'</td><td>'+escapeHtml(item.result)+'</td><td><span class="status '+(item.status==='failed'?'warn':'good')+'">'+escapeHtml(pipelineStatusText[item.status]||item.status)+'</span>'+(item.error?'<small class="pipeline-error">'+escapeHtml(item.error)+'</small>':'')+'</td><td>'+escapeHtml(businessTime(item.time))+'</td></tr>').join(''):'<tr><td colspan="5" class="table-empty">暂无处理记录。可投递文件，或在客群与产品页同步标准 JSON。</td></tr>');
   }
@@ -1908,6 +1992,7 @@
     ['dragleave','drop'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.remove('is-dragging');}));
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
     q('#refreshPipelines')?.addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
+    q('#datasetCatalog')?.addEventListener('click',()=>showDatasetCatalog());
     q('#syncNdcFlight')?.addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcFlight');button.disabled=true;try{const result=await request('/api/ndc/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
     q('#tenantForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
@@ -2311,7 +2396,7 @@ function mountMarketingAssistantV2(){
     (tenantData.personaDimensions || []).forEach(item => searchPush(rows, 'dimension', item.field_name, searchTag(item.field_code, item.applicable_personas).join(' · '), [item.module_name, item.data_type, item.update_frequency, item.required_mode], item.module_key, item.id));
     (tenantData.campaigns || []).forEach(item => searchPush(rows, 'campaign', item.name, `编号 ${item.id} · 负责人 ${item.owner || '未指定'}`, [item.stage, item.status, item.product_package, item.version], item.id, item.id));
     (tenantData.opportunities || []).forEach(item => searchPush(rows, 'opportunity', item.name, searchTag(item.route, item.signal_summary).join(' · '), [item.market_scope, item.status, item.score ? `评分 ${item.score}` : '', item.owner], item.id, item.id));
-    (tenantData.audiencePackages || []).forEach(item => searchPush(rows, 'audience', item.name, `圈选方式：${item.selection_mode === 'ai-selection' ? 'AI 圈选' : '标签组合'}`, [item.status, `${item.estimated_size || 0} 人`], item.id, item.id));
+    (tenantData.audiencePackages || []).forEach(item => searchPush(rows, 'audience', item.name, `圈选方式：${item.selection_mode === 'ai-selection' ? 'AI 圈选' : item.selection_mode === 'expression' ? '源数据条件' : '标签组合'}`, [item.status, `${item.estimated_size || 0} 人`], item.id, item.id));
     (tenantData.productPackages || []).forEach(item => searchPush(rows, 'product', item.name, item.description, [item.product_type, item.status, item.version], item.id, item.id));
     (tenantData.contentAssets || []).forEach(item => searchPush(rows, 'content', item.title || item.name, item.body, [item.channel, item.status, item.version, item.campaign_id], item.id, item.id));
     (tenantData.domains || []).forEach(item => searchPush(rows, 'domain', item.name, item.responsibility, [item.module, item.status], '', item.id));
