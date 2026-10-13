@@ -19,7 +19,7 @@
     const drafts = new Map(), modelLists = new Map();
     const $ = (selector, root = document) => root.querySelector(selector);
     const vendorFor = item => item.provider_type === 'mock' ? vendors.at(-1) : vendors.find(v => v.id === 'token-plan' && v.matches.test(item.base_url + ' ' + item.display_name)) || vendors.find(v => v.matches?.test(item.base_url + ' ' + item.display_name)) || vendors.find(v => v.id === 'custom');
-    const logo = vendor => `<img class="provider-logo" src="./brand/${vendor.id === 'mock' ? 'dongdong-robot.svg' : vendor.id === 'custom' ? 'providers/custom.svg' : 'providers/' + (vendor.logo || vendor.id) + '.svg'}" alt="${esc(vendor.name)} Logo">`;
+    const logo = vendor => `<img class="provider-logo" src="./brand/${['mock', 'custom'].includes(vendor.id) ? 'providers/custom.svg' : 'providers/' + (vendor.logo || vendor.id) + '.svg'}" alt="${esc(vendor.name)} Logo">`;
     function syncTenant() {
       if (tenant !== api.tenant()) { tenant = api.tenant(); selected = null; drafts.clear(); modelLists.clear(); }
     }

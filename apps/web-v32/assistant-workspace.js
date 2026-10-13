@@ -30,7 +30,7 @@
       }
       anchor.innerHTML = result; anchor.classList.add('assistant-formatted');
     }
-    function newChat() { if (api.busy()) return; api.setConversation('', []); messages.innerHTML = '<div class="assistant-welcome"><img src="./brand/dongdong-robot.svg" alt="东东"><h2>开始一个营销任务</h2></div>'; $('[data-chat-title]').textContent = '新对话'; panel.classList.remove('has-conversation'); api.focus(); }
+    function newChat() { if (api.busy()) return; api.setConversation('', []); messages.innerHTML = '<div class="assistant-welcome"><h2>开始一个营销任务</h2></div>'; $('[data-chat-title]').textContent = '新对话'; panel.classList.remove('has-conversation'); api.focus(); }
     function renderer(host) { return window.createA2UIRenderer(host, { ...api, task, formatAnswer }); }
     function widgets(items, anchor) {
       for (const item of items || []) {
