@@ -9,7 +9,7 @@
   const blocked = new Set(['__proto__','prototype','constructor']);
   const pointer = path => { if (typeof path !== 'string' || !path.startsWith('/')) throw Error('无效的数据路径'); const keys = path === '/' ? [] : path.slice(1).split('/').map(k => k.replace(/~1/g,'/').replace(/~0/g,'~')); if (keys.some(k => blocked.has(k))) throw Error('不允许的数据路径'); return keys; };
   const read = (model, binding) => binding && typeof binding === 'object' && 'path' in binding ? pointer(binding.path).reduce((v,k) => v?.[k],model) : binding;
-  const node = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; };
+  const node = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text).replace(/中国东方航空|东方航空|东航/g,'M航').replace(/CHINA EASTERN|China Eastern/g,'M Airlines'); return e; };
   const number = value => Number.isFinite(Number(value)) ? Math.max(0,Number(value)) : 0;
   const colors = ['#245b9e','#5494c5','#8dbbd8','#c62340','#d77988','#9daabd'];
   function table(columns, rows) {
@@ -23,11 +23,30 @@
     if(data.unit!=='%' && !data.hideTotal)title.append(node('span','a2ui-chart-total',data.values.reduce((s,v)=>s+number(v),0).toLocaleString('zh-CN') + (data.unit || '条')));
     const controls = node('div','a2ui-chart-controls'), body = node('div','a2ui-chart-body'); header.append(title,controls); box.append(header,body);
     const labels = data.labels.slice(0,40), values = data.values.slice(0,40).map(number), total = values.reduce((s,v)=>s+v,0), max = Math.max(...values,1);
-    const modes = data.hideTotal||data.unit==='%'?[['bar','柱状'],['table','明细']]:[['bar','柱状'],['donut','占比'],['table','明细']]; let mode = 'bar';
+    const modes = data.hideTotal||data.unit==='%'?[['bar','柱状'],['table','明细']]:[['bar','柱状'],['donut','占比'],['table','明细']]; let mode = ['bar','donut','line','radar','funnel','table'].includes(data.view)?data.view:'bar';
+    for(const entry of [['line','趋势'],['radar','雷达'],['funnel','漏斗']]) if(!modes.some(m=>m[0]===entry[0])) modes.push(entry);
     function draw() {
       body.replaceChildren(); controls.querySelectorAll('[data-mode]').forEach(b => { b.classList.toggle('active',b.dataset.mode===mode); b.setAttribute('aria-pressed',String(b.dataset.mode===mode)); });
       if (!labels.length) { body.append(node('p','a2ui-empty','暂无统计记录')); return; }
       if (mode==='table') { body.append(table(['分类','数值（'+(data.unit||'条')+'）'],labels.map((l,i)=>[l,values[i].toLocaleString('zh-CN')]))); return; }
+      if(mode==='line'||mode==='radar') {
+        const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 460 240');svg.classList.add('a2ui-svg-chart');svg.setAttribute('role','img');svg.setAttribute('aria-label',data.title+'：'+labels.map((l,i)=>l+' '+values[i]).join('，'));
+        const shape=(tag,attrs)=>{const e=document.createElementNS(svg.namespaceURI,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));svg.append(e);return e;};
+        if(mode==='radar') {
+          const n=Math.max(labels.length,3),point=(i,r)=>[230+Math.cos(i*2*Math.PI/n-Math.PI/2)*r,120+Math.sin(i*2*Math.PI/n-Math.PI/2)*r];
+          [25,50,75,100].forEach(r=>shape('polygon',{points:Array.from({length:n},(_,i)=>point(i,r).join(',')).join(' '),fill:'none',stroke:'#dce6ef'}));
+          labels.forEach((l,i)=>{const p=point(i,112);shape('text',{x:p[0],y:p[1],'text-anchor':'middle','font-size':11,fill:'#62778d'}).textContent=l;});
+          shape('polygon',{points:values.map((v,i)=>point(i,v/max*88).join(',')).join(' '),fill:'#245b9e33',stroke:'#245b9e','stroke-width':2});
+        } else {
+          [0,1,2,3].forEach(i=>shape('line',{x1:32,y1:25+i*55,x2:440,y2:25+i*55,stroke:'#e7edf4'}));
+          const points=values.map((v,i)=>[42+i*380/Math.max(values.length-1,1),195-v/max*155]);shape('polyline',{points:points.map(p=>p.join(',')).join(' '),fill:'none',stroke:'#245b9e','stroke-width':3});
+          points.forEach((p,i)=>{shape('circle',{cx:p[0],cy:p[1],r:4,fill:'#c62340'});shape('text',{x:p[0],y:222,'text-anchor':'middle','font-size':10,fill:'#62778d'}).textContent=labels[i];});
+        }
+        body.append(svg); return;
+      }
+      if(mode==='funnel') {
+        const funnel=node('div','a2ui-funnel');labels.forEach((l,i)=>{const row=node('div','a2ui-funnel-stage');row.style.width=(35+values[i]/max*65)+'%';row.style.background=colors[i%colors.length];row.append(node('span','',l),node('b','',values[i].toLocaleString('zh-CN')+(data.unit||'')));funnel.append(row);});body.append(funnel);return;
+      }
       if (mode==='donut') {
         let offset=0; const stops=values.map((v,i)=>{ const from=offset; offset+=total?v/total*100:0; return colors[i%colors.length]+' '+from+'% '+offset+'%'; });
         const disk=node('div','a2ui-donut'); disk.style.background=total?'conic-gradient('+stops.join(',')+')':'#e5ecf3'; disk.setAttribute('role','img'); disk.setAttribute('aria-label',labels.map((l,i)=>l+' '+values[i]).join('，')); disk.append(node('span','',total.toLocaleString('zh-CN'))); body.append(disk);
@@ -80,7 +99,7 @@
         if (depth>24 || visited.has(id)) throw Error('界面组件引用异常');
         const c=surface.components.get(id);if(!c)throw Error('界面组件尚未完整'); if (!allowed.has(c.component)) throw Error('不支持的界面组件');visited.add(id);
         let e; const value = binding => read(surface.model,binding);
-        if (c.component==='Text') e=node('div','a2ui-text',value(c.text)||'');
+        if (c.component==='Text') {e=node('div','a2ui-text');const text=value(c.text)||'';if(api.formatAnswer)api.formatAnswer(e,text);else e.textContent=text;}
         if (['Column','Row','Card'].includes(c.component)) {e=node('div','a2ui-'+c.component.toLowerCase());const ids=c.component==='Card'?[c.child]:c.children;if(!Array.isArray(ids))throw Error('不支持的布局绑定');ids.forEach(child=>e.append(component(child,depth+1)));}
         if(c.component==='Divider') e=node('hr');
         if(c.component==='Button'){e=node('button','btn'+(c.variant==='primary'?' primary':''));e.type='button';e.append(component(c.child,depth+1));e.onclick=async()=>{const action=c.action?.event;if(!action||action.name!=='open_page'||!pages.has(action.context?.page))return; e.disabled=true;try{const result=await api.request('/api/assistant/ui-action',{method:'POST',body:JSON.stringify({version:'v0.9.1',action:{name:action.name,surfaceId:surface.id,sourceComponentId:c.id,timestamp:new Date().toISOString(),context:action.context}})});api.navigate(result.page);}catch(error){api.toast(error.message);}finally{e.disabled=false;}};}

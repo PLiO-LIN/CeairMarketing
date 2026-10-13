@@ -45,9 +45,11 @@ def seed_database(session: Session) -> int:
         session.flush()
     headquarters = session.scalar(select(TenantRecord).where(TenantRecord.code == "CEA-HQ"))
     if headquarters is None:
-        headquarters = TenantRecord(code="CEA-HQ", name="东航营销运营中心")
+        headquarters = TenantRecord(code="CEA-HQ", name="M航营销运营中心")
         session.add(headquarters)
         session.flush()
+    if headquarters.name in {"东航营销运营中心", "东方航空营销运营中心"}:
+        headquarters.name = "M航营销运营中心"
     admin = session.scalar(select(UserRecord).where(UserRecord.username == settings.initial_admin_username))
     if admin is None:
         admin = UserRecord(
@@ -278,7 +280,7 @@ def seed_demo_business_data(session: Session, tenant_id: int, user_id: int) -> N
             tenant_id=tenant_id, external_id="CNT-DEMO-SANYA-APP-V3", campaign_id=campaign_id,
             audience_package_id=package.id, product_package_id=product.id, generation_objective="提升早鸟出票转化",
             generation_context_json=json.dumps({"route": "上海—三亚", "audience": "家庭高意向未购", "evidence": ["目的地热度", "搜索行为"]}, ensure_ascii=False),
-            name="东航App家庭出游内容V3", channel="App", version="V3", title="国庆去三亚，提前规划出行",
+            name="M航App家庭出游内容V3", channel="App", version="V3", title="国庆去三亚，提前规划出行",
             body="上海—三亚早鸟方案搭配行李与优选座位。适用航班和权益以最终产品规则为准。", status="待审核", generated_by="manual", created_by=user_id,
         )
         session.add(content)
@@ -306,7 +308,7 @@ def seed_demo_business_data(session: Session, tenant_id: int, user_id: int) -> N
 
 def seed_demo_knowledge(session, tenant_id, campaign, snapshot, product):
     from hashlib import sha256
-    content = "竞赛虚构案例：上海—三亚。聚合客群36420人，搜索未购且已授权触达。产品组合为客票、行李、优选座位。全部数值用于流程验证，不代表东航真实经营结果；没有实时价格、库存或收入证据。"
+    content = "竞赛虚构案例：上海—三亚。聚合客群36420人，搜索未购且已授权触达。产品组合为客票、行李、优选座位。全部数值用于流程验证，不代表M航真实经营结果；没有实时价格、库存或收入证据。"
     document = session.scalar(select(KnowledgeDocumentRecord).where(KnowledgeDocumentRecord.tenant_id == tenant_id, KnowledgeDocumentRecord.external_id == "DOC-DEMO-SANYA"))
     if document is None:
         document = KnowledgeDocumentRecord(tenant_id=tenant_id, external_id="DOC-DEMO-SANYA", title="三亚竞赛案例说明", source_type="competition", source_name="竞赛虚构案例", content=content, content_hash=sha256(content.encode()).hexdigest())
@@ -350,15 +352,22 @@ def seed_competition_workspace(session: Session, user_id: int) -> int:
     seed_demo_business_data(session, tenant.id, user_id)
     from .competition_demo import seed_extended_demo
     seed_extended_demo(session, tenant.id, user_id)
+    from .airline_products import seed_airline_products
+    seed_airline_products(session, tenant.id, user_id)
     return tenant.id
 
 
 def seed_opportunity_insight_sources(session: Session, tenant_id: int) -> None:
+    for source in session.scalars(select(OpportunityInsightSourceRecord).where(OpportunityInsightSourceRecord.tenant_id == tenant_id)):
+        if source.source_url in {"https://www.ceair.com/", "https://www.ceair.com"} and source.name in {"东航官方动态", "东方航空官方动态", "M航官方动态"}:
+            source.name = "公开航空行业动态"
+            source.focus = "公开航空服务分类与营销活动参考，不代表M航官方实时数据"
+    session.commit()
     if session.scalar(select(OpportunityInsightSourceRecord.id).where(OpportunityInsightSourceRecord.tenant_id == tenant_id).limit(1)) is not None:
         return
     defaults = [
         {"name": "中国民航行业动态", "source_type": "web", "source_url": "https://www.caac.gov.cn/XWZX/HYDT/", "focus": "关注航线供需、航班运行、机场与民航政策变化", "schedule": "manual", "max_pages": 5},
-        {"name": "东航官方动态", "source_type": "web", "source_url": "https://www.ceair.com/", "focus": "关注东航航线、会员权益、产品服务和营销活动变化", "schedule": "manual", "max_pages": 3},
+        {"name": "公开航空行业动态", "source_type": "web", "source_url": "https://www.ceair.com/", "focus": "用于演示的公开航空服务分类、会员权益与营销活动参考；不代表M航官方实时数据", "schedule": "manual", "max_pages": 3},
         {"name": "文旅热点观察", "source_type": "web", "source_url": "https://www.gov.cn/lianbo/", "focus": "关注节假日、文旅目的地、消费趋势和区域客流信号", "schedule": "manual", "max_pages": 5},
     ]
     for item in defaults:

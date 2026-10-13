@@ -54,16 +54,23 @@ class ReplySurfaces:
     def add(self, data: dict, kind: str):
         data = json.loads(json.dumps(data, ensure_ascii=False, default=str))
         key = kind + ":" + str(data.get("id") or data.get("metric") or data.get("path") or data.get("page") or len(self.keys))
+        if kind == "bar":
+            key += ":" + data.get("view", "bar")
         if key in self.keys:
             return
         self.keys.add(key)
         sid = self.run_id + "-" + str(len(self.keys))
         components = [{"id": "root", "component": "Column", "children": ["content"]}]
-        if kind == "navigation":
+        if kind == "text":
+            components.append({"id": "content", "component": "Text", "text": {"path": "/content/text"}})
+        elif kind == "navigation":
             components += [{"id": "content", "component": "Button", "child": "label", "action": {"event": {"name": "open_page", "context": {"page": data["page"]}}}}, {"id": "label", "component": "Text", "text": "打开" + data["title"]}]
         else:
             name = {"bar": "Chart", "table": "DataTable", "task": "TaskCard", "scenario": "MarketingStage"}[kind]
             components.append({"id": "content", "component": name, "task" if kind == "task" else "data": {"path": "/content"}})
+        if data.get("caption"):
+            components[0]["children"] = ["caption", "content"]
+            components.append({"id": "caption", "component": "Text", "text": {"path": "/content/caption"}})
         batch = [
             {"version": VERSION, "createSurface": {"surfaceId": sid, "catalogId": CATALOG_ID, "theme": {"primaryColor": "#245B9E", "agentDisplayName": "东东"}}},
             {"version": VERSION, "updateDataModel": {"surfaceId": sid, "path": "/", "value": {"content": data}}},

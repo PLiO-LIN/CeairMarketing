@@ -1,6 +1,6 @@
 ---
 name: product-match
-description: 东航机票、运价、空铁联运、辅营、卡券和会员权益产品匹配。
+description: M航机票、运价、空铁联运、辅营、卡券和会员权益产品匹配。
 ---
 
 # 产品匹配智能域

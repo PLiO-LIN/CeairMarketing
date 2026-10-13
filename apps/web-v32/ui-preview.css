@@ -1,7 +1,7 @@
 /* 预览节点默认隐藏，避免首页和普通入口出现未初始化结构。 */
 .preview-sidebar, .preview-sidebar-toggle, .preview-topbar-actions { display: none; }
 
-/* 东航智慧营销云 · 内页高保真预览
+/* M航智慧营销云 · 内页高保真预览
    仅由 body.preview-ui 作用于首页之外的页面；首页完全沿用原有视觉。 */
 :root {
   --pv-blue-950: #102e52;

@@ -32,7 +32,7 @@ def market_signals() -> dict[str, Any]:
 
 def product_catalog() -> dict[str, Any]:
     return {"source": MOCK_SOURCE, "generated_at": _now(), "products": [
-        {"code": "MOCK-WIFI", "name": "Wi-Fi优享", "category": "机上服务", "eligibility": "东方万里行会员；航班需支持机上互联", "benefits": ["标准全航程空中上网抵用券"], "status": "active"},
+        {"code": "MOCK-WIFI", "name": "Wi-Fi优享", "category": "机上服务", "eligibility": "M航会员会员；航班需支持机上互联", "benefits": ["标准全航程空中上网抵用券"], "status": "active"},
         {"code": "MOCK-MILE", "name": "里程优享", "category": "会员权益", "eligibility": "乘机前完成会员注册", "benefits": ["额外赠送 300-2400 里程积分"], "status": "active"},
         {"code": "MOCK-BAG", "name": "行李优享", "category": "辅营服务", "eligibility": "符合客票和航线适用条件", "benefits": ["额外行李额度"], "status": "active"},
         {"code": "MOCK-LOWCARBON", "name": "低碳优享", "category": "绿色出行", "eligibility": "国内航班；乘机后发放权益", "benefits": ["前排选座、升舱券、里程或SAF电子勋章"], "status": "active"},

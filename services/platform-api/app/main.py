@@ -1389,17 +1389,24 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
         conversation_id = ""
         public_trace = []
         ui_messages = []
+        timeline = []
+        def token_sink(token):
+            if timeline and timeline[-1]["type"] == "text": timeline[-1]["text"] += token
+            else: timeline.append({"type": "text", "text": token})
+            events.put({"type": "token", "text": token})
         def trace_sink(item):
+            if item.get("event") == "harness/model-started": timeline.append({"type": "round"})
             public_trace.append(item)
             events.put({"type": "trace", "item": item})
         def ui_sink(item):
+            timeline.append({"type": "ui", "index": len(ui_messages)})
             ui_messages.append(item)
             events.put({"type": "a2ui", "item": item})
         def failed(message):
             if conversation_id:
                 try:
                     with SessionLocal() as failed_session:
-                        finish_turn(failed_session, context, conversation_id, message, {"trace": public_trace, "a2ui": ui_messages}, failed=True)
+                        finish_turn(failed_session, context, conversation_id, message, {"trace": public_trace, "a2ui": ui_messages, "timeline": timeline}, failed=True)
                 except Exception:
                     logging.getLogger(__name__).exception("Failed to persist chat failure")
             events.put({"type": "error", "message": message})
@@ -1413,10 +1420,12 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
                     context,
                     scoped_payload,
                     event_sink=trace_sink,
-                    token_sink=lambda token: events.put({"type": "token", "text": token}),
+                    token_sink=token_sink,
                     ui_sink=ui_sink,
                 )
-                finish_turn(worker_session, context, conversation_id, result.answer, result.model_dump(mode="json"))
+                details = result.model_dump(mode="json")
+                details["timeline"] = timeline
+                finish_turn(worker_session, context, conversation_id, result.answer, details)
                 events.put({"type": "result", "result": result.model_dump(mode="json")})
         except (ValueError, LLMServiceError) as exc:
             failed(str(exc))
@@ -1959,7 +1968,9 @@ def mock_product_catalog(_context: TenantContext = Depends(get_tenant_context)):
 def product_catalog_view(_context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     """Expose the product-management catalog through the production-facing contract."""
     from .datasets import imported_product_catalog
-    return imported_product_catalog(session, _context.tenant_id) or product_catalog()
+    from .airline_products import catalog_products
+    result = imported_product_catalog(session, _context.tenant_id) or product_catalog()
+    return {**result, "products": [*result["products"], *catalog_products()]}
 
 
 @app.post("/api/integrations/profile/audiences")

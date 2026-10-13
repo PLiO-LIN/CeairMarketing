@@ -80,7 +80,8 @@
     if (typeof layer.__closeProductionModal === 'function') layer.__closeProductionModal();
     else layer.remove();
   });
-  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const brandText = value => String(value ?? '').replace(/中国东方航空|东方航空|东航/g, 'M航').replace(/CHINA EASTERN|China Eastern/g, 'M Airlines');
+  const escapeHtml = value => brandText(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const decodeEscapedText = value => {
     let text = String(value ?? '');
     for (let pass = 0; pass < 2; pass += 1) {
@@ -93,11 +94,11 @@
     return text;
   };
   const displayText = (value, fallback = '') => {
-    const text = decodeEscapedText(value);
+    const text = brandText(decodeEscapedText(value));
     return !text.trim() || /^\?+$/.test(text.trim()) ? fallback : text;
   };
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
-  const channelOptions = [['App', '东航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
+  const channelOptions = [['App', 'M航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
   const domainLabels = { 'opportunity-insight': '机会洞察智能域', 'content-generation': '内容生成智能域', 'audience-insight': '客群洞察智能域', 'product-match': '产品匹配智能域', 'activity-orchestration': '活动编排智能域', 'effect-analysis': '效果分析智能域' };
   // SQLite serializes persisted UTC timestamps without a timezone suffix.
   function businessTime(value, timeOnly = false) {
@@ -368,7 +369,7 @@
         { name: 'campaign_id', label: '关联活动', type: 'select', required: false, options: [{value:'',label:'未关联活动'}, ...(tenantData.campaigns || []).map(campaign => ({value:campaign.id,label:`${campaign.name} · ${campaign.id}`}))] },
         { name: 'audience_package_id', label: '目标客群包', type: 'select', required: false, options: [{value:'',label:'未关联客群包'}, ...(tenantData.audiencePackages || []).map(item => ({value:item.id,label:`${item.name} · ${Number(item.estimated_size||0).toLocaleString('zh-CN')}人`}))] },
         { name: 'product_package_id', label: '活动产品包', type: 'select', required: false, options: [{value:'',label:'未关联产品包'}, ...(tenantData.productPackages || []).map(item => ({value:item.id,label:`${item.name} · ${item.version||'V1'}`}))] },
-        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'东航 App'}, '东航App', '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
+        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'M航 App'}, 'M航App', '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
         { name: 'version', label: '内容版本', type: 'text' },
         { name: 'generation_objective', label: '内容目标', type: 'text', required: false },
         { name: 'status', label: '内容状态', type: 'select', options: ['草稿', '待审核', '停用'], help: '已审核内容变更后需重新审核。' },
@@ -509,9 +510,9 @@
     const layer = document.createElement('div');
     layer.className = 'production-login';
     layer.innerHTML = `<section class="production-login-brand">
-<img src="./brand/ceair-wordmark.svg" alt="中国东方航空">
+<img src="./brand/m-airlines.svg" alt="M航">
 <div>
-<h1>东航智慧营销云</h1>
+<h1>M航智慧营销云</h1>
 <p>面向航空营销全生命周期的运营、智能决策与治理平台</p>
 </div>
 </section>
@@ -706,7 +707,7 @@
     const sources=tenantData.opportunitySources||[], runs=tenantData.opportunityRuns||[];
     const sourceRows=sources.map(item=>`<div class="insight-source-row"><label><input type="checkbox" data-insight-source value="${item.id}" ${item.enabled?'checked':''}><span><b>${escapeHtml(displayText(item.name,'未命名来源'))}</b><small>${escapeHtml(displayText(item.focus,'未配置关注点'))}</small></span></label><em>${escapeHtml(item.schedule||'manual')}</em><button class="btn compact" data-insight-source-edit="${item.id}">编辑</button><button class="btn compact danger" data-insight-source-delete="${item.id}">删除</button></div>`).join('');
     const runRows=runs.map(item=>`<tr><td><strong>${escapeHtml(item.id)}</strong><small>${escapeHtml(displayText(item.prompt,'未填写洞察要求'))}</small></td><td>${escapeHtml(item.current_stage)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td>${item.step_count||0}</td><td><button class="btn compact" data-insight-run-view="${item.id}">查看进度</button></td></tr>`).join('');
-    panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕东航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
+    panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕M航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
     if(window.lucide)lucide.createIcons();
   }
   function renderKnowledgeDocuments(){
@@ -1100,9 +1101,31 @@
     body.innerHTML=metric('渠道送达率',delivery,'green')+metric('渠道任务回执覆盖率',state.channelTasks.length?withReceipts/state.channelTasks.length*100:null,'')+metric('审批处理率',approval,'amber');
   }
 
+
+  function renderMiddleScreen(state) {
+    const overview=q('#overview');if(!overview)return;
+    let grid=q('.overview-middle-screen',overview);
+    if(!grid){grid=document.createElement('div');grid.className='overview-middle-screen';q('.kpis',overview).after(grid);}
+    const d=tenantData.demo||{}, profile=d.profile||{}, synthetic=d.enabled;
+    const sum=key=>state.channelTasks.reduce((n,t)=>n+Number(t[key]||0),0);
+    const stages=[['目标触达',sum('target_count')],['实际送达',sum('delivered_count')],['渠道点击',sum('clicked_count')],['订单转化',sum('converted_count')]],max=Math.max(...stages.map(x=>x[1]),1);
+    const funnel=stages.map(([l,v],i)=>`<div style="width:${35+v/max*65}%;background:${['#245b9e','#417ab4','#6d9ec8','#c62340'][i]}"><span>${l}</span><b>${v.toLocaleString()}</b></div>`).join('');
+    const measures=[['客群准备',state.audiencePackages.filter(x=>x.status==='可用').length/Math.max(state.audiencePackages.length,1)],['产品审批',state.productPackages.filter(x=>/已审批|可用/.test(x.status)).length/Math.max(state.productPackages.length,1)],['审批处理',state.approvals.filter(x=>!approvalIsPending(x)).length/Math.max(state.approvals.length,1)],['送达比例',sum('delivered_count')/Math.max(sum('target_count'),1)],['回执覆盖',state.channelTasks.filter(x=>x.last_feedback_at).length/Math.max(state.channelTasks.length,1)]];
+    const pt=(i,r)=>[180+Math.cos(i*2*Math.PI/5-Math.PI/2)*r,115+Math.sin(i*2*Math.PI/5-Math.PI/2)*r];
+    const radar=`<svg viewBox="0 0 360 230" role="img" aria-label="业务准备与执行指标雷达图">${[25,50,75].map(r=>`<polygon points="${measures.map((_,i)=>pt(i,r).join(',')).join(' ')}" fill="none" stroke="#dce6ef"/>`).join('')}<polygon points="${measures.map((x,i)=>pt(i,Math.min(1,x[1])*75).join(',')).join(' ')}" fill="#245b9e30" stroke="#245b9e" stroke-width="2"/>${measures.map((x,i)=>{const [a,b]=pt(i,95);return `<text x="${a}" y="${b}" text-anchor="middle" fill="#62778d" font-size="11">${x[0]} ${(x[1]*100).toFixed(0)}%</text>`;}).join('')}</svg>`;
+    const regions=profile.regions||[];
+    const segments=regions.length?regions:state.audiencePackages.slice(0,5).map(x=>({label:x.name,value:x.estimated_size}));const segmentMax=Math.max(...segments.map(x=>x.value),1);
+    const bars=segments.map(x=>`<div class="dashboard-segment-line"><span title="${escapeHtml(x.label)}">${escapeHtml(x.label)}</span><i><em style="width:${x.value/segmentMax*100}%"></em></i><b>${Number(x.value).toLocaleString()}</b></div>`).join('');
+    const note=synthetic?'模拟经营记录 · 工作区历史回放':'当前工作区业务记录';
+    grid.innerHTML=`<section class="panel"><div class="panel-head"><h2>经营准备度</h2><i data-lucide="radar"></i></div><div class="panel-body">${radar}<small class="dashboard-chart-note">各项准备率独立计算，非综合预测分</small></div></section><section class="panel"><div class="panel-head"><h2>营销转化漏斗</h2><i data-lucide="filter"></i></div><div class="panel-body"><div class="dashboard-funnel">${funnel}</div><small class="dashboard-chart-note">${note} · 次数口径，未去重</small></div></section><section class="panel"><div class="panel-head"><h2>${regions.length?'客群地域画像':'客群规模'}</h2><i data-lucide="users-round"></i></div><div class="panel-body"><div class="dashboard-segments">${bars||'暂无画像数据'}</div>${(profile.preferences||[]).map(p=>`<span class="tag blue">${escapeHtml(p.label)} ${p.value}%</span>`).join('')}<small class="dashboard-chart-note">${regions.length?'模拟三亚目标客群；偏好可重叠':'客群包可重叠，不作为去重旅客数'}</small></div></section>`;
+    let recent=q('.dashboard-recent',overview);if(!recent){recent=document.createElement('section');recent.className='panel dashboard-recent';overview.append(recent);}
+    const records=[...state.channelTasks].sort((a,b)=>String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at))).slice(0,6);
+    recent.innerHTML=`<div class="panel-head"><h2>近期运营记录</h2><span>${note}</span></div><div class="panel-body"><table class="table"><thead><tr><th>活动</th><th>渠道</th><th>状态</th><th>送达</th><th>点击</th><th>转化</th><th>更新时间</th></tr></thead><tbody>${records.map(t=>`<tr><td>${escapeHtml(state.campaigns.find(c=>c.id===t.campaign_id)?.name||t.campaign_id)}</td><td>${escapeHtml(t.channel)}</td><td><span class="status ${statusClass(t.status)}">${escapeHtml(t.status)}</span></td><td>${Number(t.delivered_count||0).toLocaleString()}</td><td>${Number(t.clicked_count||0).toLocaleString()}</td><td>${Number(t.converted_count||0).toLocaleString()}</td><td>${businessTime(t.updated_at||t.created_at)}</td></tr>`).join('')||'<tr><td colspan="7">暂无运营记录</td></tr>'}</tbody></table></div>`;
+  }
+
   function renderDashboard() {
     const state=dashboardState();
-    renderDashboardKpis(state);renderDashboardActivity(state);renderDashboardTodos(state);renderDashboardCharts(state);renderDashboardHealth(state);
+    renderDashboardKpis(state);renderDashboardActivity(state);renderDashboardTodos(state);renderDashboardCharts(state);renderDashboardHealth(state);renderMiddleScreen(state);
   }
 
   function renderProducts(){
@@ -2001,7 +2024,7 @@ function mountMarketingAssistantV2(){
     if(q('#marketingAssistant')) q('#marketingAssistant').remove();
     const root=document.createElement('div');
     root.id='marketingAssistant';
-    root.innerHTML=`<button class="assistant-fab" title="打开东东" aria-label="打开东东"><img class="assistant-fab-mark" src="./brand/dongdong-robot.svg" alt=""><span>东东</span></button>
+    root.innerHTML=`<button class="assistant-fab" title="打开智能空间" aria-label="打开智能空间"><img class="assistant-fab-mark" src="./brand/dongdong-robot.svg" alt=""><span>东东</span></button>
       <section class="assistant-panel" hidden aria-label="东东对话框">
         <header class="assistant-drag-handle">
           <div class="assistant-title"><div><b>东东</b><button class="assistant-history-button" type="button" data-assistant-history>历史</button></div></div>
@@ -2051,7 +2074,8 @@ function mountMarketingAssistantV2(){
       if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div class="assistant-user-body"><div class="assistant-answer">'+escapeHtml(message)+'</div></div></div>');
       const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><div class="assistant-answer is-streaming" aria-live="polite"></div><div class="assistant-ui-output"></div></div>';if(!retryWrap)messages.appendChild(wrap);
       const answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap),process=window.createAssistantProcess(q('.assistant-live-body',wrap)),ui=workspace.renderer(q('.assistant-ui-output',wrap));messages.scrollTop=messages.scrollHeight;
-      const acceptUI=message=>{try{ui.accept(message);}catch{if(!q('.assistant-ui-error',wrap)){const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';q('.assistant-ui-output',wrap).append(error);}}};
+      const transcript=window.createAssistantTranscript(q('.assistant-ui-output',wrap),ui,workspace.formatAnswer);
+      const acceptUI=message=>{try{transcript.ui(message);}catch{if(!q('.assistant-ui-error',wrap)){const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';q('.assistant-ui-output',wrap).append(error);}}};
       let finalAnswer='';
       try{
         const result=await window.CeairAgentStream.chat(`${mount}/api/agent-chat/stream`,{
@@ -2059,16 +2083,16 @@ function mountMarketingAssistantV2(){
           headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`,'X-Tenant-ID':String(requestTenantId||'')},
           payload:{message,conversation_id:conversationId,domain_id:'marketing-copilot',history:conversation.slice(-12)},
           onEvent:(event,value)=>{
-            if(event==='trace'){process.add(value);if(value.event==='harness/model-started'){finalAnswer='';answer.textContent='';}const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
+            if(event==='trace'){process.add(value);if(value.event==='harness/model-started'){finalAnswer='';transcript.round();}const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
             if(event==='a2ui')acceptUI(value);
             if(event==='conversation'&&value.conversation_id){conversationId=value.conversation_id;}
-            if(event==='token'){finalAnswer+=value.text||'';answer.textContent=finalAnswer;messages.scrollTop=messages.scrollHeight;}
+            if(event==='token'){finalAnswer+=value.text||'';transcript.token(value.text||'');messages.scrollTop=messages.scrollHeight;}
           }
         });
         finalAnswer=result.answer||finalAnswer;
         if(!finalAnswer)throw new Error('后台未返回答复，请重试。');
         answer.textContent=finalAnswer;conversationId=result.conversation_id||conversationId;
-        workspace.formatAnswer(answer,finalAnswer);
+        answer.textContent='';transcript.finish(finalAnswer);
         conversation.push({role:'user',content:message},{role:'assistant',content:finalAnswer});
         process.finish();setLive('就绪');
         if(result.a2ui?.length){try{ui.restore(result.a2ui);}catch{if(!q('.assistant-ui-error',wrap))q('.assistant-ui-output',wrap).insertAdjacentHTML('beforeend','<div class="assistant-ui-error" role="alert">结果界面暂时无法显示，请查看文字答复。</div>');}}
@@ -2094,7 +2118,7 @@ function mountMarketingAssistantV2(){
       finally{streaming?.remove();answer.classList.remove('is-streaming');form.dataset.busy='';input.disabled=false;submitButton.disabled=false;stopButton.hidden=true;currentRequest=null;if(!panel.hidden)input.focus();messages.scrollTop=messages.scrollHeight;}
     };
     workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),ask:message=>send(message),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
-    fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}panel.hidden=!panel.hidden;if(!panel.hidden){restoreLayout();setCollapsed(false);input.focus();}});
+    fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}window.activate?.('smartspace');input.focus();});
     q('[data-assistant-history]',root).addEventListener('click',()=>workspace.show());
     q('[data-assistant-close]',root).addEventListener('click',()=>{panel.hidden=true;saveLayout();});
     collapseButton.addEventListener('click',()=>setCollapsed(!panel.classList.contains('is-collapsed')));

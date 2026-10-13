@@ -1,4 +1,4 @@
-"""Adapter for the China Eastern flight and product search snapshot."""
+"""Adapter for the M Airlines flight and product search snapshot."""
 from __future__ import annotations
 
 import hashlib
@@ -49,7 +49,7 @@ def _relation(relations: list[dict[str, Any]], source: str, relation_type: str, 
     })
 
 
-def normalize_flight_product_payload(payload: dict[str, Any], source_name: str = "东航航班及产品数据") -> dict[str, Any]:
+def normalize_flight_product_payload(payload: dict[str, Any], source_name: str = "M航航班及产品数据") -> dict[str, Any]:
     """Convert the scraper's nested response into ontology candidates.
 
     Supports both the saved response shape ({data: {...}}) and a bare data object.

@@ -219,7 +219,7 @@ class DataProcessingAgent:
             try:
                 self.harness.set_usage_recorder(lambda result: self.session.add(ModelUsageRecord(tenant_id=self.tenant.tenant_id, provider_id=provider.id, run_id=self.job.id, agent_id="data-processing", request_type="data-pipeline", model_name=result.model_name or provider.model_name, prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, total_tokens=result.total_tokens)))
                 system_prompt = (
-                    "你是东航营销数据处理智能体。先判断内容是否适合更新本体，再抽取对象与关系。只输出合法JSON。"
+                    "你是M航营销数据处理智能体。先判断内容是否适合更新本体，再抽取对象与关系。只输出合法JSON。"
                     "所有内容都可以进入知识中心，只有能映射到稳定航空营销对象、关系明确且来源和时间可追溯的内容才允许更新本体。"
                     "泛化宣传文案、无明确对象的制度说明、无法确认来源或时间的推测、重复内容或无法映射的内容，必须返回ontology_decision.eligible=false、decision=knowledge_only，并将entities和relations设为空数组。"
                     "适合入本体时返回ontology_decision：eligible、decision、reason、matched_entity_types、confidence、needs_human_confirmation；本体更新必须人工二次确认。"

@@ -1,7 +1,7 @@
 /* 内页样式层 —— 除 #dongdong 外的 14 个视图。
    版式骨架取后台运营系统（页头 / 生命周期导轨 / KPI 条 / 双栏面板 / 数据表），
    视觉皮肤走暖纸编辑式：暖灰中性阶 + 米色纸面 + 衬线标题 + 拉开字距的眉标，
-   品牌蓝是画面里唯一的蓝，红→橙渐变只给主操作（沿用东航自己的手法）。
+   品牌蓝是画面里唯一的蓝，红→橙渐变只给主操作（沿用M航自己的手法）。
    评审是年长读者，所以正文 14px 起、行高 40px、次级文字一律 >=4.5:1。
    本文件只准出现 --wb-* / .v-* 新名字：既有 :root 块互相覆盖正是因为复用了同名变量。 */
 
@@ -129,7 +129,7 @@
   --wb-shadow-card: 0 1px 2px rgba(31, 28, 25, .04), 0 4px 12px rgba(31, 28, 25, .05);
   --wb-shadow-pop:  0 2px 6px rgba(24, 21, 18, .10), 0 14px 34px rgba(24, 21, 18, .16);
 
-  /* 主操作继承东航自己的手法：页面上唯一的饱和暖色就是红→橙渐变药丸。
+  /* 主操作继承M航自己的手法：页面上唯一的饱和暖色就是红→橙渐变药丸。
      内页主按钮用它，比用蓝更贴牌，也正好是想要的暖调 */
   --wb-cta:       linear-gradient(96deg, #cb1e36, #e2603a);
   --wb-cta-solid: #cb1e36;
@@ -482,7 +482,7 @@ body:not(.dongdong-mode) .main { background: var(--wb-canvas); }
 :is(.view:not(.dongdong-view),.production-modal,.modal-layer,.drawer-layer) .btn:focus-visible,
 :is(.view:not(.dongdong-view),.production-modal,.modal-layer,.drawer-layer) .icon-btn:focus-visible { outline: 0; box-shadow: var(--wb-focus); }
 
-/* 主操作用东航自己的红→橙渐变药丸：页面上唯一的饱和暖色，比蓝更贴牌 */
+/* 主操作用M航自己的红→橙渐变药丸：页面上唯一的饱和暖色，比蓝更贴牌 */
 :is(.view:not(.dongdong-view),.production-modal,.modal-layer,.drawer-layer) .btn.primary {
   background: var(--wb-cta);
   border-color: var(--wb-cta-solid);

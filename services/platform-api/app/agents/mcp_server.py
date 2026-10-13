@@ -48,7 +48,7 @@ def add_source(payload: dict[str, Any], source_type: str, source_id: str, title:
 
 server = FastMCP(
     name="ceair-marketing-" + (PROFILE or "agent"),
-    instructions="东航智能营销平台只读业务查询 MCP。返回租户范围内的知识、本体、活动和处理任务事实。",
+    instructions="M航智能营销平台只读业务查询 MCP。返回租户范围内的知识、本体、活动和处理任务事实。",
 )
 
 
@@ -108,10 +108,19 @@ def list_available_products(query: str = "", limit: int = 12) -> dict[str, Any]:
         f"SELECT external_id, entity_type, label, confidence FROM ontology_entities WHERE tenant_id = ? AND entity_type IN ({marks}) ORDER BY updated_at DESC LIMIT 100",
         (TENANT_ID, *types),
     )
+    # The seeded reference catalog is available even when a tenant has no
+    # approved ProductPackageRecord yet. Keep the result explicit about its
+    # synthetic/reference status so the assistant never implies live stock.
+    if not rows:
+        try:
+            from app.airline_products import catalog_products
+            rows = [{"external_id": item["code"], "entity_type": "Product", "label": item["name"], "confidence": 0.72, "synthetic": True, "source": item["source"]} for item in catalog_products()]
+        except Exception:
+            rows = []
     matched = [row for row in rows if not terms or any(term in (row.get("label") or "").lower() for term in terms)][: max(1, min(limit, 30))]
     result = envelope([], key="items")
     for row in matched:
-        item = {"id": row["external_id"], "type": row["entity_type"], "label": row["label"], "confidence": row["confidence"]}
+        item = {"id": row["external_id"], "type": row["entity_type"], "label": row["label"], "confidence": row["confidence"], "data_mode": "演示参考目录" if row.get("synthetic") else "本体目录"}
         result["items"].append(item)
         add_source(result, "product", row["external_id"], row["label"], row["entity_type"])
     return result
@@ -169,7 +178,7 @@ def get_ontology_schema(query: str = "") -> dict[str, Any]:
         "object_types": objects[:50],
         "relation_types": model["relation_types"][:100],
         "principles": model["principles"],
-        "sources": [{"type": "semantic-model", "id": model["version"], "title": "东航营销本体语义模型", "excerpt": "注册对象、关系和建模原则"}],
+        "sources": [{"type": "semantic-model", "id": model["version"], "title": "M航营销本体语义模型", "excerpt": "注册对象、关系和建模原则"}],
     }
 
 
@@ -181,7 +190,7 @@ def main() -> None:
     PROFILE = args.profile
     server = FastMCP(
         name="ceair-marketing-" + PROFILE,
-        instructions="东航智能营销平台只读业务查询 MCP。当前租户=" + str(TENANT_ID),
+        instructions="M航智能营销平台只读业务查询 MCP。当前租户=" + str(TENANT_ID),
     )
     # Decorators register on the module-level server at import time. The
     # runtime server is rebuilt above, so re-register the functions.

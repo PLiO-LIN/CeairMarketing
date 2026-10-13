@@ -18,7 +18,7 @@ from .harness import HarnessContext, UnifiedHarness
 from .agentscope_runtime import AgentScopeRuntime
 from .runtime import AgentRuntime
 from ..assistant_tools import build_tools
-from ..assistant_store import list_memories, refresh_task
+from ..assistant_store import list_memories, refresh_task, compact_conversation
 from ..a2ui import ReplySurfaces
 from ..agent_process import public_value
 
@@ -87,6 +87,7 @@ class MarketingCopilot:
         else:
             api_key = ""
         config = LLMConfig(provider.provider_type, provider.base_url, provider.model_name, api_key, provider.timeout_seconds, provider.temperature, provider.max_tokens)
+        conversation_summary = compact_conversation(session, context, request.conversation_id, config, emit)
         tools: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
             "search_marketing_knowledge": lambda args: self._search_knowledge(session, context.tenant_id, str(args.get("query") or request.message), sources),
             "query_marketing_ontology": lambda args: self._query_ontology(session, context.tenant_id, str(args.get("query") or request.message), sources),
@@ -110,9 +111,9 @@ class MarketingCopilot:
                 total_tokens=result.total_tokens,
             )),
         )
-        history = [{"role": item.role if hasattr(item, "role") else item.get("role", "user"), "content": item.content if hasattr(item, "content") else item.get("content", "")} for item in request.history[-12:]]
+        history = [{"role": item.role if hasattr(item, "role") else item.get("role", "user"), "content": item.content if hasattr(item, "content") else item.get("content", "")} for item in request.history]
         system_prompt = (
-            "你是东方航空智能营销平台的营销协同智能体。问候和平台功能介绍可以直接简短回答；回答业务问题必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务。"
+            "你是M航智能营销平台的营销协同智能体。问候和平台功能介绍可以直接简短回答；回答业务问题必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务。"
             "当前可调用六大智能域：opportunity-insight、audience-insight、product-match、activity-orchestration、content-generation、effect-analysis。"
             "调用智能域必须提供活动 ID，活动编排和内容生成结果必须保留人工审核。不得杜撰旅客个人信息、库存、价格、权益和活动结果。"
             "你可以查询平台所有授权业务接口。先用platform_api_catalog查接口及字段，再用query_platform查询。"
@@ -125,7 +126,7 @@ class MarketingCopilot:
             "遇到文件上传、密码和模型密钥配置时，用open_platform_page展示对应工作台入口，凭据不得进入对话或任务参数。"
             "默认答复简洁，先结论再最多三条说明。已有图表或任务卡片时不要重复输出同一份表格或接口术语。问候仅一两句话。"
             "答复不要展示API路径、内部任务ID和实现术语。任务参数、状态及操作交给任务卡片展示。"
-            "复杂任务在调用工具前可用一句话说明公开行动计划；每轮的解释是给用户看的动作说明，不输出内部推理。图表和任务卡由工具自动生成A2UI界面。"
+            "复杂任务在调用工具前可用一句话说明公开行动计划；每轮的解释是给用户看的动作说明，不输出内部推理。使用present_insight将文字阶段直接发布到对话流；query_statistics的view可选bar/donut/line/radar/funnel/table，由你按问题选择，caption承载同一阶段解释。query_platform的show_ui决定是否展示明细。根据用户目标组合文字、图表和任务，避免在结尾重复卡片。需要旧对话原文时使用recall_conversation，摘要不作为实时事实。"
         )
         current_tasks = session.scalars(select(AssistantTaskRecord).where(
             AssistantTaskRecord.tenant_id == context.tenant_id,
@@ -145,7 +146,7 @@ class MarketingCopilot:
                     content = m.get("updateDataModel", {}).get("value", {}).get("content", {})
                     if content.get("id") == "holiday-scope": previous = content.get("params")
         continuation = previous and re.search(r"预算|改成|改为|换成|换为|客群|航线|渠道|本体|排除|方案|保存|草稿", request.message)
-        if holiday_intent(request.message) or continuation:
+        if provider.provider_type == "mock" and (holiday_intent(request.message) or continuation):
             emit("agent/plan", {"summary": "查询节假日需求、触达资格与本体关系，生成候选方案和评估视图"})
             def publish_stage(card, kind):
                 widgets.append(card); surfaces.add(card, kind)
@@ -156,7 +157,7 @@ class MarketingCopilot:
                 task = prepare_draft_task(session, context, request.conversation_id, holiday_report["params"])
                 tasks.append(task); surfaces.add(task, "task")
                 system_prompt += "已经按用户要求创建保存活动草稿的任务，任务状态" + task["status"] + "；只有点击确认才会保存，不能声称已经执行。"
-        prompt = {"question": request.message, "history": history, "memories": [m.content for m in list_memories(session, context)], "current_tasks": [{"id": t.id, "title": t.title, "status": t.status} for t in current_tasks]}
+        prompt = {"question": request.message, "history": history, "conversation_summary": conversation_summary, "memories": [m.content for m in list_memories(session, context)], "current_tasks": [{"id": t.id, "title": t.title, "status": t.status} for t in current_tasks]}
         if holiday_report:
             prompt["holiday_observation"] = {k:v for k,v in holiday_report.items() if k != "cards"}
             system_prompt += "本轮已经完成后台节假日分析并发布交互界面。只输出一段不超过120字的结论，包含计划人数、方案状态和最重要的待核验条件；不要复述卡片表格、数据清单、路径或再次提供服务。无需重复查询。qualified_products包含待核验项，是候选数不是可售产品数。当前为历史模拟回放，不声称可立即投放。"
@@ -168,7 +169,7 @@ class MarketingCopilot:
             config=config,
             system_prompt=system_prompt,
             user_prompt=user_prompt,
-            token_sink=token_sink,
+            token_sink=token_sink if provider.provider_type != "mock" else None,
             python_tools=build_tools(session, context, request.conversation_id, widgets, tasks, emit, surfaces.add),
             use_mcp=True,
         )
@@ -177,6 +178,8 @@ class MarketingCopilot:
         elif provider.provider_type == "mock":
             observations = self._mock_observations(harness, tools, request.message)
             answer = self._mock_answer(request.message, observations)
+        if provider.provider_type == "mock" and token_sink:
+            token_sink(answer)
         session.commit()
         return AgentChatResponse(
             conversation_id=request.conversation_id or f"CONV-{uuid4().hex[:10].upper()}",
@@ -199,9 +202,9 @@ class MarketingCopilot:
         token_sink: Callable[[str], None] | None = None,
     ) -> str:
         observations: list[dict[str, Any]] = []
-        history = [{"role": item.role, "content": item.content} for item in request.history[-12:]]
+        history = [{"role": item.role, "content": item.content} for item in request.history]
         system_prompt = (
-            "你是东方航空智能营销平台的营销协同智能体。你必须先基于工具读取租户内真实知识、本体或活动数据，再回答业务问题。"
+            "你是M航智能营销平台的营销协同智能体。你必须先基于工具读取租户内真实知识、本体或活动数据，再回答业务问题。"
             "可用工具为 search_marketing_knowledge、query_marketing_ontology、inspect_campaign、list_available_products、inspect_data_pipeline、run_marketing_domain。"
             "run_marketing_domain可调用六大智能域，domain_id只能是opportunity-insight、audience-insight、product-match、activity-orchestration、content-generation、effect-analysis，且必须提供campaign_id。"
             "每一步只输出JSON：需要工具时输出{\"action\":工具名,\"arguments\":{...},\"reason\":原因}；"
@@ -229,7 +232,7 @@ class MarketingCopilot:
             result = harness.run_tool(action, lambda action=action, arguments=arguments: tools[action](arguments))
             observations.append({"tool": action, "reason": decision.get("reason", ""), "result": result})
         synthesis_prompt = json.dumps({"question": request.message, "history": history, "tool_observations": observations}, ensure_ascii=False)
-        final_system_prompt = "你是东航营销业务助手。仅根据工具观测回答，给出可执行结论、引用的数据依据、风险和需要人工确认的事项，不得编造。"
+        final_system_prompt = "你是M航营销业务助手。仅根据工具观测回答，给出可执行结论、引用的数据依据、风险和需要人工确认的事项，不得编造。"
         if token_sink:
             return harness.generate_text_stream(config, final_system_prompt, synthesis_prompt, token_sink)
         return harness.generate_text(config, final_system_prompt, synthesis_prompt)
