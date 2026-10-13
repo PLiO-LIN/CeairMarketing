@@ -1677,42 +1677,81 @@
   }
   async function renderOntologySchemaGraphV2(){
     const host=q('#ontologySchema'); if(!host)return;
-    let model; try{model=await request('/api/ontology/semantic-model');}catch{model={object_types:[],relation_types:[]};}
     if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
-    const types=model.object_types||[], relations=model.relation_types||[];
-    if(!types.length){host.innerHTML='<div class="ontology-map-empty"><i data-lucide="network"></i><b>暂无本体结构</b><span>完成数据处理或配置语义模型后，这里会展示业务对象与关系。</span></div>';if(window.lucide)lucide.createIcons();return;}
-    const moduleLabels={data:'数据来源',aviation:'航空业务',customer:'客户与客群',product:'产品与权益',strategy:'策略规划',marketing:'营销活动',governance:'治理审批',execution:'执行触达',measurement:'效果度量',agent:'智能体',knowledge:'知识底座',semantic:'语义配置'};
-    const colors={data:'#5b8db8',aviation:'#3d91b7',customer:'#43a584',product:'#c59435',strategy:'#806dc0',marketing:'#438bc5',governance:'#bd7853',execution:'#4d9e9c',measurement:'#687fac',agent:'#b15e9b',knowledge:'#6c9078',semantic:'#7e8795'};
-    const modules=[...new Set(types.map(item=>item.module||'semantic'))];
-    const typeMap=new Map(types.map(item=>[item.id,item]));
-    const links=[];relations.forEach(rel=>(rel.from_types||[]).forEach(from=>(rel.to_types||[]).forEach(to=>{if(typeMap.has(from)&&typeMap.has(to))links.push({source:from,target:to,label:rel.name||rel.id});})));
-    host.innerHTML='<div class="ontology-map-summary"><div><b>本体语义拓扑</b><span></span></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象类、业务域或属性"></label><select data-ontology-module><option value="all">全部业务域</option>'+modules.map(item=>'<option value="'+escapeHtml(item)+'">'+escapeHtml(moduleLabels[item]||item)+'</option>').join('')+'</select><button type="button" class="btn" data-ontology-reset><i data-lucide="scan-search"></i>重置视图</button><span class="ontology-map-hint">拖动节点 · 滚轮缩放 · 点击聚焦</span></div><div class="ontology-map-legend">'+modules.map(item=>'<span><i style="background:'+colors[item]+'"></i>'+escapeHtml(moduleLabels[item]||item)+'</span>').join('')+'</div><div class="ontology-map-viewport"><svg class="ontology-map-canvas" viewBox="0 0 1240 690" role="img" aria-label="本体语义拓扑图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9bb6c6"></path></marker></defs><g class="ontology-map-root"><g class="ontology-map-edges"></g><g class="ontology-map-edge-labels"></g><g class="ontology-map-nodes"></g></g></svg></div>';
+    let model;
+    try{model=await request('/api/ontology/semantic-model');}
+    catch(error){host.innerHTML='<div class="ontology-map-empty"><b>本体结构加载失败</b><span>'+escapeHtml(error.message||'请重新进入知识中心')+'</span></div>';return;}
+    const types=model.object_types||[],relations=model.relation_types||[];
+    if(!types.length){host.innerHTML='<div class="ontology-map-empty"><b>暂无本体结构</b></div>';return;}
+    const labels={data:'数据来源',aviation:'航空供给',customer:'客户与客群',product:'产品与权益',strategy:'策略规划',marketing:'营销活动',governance:'治理审批',execution:'执行触达',measurement:'效果度量',agent:'智能体',knowledge:'知识底座',semantic:'语义配置'};
+    const colors={data:'#517391',aviation:'#517391',customer:'#398374',product:'#a97b37',strategy:'#665b91',marketing:'#285a9a',governance:'#665b91',execution:'#285a9a',measurement:'#398374',agent:'#665b91',knowledge:'#517391',semantic:'#517391'};
+    const typeMap=new Map(types.map(t=>[t.id,t]));
+    const links=[];
+    relations.forEach(r=>(r.from_types||[]).forEach(source=>(r.to_types||[]).forEach(target=>{if(source!==target&&typeMap.has(source)&&typeMap.has(target))links.push({source,target,label:r.name||r.id,id:r.id});})));
+    const core=['Opportunity','AudienceSnapshot','ProductPackage','Campaign','ExecutionBatch','Feedback'];
+    const supporting=['Route','Product','CampaignVersion','ApprovalTask','Evidence','BusinessRule'];
+    const mainRelations=new Set(['targets_audience','uses_product_package','executes','produces_feedback','has_campaign_version','requires_approval','contains_product','concerns_route']);
+    const modules=[...new Set(types.map(t=>t.module||'semantic'))];
+    host.innerHTML='<div class="ontology-map-summary"><div><b>营销业务本体</b></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象、业务域或属性"></label><select data-ontology-module aria-label="筛选本体业务域"><option value="all">营销主线</option>'+modules.map(m=>'<option value="'+escapeHtml(m)+'">'+escapeHtml(labels[m]||m)+'</option>').join('')+'</select><button class="btn" data-ontology-reset>返回主线</button><button class="btn" data-ontology-catalog>对象目录</button><button class="btn" data-ontology-detail>对象详情</button><span class="ontology-map-hint">点击对象展开关联</span></div><div class="ontology-map-viewport ontology-map-clean"><svg class="ontology-map-canvas" viewBox="0 0 1240 560" role="img" aria-label="营销业务本体关系图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8aa3ba"></path></marker></defs><g class="ontology-map-root"></g></svg></div><div class="ontology-map-caption" aria-live="polite"></div>';
     if(window.lucide)lucide.createIcons();
-    const width=1240,height=690,svg=d3.select('.ontology-map-canvas',host),root=svg.select('.ontology-map-root'),edgeLayer=root.select('.ontology-map-edges'),labelLayer=root.select('.ontology-map-edge-labels'),nodeLayer=root.select('.ontology-map-nodes');
-    const nodes=types.map(item=>({...item,title:item.name||item.id,module:item.module||'semantic',attributes:item.attributes||[]}));
-    const nodeById=new Map(nodes.map(item=>[item.id,item]));
-    const simLinks=links.map(item=>({...item,source:nodeById.get(item.source),target:nodeById.get(item.target)}));
-    const edge=edgeLayer.selectAll('path').data(simLinks).join('path').attr('class','ontology-map-edge').attr('marker-end','url(#ontology-map-arrow)');
-    const edgeLabel=labelLayer.selectAll('text').data(simLinks).join('text').attr('class','ontology-map-edge-label').text(item=>item.label);
-    const node=nodeLayer.selectAll('g').data(nodes,d=>d.id).join('g').attr('class','ontology-map-node').attr('data-schema-type',d=>d.id).attr('tabindex',0);
-    node.append('rect').attr('class','ontology-map-card').attr('width',186).attr('height',92).attr('rx',10).attr('stroke',d=>colors[d.module]||colors.semantic);
-    node.append('rect').attr('class','ontology-map-card-top').attr('width',186).attr('height',7).attr('rx',6).attr('fill',d=>colors[d.module]||colors.semantic);
-    node.append('text').attr('class','ontology-map-module').attr('x',12).attr('y',27).text(d=>moduleLabels[d.module]||d.module);
-    node.append('text').attr('class','ontology-map-title').attr('x',12).attr('y',49).text(d=>String(d.title).slice(0,13));
-    node.append('text').attr('class','ontology-map-id').attr('x',12).attr('y',66).text(d=>d.id);
-    node.append('text').attr('class','ontology-map-attrs').attr('x',12).attr('y',83).text(d=>(d.attributes||[]).slice(0,3).join(' · ')||'核心属性待补充');
-    const zoom=d3.zoom().scaleExtent([.45,2.2]).on('zoom',event=>root.attr('transform',event.transform));svg.call(zoom);
-    const updateEdges=()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);edgeLabel.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);};
-    const connected=new Map(nodes.map(item=>[item.id,new Set()]));links.forEach(item=>{connected.get(item.source)?.add(item.target);connected.get(item.target)?.add(item.source);});
-    const showDetail=item=>{const out=relations.filter(rel=>(rel.from_types||[]).includes(item.id)),input=relations.filter(rel=>(rel.to_types||[]).includes(item.id)),detail=q('#entityDetail');if(!detail)return;detail.innerHTML='<div class="entity-title"><b>'+escapeHtml(item.title)+'</b><span>本体类 · '+escapeHtml(item.id)+'</span></div><dl><dt>业务域</dt><dd>'+escapeHtml(moduleLabels[item.module]||item.module)+'</dd><dt>业务定义</dt><dd>'+escapeHtml(item.description||'暂无业务定义')+'</dd><dt>核心属性</dt><dd>'+((item.attributes||[]).map(value=>'<code>'+escapeHtml(value)+'</code>').join(' ')||'暂无属性定义')+'</dd></dl><div class="ai-result"><b>关系使用</b><p>出边 '+out.length+' 条 · 入边 '+input.length+' 条</p><p>'+escapeHtml(out.slice(0,5).map(rel=>(item.title)+' —'+(rel.name||rel.id)+'→ '+(rel.to_types||[]).join('/')).join('；')||'暂无出边关系')+'</p></div>';node.classed('is-selected',value=>value.id===item.id).classed('is-neighbor',value=>value.id!==item.id&&(connected.get(item.id)?.has(value.id)));};
-    const applyFilter=()=>{const query=(q('[data-ontology-search]',host)?.value||'').trim().toLowerCase(),module=q('[data-ontology-module]',host)?.value||'all';const visible=new Set(nodes.filter(item=>{const hay=[item.id,item.title,item.description,item.module,...(item.attributes||[])].join(' ').toLowerCase();return (!query||hay.includes(query))&&(module==='all'||item.module===module);}).map(item=>item.id));node.classed('is-muted',item=>!visible.has(item.id));edge.classed('is-hidden',item=>!visible.has(item.source.id)||!visible.has(item.target.id));edgeLabel.classed('is-hidden',item=>!visible.has(item.source.id)||!visible.has(item.target.id));};
-    node.on('click',(event,item)=>{event.stopPropagation();showDetail(item);}).on('keydown',(event,item)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showDetail(item);}}).call(d3.drag().on('start',(event,item)=>{if(!event.active)simulation.alphaTarget(.25).restart();item.fx=item.x;item.fy=item.y;}).on('drag',(event,item)=>{item.fx=event.x;item.fy=event.y;updateEdges();}).on('end',(event,item)=>{if(!event.active)simulation.alphaTarget(0);item.fx=null;item.fy=null;}));
-    const simulation=window.ceairSchemaSimulation=d3.forceSimulation(nodes).force('link',d3.forceLink(simLinks).id(item=>item.id).distance(150).strength(.55)).force('charge',d3.forceManyBody().strength(-430)).force('collide',d3.forceCollide().radius(112)).force('center',d3.forceCenter(width/2,height/2)).force('x',d3.forceX(width/2).strength(.045)).force('y',d3.forceY(height/2).strength(.045)).on('tick',()=>{node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);updateEdges();});
-    q('[data-ontology-search]',host)?.addEventListener('input',applyFilter);q('[data-ontology-module]',host)?.addEventListener('change',applyFilter);q('[data-ontology-reset]',host)?.addEventListener('click',()=>{q('[data-ontology-search]',host).value='';q('[data-ontology-module]',host).value='all';applyFilter();svg.transition().duration(350).call(zoom.transform,d3.zoomIdentity);node.classed('is-selected',false).classed('is-neighbor',false);});
-    simulation.stop();for(let tick=0;tick<150;tick++)simulation.tick();updateEdges();node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);
-    const minX=Math.min(...nodes.map(n=>n.x-95)),maxX=Math.max(...nodes.map(n=>n.x+95)),minY=Math.min(...nodes.map(n=>n.y-48)),maxY=Math.max(...nodes.map(n=>n.y+48));const scale=Math.min(1,(width-40)/(maxX-minX),(height-40)/(maxY-minY));const fit=d3.zoomIdentity.translate((width-scale*(maxX+minX))/2,(height-scale*(maxY+minY))/2).scale(scale);svg.call(zoom.transform,fit);
-    if(nodes[0])showDetail(nodes[0]);applyFilter();
+    const svg=d3.select('.ontology-map-canvas',host),root=svg.select('.ontology-map-root');
+    const zoom=d3.zoom().scaleExtent([.5,2]).on('zoom',e=>root.attr('transform',e.transform));svg.call(zoom);
+    let focused=null;
+    const showDetail=item=>{
+      const detail=q('#entityDetail'); if(!detail)return;
+      const related=relations.filter(r=>(r.from_types||[]).includes(item.id)||(r.to_types||[]).includes(item.id));
+      detail.innerHTML='<div class="entity-title"><b>'+escapeHtml(item.name||item.id)+'</b><span>'+escapeHtml(item.id)+' · '+escapeHtml(labels[item.module]||item.module)+'</span></div><dl><dt>业务定义</dt><dd>'+escapeHtml(item.description||'暂无定义')+'</dd><dt>核心属性</dt><dd>'+((item.attributes||[]).map(a=>'<code>'+escapeHtml(a)+'</code>').join(' ')||'暂无属性定义')+'</dd></dl><div class="ontology-detail-relations"><h3>关联关系</h3>'+related.map(r=>'<p><b>'+escapeHtml(r.name||r.id)+'</b><span>'+escapeHtml((r.from_types||[]).map(id=>typeMap.get(id)?.name||id).join('、'))+' → '+escapeHtml((r.to_types||[]).map(id=>typeMap.get(id)?.name||id).join('、'))+'</span></p>').join('')+'</div>';
+    };
+    const render=()=>{
+      const term=q('[data-ontology-search]',host).value.trim().toLowerCase(),module=q('[data-ontology-module]',host).value;
+      let visible,visibleLinks,heading;
+      if(focused){
+        visibleLinks=links.filter(l=>l.source===focused||l.target===focused);
+        visible=[focused,...new Set(visibleLinks.flatMap(l=>[l.source,l.target]).filter(id=>id!==focused))];
+        heading=(typeMap.get(focused)?.name||focused)+'的直接关联';
+      }else if(term||module!=='all'){
+        visible=types.filter(t=>(module==='all'||t.module===module)&&(!term||[t.id,t.name,t.description,labels[t.module],...(t.attributes||[])].join(' ').toLowerCase().includes(term))).map(t=>t.id);
+        heading='筛选结果';
+      }else{visible=[...core,...supporting].filter(id=>typeMap.has(id));heading='营销主线';}
+      const ids=new Set(visible);
+      visibleLinks=(visibleLinks||links).filter(l=>ids.has(l.source)&&ids.has(l.target));
+      if(!focused&&!term&&module==='all'){
+        const overviewPairs=new Set(['Opportunity|AudienceSnapshot','Opportunity|Route','AudienceSnapshot|ProductPackage','Campaign|ProductPackage','Campaign|ExecutionBatch','ExecutionBatch|Feedback','ProductPackage|Product','Campaign|CampaignVersion','CampaignVersion|ApprovalTask','Evidence|BusinessRule']);
+        visibleLinks=visibleLinks.filter(l=>overviewPairs.has(l.source+'|'+l.target)&&(mainRelations.has(l.id)||l.id==='supports_claim'));
+      }
+      root.selectAll('*').remove();
+      if(!visible.length){q('.ontology-map-caption',host).textContent='没有匹配对象，请调整搜索条件';return;}
+      const main=!focused&&!term&&module==='all',positions=new Map(),W=170,H=68;
+      const rows=main?3:Math.ceil(visible.length/6),height=Math.max(560,rows*126+100);
+      svg.attr('viewBox','0 0 1240 '+height);
+      if(main){core.forEach((id,i)=>positions.set(id,{x:35+i*202,y:76}));[['Route',35,238],['Product',439,238],['CampaignVersion',641,238],['ApprovalTask',843,238],['Evidence',237,410],['BusinessRule',641,410]].forEach(([id,x,y])=>positions.set(id,{x,y}));
+        [['经营决策',40,45],['供给与流程',40,207],['证据与约束',40,379]].forEach(([text,x,y])=>root.append('text').attr('class','ontology-map-row-title').attr('x',x).attr('y',y).text(text));
+      }else{visible.forEach((id,i)=>positions.set(id,{x:35+(i%6)*202,y:50+Math.floor(i/6)*126}));}
+      const paths=root.append('g').attr('class','ontology-map-edges'),texts=root.append('g'),nodes=root.append('g');
+      visibleLinks.forEach((l,i)=>{const a=positions.get(l.source),b=positions.get(l.target);if(!a||!b)return;let d,lx,ly;
+        if(a.y===b.y){const forward=b.x>a.x,x1=a.x+(forward?W:0),x2=b.x+(forward?0:W),y=a.y+H/2;d=`M${x1},${y} L${x2},${y}`;lx=(x1+x2)/2;ly=y-9;}
+        else{const down=b.y>a.y,x1=a.x+W/2,y1=a.y+(down?H:0),x2=b.x+W/2,y2=b.y+(down?0:H),mid=(y1+y2)/2;d=`M${x1},${y1} V${mid} H${x2} V${y2}`;lx=(x1+x2)/2+9;ly=mid-7;}
+        paths.append('path').attr('class','ontology-map-edge').attr('d',d).attr('marker-end','url(#ontology-map-arrow)');
+        if(main||visibleLinks.length<16)texts.append('text').attr('class','ontology-map-edge-label').attr('x',lx).attr('y',ly).text(l.label);
+      });
+      visible.forEach(id=>{const item=typeMap.get(id),pos=positions.get(id);if(!item||!pos)return;const node=nodes.append('g').attr('class','ontology-map-node'+(id===focused?' is-selected':'')).attr('data-schema-type',id).attr('transform',`translate(${pos.x},${pos.y})`).attr('tabindex',0).attr('role','button').attr('aria-label',item.name||id);
+        node.append('rect').attr('class','ontology-map-card').attr('width',W).attr('height',H).attr('rx',6).attr('stroke',colors[item.module]||colors.semantic);
+        node.append('rect').attr('width',3).attr('height',H-18).attr('x',0).attr('y',9).attr('rx',1).attr('fill',colors[item.module]||colors.semantic);
+        node.append('text').attr('class','ontology-map-title').attr('x',14).attr('y',29).text(item.name||id);
+        node.append('text').attr('class','ontology-map-id').attr('x',14).attr('y',49).text(id);
+        const select=()=>{focused=id;showDetail(item);render();};node.on('click',select).on('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select();}});
+      });
+      q('.ontology-map-caption',host).textContent=heading+' · '+visible.length+' 个对象 · '+visibleLinks.length+' 条关联';
+      svg.call(zoom.transform,d3.zoomIdentity);
+    };
+    q('[data-ontology-search]',host).addEventListener('input',()=>{focused=null;render();});
+    q('[data-ontology-module]',host).addEventListener('change',()=>{focused=null;render();});
+    q('[data-ontology-reset]',host).addEventListener('click',()=>{focused=null;q('[data-ontology-search]',host).value='';q('[data-ontology-module]',host).value='all';render();showDetail(typeMap.get('Campaign')||types[0]);});
+    q('[data-ontology-catalog]',host).addEventListener('click',()=>{dataDialog('本体对象目录','<div class="ontology-class-directory">'+types.map(t=>'<button class="btn" data-select-ontology-class="'+escapeHtml(t.id)+'">'+escapeHtml(t.name||t.id)+'</button>').join('')+'</div>');qa('[data-select-ontology-class]').forEach(b=>b.addEventListener('click',()=>{focused=b.dataset.selectOntologyClass;b.closest('.production-modal')?.remove();showDetail(typeMap.get(focused));render();}));});
+    q('[data-ontology-detail]',host).addEventListener('click',()=>dataDialog('业务对象详情',q('#entityDetail').innerHTML));
+    render();showDetail(typeMap.get('Campaign')||types[0]);
   }
+
 
   function setupKnowledgeViews(){
     const canvas=q('#graphCanvas'); if(!canvas) return; const body=canvas.closest('.panel-body'); if(!body||q('#knowledgeViewTabs',body)) return;

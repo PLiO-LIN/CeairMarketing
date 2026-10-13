@@ -827,3 +827,31 @@ body.dongdong-mode .topnav .brand { min-width: 292px; }
   body.dongdong-mode .dongdong-cap b { font-size: 14px; }
   body.dongdong-mode .dongdong-cap p { font-size: 12px; }
 }
+
+/* Stable overview; full semantic relationships remain available through focus and filters. */
+.ontology-map-clean{background:#fcfdff;background-image:none;height:500px}
+.ontology-map-clean .ontology-map-canvas{min-width:0}
+.ontology-map-clean .ontology-map-card{filter:none;stroke-width:1.2}
+.ontology-map-clean .ontology-map-node{cursor:pointer}
+.ontology-map-clean .ontology-map-title{font-size:16px}
+.ontology-map-clean .ontology-map-id{font-size:11px;fill:#7b8b9f}
+.ontology-map-clean .ontology-map-edge{opacity:1;stroke:#91a9bf;stroke-width:1.4}
+.ontology-map-clean .ontology-map-edge-label{font-size:11px;stroke:#fcfdff;stroke-width:5px}
+.ontology-map-row-title{font-size:12px;fill:#7d8b9f;letter-spacing:1px}
+.ontology-map-caption{padding:10px 2px;color:#728196;font-size:12px}
+.ontology-class-directory{display:flex;flex-wrap:wrap;gap:10px}
+.ontology-detail-relations h3{font-size:14px;margin:20px 0 10px}
+.ontology-detail-relations p{padding:10px 0;margin:0;border-bottom:1px solid #edf0f5}
+.ontology-detail-relations b{display:block;font-size:13px;color:#34577b}
+.ontology-detail-relations span{display:block;line-height:1.7;font-size:12px;color:#788799;margin-top:5px}
+.ontology-map-toolbar .ontology-map-search{min-width:180px;flex:1}
+.ontology-map-toolbar .ontology-map-hint{white-space:nowrap}
+@media(max-width:1100px){.ontology-map-toolbar{flex-wrap:wrap}.ontology-map-hint{display:none}.ontology-map-clean{height:420px}}
+
+#graph [data-instance-toolbar][hidden]{display:none!important}
+#graph .graph-layout:has(#ontologySchema:not([hidden])){grid-template-columns:minmax(0,1fr)}
+#graph .graph-layout:has(#ontologySchema:not([hidden]))>.entity{display:none}
+#graph .graph-layout:has(#ontologySchema:not([hidden]))>.graph-panel{min-height:0}
+#graph .ontology-map-clean{height:430px}
+#graph .ontology-map-summary{background:#fff;border:0;padding:0 0 12px}
+#graph .ontology-map-summary strong{font-size:18px}
