@@ -855,3 +855,27 @@ body.dongdong-mode .topnav .brand { min-width: 292px; }
 #graph .ontology-map-clean{height:430px}
 #graph .ontology-map-summary{background:#fff;border:0;padding:0 0 12px}
 #graph .ontology-map-summary strong{font-size:18px}
+
+/* Circle graph: labels stay on the nodes; detailed evidence appears on selection. */
+.circle-graph-host{position:relative;background:radial-gradient(ellipse at center,#f6f9fd,#fff 74%);overflow:hidden;border:1px solid #e8eef5;border-radius:16px}
+.circle-graph-svg{display:block;width:100%;height:100%;touch-action:none;min-width:0!important}
+.circle-graph-controls{position:absolute;z-index:1;right:12px;top:12px;display:flex;gap:6px}
+.circle-graph-controls .btn{padding:5px 10px;font-size:12px;background:#ffffffec}
+.circle-graph-node{cursor:pointer;outline:none;transition:opacity .22s}
+.circle-graph-body{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 4px 6px #37577b22)}
+.circle-graph-halo{fill:none;stroke-width:1.3;opacity:.18;transition:opacity .2s}
+.circle-graph-node:hover .circle-graph-halo,.circle-graph-node:focus .circle-graph-halo{opacity:.7;stroke-width:2}
+.circle-graph-node.is-selected .circle-graph-halo{opacity:.85;stroke-width:2;stroke-dasharray:5 4;animation:ontology-orbit 20s linear infinite}
+.circle-graph-name{font-size:13px;font-weight:600;fill:#fff;pointer-events:none}
+.circle-graph-edge{fill:none;stroke:#b8c9da;stroke-width:1.3;transition:opacity .2s}
+.circle-graph-edge.is-active{stroke:#668baa;stroke-width:1.9}
+.circle-graph-relation{font-size:11px;fill:#486583;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;opacity:0;pointer-events:none;transition:opacity .2s}
+.circle-graph-relation.is-visible{opacity:1}
+.circle-graph-node.is-dimmed{opacity:.24}.circle-graph-edge.is-dimmed{opacity:.15}
+.circle-graph-count{position:absolute;left:15px;bottom:12px;color:#7e8fa3;font-size:12px;background:#ffffffdc;border-radius:6px;padding:4px 8px}
+.circle-graph-host.is-paused *{animation-play-state:paused!important}
+#graph .graph-layout{grid-template-columns:minmax(0,1fr)!important}
+#graph .graph-layout>.entity{display:none!important}
+#graph #graphCanvas.circle-graph-host{height:440px;min-height:0!important}
+@keyframes ontology-orbit{to{stroke-dashoffset:-180}}
+@media(prefers-reduced-motion:reduce){.circle-graph-host *{animation:none!important;transition:none!important}}

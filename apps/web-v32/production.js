@@ -139,6 +139,7 @@
     }
     if(viewId==='graph'&&(selected==='schema'||selected==='instances')){const target=q(`[data-knowledge-view=${selected}]`,view);if(target&&!target.classList.contains('active'))target.click();}
     if(viewId==='graph'&&selected==='instances')requestAnimationFrame(()=>renderDynamicGraph());
+    if(viewId==='graph'&&selected==='documents'){window.ceairGraphSimulation?.stop();window.ceairSchemaSimulation?.stop();}
     if(!options.silent)q(`[data-business-subview=${selected}]`,view)?.focus({preventScroll:true});
   }
   function ensureBusinessSubviewNavigation(viewId){
@@ -1659,6 +1660,7 @@
     const host=q('#ontologySchema'); if(!host)return;
     let model; try{model=await request('/api/ontology/semantic-model');}catch{model={object_types:[],relation_types:[]};}
     if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
+    if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
     const types=model.object_types||[], relations=model.relation_types||[];
     const W=220,H=116,cols=5,gx=258,gy=150,width=Math.max(1320,cols*gx+20),height=Math.max(760,Math.ceil(types.length/cols)*gy+36);
     const positions=new Map(types.map((item,index)=>[item.id,{x:18+(index%cols)*gx,y:18+Math.floor(index/cols)*gy}]));
@@ -1675,16 +1677,67 @@
     qa('.ontology-schema-node').forEach(element=>{const item=types.find(value=>value.id===element.dataset.schemaType);element.addEventListener('click',()=>item&&detailFor(item));element.addEventListener('keydown',event=>{if(item&&(event.key==='Enter'||event.key===' ')){event.preventDefault();detailFor(item);}});let moving=false;element.addEventListener('pointerdown',event=>{moving=true;element.setPointerCapture(event.pointerId);});element.addEventListener('pointermove',event=>{if(moving){const p=point(item.id);p.x=Math.max(0,p.x+event.movementX);p.y=Math.max(0,p.y+event.movementY);element.setAttribute('transform','translate('+p.x+','+p.y+')');updateEdges();}});element.addEventListener('pointerup',()=>{moving=false;});element.addEventListener('pointercancel',()=>{moving=false;});});
     if(types[0])detailFor(types[0]);
   }
+
+  function renderCircleOntology(host, objects, relationships, options={}) {
+    host.__circleGraph?.destroy();
+    const width=1100,height=500,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const colors={data:'#6585a4',aviation:'#447db3',customer:'#3c9d94',product:'#b58a43',strategy:'#8072b3',marketing:'#295c98',governance:'#8072b3',execution:'#295c98',measurement:'#3c9d94',knowledge:'#6585a4',semantic:'#6585a4'};
+    const kinds={campaign:'marketing',campaignversion:'marketing',opportunity:'strategy',audiencesnapshot:'customer',audience:'customer',product:'product',productpackage:'product',route:'aviation',flight:'aviation',cabin:'aviation',fare:'aviation',airport:'aviation',evidence:'knowledge',businessrule:'governance',approvaltask:'governance',executionbatch:'execution',feedback:'measurement',review:'measurement'};
+    const nodes=objects.map((n,i)=>({...n,r:n.id===options.selected?39:33,x:width/2+Math.cos(i/objects.length*Math.PI*2)*210,y:height/2+Math.sin(i/objects.length*Math.PI*2)*160}));
+    const ids=new Set(nodes.map(n=>n.id)),links=relationships.filter(l=>ids.has(l.source)&&ids.has(l.target)).map(l=>({...l}));
+    const color=n=>colors[n.module||kinds[String(n.type||'').toLowerCase()]||'semantic'];
+    host.innerHTML='<div class="circle-graph-controls"><button type="button" class="btn" data-circle-fit aria-label="适配图谱">适配</button><button type="button" class="btn" data-circle-pause aria-pressed="false">暂停</button></div>';
+    const svg=d3.select(host).append('svg').attr('class','circle-graph-svg').attr('viewBox',`0 0 ${width} ${height}`).attr('role','img').attr('aria-label',options.label||'本体圆形动态图谱');
+    const arrow='circle-arrow-'+Math.random().toString(36).slice(2),defs=svg.append('defs');
+    defs.append('marker').attr('id',arrow).attr('viewBox','0 0 10 10').attr('refX',9).attr('refY',5).attr('markerWidth',5).attr('markerHeight',5).attr('orient','auto').append('path').attr('d','M0,0 L10,5 L0,10 z').attr('fill','#9ab0c5');
+    const root=svg.append('g');let paused=reduced,simulation,selected=options.selected||null;
+    const zoom=d3.zoom().scaleExtent([.18,3]).on('zoom',e=>root.attr('transform',e.transform));svg.call(zoom).on('dblclick.zoom',null);
+    const edge=root.append('g').selectAll('path').data(links).join('path').attr('class','circle-graph-edge').attr('marker-end',`url(#${arrow})`);
+    const labels=root.append('g').selectAll('text').data(links).join('text').attr('class','circle-graph-relation').attr('text-anchor','middle').text(l=>l.label||l.relation||'关联');
+    const node=root.append('g').selectAll('g').data(nodes).join('g').attr('class','circle-graph-node').attr('data-circle-id',n=>n.id).attr('role','button').attr('tabindex',0).attr('aria-label',n=>n.title||n.name||n.label||n.id);
+    node.append('circle').attr('class','circle-graph-halo').attr('r',n=>n.r+7).attr('stroke',color);
+    node.append('circle').attr('class','circle-graph-body').attr('r',n=>n.r).attr('fill',color);
+    node.append('title').text(n=>(n.title||n.name||n.label||n.id)+'\n'+n.id);
+    node.each(function(n){
+      const value=String(n.shortLabel||n.name||n.title||n.typeLabel||n.id),parts=value.length>5?[value.slice(0,4),value.slice(4,8)+(value.length>8?'…':'')]:[value];
+      const t=d3.select(this).append('text').attr('class','circle-graph-name').attr('text-anchor','middle');
+      parts.forEach((part,i)=>t.append('tspan').attr('x',0).attr('y',(i-(parts.length-1)/2)*17+5).text(part));
+    });
+    const highlight=id=>{
+      const near=new Set([id]);links.forEach(l=>{if(l.source.id===id)near.add(l.target.id);if(l.target.id===id)near.add(l.source.id);});
+      node.classed('is-selected',n=>n.id===selected).classed('is-dimmed',n=>!!id&&!near.has(n.id));
+      edge.classed('is-active',l=>l.source.id===id||l.target.id===id).classed('is-dimmed',l=>!!id&&l.source.id!==id&&l.target.id!==id);
+      labels.classed('is-visible',l=>!!id&&(l.source.id===id||l.target.id===id));
+    };
+    const choose=n=>{selected=n.id;highlight(selected);options.onSelect?.(n);};
+    node.on('click',(e,n)=>{e.stopPropagation();choose(n);}).on('keydown',(e,n)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(n);}}).on('mouseenter',(e,n)=>highlight(n.id)).on('mouseleave',()=>highlight(selected));
+    svg.on('click',e=>{if(e.target===svg.node()){selected=null;highlight(null);}});
+    const tick=()=>{
+      edge.attr('d',l=>{const dx=l.target.x-l.source.x,dy=l.target.y-l.source.y,dist=Math.max(1,Math.hypot(dx,dy));return `M${l.source.x+dx/dist*(l.source.r+3)},${l.source.y+dy/dist*(l.source.r+3)} L${l.target.x-dx/dist*(l.target.r+7)},${l.target.y-dy/dist*(l.target.r+7)}`;});
+      labels.attr('x',l=>(l.source.x+l.target.x)/2).attr('y',l=>(l.source.y+l.target.y)/2-8);
+      node.attr('transform',n=>`translate(${n.x},${n.y})`);
+    };
+    simulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(n=>n.id).distance(148).strength(.45)).force('charge',d3.forceManyBody().strength(-520)).force('collide',d3.forceCollide(58).iterations(3)).force('x',d3.forceX(width/2).strength(.065)).force('y',d3.forceY(height/2).strength(.16)).alphaDecay(.035).on('tick',()=>{if(!host.isConnected||host.closest('[hidden]')||host.getClientRects().length===0)simulation.stop();tick();});
+    simulation.stop();for(let i=0;i<85;i++)simulation.tick();tick();
+    const fit=()=>{const x0=Math.min(...nodes.map(n=>n.x-55)),x1=Math.max(...nodes.map(n=>n.x+55)),y0=Math.min(...nodes.map(n=>n.y-55)),y1=Math.max(...nodes.map(n=>n.y+55));const scale=Math.min(1.45,(width-90)/(x1-x0),(height-50)/(y1-y0));svg.call(zoom.transform,d3.zoomIdentity.translate((width-scale*(x0+x1))/2,(height-scale*(y0+y1))/2).scale(scale));};fit();
+    node.call(d3.drag().on('start',(e,n)=>{if(!e.active&&!paused)simulation.alphaTarget(.18).restart();n.fx=n.x;n.fy=n.y;}).on('drag',(e,n)=>{n.fx=e.x;n.fy=e.y;if(paused){n.x=e.x;n.y=e.y;tick();}}).on('end',(e,n)=>{simulation.alphaTarget(0);n.fx=null;n.fy=null;}));
+    const pause=host.querySelector('[data-circle-pause]');const sync=()=>{pause.textContent=paused?'继续':'暂停';pause.setAttribute('aria-pressed',String(paused));host.classList.toggle('is-paused',paused);};
+    pause.onclick=()=>{paused=!paused;if(paused)simulation.stop();else simulation.alpha(.22).restart();sync();};host.querySelector('[data-circle-fit]').onclick=fit;
+    if(!paused)simulation.alpha(.22).restart();sync();highlight(selected);
+    const controller={simulation,destroy(){simulation.stop();svg.on('.zoom',null);}};host.__circleGraph=controller;return controller;
+  }
   async function renderOntologySchemaGraphV2(){
     const host=q('#ontologySchema'); if(!host)return;
+    const generation=(host.__schemaGeneration||0)+1;host.__schemaGeneration=generation;
     if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
+    if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
     let model;
     try{model=await request('/api/ontology/semantic-model');}
     catch(error){host.innerHTML='<div class="ontology-map-empty"><b>本体结构加载失败</b><span>'+escapeHtml(error.message||'请重新进入知识中心')+'</span></div>';return;}
+    if(host.__schemaGeneration!==generation||!host.isConnected)return;
     const types=model.object_types||[],relations=model.relation_types||[];
     if(!types.length){host.innerHTML='<div class="ontology-map-empty"><b>暂无本体结构</b></div>';return;}
     const labels={data:'数据来源',aviation:'航空供给',customer:'客户与客群',product:'产品与权益',strategy:'策略规划',marketing:'营销活动',governance:'治理审批',execution:'执行触达',measurement:'效果度量',agent:'智能体',knowledge:'知识底座',semantic:'语义配置'};
-    const colors={data:'#517391',aviation:'#517391',customer:'#398374',product:'#a97b37',strategy:'#665b91',marketing:'#285a9a',governance:'#665b91',execution:'#285a9a',measurement:'#398374',agent:'#665b91',knowledge:'#517391',semantic:'#517391'};
     const typeMap=new Map(types.map(t=>[t.id,t]));
     const links=[];
     relations.forEach(r=>(r.from_types||[]).forEach(source=>(r.to_types||[]).forEach(target=>{if(source!==target&&typeMap.has(source)&&typeMap.has(target))links.push({source,target,label:r.name||r.id,id:r.id});})));
@@ -1692,10 +1745,9 @@
     const supporting=['Route','Product','CampaignVersion','ApprovalTask','Evidence','BusinessRule'];
     const mainRelations=new Set(['targets_audience','uses_product_package','executes','produces_feedback','has_campaign_version','requires_approval','contains_product','concerns_route']);
     const modules=[...new Set(types.map(t=>t.module||'semantic'))];
-    host.innerHTML='<div class="ontology-map-summary"><div><b>营销业务本体</b></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象、业务域或属性"></label><select data-ontology-module aria-label="筛选本体业务域"><option value="all">营销主线</option>'+modules.map(m=>'<option value="'+escapeHtml(m)+'">'+escapeHtml(labels[m]||m)+'</option>').join('')+'</select><button class="btn" data-ontology-reset>返回主线</button><button class="btn" data-ontology-catalog>对象目录</button><button class="btn" data-ontology-detail>对象详情</button><span class="ontology-map-hint">点击对象展开关联</span></div><div class="ontology-map-viewport ontology-map-clean"><svg class="ontology-map-canvas" viewBox="0 0 1240 560" role="img" aria-label="营销业务本体关系图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8aa3ba"></path></marker></defs><g class="ontology-map-root"></g></svg></div><div class="ontology-map-caption" aria-live="polite"></div>';
+    host.innerHTML='<div class="ontology-map-summary"><div><b>营销业务本体</b></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象、业务域或属性"></label><select data-ontology-module aria-label="筛选本体业务域"><option value="all">营销主线</option>'+modules.map(m=>'<option value="'+escapeHtml(m)+'">'+escapeHtml(labels[m]||m)+'</option>').join('')+'</select><button class="btn" data-ontology-reset>返回主线</button><button class="btn" data-ontology-catalog>对象目录</button><button class="btn" data-ontology-detail>对象详情</button><span class="ontology-map-hint">点击对象展开关联</span></div><div class="ontology-map-viewport ontology-map-clean circle-graph-host"><svg class="ontology-map-canvas" viewBox="0 0 1240 560" role="img" aria-label="营销业务本体关系图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8aa3ba"></path></marker></defs><g class="ontology-map-root"></g></svg></div><div class="ontology-map-caption" aria-live="polite"></div>';
     if(window.lucide)lucide.createIcons();
-    const svg=d3.select('.ontology-map-canvas',host),root=svg.select('.ontology-map-root');
-    const zoom=d3.zoom().scaleExtent([.5,2]).on('zoom',e=>root.attr('transform',e.transform));svg.call(zoom);
+    const viewport=q('.ontology-map-viewport',host);
     let focused=null;
     const showDetail=item=>{
       const detail=q('#entityDetail'); if(!detail)return;
@@ -1719,30 +1771,10 @@
         const overviewPairs=new Set(['Opportunity|AudienceSnapshot','Opportunity|Route','AudienceSnapshot|ProductPackage','Campaign|ProductPackage','Campaign|ExecutionBatch','ExecutionBatch|Feedback','ProductPackage|Product','Campaign|CampaignVersion','CampaignVersion|ApprovalTask','Evidence|BusinessRule']);
         visibleLinks=visibleLinks.filter(l=>overviewPairs.has(l.source+'|'+l.target)&&(mainRelations.has(l.id)||l.id==='supports_claim'));
       }
-      root.selectAll('*').remove();
-      if(!visible.length){q('.ontology-map-caption',host).textContent='没有匹配对象，请调整搜索条件';return;}
-      const main=!focused&&!term&&module==='all',positions=new Map(),W=170,H=68;
-      const rows=main?3:Math.ceil(visible.length/6),height=Math.max(560,rows*126+100);
-      svg.attr('viewBox','0 0 1240 '+height);
-      if(main){core.forEach((id,i)=>positions.set(id,{x:35+i*202,y:76}));[['Route',35,238],['Product',439,238],['CampaignVersion',641,238],['ApprovalTask',843,238],['Evidence',237,410],['BusinessRule',641,410]].forEach(([id,x,y])=>positions.set(id,{x,y}));
-        [['经营决策',40,45],['供给与流程',40,207],['证据与约束',40,379]].forEach(([text,x,y])=>root.append('text').attr('class','ontology-map-row-title').attr('x',x).attr('y',y).text(text));
-      }else{visible.forEach((id,i)=>positions.set(id,{x:35+(i%6)*202,y:50+Math.floor(i/6)*126}));}
-      const paths=root.append('g').attr('class','ontology-map-edges'),texts=root.append('g'),nodes=root.append('g');
-      visibleLinks.forEach((l,i)=>{const a=positions.get(l.source),b=positions.get(l.target);if(!a||!b)return;let d,lx,ly;
-        if(a.y===b.y){const forward=b.x>a.x,x1=a.x+(forward?W:0),x2=b.x+(forward?0:W),y=a.y+H/2;d=`M${x1},${y} L${x2},${y}`;lx=(x1+x2)/2;ly=a.y-12;}
-        else{const down=b.y>a.y,x1=a.x+W/2,y1=a.y+(down?H:0),x2=b.x+W/2,y2=b.y+(down?0:H),mid=(y1+y2)/2;d=`M${x1},${y1} V${mid} H${x2} V${y2}`;lx=(x1+x2)/2+9;ly=mid-7;}
-        paths.append('path').attr('class','ontology-map-edge').attr('d',d).attr('marker-end','url(#ontology-map-arrow)');
-        if(main||visibleLinks.length<16)texts.append('text').attr('class','ontology-map-edge-label').attr('x',lx).attr('y',ly).text(l.label);
-      });
-      visible.forEach(id=>{const item=typeMap.get(id),pos=positions.get(id);if(!item||!pos)return;const node=nodes.append('g').attr('class','ontology-map-node'+(id===focused?' is-selected':'')).attr('data-schema-type',id).attr('transform',`translate(${pos.x},${pos.y})`).attr('tabindex',0).attr('role','button').attr('aria-label',item.name||id);
-        node.append('rect').attr('class','ontology-map-card').attr('width',W).attr('height',H).attr('rx',6).attr('stroke',colors[item.module]||colors.semantic);
-        node.append('rect').attr('width',3).attr('height',H-18).attr('x',0).attr('y',9).attr('rx',1).attr('fill',colors[item.module]||colors.semantic);
-        node.append('text').attr('class','ontology-map-title').attr('x',14).attr('y',29).text(item.name||id);
-        node.append('text').attr('class','ontology-map-id').attr('x',14).attr('y',49).text(id);
-        const select=()=>{focused=id;showDetail(item);render();};node.on('click',select).on('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select();}});
-      });
+      if(!visible.length){viewport.__circleGraph?.destroy();viewport.innerHTML='<div class="ontology-map-empty">没有匹配对象</div>';q('.ontology-map-caption',host).textContent='没有匹配对象，请调整搜索条件';return;}
+      const controller=renderCircleOntology(viewport,visible.map(id=>({...typeMap.get(id),title:typeMap.get(id).name})),visibleLinks,{selected:focused,onSelect:item=>{if(focused===item.id){showDetail(item);return;}focused=item.id;showDetail(item);render();}});
+      window.ceairSchemaSimulation=controller.simulation;
       q('.ontology-map-caption',host).textContent=heading+' · '+visible.length+' 个对象 · '+visibleLinks.length+' 条关联';
-      svg.call(zoom.transform,d3.zoomIdentity);
     };
     q('[data-ontology-search]',host).addEventListener('input',()=>{focused=null;render();});
     q('[data-ontology-module]',host).addEventListener('change',()=>{focused=null;render();});
@@ -1830,7 +1862,11 @@
       const button=document.createElement('button');button.className='btn';button.dataset.ontologyCatalog='true';button.textContent='检索本体对象';
       button.onclick=()=>showOntologyCatalog();toolbar.append(button);
     }
-    const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return; canvas.innerHTML='';
+    if(toolbar&&!q('[data-instance-detail]',toolbar)){
+      const button=document.createElement('button');button.type='button';button.className='btn';button.dataset.instanceDetail='true';button.textContent='对象详情';button.onclick=()=>dataDialog('业务对象详情',q('#entityDetail')?.innerHTML||'请先选择对象');toolbar.append(button);
+    }
+    const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return;
+    canvas.__circleGraph?.destroy();if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();canvas.innerHTML='';canvas.classList.add('circle-graph-host');
     let source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
     let picker=q('[data-graph-case]');
     if(!picker){picker=document.createElement('select');picker.dataset.graphCase='true';picker.setAttribute('aria-label','选择图谱活动');q('[data-instance-toolbar]')?.append(picker);picker.onchange=()=>{window.ceairSetChainCase?.(picker.value);renderDynamicGraph();};}
@@ -1861,40 +1897,20 @@
     qa('[data-graph-filter]').forEach(button=>{button.onclick=()=>{if(search)search.value='';if(typeSelect)typeSelect.value='all';picker.value=button.dataset.graphFilter==='all'?'all':(tenantData.demo?.enabled?'ACT-2026-0921':tenantData.campaigns[0]?.id||'all');renderDynamicGraph();};});
     if(!source.nodes.length){canvas.innerHTML='<div class="graph-empty">没有符合筛选条件的本体对象</div>';return;}
     if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
-    const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
     const typeLabels={opportunity:'营销机会',audience:'客群',customer:'客户',product:'产品包',product_package:'产品包',content:'内容',campaign:'营销活动',channel:'渠道',flight:'航班',flight_segment:'航段',airport:'机场',route:'航线',fare:'运价',cabin:'舱位',result:'营销结果',entity:'业务对象',audiencesnapshot:'冻结客群',customeraggregate:'聚合客群',productpackage:'产品包',contentasset:'内容资产',campaignversion:'活动版本',approvaltask:'审批任务',executionbatch:'执行批次',feedback:'渠道反馈',review:'效果复盘',agentRun:'智能体运行',agentrun:'智能体运行',evidence:'证据',marketsignal:'市场信号',knowledgedocument:'来源文档',knowledgechunk:'知识片段',strategyplan:'策略计划',touchpointplan:'触点计划',humandecision:'人工决策',valueproposition:'价值主张',customerneed:'旅客需求',recommendation:'机会建议'};
     const nodes=source.nodes.map(item=>({...item,title:displayText(item.label,'未命名对象'),type:String(item.type||'entity').toLowerCase(),typeLabel:typeLabels[String(item.type||'entity').toLowerCase()]||'业务对象',w:172,h:60}));
     const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(({has_campaign_version:'包含版本',targets_audience:'面向客群',uses_product_package:'使用产品包',generates_content:'生成内容',requires_approval:'需要审批',confirmed_by_human:'人工确认',executes:'产生执行',uses_channel:'使用渠道',produces_feedback:'产生反馈',reviewed_by:'效果复盘',supports_campaign:'支撑活动',has_evidence:'具有证据',derived_from:'来源于',contains_chunk:'包含片段',has_strategy_plan:'策略方案',uses_touchpoint_plan:'触点计划',produces_object:'形成对象',evidence_for:'提供证据',addresses_opportunity:'响应机会'})[item.relation]||item.relation,'关联')})); const neighbors=new Map(nodes.map(item=>[item.id,new Set()])); links.forEach(item=>{neighbors.get(item.source.id)?.add(item.target.id);neighbors.get(item.target.id)?.add(item.source.id);});
-    const svg=d3.select(canvas).append('svg').attr('width',width).attr('height',height), defs=svg.append('defs');
-    defs.append('marker').attr('id','production-arrow').attr('viewBox','0 0 8 8').attr('refX',7).attr('refY',4).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,0 L8,4 L0,8 z').attr('fill','#93b2c4');
-    const root=svg.append('g'),zoom=d3.zoom().scaleExtent([.08,2]).on('zoom',event=>root.attr('transform',event.transform));svg.call(zoom);
-    const edge=root.append('g').selectAll('path').data(links).join('path').attr('class','graph-edge').attr('marker-end','url(#production-arrow)');
-    const labels=root.append('g').selectAll('text').data(links).join('text').attr('class','edge-label').text(item=>item.label);
-    const node=root.append('g').selectAll('g').data(nodes).join('g').attr('class',item=>`graph-node dynamic ${item.type}`).call(d3.drag().on('start',(event,item)=>{if(!event.active)simulation.alphaTarget(.25).restart();item.fx=item.x;item.fy=item.y}).on('drag',(event,item)=>{item.fx=event.x;item.fy=event.y}).on('end',(event,item)=>{if(!event.active)simulation.alphaTarget(0);item.fx=null;item.fy=null}));
-    node.append('rect').attr('x',item=>-item.w/2).attr('y',item=>-item.h/2).attr('width',item=>item.w).attr('height',item=>item.h).attr('rx',4);
-    node.append('text').attr('class','title').attr('x',item=>-item.w/2+10).attr('y',-5).text(item=>item.title.slice(0,16)); node.append('text').attr('class','type').attr('x',item=>-item.w/2+10).attr('y',17).text(item=>item.typeLabel);
-    node.on('click',(event,item)=>{event.stopPropagation();const near=neighbors.get(item.id)||new Set();node.classed('is-selected',value=>value.id===item.id).classed('is-neighbor',value=>near.has(value.id)).classed('is-muted',value=>value.id!==item.id&&!near.has(value.id));edge.classed('is-muted',value=>value.source.id!==item.id&&value.target.id!==item.id);labels.classed('is-muted',value=>value.source.id!==item.id&&value.target.id!==item.id);q('#entityDetail').innerHTML=`<div class="entity-title">
-<b>${escapeHtml(item.title)}</b>
-<span>${escapeHtml(item.typeLabel)}</span>
-</div>
-<dl>
-<dt>对象 ID</dt>
-<dd>${escapeHtml(item.id)}</dd>
-<dt>数据来源</dt>
-<dd>${escapeHtml(displayText(item.source,'未知来源'))}</dd>
-<dt>置信度</dt>
-<dd>${item.attributes?.confidence_status==='未评估'?'未评估':Math.round((item.confidence||0)*100)+'%'}</dd>
-</dl>
-<div class="ai-result">
-<b>对象属性（入库记录）</b>
-<p>${escapeHtml(Object.entries(item.attributes||{}).slice(0,6).map(([key,value])=>`${key}：${typeof value==='object'?JSON.stringify(value):value}`).join('；')||'暂无扩展属性')}</p>
-</div>`;});
-    const simulation=window.ceairGraphSimulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(item=>item.id).distance(145).strength(.7)).force('charge',d3.forceManyBody().strength(-420)).force('collide',d3.forceCollide().radius(90)).force('center',d3.forceCenter(width/2,height/2)).on('tick',()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);labels.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);node.attr('transform',item=>`translate(${item.x},${item.y})`)});
-    simulation.stop();for(let tick=0;tick<160;tick++)simulation.tick();
-    const bounds={minX:Math.min(...nodes.map(n=>n.x-90)),maxX:Math.max(...nodes.map(n=>n.x+90)),minY:Math.min(...nodes.map(n=>n.y-35)),maxY:Math.max(...nodes.map(n=>n.y+35))};
-    const scale=Math.min(.95,(width-30)/(bounds.maxX-bounds.minX),(height-30)/(bounds.maxY-bounds.minY));
-    svg.call(zoom.transform,d3.zoomIdentity.translate((width-scale*(bounds.maxX+bounds.minX))/2,(height-scale*(bounds.maxY+bounds.minY))/2).scale(scale));simulation.alpha(.03).restart();
-    node.filter((_,index)=>index===0).dispatch('click');
+    const ranked=nodes.slice().sort((a,b)=>(neighbors.get(b.id)?.size||0)-(neighbors.get(a.id)?.size||0));
+    const visible=ranked.slice(0,48),visibleIds=new Set(visible.map(n=>n.id));
+    const visibleLinks=links.filter(l=>visibleIds.has(l.source.id)&&visibleIds.has(l.target.id)).map(l=>({...l,source:l.source.id,target:l.target.id}));
+    const onSelect=item=>{
+      const detail=q('#entityDetail');if(!detail)return;
+      detail.innerHTML=`<div class="entity-title"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.typeLabel)}</span></div><dl><dt>对象 ID</dt><dd>${escapeHtml(item.id)}</dd><dt>数据来源</dt><dd>${escapeHtml(displayText(item.source,'未知来源'))}</dd><dt>置信度</dt><dd>${item.attributes?.confidence_status==='未评估'?'未评估':Math.round((item.confidence||0)*100)+'%'}</dd></dl><details open><summary>对象属性</summary><dl>${Object.entries(item.attributes||{}).map(([key,value])=>`<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(typeof value==='object'?JSON.stringify(value):value)}</dd>`).join('')}</dl></details>`;
+    };
+    const controller=renderCircleOntology(canvas,visible,visibleLinks,{label:'本体实例圆形动态图谱',onSelect});window.ceairGraphSimulation=controller.simulation;
+    const caption=document.createElement('div');caption.className='circle-graph-count';caption.textContent=`${visible.length} 个对象 · ${visibleLinks.length} 条关联`+(nodes.length>visible.length?` · 共 ${nodes.length} 个对象，可筛选或检索查看`:'');canvas.append(caption);
+    if(visible[0])onSelect(visible[0]);
+
   }
 
   const pipelineStages={queued:['\u7b49\u5f85\u5904\u7406',6],received:['\u6587\u4ef6\u68c0\u67e5',16],extracting:['\u5185\u5bb9\u89e3\u6790',32],extracted:['\u6e05\u6d17\u5207\u5206',48],classifying:['AI \u8bed\u4e49\u62bd\u53d6',65],classified:['\u4e1a\u52a1\u6821\u9a8c',78],persisting:['\u77e5\u8bc6\u5165\u5e93',90],'ontology-updated':['\u5904\u7406\u5b8c\u6210',100],failed:['\u5904\u7406\u5931\u8d25',100]};
