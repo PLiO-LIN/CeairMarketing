@@ -180,7 +180,7 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
         return text_tool_result({"messages": [{"role": m.role, "content": public_value(m.content)} for m in reversed(rows)]})
 
     async def plan_holiday_marketing(parameters_json: str = "{}"):
-        """Analyze holiday travel marketing through imported data and typed ontology. Parameters: start/end YYYY-MM-DD, as_of local timestamp, segment, route_id, channel, budget_yuan. Emits interactive charts, evidence graph, rules, plan and measurement. Never executes a campaign."""
+        """Analyze holiday travel marketing through imported data and typed ontology. Parameters: start/end YYYY-MM-DD, as_of local timestamp, segment, route_id, channel, budget_yuan. Emits the complete interactive charts, evidence graph, rules, plan and measurement. Never executes a campaign. After success, finish with a concise conclusion; the UI is already published and no catalog/graph/statistics calls are needed for this analysis."""
         from .holiday_marketing import analyze_holiday, HolidayParameters
         try:
             def output(card, kind):

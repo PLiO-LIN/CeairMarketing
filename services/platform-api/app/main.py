@@ -1444,16 +1444,19 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
 
     def stream():
         yield ": ceair-agent-stream\n\n"
-        deadline = time.monotonic() + 230
+        # Limit inactivity, not the total duration of a progressing task.
+        idle_timeout = 230
+        deadline = time.monotonic() + idle_timeout
         while True:
             if time.monotonic() >= deadline:
-                yield encode("error", {"message": "智能体响应超时，请查看运行记录后重试。"})
+                yield encode("error", {"message": "智能体长时间没有返回进展，请查看运行记录后重试。"})
                 break
             try:
                 item = events.get(timeout=min(15, max(0.01, deadline - time.monotonic())))
             except queue.Empty:
                 yield ": heartbeat\n\n"
                 continue
+            deadline = time.monotonic() + idle_timeout
             kind = item.get("type")
             if kind == "trace":
                 yield encode("trace", item["item"])

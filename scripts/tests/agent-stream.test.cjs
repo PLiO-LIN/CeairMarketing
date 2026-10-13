@@ -32,3 +32,24 @@ test('idle timeout and manual cancellation release pending requests', async () =
   controller.abort();
   await assert.rejects(pending, error => error.code === 'cancelled');
 });
+
+test('continues a progressing five-minute task without a total-duration cutoff', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const stream = new ReadableStream({ start(controller) {
+    const sendProgress = minute => setTimeout(() => {
+      const frame = minute === 5 ? 'event: complete\ndata: {"answer":"完整结果"}\n\n'
+        : 'event: trace\ndata: {"event":"harness/tool-finished"}\n\n';
+      controller.enqueue(encoder.encode(frame));
+      if (minute === 5) controller.close();
+      else sendProgress(minute + 1);
+    }, 60000);
+    sendProgress(1);
+  } });
+  const pending = chat('/chat', { fetchImpl: async () => new Response(stream,
+    { headers: { 'Content-Type': 'text/event-stream' } }) });
+  for (let minute = 0; minute < 5; minute++) {
+    await new Promise(resolve => setImmediate(resolve));
+    t.mock.timers.tick(60000);
+  }
+  assert.equal((await pending).answer, '完整结果');
+});
