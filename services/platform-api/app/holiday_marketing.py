@@ -336,7 +336,7 @@ def analyze_holiday(session, tenant_id, params, publish=None, emit=None, omitted
     title = "假期出行 · " + route["origin_city"] + "—" + route["destination_city"]
     content = {"title": title, "body": f"{p.start:%m月%d日}至{p.end:%m月%d日}，关注{route['origin_city']}至{route['destination_city']}出行计划。"
         + (f"可了解{selected_product['product_name']}，适用资格、余量与最终价格以预订页核验为准。" if selected_product else "产品资格确认后提供出行权益。")}
-    proposal = dict(name=f"{p.start}假期-{route['origin_city']}{route['destination_city']}-{p.segment}（模拟草稿）",
+    proposal = dict(name=f"{p.start}假期-{route['origin_city']}{route['destination_city']}-{p.segment}",
         audience_size=planned, budget_yuan=p.budget_yuan, channels=[p.channel], product=selected_product["product_name"] if selected_product else "",
         content=content, status="候选草稿" if all_pass and planned else "阻断", planned_cost_yuan=planned_cost)
     stage("plan", "活动方案", "生成候选方案，保存草稿后进入平台审批流程。", params=scope, proposal=proposal,
