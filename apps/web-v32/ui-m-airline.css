@@ -1,9 +1,7 @@
 /* M airline identity and shared conversation output. */
-.preview-sidebar-head { min-height:64px; display:flex; align-items:center; justify-content:center; }
-.preview-robot-entry { border:0; background:transparent; cursor:pointer; border-radius:14px; padding:8px; }
-.preview-robot-entry img { width:38px; height:38px; display:block; }
-.preview-robot-entry:hover { background:#edf3fa; }
-.dongdong-avatar { cursor:pointer; padding:8px; border:1px solid #dce5ee; background:white; }
+.dongdong-avatar { display:none !important; }
+body.dongdong-mode #marketingAssistant .assistant-fab,
+body.smartspace-mode #marketingAssistant .assistant-fab { display:flex !important; }
 .dongdong-card-head .dongdong-live { margin-left:auto; }
 body.dongdong-mode .assistant-process { display:block !important; }
 body.dongdong-mode .assistant-ui-output:not(:empty) { display:flex !important; }

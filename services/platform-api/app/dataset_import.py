@@ -161,7 +161,7 @@ def import_dataset(session: Session, data: dict, tenant_code: str, username: str
     for i, (segment, count) in enumerate(sorted(segments.items()), 1):
         expression = dict(dataset_key=key("客户画像"), field="business_segment", operator="eq", value=segment,
             as_of=data["metadata"].get("as_of"), synthetic=True, counting_unit="去重客户")
-        a = AudiencePackageRecord(tenant_id=tid, external_id=xid(f"SEG-{i}"), name=segment + "（模拟）",
+        a = AudiencePackageRecord(tenant_id=tid, external_id=xid(f"SEG-{i}"), name=segment,
             selection_mode="expression", expression_json=dumps(expression), estimated_size=count, status="已冻结", created_by=uid)
         session.add(a); session.flush()
         audiences[segment] = a
@@ -170,7 +170,7 @@ def import_dataset(session: Session, data: dict, tenant_code: str, username: str
     products = {}
     for r in get("产品目录"):
         p = ProductPackageRecord(tenant_id=tid, external_id=xid("PP-" + r["product_id"]), name=r["product_name"],
-            product_type=r["category"], description=f"{r['product_name']}，模拟价格 {r['price_yuan']} 元/{r['unit']}；待上游核验。来源 {key('产品目录')} / {r['product_id']}", eligibility=r["eligibility"], status="草稿",
+            product_type=r["category"], description=f"{r['product_name']}，参考价格 {r['price_yuan']} 元/{r['unit']}；待上游核验。来源 {key('产品目录')} / {r['product_id']}", eligibility=r["eligibility"], status="草稿",
             valid_from=datetime.fromisoformat(r["valid_from"]), valid_to=datetime.fromisoformat(r["valid_to"] + "T23:59:59"), created_by=uid)
         session.add(p); session.flush(); products[r["product_id"]] = p
     touches = defaultdict(list)
@@ -192,7 +192,7 @@ def import_dataset(session: Session, data: dict, tenant_code: str, username: str
         session.add(sn); session.flush(); historical_snapshots[r["campaign_id"]] = sn
         linked = content_rows[r["campaign_id"]]
         p = products.get(linked[0]["product_id"]) if linked else None
-        session.add(CampaignRecord(tenant_id=tid, id=cid, name=r["name"], stage="效果复盘", status="已完成（模拟历史）",
+        session.add(CampaignRecord(tenant_id=tid, id=cid, name=r["name"], stage="效果复盘", status="已完成",
             version=r["version"], owner="数据导入", audience_size=len(universe), product_package=p.name if p else "",
             budget_yuan=r["budget_yuan"], roi_target=0))
         v = CampaignVersionRecord(tenant_id=tid, campaign_id=cid, external_id=xid(r["campaign_id"] + "-" + r["version"]),
