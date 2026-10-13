@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1460" viewBox="0 0 1600 1460">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">数据来源到业务与本体的处理链路</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="40" y="170" width="470" height="140" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="275.0" y="202.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="275.0" dy="0">用户爬取CSV</tspan>
+</text>
+<text x="275.0" y="261.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="275.0" dy="0">15文件 / 70列</tspan>
+</text>
+<rect x="565" y="170" width="470" height="140" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="800.0" y="202.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">公开与项目资料</tspan>
+</text>
+<text x="800.0" y="261.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">官网 / NDC / 产品与画像</tspan>
+</text>
+<rect x="1090" y="170" width="470" height="140" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1325.0" y="202.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1325.0" dy="0">固定种子模拟</tspan>
+</text>
+<text x="1325.0" y="261.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1325.0" dy="0">客户 / 行为 / 订单 / 实验</tspan>
+</text>
+<polyline points="275,310 275,370" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="275,370 268.91048252244275,357.39374056706254 281.08951747755725,357.39374056706254" fill="#245B9E"/>
+<polyline points="800,310 800,370" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="800,370 793.9104825224427,357.39374056706254 806.0895174775573,357.39374056706254" fill="#245B9E"/>
+<polyline points="1325,310 1325,370" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1325,370 1318.9104825224429,357.39374056706254 1331.0895174775571,357.39374056706254" fill="#245B9E"/>
+<rect x="40" y="370" width="1520" height="170" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="402.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">原始层与来源登记</tspan>
+</text>
+<rect x="65" y="430" width="1470" height="83" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="800.0" y="471.5" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">保留原值、文件与行、SHA-256、source_id及data_mode</tspan>
+</text>
+<polyline points="800,540 800,650" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="800,650 793.9104825224427,637.3937405670625 806.0895174775573,637.3937405670625" fill="#245B9E"/>
+<rect x="634.25" y="580.0" width="331.5" height="34" fill="white"/>
+<text x="800" y="597.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">字段 / 外键 / 金额 / 时间校验</tspan>
+</text>
+<rect x="40" y="650" width="1520" height="190" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="66" y="682.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">标准数据包 CE26</tspan>
+</text>
+<rect x="65" y="710" width="1470" height="100" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="800.0" y="742.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">29数据集 · 429,996源记录 · 同版本导入指纹</tspan>
+</text>
+<text x="800.0" y="775.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">captured_at未知保持空值，原始层与标准层分离</tspan>
+</text>
+<polyline points="430,840 430,940" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="430,940 423.91048252244275,927.3937405670625 436.08951747755725,927.3937405670625" fill="#245B9E"/>
+<polyline points="1170,840 1170,940" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1170,940 1163.9104825224429,927.3937405670625 1176.0895174775571,927.3937405670625" fill="#245B9E"/>
+<rect x="40" y="940" width="720" height="225" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="972.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">数据目录与业务工作台</tspan>
+</text>
+<rect x="65" y="1005" width="670" height="125" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="400.0" y="1037.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">源行与业务投影</tspan>
+</text>
+<text x="400.0" y="1086.25" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">源行保真 / 客群快照 / 产品 / 活动 / 内容</tspan>
+</text>
+<rect x="840" y="940" width="720" height="225" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="866" y="972.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="866" dy="0">本体实例与证据</tspan>
+</text>
+<rect x="865" y="1005" width="670" height="125" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1200.0" y="1037.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">对象与关系投影</tspan>
+</text>
+<text x="1200.0" y="1086.25" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">航班 / 航段 / 舱位 / 运价 / 观测 / 来源</tspan>
+</text>
+<polyline points="400,1165 400,1240 1200,1240 1200,1165" fill="none" stroke="#377C62" stroke-width="3"/>
+<polygon points="1200,1165 1206.0895174775571,1177.6062594329376 1193.9104825224429,1177.6062594329376" fill="#377C62"/>
+<rect x="647.0" y="1223.0" width="306.0" height="34" fill="white"/>
+<text x="800" y="1240.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">业务记录与本体实例同事务</tspan>
+</text>
+<rect x="250" y="1320" width="1100" height="92" rx="10" fill="#FFFFFF" stroke="#C62340" stroke-width="2"/>
+<text x="800.0" y="1352.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">导入幂等与整体回滚</tspan>
+</text>
+<text x="800.0" y="1380.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">任何类型、关系或质量校验失败，整体回滚</tspan>
+</text>
+</svg>

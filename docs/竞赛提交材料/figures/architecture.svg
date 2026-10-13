@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1410" viewBox="0 0 1600 1410">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">平台分层架构与跨层控制</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="40" y="170" width="1160" height="145" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="202.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">应用层</tspan>
+</text>
+<text x="620" y="266.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="620" dy="0">首页 · 智能空间 · 画像与产品 · 活动与复盘</tspan>
+</text>
+<polyline points="620,315 620,360" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="620,360 613.9104825224427,347.39374056706254 626.0895174775573,347.39374056706254" fill="#245B9E"/>
+<rect x="40" y="360" width="1160" height="145" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="392.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">交互层</tspan>
+</text>
+<text x="620" y="456.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="620" dy="0">SSE公开事件 · A2UI有限组件 · 参数动作与历史恢复</tspan>
+</text>
+<polyline points="620,505 620,550" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="620,550 613.9104825224427,537.3937405670625 626.0895174775573,537.3937405670625" fill="#245B9E"/>
+<rect x="40" y="550" width="1160" height="145" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="582.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">智能体层</tspan>
+</text>
+<text x="620" y="646.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="620" dy="0">东东 · 六个业务智能域 · AgentScope · 受控工具</tspan>
+</text>
+<polyline points="620,695 620,740" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="620,740 613.9104825224427,727.3937405670625 626.0895174775573,727.3937405670625" fill="#245B9E"/>
+<rect x="40" y="740" width="1160" height="145" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="66" y="772.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">约束层</tspan>
+</text>
+<text x="620" y="836.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="620" dy="0">本体路径 · 资格与预算 · 数据版本 · 审批门禁</tspan>
+</text>
+<polyline points="620,885 620,930" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="620,930 613.9104825224427,917.3937405670625 626.0895174775573,917.3937405670625" fill="#245B9E"/>
+<rect x="40" y="930" width="1160" height="145" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="962.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">服务层</tspan>
+</text>
+<text x="620" y="1026.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="620" dy="0">FastAPI · 数据导入与查询 · 活动服务 · 事务投影</tspan>
+</text>
+<polyline points="620,1075 620,1120" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="620,1120 613.9104825224427,1107.3937405670624 626.0895174775573,1107.3937405670624" fill="#245B9E"/>
+<rect x="40" y="1120" width="1160" height="145" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="1152.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">存储与来源</tspan>
+</text>
+<text x="620" y="1216.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="620" dy="0">SQLite演示 / PostgreSQL支持 · CE26源行 · 本体实例</tspan>
+</text>
+<rect x="1260" y="170" width="300" height="1095" rx="10" fill="#F4F6F9" stroke="#6B7C90" stroke-width="2"/>
+<text x="1286" y="202.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="1286" dy="0">跨层控制</tspan>
+</text>
+<rect x="1285" y="250" width="250" height="135" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1410.0" y="282.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">身份与租户</tspan>
+</text>
+<text x="1410.0" y="337.75" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">访问隔离</tspan>
+</text>
+<rect x="1285" y="445" width="250" height="135" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1410.0" y="477.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">角色与权限</tspan>
+</text>
+<text x="1410.0" y="532.75" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">受控工具</tspan>
+</text>
+<rect x="1285" y="640" width="250" height="135" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1410.0" y="672.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">状态与幂等</tspan>
+</text>
+<text x="1410.0" y="727.75" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">任务确认</tspan>
+</text>
+<rect x="1285" y="835" width="250" height="135" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1410.0" y="867.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">版本与证据</tspan>
+</text>
+<text x="1410.0" y="922.75" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">同源追踪</tspan>
+</text>
+<rect x="1285" y="1030" width="250" height="135" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1410.0" y="1062.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">异常与回退</tspan>
+</text>
+<text x="1410.0" y="1117.75" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1410.0" dy="0">公开失败</tspan>
+</text>
+<text x="800" y="1355.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">数据事实由后端计算；大模型负责理解任务、选择工具和组织解释</tspan>
+</text>
+</svg>

@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1480" viewBox="0 0 1600 1480">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">A2UI输出渲染与交互回传架构</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="40" y="170" width="720" height="230" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="66" y="202.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">后台结果与数据模型</tspan>
+</text>
+<rect x="65" y="240" width="670" height="125" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="400.0" y="272.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">同次分析的结构化事实</tspan>
+</text>
+<text x="400.0" y="321.25" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">人数 / 预算 / 规则 / 图谱路径 / 来源键</tspan>
+</text>
+<rect x="840" y="170" width="720" height="230" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="866" y="202.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="866" dy="0">A2UI v0.9.1消息</tspan>
+</text>
+<rect x="865" y="240" width="670" height="125" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1200.0" y="272.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">表面、组件与数据更新</tspan>
+</text>
+<text x="1200.0" y="304.25" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">createSurface / updateDataModel</tspan>
+<tspan x="1200.0" dy="34">updateComponents</tspan>
+</text>
+<polyline points="760,290 840,290" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="840,290 827.3937405670625,296.08951747755725 827.3937405670625,283.91048252244275" fill="#245B9E"/>
+<rect x="840" y="480" width="720" height="235" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="866" y="512.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="866" dy="0">有限平台组件目录</tspan>
+</text>
+<rect x="865" y="550" width="670" height="130" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1200.0" y="582.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">ceair-marketing:assistant-v1</tspan>
+</text>
+<text x="1200.0" y="617.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">Chart / DataTable / TaskCard</tspan>
+<tspan x="1200.0" dy="34">MarketingStage / Text / Button</tspan>
+</text>
+<polyline points="1200,400 1200,480" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1200,480 1193.9104825224429,467.39374056706254 1206.0895174775571,467.39374056706254" fill="#245B9E"/>
+<rect x="1146.5" y="423.0" width="107.0" height="34" fill="white"/>
+<text x="1200" y="440.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200" dy="0">SSE传输</tspan>
+</text>
+<rect x="40" y="480" width="720" height="235" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="66" y="512.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">数据绑定与协议校验</tspan>
+</text>
+<rect x="65" y="550" width="670" height="130" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="400.0" y="582.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">JSON Pointer与JSON Schema</tspan>
+</text>
+<text x="400.0" y="634.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">组件绑定结构化数据，消息校验后渲染</tspan>
+</text>
+<polyline points="760,600 840,600" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="840,600 827.3937405670625,606.0895174775573 827.3937405670625,593.9104825224427" fill="#245B9E"/>
+<rect x="840" y="795" width="720" height="245" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="866" y="827.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="866" dy="0">原生前端渲染</tspan>
+</text>
+<rect x="865" y="865" width="670" height="140" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1200.0" y="897.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">图表、图谱与任务交互</tspan>
+</text>
+<text x="1200.0" y="939.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">图表切换 / 明细查看 / 证据定位</tspan>
+<tspan x="1200.0" dy="34">参数选择 / 保存方案</tspan>
+</text>
+<polyline points="1200,715 1200,795" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1200,795 1193.9104825224429,782.3937405670625 1206.0895174775571,782.3937405670625" fill="#245B9E"/>
+<rect x="40" y="795" width="720" height="245" rx="10" fill="#FFF0F3" stroke="#C62340" stroke-width="2"/>
+<text x="66" y="827.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">动作校验与后台重算</tspan>
+</text>
+<rect x="65" y="865" width="670" height="140" rx="10" fill="#FFFFFF" stroke="#C62340" stroke-width="2"/>
+<text x="400.0" y="897.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">归属、权限、资格与确认</tspan>
+</text>
+<text x="400.0" y="939.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">会话与租户归属 / 待确认任务</tspan>
+<tspan x="400.0" dy="34">再次校验业务约束</tspan>
+</text>
+<polyline points="840,920 760,920" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="760,920 772.6062594329375,913.9104825224427 772.6062594329375,926.0895174775573" fill="#C62340"/>
+<rect x="767.0" y="928.0" width="66.0" height="34" fill="white"/>
+<text x="800" y="945.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">动作</tspan>
+</text>
+<polyline points="400,795 400,715" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="400,715 406.08951747755725,727.6062594329375 393.91048252244275,727.6062594329375" fill="#C62340"/>
+<rect x="160" y="1140" width="1280" height="135" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="800.0" y="1172.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">7个阶段 × 每表面3条协议消息 = 21条消息</tspan>
+</text>
+<text x="800.0" y="1227.75" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">不执行模型生成的HTML或脚本；历史保存协议消息与表面</tspan>
+</text>
+<text x="800" y="1370.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">图表不是独立插图，而是同次后台分析结果的动态界面</tspan>
+</text>
+</svg>

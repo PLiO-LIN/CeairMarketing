@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1630" viewBox="0 0 1600 1630">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">航空供给与营销本体关系</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="40" y="160" width="1520" height="615" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="192.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">航空供给本体</tspan>
+</text>
+<rect x="70" y="300" width="270" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="205.0" y="332.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="205.0" dy="0">Flight</tspan>
+</text>
+<text x="205.0" y="372.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="205.0" dy="0">具体航班</tspan>
+</text>
+<rect x="425" y="235" width="350" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="600.0" y="267.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="600.0" dy="0">Route</tspan>
+</text>
+<text x="600.0" y="307.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="600.0" dy="0">有向航线</tspan>
+</text>
+<rect x="1010" y="235" width="485" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1252.5" y="267.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1252.5" dy="0">Airport</tspan>
+</text>
+<text x="1252.5" y="307.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1252.5" dy="0">出发 / 到达机场</tspan>
+</text>
+<rect x="425" y="420" width="350" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="600.0" y="452.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="600.0" dy="0">FlightSegment</tspan>
+</text>
+<text x="600.0" y="492.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="600.0" dy="0">源行程航段</tspan>
+</text>
+<rect x="425" y="615" width="270" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="560.0" y="647.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="560.0" dy="0">Cabin</tspan>
+</text>
+<text x="560.0" y="687.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="560.0" dy="0">舱位观测</tspan>
+</text>
+<rect x="855" y="615" width="270" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="990.0" y="647.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="990.0" dy="0">Fare</tspan>
+</text>
+<text x="990.0" y="687.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="990.0" dy="0">带时点运价</tspan>
+</text>
+<rect x="1290" y="615" width="235" height="112" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1407.5" y="647.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1407.5" dy="0">Product</tspan>
+</text>
+<text x="1407.5" y="687.8" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1407.5" dy="0">票价产品</tspan>
+</text>
+<polyline points="340,336 380,336 380,291 425,291" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="425,291 412.39374056706254,297.08951747755725 412.39374056706254,284.91048252244275" fill="#245B9E"/>
+<rect x="215.0" y="253.0" width="160.0" height="34" fill="white"/>
+<text x="295" y="270.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="295" dy="0">operates_on</tspan>
+</text>
+<polyline points="775,291 1010,291" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1010,291 997.3937405670625,297.08951747755725 997.3937405670625,284.91048252244275" fill="#245B9E"/>
+<rect x="835.0" y="249.0" width="114.0" height="34" fill="white"/>
+<text x="892" y="266.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="892" dy="0">机场关系</tspan>
+</text>
+<polyline points="340,365 380,365 380,476 425,476" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="425,476 412.39374056706254,482.08951747755725 412.39374056706254,469.91048252244275" fill="#245B9E"/>
+<rect x="205.75" y="435.0" width="168.5" height="34" fill="white"/>
+<text x="290" y="452.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="290" dy="0">has_segment</tspan>
+</text>
+<polyline points="775,476 1235,476 1235,347" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1235,347 1241.0895174775571,359.60625943293746 1228.9104825224429,359.60625943293746" fill="#245B9E"/>
+<rect x="993.0" y="433.0" width="114.0" height="34" fill="white"/>
+<text x="1050" y="450.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1050" dy="0">机场关系</tspan>
+</text>
+<polyline points="205,412 205,671 425,671" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="425,671 412.39374056706254,677.0895174775573 412.39374056706254,664.9104825224427" fill="#245B9E"/>
+<rect x="234.5" y="629.0" width="131.0" height="34" fill="white"/>
+<text x="300" y="646.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="300" dy="0">has_cabin</tspan>
+</text>
+<polyline points="695,671 855,671" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="855,671 842.3937405670625,677.0895174775573 842.3937405670625,664.9104825224427" fill="#245B9E"/>
+<rect x="718.50390625" y="629.0" width="112.9921875" height="34" fill="white"/>
+<text x="775" y="646.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="775" dy="0">has_fare</tspan>
+</text>
+<polyline points="1125,671 1290,671" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1290,671 1277.3937405670624,677.0895174775573 1277.3937405670624,664.9104825224427" fill="#245B9E"/>
+<rect x="1124.50390625" y="628.0" width="170.9921875" height="34" fill="white"/>
+<text x="1210" y="645.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1210" dy="0">uses_product</tspan>
+</text>
+<rect x="40" y="825" width="1520" height="280" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="66" y="857.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">产品包与活动本体</tspan>
+</text>
+<rect x="70" y="915" width="420" height="120" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="280.0" y="947.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="280.0" dy="0">Campaign</tspan>
+</text>
+<text x="280.0" y="993.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="280.0" dy="0">活动 / 客群 / 内容版本</tspan>
+</text>
+<rect x="615" y="915" width="420" height="120" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="825.0" y="947.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="825.0" dy="0">ProductPackage</tspan>
+</text>
+<text x="825.0" y="993.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="825.0" dy="0">营销产品包</tspan>
+</text>
+<rect x="1170" y="915" width="365" height="120" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="1352.5" y="947.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1352.5" dy="0">AncillaryProduct</tspan>
+</text>
+<text x="1352.5" y="993.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1352.5" dy="0">权益与适用规则</tspan>
+</text>
+<polyline points="490,975 615,975" fill="none" stroke="#377C62" stroke-width="3"/>
+<polygon points="615,975 602.3937405670625,981.0895174775573 602.3937405670625,968.9104825224427" fill="#377C62"/>
+<rect x="508.0" y="933.0" width="90.0" height="34" fill="white"/>
+<text x="553" y="950.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="553" dy="0">产品包</tspan>
+</text>
+<polyline points="1035,975 1170,975" fill="none" stroke="#377C62" stroke-width="3"/>
+<polygon points="1170,975 1157.3937405670624,981.0895174775573 1157.3937405670624,968.9104825224427" fill="#377C62"/>
+<rect x="1043.0" y="933.0" width="114.0" height="34" fill="white"/>
+<text x="1100" y="950.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1100" dy="0">包含权益</tspan>
+</text>
+<rect x="40" y="1155" width="1520" height="285" rx="10" fill="#FFF0F3" stroke="#C62340" stroke-width="2"/>
+<text x="66" y="1187.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">建议与证据本体</tspan>
+</text>
+<rect x="70" y="1245" width="420" height="120" rx="10" fill="#FFFFFF" stroke="#C62340" stroke-width="2"/>
+<text x="280.0" y="1277.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="280.0" dy="0">Recommendation</tspan>
+</text>
+<text x="280.0" y="1323.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="280.0" dy="0">待确认营销建议</tspan>
+</text>
+<rect x="615" y="1245" width="420" height="120" rx="10" fill="#FFFFFF" stroke="#C62340" stroke-width="2"/>
+<text x="825.0" y="1277.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="825.0" dy="0">Evidence</tspan>
+</text>
+<text x="825.0" y="1323.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="825.0" dy="0">来源键 / 规则 / 路径</tspan>
+</text>
+<rect x="1170" y="1245" width="365" height="120" rx="10" fill="#FFFFFF" stroke="#C62340" stroke-width="2"/>
+<text x="1352.5" y="1277.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1352.5" dy="0">Campaign</tspan>
+</text>
+<text x="1352.5" y="1323.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1352.5" dy="0">关联活动及版本</tspan>
+</text>
+<polyline points="490,1305 615,1305" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="615,1305 602.3937405670625,1311.0895174775571 602.3937405670625,1298.9104825224429" fill="#C62340"/>
+<rect x="520.0" y="1263.0" width="66.0" height="34" fill="white"/>
+<text x="553" y="1280.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="553" dy="0">证据</tspan>
+</text>
+<polyline points="280,1365 280,1412 1360,1412 1360,1365" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="1360,1365 1366.0895174775571,1377.6062594329376 1353.9104825224429,1377.6062594329376" fill="#C62340"/>
+<rect x="703.0" y="1395.0" width="234.0" height="34" fill="white"/>
+<text x="820" y="1412.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="820" dy="0">确认保存后关联活动</tspan>
+</text>
+<text x="800" y="1510.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">Flight→MetricObservation：库存与经营观测；活动→客群快照 / 内容版本</tspan>
+</text>
+<text x="800" y="1570.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">类型、方向、时点、版本和来源共同参与资格校验</tspan>
+</text>
+</svg>

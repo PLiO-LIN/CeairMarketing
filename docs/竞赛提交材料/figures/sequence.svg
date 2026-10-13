@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1610" viewBox="0 0 1600 1610">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">从自然语言提问到活动草稿的时序</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="55" y="170" width="330" height="86" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="220.0" y="213.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="220.0" dy="0">用户与智能空间</tspan>
+</text>
+<polyline points="220,280 220,1520" fill="none" stroke="#C9D6E6" stroke-width="3" stroke-dasharray="8 6"/>
+<polygon points="220,1520 213.91048252244278,1507.3937405670624 226.08951747755722,1507.3937405670624" fill="#C9D6E6"/>
+<rect x="445" y="170" width="330" height="86" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="610.0" y="213.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="610.0" dy="0">东东与AgentScope</tspan>
+</text>
+<polyline points="610,280 610,1520" fill="none" stroke="#C9D6E6" stroke-width="3" stroke-dasharray="8 6"/>
+<polygon points="610,1520 603.9104825224427,1507.3937405670624 616.0895174775573,1507.3937405670624" fill="#C9D6E6"/>
+<rect x="835" y="170" width="330" height="86" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1000.0" y="213.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1000.0" dy="0">业务服务与本体</tspan>
+</text>
+<polyline points="1000,280 1000,1520" fill="none" stroke="#C9D6E6" stroke-width="3" stroke-dasharray="8 6"/>
+<polygon points="1000,1520 993.9104825224427,1507.3937405670624 1006.0895174775573,1507.3937405670624" fill="#C9D6E6"/>
+<rect x="1225" y="170" width="330" height="86" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1390.0" y="213.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1390.0" dy="0">数据与任务存储</tspan>
+</text>
+<polyline points="1390,280 1390,1520" fill="none" stroke="#C9D6E6" stroke-width="3" stroke-dasharray="8 6"/>
+<polygon points="1390,1520 1383.9104825224429,1507.3937405670624 1396.0895174775571,1507.3937405670624" fill="#C9D6E6"/>
+<polyline points="220,355 610,355" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="610,355 597.3937405670625,361.08951747755725 597.3937405670625,348.91048252244275" fill="#245B9E"/>
+<rect x="262.0" y="311.0" width="306.0" height="34" fill="white"/>
+<text x="415.0" y="328.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="415.0" dy="0">自然语言目标与会话上下文</tspan>
+</text>
+<polyline points="610,490 1000,490" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1000,490 987.3937405670625,496.08951747755725 987.3937405670625,483.91048252244275" fill="#245B9E"/>
+<rect x="652.0" y="446.0" width="306.0" height="34" fill="white"/>
+<text x="805.0" y="463.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="805.0" dy="0">识别参数并发起七阶段分析</tspan>
+</text>
+<polyline points="1000,625 1390,625" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1390,625 1377.3937405670624,631.0895174775573 1377.3937405670624,618.9104825224427" fill="#245B9E"/>
+<rect x="1030.0" y="581.0" width="330.0" height="34" fill="white"/>
+<text x="1195.0" y="598.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1195.0" dy="0">读取同租户同版本源行与关系</tspan>
+</text>
+<polyline points="1390,760 1000,760" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1000,760 1012.6062594329375,753.9104825224427 1012.6062594329375,766.0895174775573" fill="#245B9E"/>
+<rect x="1030.0" y="716.0" width="330.0" height="34" fill="white"/>
+<text x="1195.0" y="733.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1195.0" dy="0">返回事实、资格、路径及来源</tspan>
+</text>
+<polyline points="1000,895 220,895" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="220,895 232.60625943293746,888.9104825224427 232.60625943293746,901.0895174775573" fill="#245B9E"/>
+<rect x="468.5" y="851.0" width="283.0" height="34" fill="white"/>
+<text x="610.0" y="868.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="610.0" dy="0">SSE阶段事件与A2UI结果</tspan>
+</text>
+<polyline points="610,1030 220,1030" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="220,1030 232.60625943293746,1023.9104825224427 232.60625943293746,1036.0895174775571" fill="#245B9E"/>
+<rect x="262.0" y="986.0" width="306.0" height="34" fill="white"/>
+<text x="415.0" y="1003.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="415.0" dy="0">组织简短结论与待核验说明</tspan>
+</text>
+<polyline points="220,1165 1000,1165" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="1000,1165 987.3937405670625,1171.0895174775571 987.3937405670625,1158.9104825224429" fill="#C62340"/>
+<rect x="469.0" y="1121.0" width="282.0" height="34" fill="white"/>
+<text x="610.0" y="1138.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="610.0" dy="0">保存请求形成待确认任务</tspan>
+</text>
+<polyline points="220,1300 1000,1300" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="1000,1300 987.3937405670625,1306.0895174775571 987.3937405670625,1293.9104825224429" fill="#C62340"/>
+<rect x="457.0" y="1256.0" width="306.0" height="34" fill="white"/>
+<text x="610.0" y="1273.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="610.0" dy="0">人工确认后重算与归属校验</tspan>
+</text>
+<polyline points="1000,1435 1390,1435" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1390,1435 1377.3937405670624,1441.0895174775571 1377.3937405670624,1428.9104825224429" fill="#245B9E"/>
+<rect x="1042.0" y="1391.0" width="306.0" height="34" fill="white"/>
+<text x="1195.0" y="1408.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1195.0" dy="0">事务写入活动、快照与证据</tspan>
+</text>
+<text x="800" y="1570.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">公开的是阶段状态、动作、规则和结果；不展示模型隐藏思维内容</tspan>
+</text>
+</svg>

@@ -1,0 +1,237 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1810" viewBox="0 0 1600 1810">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">东方航空智能营销平台总体架构</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="40" y="160" width="1120" height="210" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="192.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">应用工作空间</tspan>
+</text>
+<text x="1138" y="194.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="end" dominant-baseline="middle">
+<tspan x="1138" dy="0">原生 JavaScript / HTML / CSS</tspan>
+</text>
+<rect x="65" y="225" width="335" height="118" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="232.5" y="257.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">首页与智能空间</tspan>
+</text>
+<text x="232.5" y="301.7" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">轻量问答 · 历史任务</tspan>
+</text>
+<rect x="425" y="225" width="335" height="118" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="592.5" y="257.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">营销业务工作台</tspan>
+</text>
+<text x="592.5" y="301.7" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">画像 · 产品 · 活动 · 复盘</tspan>
+</text>
+<rect x="785" y="225" width="335" height="118" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="952.5" y="257.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">管理与知识工作台</tspan>
+</text>
+<text x="952.5" y="301.7" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">本体 · 数据 · 模型配置</tspan>
+</text>
+<rect x="40" y="425" width="1120" height="170" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="457.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">交互与会话层</tspan>
+</text>
+<rect x="65" y="480" width="335" height="100" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="232.5" y="512.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">SSE公开事件</tspan>
+</text>
+<text x="232.5" y="545.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">阶段状态 · 工具结果</tspan>
+</text>
+<rect x="425" y="480" width="335" height="100" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="592.5" y="512.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">A2UI界面协议</tspan>
+</text>
+<text x="592.5" y="545.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">图表 · 表格 · 图谱 · 任务</tspan>
+</text>
+<rect x="785" y="480" width="335" height="100" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="952.5" y="512.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">会话与任务服务</tspan>
+</text>
+<text x="952.5" y="545.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">历史恢复 · 显式记忆</tspan>
+</text>
+<rect x="40" y="650" width="1120" height="310" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="682.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">智能体运行层</tspan>
+</text>
+<text x="1138" y="684.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="end" dominant-baseline="middle">
+<tspan x="1138" dy="0">AgentScope 2.0.8</tspan>
+</text>
+<rect x="65" y="710" width="1070" height="70" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="600.0" y="745.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="600.0" dy="0">东东协同入口与受控工具目录</tspan>
+</text>
+<rect x="65" y="805" width="335" height="52" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="232.5" y="831.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">机会洞察</tspan>
+</text>
+<rect x="425" y="805" width="335" height="52" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="592.5" y="831.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">客群洞察</tspan>
+</text>
+<rect x="785" y="805" width="335" height="52" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="952.5" y="831.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">产品匹配</tspan>
+</text>
+<rect x="65" y="875" width="335" height="52" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="232.5" y="901.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">活动编排</tspan>
+</text>
+<rect x="425" y="875" width="335" height="52" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="592.5" y="901.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">内容生成</tspan>
+</text>
+<rect x="785" y="875" width="335" height="52" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="952.5" y="901.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">效果分析</tspan>
+</text>
+<rect x="40" y="1015" width="1120" height="190" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="66" y="1047.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">业务约束与执行层</tspan>
+</text>
+<rect x="65" y="1080" width="335" height="100" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="232.5" y="1112.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">参数化营销分析</tspan>
+</text>
+<text x="232.5" y="1145.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">资格 · 时点 · 预算</tspan>
+</text>
+<rect x="425" y="1080" width="335" height="100" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="592.5" y="1112.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">航空营销本体</tspan>
+</text>
+<text x="592.5" y="1145.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">类型 · 多跳关系 · 证据</tspan>
+</text>
+<rect x="785" y="1080" width="335" height="100" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="952.5" y="1112.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">活动业务服务</tspan>
+</text>
+<text x="952.5" y="1145.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">草稿 · 版本 · 审批</tspan>
+</text>
+<rect x="40" y="1260" width="1120" height="195" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="66" y="1292.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">数据访问与持久化</tspan>
+</text>
+<text x="1138" y="1294.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="end" dominant-baseline="middle">
+<tspan x="1138" dy="0">FastAPI / SQLAlchemy</tspan>
+</text>
+<rect x="65" y="1320" width="335" height="110" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="232.5" y="1352.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">数据目录与源行</tspan>
+</text>
+<text x="232.5" y="1391.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="232.5" dy="0">分页查询 · 聚合统计</tspan>
+</text>
+<rect x="425" y="1320" width="335" height="110" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="592.5" y="1352.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">业务记录与事务</tspan>
+</text>
+<text x="592.5" y="1391.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="592.5" dy="0">SQLite演示 / PG支持</tspan>
+</text>
+<rect x="785" y="1320" width="335" height="110" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="952.5" y="1352.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">本体实例与投影</tspan>
+</text>
+<text x="952.5" y="1391.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="952.5" dy="0">对象 · 关系 · 来源版本</tspan>
+</text>
+<rect x="40" y="1515" width="1520" height="190" rx="10" fill="#F4F6F9" stroke="#6B7C90" stroke-width="2"/>
+<text x="66" y="1547.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="66" dy="0">演示数据与知识来源</tspan>
+</text>
+<rect x="65" y="1580" width="470" height="98" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="300.0" y="1612.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="300.0" dy="0">用户航班爬取资料</tspan>
+</text>
+<text x="300.0" y="1643.7" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="300.0" dy="0">15 CSV · 原始值与标准层</tspan>
+</text>
+<rect x="565" y="1580" width="470" height="98" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="800.0" y="1612.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">模拟业务与实验数据</tspan>
+</text>
+<text x="800.0" y="1643.7" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">客户 · 行为 · 订单 · 实验</tspan>
+</text>
+<rect x="1065" y="1580" width="470" height="98" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2"/>
+<text x="1300.0" y="1612.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1300.0" dy="0">项目知识与公开参考</tspan>
+</text>
+<text x="1300.0" y="1643.7" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1300.0" dy="0">产品资料 · 画像字典 · 官网</tspan>
+</text>
+<rect x="1215" y="160" width="345" height="435" rx="10" fill="#EAF1FB" stroke="#245B9E" stroke-width="2"/>
+<text x="1241" y="192.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="1241" dy="0">云端模型服务</tspan>
+</text>
+<rect x="1240" y="235" width="295" height="110" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1387.5" y="267.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">阿里云Token Plan</tspan>
+</text>
+<text x="1387.5" y="306.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">OpenAI兼容调用</tspan>
+</text>
+<rect x="1240" y="375" width="295" height="110" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1387.5" y="407.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">阿里云百炼</tspan>
+</text>
+<text x="1387.5" y="446.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">模型 / Agent入口</tspan>
+</text>
+<text x="1385" y="548.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="24" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1385" dy="0">服务端保护模型凭据</tspan>
+</text>
+<rect x="1215" y="1015" width="345" height="440" rx="10" fill="#F4F6F9" stroke="#6B7C90" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1241" y="1047.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="1241" dy="0">生产外部接口</tspan>
+</text>
+<rect x="1240" y="1090" width="295" height="58" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1387.5" y="1119.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">CRM / CDP会员</tspan>
+</text>
+<rect x="1240" y="1166" width="295" height="58" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1387.5" y="1195.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">PSS客票与库存</tspan>
+</text>
+<rect x="1240" y="1242" width="295" height="58" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1387.5" y="1271.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">产品权益平台</tspan>
+</text>
+<rect x="1240" y="1318" width="295" height="58" rx="10" fill="#FFFFFF" stroke="#6B7C90" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="1387.5" y="1347.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="27" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1387.5" dy="0">渠道回执与实验</tspan>
+</text>
+<text x="1386" y="1420.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="23" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1386" dy="0">标准接口规划 · 尚未接入</tspan>
+</text>
+<polyline points="600,370 600,425" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="600,425 593.9104825224427,412.39374056706254 606.0895174775573,412.39374056706254" fill="#245B9E"/>
+<polyline points="600,595 600,650" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="600,650 593.9104825224427,637.3937405670625 606.0895174775573,637.3937405670625" fill="#245B9E"/>
+<polyline points="600,960 600,1015" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="600,1015 593.9104825224427,1002.3937405670625 606.0895174775573,1002.3937405670625" fill="#245B9E"/>
+<polyline points="600,1205 600,1260" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="600,1260 593.9104825224427,1247.3937405670624 606.0895174775573,1247.3937405670624" fill="#245B9E"/>
+<polyline points="600,1515 600,1455" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="600,1455 606.0895174775573,1467.6062594329376 593.9104825224427,1467.6062594329376" fill="#245B9E"/>
+<polyline points="1160,745 1190,745 1190,550 1215,550" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="1215,550 1202.3937405670624,556.0895174775573 1202.3937405670624,543.9104825224427" fill="#245B9E"/>
+<polyline points="1215,1320 1190,1320 1190,1370 1160,1370" fill="none" stroke="#6B7C90" stroke-width="3" stroke-dasharray="8 6"/>
+<polygon points="1160,1370 1172.6062594329376,1363.9104825224429 1172.6062594329376,1376.0895174775571" fill="#6B7C90"/>
+<text x="800" y="1760.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">实线：当前实现与演示路径    虚线：生产接口规划    业务与本体投影同事务</tspan>
+</text>
+</svg>

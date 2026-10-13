@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1250" viewBox="0 0 1600 1250">
+<rect width="100%" height="100%" fill="white"/>
+<text x="40" y="38.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">系统技术方案</tspan>
+</text>
+<text x="40" y="90.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="43" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="40" dy="0">本体关系与业务资格共同约束行动</tspan>
+</text>
+<polyline points="40,125 1560,125" fill="none" stroke="#C9D6E6" stroke-width="2"/>
+<rect x="40" y="170" width="470" height="210" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="275.0" y="202.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="275.0" dy="0">需求与客群</tspan>
+</text>
+<text x="275.0" y="289.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="275.0" dy="0">近期意向 / 画像时点</tspan>
+<tspan x="275.0" dy="34">授权 / 保护 / 频控</tspan>
+</text>
+<rect x="565" y="170" width="470" height="210" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="800.0" y="202.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">本体供给路径</tspan>
+</text>
+<text x="800.0" y="289.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">Flight → Route → Airport</tspan>
+<tspan x="800.0" dy="34">Flight → Cabin → Fare → Product</tspan>
+</text>
+<rect x="1090" y="170" width="470" height="210" rx="10" fill="#FFFFFF" stroke="#245B9E" stroke-width="2"/>
+<text x="1325.0" y="202.0" fill="#245B9E" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1325.0" dy="0">产品权益与时效</tspan>
+</text>
+<text x="1325.0" y="289.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1325.0" dy="0">产品包 → 权益版本</tspan>
+<tspan x="1325.0" dy="34">有效期 / 机场 / 同行 / Wi-Fi</tspan>
+</text>
+<polyline points="275,380 275,465 800,465 800,545" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="800,545 793.9104825224427,532.3937405670625 806.0895174775573,532.3937405670625" fill="#245B9E"/>
+<polyline points="800,380 800,465 800,465 800,545" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="800,545 793.9104825224427,532.3937405670625 806.0895174775573,532.3937405670625" fill="#245B9E"/>
+<polyline points="1325,380 1325,465 800,465 800,545" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="800,545 793.9104825224427,532.3937405670625 806.0895174775573,532.3937405670625" fill="#245B9E"/>
+<rect x="180" y="545" width="1240" height="220" rx="10" fill="#E8F3EF" stroke="#377C62" stroke-width="2"/>
+<text x="206" y="577.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="31" font-weight="700" text-anchor="start" dominant-baseline="middle">
+<tspan x="206" dy="0">确定性资格与关系门禁</tspan>
+</text>
+<rect x="205" y="612" width="1190" height="120" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="800.0" y="644.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="29" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">源行属性一致 · 类型与方向正确 · 观测时点满足</tspan>
+</text>
+<text x="800.0" y="690.0" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="25" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800.0" dy="0">关键关系缺失则阻断；未知上游状态保留待核验</tspan>
+</text>
+<polyline points="480,765 480,890" fill="none" stroke="#245B9E" stroke-width="3"/>
+<polygon points="480,890 473.91048252244275,877.3937405670625 486.08951747755725,877.3937405670625" fill="#245B9E"/>
+<polyline points="1120,765 1120,890" fill="none" stroke="#C62340" stroke-width="3"/>
+<polygon points="1120,890 1113.9104825224429,877.3937405670625 1126.0895174775571,877.3937405670625" fill="#C62340"/>
+<rect x="40" y="890" width="720" height="170" rx="10" fill="#FFFFFF" stroke="#377C62" stroke-width="2"/>
+<text x="400.0" y="922.0" fill="#377C62" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">候选草稿</tspan>
+</text>
+<text x="400.0" y="983.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="400.0" dy="0">人数与预算有证据</tspan>
+<tspan x="400.0" dy="34">人工确认后落库</tspan>
+</text>
+<rect x="840" y="890" width="720" height="170" rx="10" fill="#FFFFFF" stroke="#C62340" stroke-width="2"/>
+<text x="1200.0" y="922.0" fill="#C62340" font-family="Microsoft YaHei, sans-serif" font-size="30" font-weight="700" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">阻断或待核验</tspan>
+</text>
+<text x="1200.0" y="983.5" fill="#24364B" font-family="Microsoft YaHei, sans-serif" font-size="26" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="1200.0" dy="0">缺关键边 / 资格失效</tspan>
+<tspan x="1200.0" dy="34">时效未知 / 上游可售未接入</tspan>
+</text>
+<text x="800" y="1175.0" fill="#6B7C90" font-family="Microsoft YaHei, sans-serif" font-size="28" font-weight="400" text-anchor="middle" dominant-baseline="middle">
+<tspan x="800" dy="0">本体集中维护跨对象合同；分数与模型文字不能覆盖业务资格</tspan>
+</text>
+</svg>
