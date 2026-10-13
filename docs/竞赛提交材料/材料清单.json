@@ -1,0 +1,64 @@
+{
+  "version": "V2.0",
+  "date": "2026-10-13",
+  "code_baseline": "124d2bdd382876c7c6acfcf0a740c7e3d9e51f45",
+  "main_pages": 34,
+  "main_figures": 12,
+  "main_numbered_tables": 18,
+  "online_pages": 8,
+  "signature_status": "预留待填",
+  "external_submission_status": "未提交",
+  "answer_ppt_status": "未制作",
+  "files": [
+    {
+      "name": "东方航空智能营销平台_线上展示材料_20261013.docx",
+      "bytes": 3470255,
+      "sha256": "e34a52c4a1be4877acb3498934ecd138db184ab23cf948953a772a497d64e3d7"
+    },
+    {
+      "name": "东方航空智能营销平台_线上展示材料_20261013.pdf",
+      "bytes": 570168,
+      "sha256": "e7ab4fb1394003be2f3101b21abd6f91dbb4f3cf3dc7ae47cc30711e8748fb45"
+    },
+    {
+      "name": "东方航空智能营销平台_项目文档_V2.0_20261013.docx",
+      "bytes": 4661264,
+      "sha256": "5bbda865034bbe3af9223145e326097d0cc5436b4fe5c128806557fbe9d5b281"
+    },
+    {
+      "name": "东方航空智能营销平台_项目文档_V2.0_20261013.pdf",
+      "bytes": 1628973,
+      "sha256": "2694181fcb83eaef952beb278fefa38ee4e3bad2e54c1fc01890613a9b6f5840"
+    },
+    {
+      "name": "东航平台_已导入数据清单_20261012.xlsx",
+      "bytes": 17575,
+      "sha256": "2305fccd1a7a81cc9d4f2f1bd7394277f48e01cda527864996908cb030e59db6"
+    },
+    {
+      "name": "作品名称.txt",
+      "bytes": 31,
+      "sha256": "f7c0abb8729c141b9b7189a1cb903615eae84785e00324ade87210aea28569ac"
+    },
+    {
+      "name": "作品简介.txt",
+      "bytes": 1044,
+      "sha256": "3ad10cf0abb35e8bfd90cd0a5f37c6fe8c2ba6b282e98e86539846852abb7882"
+    },
+    {
+      "name": "待填序号-待填队伍名称-线上展示材料.zip",
+      "bytes": 527509,
+      "sha256": "4c0b4faa75002258079cf604cc1b360b1165e99a4358c0e9f982c8d79a54edd3"
+    },
+    {
+      "name": "提交说明.md",
+      "bytes": 3386,
+      "sha256": "388aa676d990dc20db2eaedf4a6ccdc546ee14f8eedb3401b0d6c27a51583ec2"
+    }
+  ],
+  "online_package_members": [
+    "作品名称.txt",
+    "作品简介.txt",
+    "东方航空智能营销平台_线上展示材料_20261013.pdf"
+  ]
+}
