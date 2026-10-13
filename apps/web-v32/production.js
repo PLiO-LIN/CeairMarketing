@@ -2093,7 +2093,7 @@ function mountMarketingAssistantV2(){
       }
       finally{streaming?.remove();answer.classList.remove('is-streaming');form.dataset.busy='';input.disabled=false;submitButton.disabled=false;stopButton.hidden=true;currentRequest=null;if(!panel.hidden)input.focus();messages.scrollTop=messages.scrollHeight;}
     };
-    workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
+    workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),ask:message=>send(message),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
     fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}panel.hidden=!panel.hidden;if(!panel.hidden){restoreLayout();setCollapsed(false);input.focus();}});
     q('[data-assistant-history]',root).addEventListener('click',()=>workspace.show());
     q('[data-assistant-close]',root).addEventListener('click',()=>{panel.hidden=true;saveLayout();});

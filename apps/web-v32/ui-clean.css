@@ -284,6 +284,52 @@ body.smartspace-mode .assistant-panel.is-docked .assistant-message.assistant { f
 body.smartspace-mode .assistant-panel.is-docked .assistant-message,
 body.smartspace-mode .assistant-panel.is-docked .assistant-live-body,
 .assistant-process,.assistant-process-list,.assistant-process-step,.a2ui-surface { white-space:normal; }
+
+/* Holiday analysis stays inside conversation surfaces; compact on the home page. */
+.a2ui-marketing-stage { padding:20px; background:#fff; border:1px solid #e2e9f1; border-radius:12px; min-width:0; }
+.a2ui-stage-head { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
+.a2ui-stage-head::before { content:'›'; color:#8298b0; font-size:18px; }
+.a2ui-marketing-stage[open] > .a2ui-stage-head::before { transform:rotate(90deg); }
+.a2ui-stage-head h3 { margin:0; font-size:15px; color:#245b9e; font-weight:600; }
+.a2ui-stage-summary { margin:10px 0 16px; color:#60758d; font-size:13px; line-height:1.7; }
+.a2ui-stage-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:16px; margin:16px 0; }
+.a2ui-stage-metrics span { display:block; color:#7c8fa3; font-size:12px; }
+.a2ui-stage-metrics b { display:block; margin-top:6px; color:#2c5178; font-size:18px; font-weight:500; overflow-wrap:anywhere; }
+.a2ui-marketing-stage .a2ui-chart { border:0; padding:0; box-shadow:none; }
+.a2ui-stage-detail { margin:12px 0; color:#536d88; font-size:13px; }
+.a2ui-stage-detail > summary { cursor:pointer; padding:8px 0; }
+.a2ui-stage-detail p { margin:9px 0; line-height:1.7; }
+.a2ui-scenario-controls { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:16px 0; }
+.a2ui-scenario-controls label { display:grid; gap:6px; color:#6c8095; font-size:12px; }
+.a2ui-scenario-controls select,.a2ui-scenario-controls input,.a2ui-graph-toolbar select { width:100%; min-width:0; border:1px solid #dce5ef; border-radius:6px; padding:8px; background:#fff; color:#385b7f; font:inherit; }
+.a2ui-scenario-controls button { justify-self:start; }
+.a2ui-rule-list { display:grid; gap:6px; }
+.a2ui-rule { display:grid; grid-template-columns:minmax(80px,1fr) auto; gap:6px 12px; padding:10px 0; border-bottom:1px solid #edf1f6; align-items:center; }
+.a2ui-rule b { font-weight:500; font-size:13px; }
+.a2ui-rule-detail { grid-column:1/-1; color:#7d8fa2; line-height:1.6; font-size:12px; }
+.a2ui-rule-state { font-size:11px; border-radius:5px; padding:3px 7px; background:#edf4fb; color:#38648e; }
+.a2ui-rule-state[data-state="排除"],.a2ui-rule-state[data-state="阻断"] { color:#b82c43; background:#fbf0f2; }
+.a2ui-rule-state[data-state="待核验"] { color:#9a6a20; background:#fcf7ec; }
+.a2ui-evidence-graph { margin:20px 0; background:#f8fafc; padding:16px; border-radius:10px; }
+.a2ui-graph-toolbar { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; align-items:center; font-size:13px; }
+.a2ui-graph-toolbar select { width:auto; max-width:180px; font-size:12px; }
+.a2ui-graph-path { margin-top:18px; }
+.a2ui-graph-path > small { color:#7a8fa4; font-size:11px; }
+.a2ui-path-flow { display:flex; align-items:center; gap:7px; overflow-x:auto; padding:10px 0; }
+.a2ui-graph-node { flex:1 0 90px; min-height:65px; border:1px solid #ccddee; border-radius:8px; background:#fff; color:#345c83; padding:9px; cursor:pointer; text-align:left; font:inherit; }
+.a2ui-graph-node small { display:block; font-size:10px; color:#8195ab; margin-bottom:6px; }
+.a2ui-graph-node b { font-weight:500; font-size:12px; line-height:1.5; }
+.a2ui-graph-node:hover,.a2ui-graph-node:focus-visible { border-color:#245b9e; }
+.a2ui-graph-edge { flex:0 0 48px; font-size:10px; color:#6a88a5; text-align:center; border-bottom:1px solid #8eabc4; padding:0 0 7px; }
+.a2ui-graph-edge::after { content:' →'; }
+.a2ui-graph-edge.missing { color:#c62340; border-bottom:1px dashed #c62340; }
+.a2ui-node-inspector { border-top:1px solid #e1e9f2; padding-top:12px; font-size:12px; color:#627d97; overflow-wrap:anywhere; }
+.a2ui-node-inspector p { line-height:1.6; }
+.a2ui-proposal { display:grid; gap:10px; padding:16px 0; color:#345a80; font-size:13px; }
+.a2ui-proposal > .a2ui-rule-state { justify-self:start; }
+.a2ui-proposal blockquote { margin:0; border-left:2px solid #d4e1ef; padding:10px 14px; color:#687f97; line-height:1.8; }
+.a2ui-action-status { margin-top:12px; color:#637e98; font-size:12px; }
+@media(max-width:700px) { .a2ui-marketing-stage { padding:14px; } .a2ui-scenario-controls { grid-template-columns:repeat(2,minmax(0,1fr)); } .a2ui-graph-toolbar { flex-wrap:wrap; } }
 body.smartspace-mode .assistant-panel.is-docked { grid-template-rows:auto minmax(0,1fr) auto; height:calc(100dvh - 275px) !important; min-height:420px; }
 body.smartspace-mode .assistant-panel.is-docked .assistant-message.user { min-height:0; margin-top:0; margin-bottom:0; }
 body.smartspace-mode .assistant-panel.is-docked .assistant-message.user .assistant-answer { white-space:pre-wrap; }

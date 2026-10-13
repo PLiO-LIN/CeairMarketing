@@ -25,7 +25,7 @@ def platform_catalog():
     catalog["catalogId"] = CATALOG_ID
     catalog["components"] = {k: basic["components"][k] for k in ("Text", "Column", "Row", "Card", "Button", "Divider")}
     catalog["functions"] = {}
-    for name, field in (("Chart", "data"), ("DataTable", "data"), ("TaskCard", "task")):
+    for name, field in (("Chart", "data"), ("DataTable", "data"), ("TaskCard", "task"), ("MarketingStage", "data")):
         catalog["components"][name] = {
             "type": "object", "additionalProperties": False,
             "properties": {"id": {"type": "string"}, "component": {"const": name}, field: {"type": "object", "required": ["path"], "properties": {"path": {"type": "string", "pattern": "^/"}}, "additionalProperties": False}},
@@ -62,7 +62,7 @@ class ReplySurfaces:
         if kind == "navigation":
             components += [{"id": "content", "component": "Button", "child": "label", "action": {"event": {"name": "open_page", "context": {"page": data["page"]}}}}, {"id": "label", "component": "Text", "text": "打开" + data["title"]}]
         else:
-            name = {"bar": "Chart", "table": "DataTable", "task": "TaskCard"}[kind]
+            name = {"bar": "Chart", "table": "DataTable", "task": "TaskCard", "scenario": "MarketingStage"}[kind]
             components.append({"id": "content", "component": name, "task" if kind == "task" else "data": {"path": "/content"}})
         batch = [
             {"version": VERSION, "createSurface": {"surfaceId": sid, "catalogId": CATALOG_ID, "theme": {"primaryColor": "#245B9E", "agentDisplayName": "东东"}}},

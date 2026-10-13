@@ -1,3 +1,10 @@
+## v3.19 - 2026-10-13
+
+- Added an evidence-driven holiday travel marketing planner for Dongdong, covering demand, audience eligibility, flight/product constraints, campaign draft, content and effect measurement.
+- Added deterministic typed-ontology gates and counterfactual relation checks; missing Flight→Route/ProductPackage→Ancillary paths block composition and expose source records.
+- Added streamed A2UI MarketingStage cards with charts, tables, evidence paths, source expansion, scenario controls and reviewable draft task creation.
+- Added regression coverage for cross-domain filtering, time/version boundaries, tenant isolation, missing ontology relations, A2UI streaming and draft projection.
+
 ## v3.18 - 2026-10-12
 
 - Added atomic versioned dataset import, complete source-record storage, tenant-scoped data catalog and indexed detail queries.

@@ -37,6 +37,7 @@ from .opportunity_insight import launch_opportunity_insight
 from .mock_business import channel_delivery, flight_operations, market_signals, product_catalog, profile_summary
 from .imports import import_file
 from .datasets import router as datasets_router
+from .holiday_marketing import router as holiday_router
 from .llm import LLMClient, LLMConfig, LLMServiceError
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
 from .models import (
@@ -161,8 +162,9 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title=settings.app_name, version="3.18.0", lifespan=lifespan)
+app = FastAPI(title=settings.app_name, version="3.19.0", lifespan=lifespan)
 app.include_router(datasets_router)
+app.include_router(holiday_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -1595,7 +1597,7 @@ def assistant_ui_catalog(_context: TenantContext = Depends(get_tenant_context)):
 
 
 @app.post("/api/assistant/ui-action")
-def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_tenant_context)):
+def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     from .a2ui import ACTION_VALIDATOR
     from jsonschema import ValidationError
     try:
@@ -1603,6 +1605,30 @@ def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_ten
     except ValidationError as exc:
         raise HTTPException(422, "界面操作格式无效") from exc
     action = payload.get("action", {})
+    if action.get("name") == "prepare_holiday_draft":
+        if _context.role not in {"admin", "manager", "analyst"}:
+            raise HTTPException(403, "当前角色不能创建活动草稿")
+        from .holiday_marketing import HolidayParameters, analyze_holiday, prepare_draft_task
+        ctx = action.get("context", {})
+        conversation = scoped_conversation(session, _context, ctx.get("conversation_id", ""))
+        messages = session.scalars(select(AssistantMessageRecord).where(AssistantMessageRecord.conversation_id == conversation.id,
+            AssistantMessageRecord.role == "assistant").order_by(AssistantMessageRecord.id.desc()).limit(50))
+        params = None
+        for msg in messages:
+            for message in json.loads(msg.detail_json).get("a2ui", []):
+                data = message.get("updateDataModel", {})
+                content = data.get("value", {}).get("content", {})
+                if data.get("surfaceId") == action.get("surfaceId") and content.get("id") == "holiday-plan":
+                    params = content.get("params")
+        if params is None or action.get("sourceComponentId") != "content":
+            raise HTTPException(422, "未找到当前对话的活动方案界面")
+        try:
+            validated = HolidayParameters(**params)
+            report = analyze_holiday(session, _context.tenant_id, validated)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if not report["ready"]: raise HTTPException(409, "当前条件未通过，请重新分析")
+        return {"task": prepare_draft_task(session, _context, conversation.id, params)}
     pages = {"overview", "campaigns", "opportunities", "audiences", "products", "contents", "approvals", "execution", "feedback", "graph", "imports", "models", "tenants", "permissions"}
     if action.get("name") != "open_page" or action.get("context", {}).get("page") not in pages:
         raise HTTPException(422, "界面操作未授权")

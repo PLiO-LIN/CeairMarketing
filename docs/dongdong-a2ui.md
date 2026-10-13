@@ -6,9 +6,9 @@
 
 实现稳定版 **A2UI v0.9.1**。SSE `a2ui` 事件每次携带一个标准消息，按 `createSurface → updateDataModel → updateComponents` 创建结果界面；客户端支持局部更新及 `deleteSurface`。组件使用扁平 ID 引用和 RFC 6901 JSON Pointer，不执行模型提供的 HTML、脚本或远程代码。
 
-平台目录 `ceair-marketing:assistant-v1` 采用标准 Text、Column、Row、Card、Button、Divider，并定义 Chart、DataTable、TaskCard 三个扩展组件。`/api/assistant/ui-catalog` 返回目录，`/api/assistant/capabilities` 声明版本与目录。图表数据来自 `query_statistics`，查询明细来自原有业务 API，任务来自后台待确认记录；工具观测转成协议消息之前经过官方 schema 与目录校验。
+平台目录 `ceair-marketing:assistant-v1` 采用标准 Text、Column、Row、Card、Button、Divider，并定义 Chart、DataTable、TaskCard、MarketingStage 四个扩展组件。`/api/assistant/ui-catalog` 返回目录，`/api/assistant/capabilities` 声明版本与目录。图表数据来自 `query_statistics`，查询明细来自原有业务 API，任务来自后台待确认记录；工具观测转成协议消息之前经过官方 schema 与目录校验。MarketingStage 将后台节假日分析的指标、约束、图谱和来源以可折叠卡片流式展示。
 
-图表在对应助手消息中逐步渲染，支持柱状、占比、明细和 CSV。导航按钮发标准 `action` envelope 到 `/api/assistant/ui-action`，后端仅接受预定业务页面。任务卡仍使用现有鉴权、参数校验和原业务确认接口。
+图表在对应助手消息中逐步渲染，支持柱状、占比、明细和 CSV；百分比与非互斥筛选指标不显示相加总数及占比模式。导航按钮发标准 `action` envelope 到 `/api/assistant/ui-action`。除预定业务页面外，后端接受 `prepare_holiday_draft`，要求界面属于当前用户在当前租户下已保存的对话，重新校验后只生成待确认任务。任务卡仍使用现有鉴权、参数校验和原业务确认接口。
 
 本项目使用与当前原生 JavaScript 前端一致的 DOM 渲染器，而非引入 Angular、Flutter 等完整框架。它实现上述目录及消息操作，是限定目录的渲染实现，不声称支持全部官方基础组件或函数。
 

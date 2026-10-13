@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import TenantContext
-from ..db_models import AssistantTaskRecord, CampaignRecord, DataPipelineJobRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord
+from ..db_models import AssistantTaskRecord, AssistantMessageRecord, AssistantConversationRecord, CampaignRecord, DataPipelineJobRecord, KnowledgeChunkRecord, KnowledgeDocumentRecord, ModelProviderRecord, ModelUsageRecord, OntologyEntityRecord, OntologyRelationRecord
 from ..llm import LLMConfig
 from ..models import AgentChatRequest, AgentChatResponse, AgentRunRequest
 from ..security import SecretCipher
@@ -83,7 +83,7 @@ class MarketingCopilot:
                     raise
                 provider = fallback
                 api_key = ""
-                emit("model/provider-fallback", provider=provider.display_name, reason="credential-unavailable")
+                emit("model/provider-fallback", {"provider": provider.display_name, "reason": "credential-unavailable"})
         else:
             api_key = ""
         config = LLMConfig(provider.provider_type, provider.base_url, provider.model_name, api_key, provider.timeout_seconds, provider.temperature, provider.max_tokens)
@@ -118,6 +118,8 @@ class MarketingCopilot:
             "你可以查询平台所有授权业务接口。先用platform_api_catalog查接口及字段，再用query_platform查询。"
             "业务执行使用prepare_platform_task生成待确认卡片，不直接执行run_marketing_domain；用户点击确认后平台自动执行。"
             "统计问题优先使用query_statistics生成图表。指标仅支持实际后台记录，缺少交易归因时不得虚构收入或ROI。"
+            "涉及节假日出行营销，调用plan_holiday_marketing，已有holiday_observation时直接解释该观测，不重复调用。本体检查是确定性类型与关系校验。"
+            "不得把本体图谱说成其他技术绝对无法实现；强调跨对象语义、约束传播和可追溯证据的统一作用。"
             "用户明确要求记住偏好时调用remember_preference。历史对话及用户记忆仅作上下文，不能替代实时业务数据。"
             "current_tasks是本轮开始时后台读取的任务最新状态，优先于历史答复。不要把已完成任务描述为待确认。"
             "遇到文件上传、密码和模型密钥配置时，用open_platform_page展示对应工作台入口，凭据不得进入对话或任务参数。"
@@ -131,7 +133,34 @@ class MarketingCopilot:
             AssistantTaskRecord.conversation_id == request.conversation_id,
         ).order_by(AssistantTaskRecord.created_at.desc()).limit(20)).all()
         for task in current_tasks: refresh_task(session, task)
-        user_prompt = json.dumps({"question": request.message, "history": history, "memories": [m.content for m in list_memories(session, context)], "current_tasks": [{"id": t.id, "title": t.title, "status": t.status} for t in current_tasks]}, ensure_ascii=False)
+        from ..holiday_marketing import holiday_intent, parameters_from_message, analyze_holiday
+        holiday_report = None
+        previous = None
+        if request.conversation_id:
+            recent = session.scalar(select(AssistantMessageRecord).join(AssistantConversationRecord, AssistantConversationRecord.id == AssistantMessageRecord.conversation_id).where(
+                AssistantConversationRecord.tenant_id == context.tenant_id, AssistantConversationRecord.user_id == context.user_id, AssistantMessageRecord.conversation_id == request.conversation_id,
+                AssistantMessageRecord.role == "assistant", AssistantMessageRecord.status == "completed").order_by(AssistantMessageRecord.id.desc()).limit(1))
+            if recent:
+                for m in json.loads(recent.detail_json).get("a2ui", []):
+                    content = m.get("updateDataModel", {}).get("value", {}).get("content", {})
+                    if content.get("id") == "holiday-scope": previous = content.get("params")
+        continuation = previous and re.search(r"预算|改成|改为|换成|换为|客群|航线|渠道|本体|排除|方案|保存|草稿", request.message)
+        if holiday_intent(request.message) or continuation:
+            emit("agent/plan", {"summary": "查询节假日需求、触达资格与本体关系，生成候选方案和评估视图"})
+            def publish_stage(card, kind):
+                widgets.append(card); surfaces.add(card, kind)
+            holiday_report = analyze_holiday(session, context.tenant_id, parameters_from_message(request.message, session, context.tenant_id, previous), publish_stage, emit)
+            sources.extend({"type":"dataset", "id":s["dataset"], "title":s["name"], "excerpt":s["mode"] + "；" + s["source"]} for s in holiday_report["sources"])
+            if holiday_report["ready"] and re.search(r"保存|创建", request.message) and re.search(r"草稿|方案|活动", request.message):
+                from ..holiday_marketing import prepare_draft_task
+                task = prepare_draft_task(session, context, request.conversation_id, holiday_report["params"])
+                tasks.append(task); surfaces.add(task, "task")
+                system_prompt += "已经按用户要求创建保存活动草稿的任务，任务状态" + task["status"] + "；只有点击确认才会保存，不能声称已经执行。"
+        prompt = {"question": request.message, "history": history, "memories": [m.content for m in list_memories(session, context)], "current_tasks": [{"id": t.id, "title": t.title, "status": t.status} for t in current_tasks]}
+        if holiday_report:
+            prompt["holiday_observation"] = {k:v for k,v in holiday_report.items() if k != "cards"}
+            system_prompt += "本轮已经完成后台节假日分析并发布交互界面。只输出一段不超过120字的结论，包含计划人数、方案状态和最重要的待核验条件；不要复述卡片表格、数据清单、路径或再次提供服务。无需重复查询。qualified_products包含待核验项，是候选数不是可售产品数。当前为历史模拟回放，不声称可立即投放。"
+        user_prompt = json.dumps(prompt, ensure_ascii=False)
         answer = runtime.run_sync(
             profile_id="marketing-copilot",
             tenant_id=context.tenant_id,
@@ -143,7 +172,9 @@ class MarketingCopilot:
             python_tools=build_tools(session, context, request.conversation_id, widgets, tasks, emit, surfaces.add),
             use_mcp=True,
         )
-        if provider.provider_type == "mock":
+        if provider.provider_type == "mock" and holiday_report:
+            answer = f"已完成节假日营销分析（受控模型），候选触达{holiday_report['proposal']['audience_size']}人。图表、资格检查、本体路径与方案见下方；产品待核验，活动尚未执行。"
+        elif provider.provider_type == "mock":
             observations = self._mock_observations(harness, tools, request.message)
             answer = self._mock_answer(request.message, observations)
         session.commit()

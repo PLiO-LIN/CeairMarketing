@@ -25,6 +25,7 @@ BUSINESS_PREFIXES = (
     "/api/audit-logs", "/api/agent-evaluations", "/api/datasets",
     "/api/mock/flight-operations", "/api/mock/profile-summary", "/api/mock/market-signals",
     "/api/assistant/tasks", "/api/assistant/conversations", "/api/assistant/memories",
+    "/api/holiday-marketing",
 )
 
 
@@ -146,6 +147,16 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
             return text_tool_result(chart)
         except ValueError as exc: return text_tool_result({"ok": False, "error": str(exc)})
 
+    async def plan_holiday_marketing(parameters_json: str = "{}"):
+        """Analyze holiday travel marketing through imported data and typed ontology. Parameters: start/end YYYY-MM-DD, as_of local timestamp, segment, route_id, channel, budget_yuan. Emits interactive charts, evidence graph, rules, plan and measurement. Never executes a campaign."""
+        from .holiday_marketing import analyze_holiday, HolidayParameters
+        try:
+            def output(card, kind):
+                widgets.append(card); publish(card, kind)
+            report = analyze_holiday(session, context.tenant_id, HolidayParameters(**json.loads(parameters_json)), output, emit)
+            return text_tool_result({k:v for k,v in report.items() if k != "cards"})
+        except ValueError as exc: return text_tool_result({"ok": False, "error": str(exc)})
+
     async def prepare_platform_task(method: str, path: str, title: str, body_json: str = "{}"):
         """Prepare a task for explicit UI confirmation; does NOT execute the business operation. Use catalog schemas and concrete IDs."""
         try:
@@ -187,4 +198,4 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
 
     # These tools either read facts or prepare private tasks/preferences. Actual
     # business mutations only happen through the separately confirmed endpoint.
-    return [make_tool(f, read_only=True) for f in (platform_api_catalog, query_platform, query_statistics, open_platform_page)] + [make_tool(f, read_only=False, allow_internal=True) for f in (prepare_platform_task, remember_preference)]
+    return [make_tool(f, read_only=True) for f in (platform_api_catalog, query_platform, query_statistics, open_platform_page, plan_holiday_marketing)] + [make_tool(f, read_only=False, allow_internal=True) for f in (prepare_platform_task, remember_preference)]
