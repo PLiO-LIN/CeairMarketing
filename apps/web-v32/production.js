@@ -1729,7 +1729,7 @@
       }else{visible.forEach((id,i)=>positions.set(id,{x:35+(i%6)*202,y:50+Math.floor(i/6)*126}));}
       const paths=root.append('g').attr('class','ontology-map-edges'),texts=root.append('g'),nodes=root.append('g');
       visibleLinks.forEach((l,i)=>{const a=positions.get(l.source),b=positions.get(l.target);if(!a||!b)return;let d,lx,ly;
-        if(a.y===b.y){const forward=b.x>a.x,x1=a.x+(forward?W:0),x2=b.x+(forward?0:W),y=a.y+H/2;d=`M${x1},${y} L${x2},${y}`;lx=(x1+x2)/2;ly=y-9;}
+        if(a.y===b.y){const forward=b.x>a.x,x1=a.x+(forward?W:0),x2=b.x+(forward?0:W),y=a.y+H/2;d=`M${x1},${y} L${x2},${y}`;lx=(x1+x2)/2;ly=a.y-12;}
         else{const down=b.y>a.y,x1=a.x+W/2,y1=a.y+(down?H:0),x2=b.x+W/2,y2=b.y+(down?0:H),mid=(y1+y2)/2;d=`M${x1},${y1} V${mid} H${x2} V${y2}`;lx=(x1+x2)/2+9;ly=mid-7;}
         paths.append('path').attr('class','ontology-map-edge').attr('d',d).attr('marker-end','url(#ontology-map-arrow)');
         if(main||visibleLinks.length<16)texts.append('text').attr('class','ontology-map-edge-label').attr('x',lx).attr('y',ly).text(l.label);
