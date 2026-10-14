@@ -9,7 +9,8 @@
   const blocked = new Set(['__proto__','prototype','constructor']);
   const pointer = path => { if (typeof path !== 'string' || !path.startsWith('/')) throw Error('无效的数据路径'); const keys = path === '/' ? [] : path.slice(1).split('/').map(k => k.replace(/~1/g,'/').replace(/~0/g,'~')); if (keys.some(k => blocked.has(k))) throw Error('不允许的数据路径'); return keys; };
   const read = (model, binding) => binding && typeof binding === 'object' && 'path' in binding ? pointer(binding.path).reduce((v,k) => v?.[k],model) : binding;
-  const node = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text).replace(/中国东方航空|东方航空|东航/g,'M航').replace(/CHINA EASTERN|China Eastern/g,'M Airlines'); return e; };
+  const brandText = text => String(text ?? '').replace(/M\s*航空|M\s*航/g,'东航').replace(/M\s+AIRLINES/gi,'China Eastern');
+  const node = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = brandText(text); return e; };
   const number = value => Number.isFinite(Number(value)) ? Math.max(0,Number(value)) : 0;
   const colors = ['#245b9e','#5494c5','#8dbbd8','#c62340','#d77988','#9daabd'];
   function table(columns, rows) {
@@ -22,7 +23,7 @@
     title.append(node('h3','',data.title || '统计'));
     if(data.unit!=='%' && !data.hideTotal)title.append(node('span','a2ui-chart-total',data.values.reduce((s,v)=>s+number(v),0).toLocaleString('zh-CN') + (data.unit || '条')));
     const controls = node('div','a2ui-chart-controls'), body = node('div','a2ui-chart-body'); header.append(title,controls); box.append(header,body);
-    const labels = data.labels.slice(0,40), values = data.values.slice(0,40).map(number), total = values.reduce((s,v)=>s+v,0), max = Math.max(...values,1);
+    const labels = data.labels.slice(0,40).map(brandText), values = data.values.slice(0,40).map(number), total = values.reduce((s,v)=>s+v,0), max = Math.max(...values,1);
     const modes = data.hideTotal||data.unit==='%'?[['bar','柱状'],['table','明细']]:[['bar','柱状'],['donut','占比'],['table','明细']]; let mode = ['bar','donut','line','radar','funnel','table'].includes(data.view)?data.view:'bar';
     for(const entry of [['line','趋势'],['radar','雷达'],['funnel','漏斗']]) if(!modes.some(m=>m[0]===entry[0])) modes.push(entry);
     function draw() {
@@ -99,7 +100,7 @@
         if (depth>24 || visited.has(id)) throw Error('界面组件引用异常');
         const c=surface.components.get(id);if(!c)throw Error('界面组件尚未完整'); if (!allowed.has(c.component)) throw Error('不支持的界面组件');visited.add(id);
         let e; const value = binding => read(surface.model,binding);
-        if (c.component==='Text') {e=node('div','a2ui-text');const text=value(c.text)||'';if(api.formatAnswer)api.formatAnswer(e,text);else e.textContent=text;}
+        if (c.component==='Text') {e=node('div','a2ui-text');const text=brandText(value(c.text));if(api.formatAnswer)api.formatAnswer(e,text);else e.textContent=text;}
         if (['Column','Row','Card'].includes(c.component)) {e=node('div','a2ui-'+c.component.toLowerCase());const ids=c.component==='Card'?[c.child]:c.children;if(!Array.isArray(ids))throw Error('不支持的布局绑定');ids.forEach(child=>e.append(component(child,depth+1)));}
         if(c.component==='Divider') e=node('hr');
         if(c.component==='Button'){e=node('button','btn'+(c.variant==='primary'?' primary':''));e.type='button';e.append(component(c.child,depth+1));e.onclick=async()=>{const action=c.action?.event;if(!action||action.name!=='open_page'||!pages.has(action.context?.page))return; e.disabled=true;try{const result=await api.request('/api/assistant/ui-action',{method:'POST',body:JSON.stringify({version:'v0.9.1',action:{name:action.name,surfaceId:surface.id,sourceComponentId:c.id,timestamp:new Date().toISOString(),context:action.context}})});api.navigate(result.page);}catch(error){api.toast(error.message);}finally{e.disabled=false;}};}

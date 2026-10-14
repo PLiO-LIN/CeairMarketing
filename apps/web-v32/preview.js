@@ -102,7 +102,7 @@
     const logo = query('.brand .logo img');
     if (!logo) return;
     if (!originalLogoSrc) originalLogoSrc = logo.getAttribute('src');
-    // 内页沿用首页完整M航字标，避免在业务页切换成另一套品牌标识。
+    // 内页沿用首页完整东航字标，避免在业务页切换成另一套品牌标识。
     logo.src = originalLogoSrc;
   }
 

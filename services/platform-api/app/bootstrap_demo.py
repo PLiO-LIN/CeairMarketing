@@ -16,21 +16,36 @@ from .auth import hash_password
 from .config import get_settings
 from .database import SessionLocal
 from .dataset_import import import_dataset
-from .db_models import (AudiencePackageRecord, CampaignRecord, DatasetRecord,
+from .db_models import (AudiencePackageRecord, CampaignRecord, ContentAssetRecord, DatasetRecord,
     ModelProviderRecord, OntologyEntityRecord, ProductPackageRecord,
     TenantMembershipRecord, TenantRecord, UserRecord)
 from .seed import seed_competition_workspace
 
 WORKSPACE_CODE = "CEA-COMPETITION"
-WORKSPACE_NAME = "M航营销运营"
+WORKSPACE_NAME = "东航营销运营"
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 
 def normalize_workspace_labels(session, tenant_id):
     """Migrate only legacy fixture labels; never rewrite user-authored records."""
     tenant = session.get(TenantRecord, tenant_id)
-    if tenant.name in {"竞赛演示（虚构数据）", "竞赛演示", WORKSPACE_NAME}:
+    if tenant.name in {"竞赛演示（虚构数据）", "竞赛演示", "M航营销运营", WORKSPACE_NAME}:
         tenant.name = WORKSPACE_NAME
+    legacy_graph_labels = {
+        "channel-ceair-app": ("M航App", "东航App"),
+        "content-app-v3": ("M航App家庭出游内容V3", "东航App家庭出游内容V3"),
+    }
+    for row in session.scalars(select(OntologyEntityRecord).where(
+            OntologyEntityRecord.tenant_id == tenant_id,
+            OntologyEntityRecord.external_id.in_(legacy_graph_labels))):
+        old, new = legacy_graph_labels[row.external_id]
+        if row.label == old:
+            row.label = new
+    content = session.scalar(select(ContentAssetRecord).where(
+        ContentAssetRecord.tenant_id == tenant_id,
+        ContentAssetRecord.external_id == "CNT-DEMO-SANYA-APP-V3"))
+    if content is not None and content.name == "M航App家庭出游内容V3":
+        content.name = "东航App家庭出游内容V3"
     for row in session.scalars(select(AudiencePackageRecord).where(
             AudiencePackageRecord.tenant_id == tenant_id,
             AudiencePackageRecord.external_id.startswith("CE26-SEG-", autoescape=True))):

@@ -1,3 +1,8 @@
+## v3.20 - 2026-10-14
+
+- Restored China Eastern branding and the official wordmark across sign-in, homepage, workbenches, agent prompts and A2UI output.
+- Preserved compatibility with existing M-airline workspace labels and App channel aliases; deployment updates only known fixture labels without changing source provenance or custom workspace names.
+
 ## v3.19 - 2026-10-13
 
 - Added an evidence-driven holiday travel marketing planner for Dongdong, covering demand, audience eligibility, flight/product constraints, campaign draft, content and effect measurement.

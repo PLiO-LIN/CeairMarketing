@@ -1,4 +1,4 @@
-"""Business semantic model for the M Airlines marketing ontology.
+"""Business semantic model for the China Eastern marketing ontology.
 
 This registry describes stable business meaning, not a fixed tag dictionary. Tag
 values remain configurable and can come from existing source systems, operator
@@ -37,7 +37,7 @@ OBJECT_TYPES = [
     {"id": "CampaignVersion", "name": "活动版本", "description": "活动方案在客群、产品、内容、渠道或预算变化后的可追溯版本。", "module": "marketing"},
     {"id": "ApprovalTask", "name": "审批任务", "description": "营销运营、预算、产品和合规等多级审批节点。", "module": "governance"},
     {"id": "ExecutionBatch", "name": "执行批次", "description": "按渠道、时间窗口和客群快照生成的触达执行批次。", "module": "execution"},
-    {"id": "Channel", "name": "触达渠道", "description": "M航App、微信、短信、官网、企业和分销触点。", "module": "execution"},
+    {"id": "Channel", "name": "触达渠道", "description": "东航App、微信、短信、官网、企业和分销触点。", "module": "execution"},
     {"id": "Feedback", "name": "营销反馈", "description": "送达、打开、点击、出票、辅营、退订和投诉等反馈。", "module": "execution"},
     {"id": "AttributionResult", "name": "营销归因结果", "description": "将增量出票、辅营收入、会员活跃和服务反馈归因到客群、产品、内容、渠道及策略。", "module": "measurement"},
     {"id": "Review", "name": "效果复盘", "description": "对活动目标、渠道、客群、产品和内容效果的复盘结论。", "module": "marketing"},

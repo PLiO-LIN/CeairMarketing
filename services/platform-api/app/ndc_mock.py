@@ -82,7 +82,7 @@ def _flight_items(origin: str, destination: str, departure_date: str) -> dict[st
         "productInfos": [
             {"productCode": "MU-EARLY-Y", "promotionCode": "EARLY-MU", "beneficiary": "成人旅客", "buyTicketMember": "ALL", "takeType": "ticket", "cabinLabelInfo": [{"labelName": "早鸟优惠"}]},
             {"productCode": "MU-FLEX-Y", "promotionCode": "FLEX-MU", "beneficiary": "成人旅客", "buyTicketMember": "ALL", "takeType": "ticket", "cabinLabelInfo": [{"labelName": "灵活出行"}]},
-            {"productCode": "MU-BIZ-C", "promotionCode": "BIZ-MU", "beneficiary": "成人旅客", "buyTicketMember": "M航会员会员", "takeType": "ticket", "cabinLabelInfo": []},
+            {"productCode": "MU-BIZ-C", "promotionCode": "BIZ-MU", "beneficiary": "成人旅客", "buyTicketMember": "东方万里行会员", "takeType": "ticket", "cabinLabelInfo": []},
         ],
         "xProductMap": {
             "XB20": {"productCode": "XB20", "productName": "预付费行李20KG", "resourceCode": "BAG20", "accountPrice": 180, "salePrice": 180, "productValue": "20KG", "xProductType": "BAGGAGE"},

@@ -80,7 +80,7 @@
     if (typeof layer.__closeProductionModal === 'function') layer.__closeProductionModal();
     else layer.remove();
   });
-  const brandText = value => String(value ?? '').replace(/中国东方航空|东方航空|东航/g, 'M航').replace(/CHINA EASTERN|China Eastern/g, 'M Airlines');
+  const brandText = value => String(value ?? '').replace(/M\s*航空|M\s*航/g, '东航').replace(/M\s+AIRLINES/gi, 'China Eastern');
   const escapeHtml = value => brandText(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const decodeEscapedText = value => {
     let text = String(value ?? '');
@@ -98,7 +98,7 @@
     return !text.trim() || /^\?+$/.test(text.trim()) ? fallback : text;
   };
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
-  const channelOptions = [['App', 'M航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
+  const channelOptions = [['App', '东航 App'], ['官网', '官网 / 活动页'], ['微信', '微信 / 小程序'], ['短信', '短信'], ['邮件', '邮件'], ['客服外呼', '客服外呼']];
   const domainLabels = { 'opportunity-insight': '机会洞察智能域', 'content-generation': '内容生成智能域', 'audience-insight': '客群洞察智能域', 'product-match': '产品匹配智能域', 'activity-orchestration': '活动编排智能域', 'effect-analysis': '效果分析智能域' };
   // SQLite serializes persisted UTC timestamps without a timezone suffix.
   function businessTime(value, timeOnly = false) {
@@ -370,7 +370,7 @@
         { name: 'campaign_id', label: '关联活动', type: 'select', required: false, options: [{value:'',label:'未关联活动'}, ...(tenantData.campaigns || []).map(campaign => ({value:campaign.id,label:`${campaign.name} · ${campaign.id}`}))] },
         { name: 'audience_package_id', label: '目标客群包', type: 'select', required: false, options: [{value:'',label:'未关联客群包'}, ...(tenantData.audiencePackages || []).map(item => ({value:item.id,label:`${item.name} · ${Number(item.estimated_size||0).toLocaleString('zh-CN')}人`}))] },
         { name: 'product_package_id', label: '活动产品包', type: 'select', required: false, options: [{value:'',label:'未关联产品包'}, ...(tenantData.productPackages || []).map(item => ({value:item.id,label:`${item.name} · ${item.version||'V1'}`}))] },
-        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'M航 App'}, 'M航App', '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
+        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'东航 App'}, '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
         { name: 'version', label: '内容版本', type: 'text' },
         { name: 'generation_objective', label: '内容目标', type: 'text', required: false },
         { name: 'status', label: '内容状态', type: 'select', options: ['草稿', '待审核', '停用'], help: '已审核内容变更后需重新审核。' },
@@ -511,9 +511,9 @@
     const layer = document.createElement('div');
     layer.className = 'production-login';
     layer.innerHTML = `<section class="production-login-brand">
-<img src="./brand/m-airlines.svg" alt="M航">
+<img src="./brand/ceair-wordmark.svg" alt="东航">
 <div>
-<h1>M航智慧营销云</h1>
+<h1>东航智慧营销云</h1>
 <p>面向航空营销全生命周期的运营、智能决策与治理平台</p>
 </div>
 </section>
@@ -708,7 +708,7 @@
     const sources=tenantData.opportunitySources||[], runs=tenantData.opportunityRuns||[];
     const sourceRows=sources.map(item=>`<div class="insight-source-row"><label><input type="checkbox" data-insight-source value="${item.id}" ${item.enabled?'checked':''}><span><b>${escapeHtml(displayText(item.name,'未命名来源'))}</b><small>${escapeHtml(displayText(item.focus,'未配置关注点'))}</small></span></label><em>${escapeHtml(item.schedule||'manual')}</em><button class="btn compact" data-insight-source-edit="${item.id}">编辑</button><button class="btn compact danger" data-insight-source-delete="${item.id}">删除</button></div>`).join('');
     const runRows=runs.map(item=>`<tr><td><strong>${escapeHtml(item.id)}</strong><small>${escapeHtml(displayText(item.prompt,'未填写洞察要求'))}</small></td><td>${escapeHtml(item.current_stage)}</td><td><span class="status ${statusClass(item.status)}">${escapeHtml(item.status)}</span></td><td>${item.step_count||0}</td><td><button class="btn compact" data-insight-run-view="${item.id}">查看进度</button></td></tr>`).join('');
-    panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕M航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
+    panel.innerHTML=`<div class="panel-head"><div><h2>商机洞察智能体</h2></div><span class="insight-badge"><i data-lucide="sparkles"></i> AgentScope · 多智能体</span></div><div class="panel-body"><div class="insight-console-grid"><section class="insight-source-config"><div class="section-kicker">洞察来源</div><div class="insight-source-list">${sourceRows||'<div class="empty-action">暂无来源，请先新增一个网站或人工信号来源</div>'}</div><form id="opportunitySourceForm" class="insight-source-form"><input type="hidden" name="source_id"><input name="name" placeholder="来源名称，例如：三亚文旅官方动态" required><input name="source_url" placeholder="网站地址，可留空使用人工描述"><select name="source_type"><option value="web">网站</option><option value="api">接口</option><option value="manual">人工信号</option><option value="social">社媒</option></select><input name="schedule" value="manual" placeholder="采集方式，例如 manual / daily"><textarea name="focus" placeholder="希望重点关注什么：航线需求、节假日热度、产品机会、竞品变化等"></textarea><div class="insight-form-actions"><button type="submit" class="btn primary" data-action="saveOpportunitySource">保存来源</button><button type="button" class="btn" data-action="resetOpportunitySource">清空</button></div></form></section><section class="insight-run-config"><div class="section-kicker">业务洞察要求</div><textarea id="opportunityInsightPrompt" class="insight-prompt" placeholder="例如：围绕国庆前上海—三亚航线，关注客座率、价格、目的地热度、家庭客群和行李/选座辅营机会">围绕东航重点航线和近期市场热点，识别可落地的营销商机，并说明证据、适配客群和可引用产品。</textarea><div class="insight-run-actions"><button class="btn primary" data-action="runOpportunityInsight"><i data-lucide="play"></i>开始多智能体洞察</button></div><div class="insight-agent-lane"><span>市场信号</span><i>＋</i><span>航线经营</span><i>＋</i><span>产品商业化</span><b>→ 商机候选</b></div></section></div><div class="insight-history"><div class="section-kicker">洞察历史与溯源</div><table class="table compact-table"><tr><th>任务</th><th>当前阶段</th><th>状态</th><th>步骤</th><th>操作</th></tr>${runRows||'<tr><td colspan="5" class="muted">暂无洞察任务</td></tr>'}</table></div></div>`;
     if(window.lucide)lucide.createIcons();
   }
   function renderKnowledgeDocuments(){

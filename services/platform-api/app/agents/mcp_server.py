@@ -48,7 +48,7 @@ def add_source(payload: dict[str, Any], source_type: str, source_id: str, title:
 
 server = FastMCP(
     name="ceair-marketing-" + (PROFILE or "agent"),
-    instructions="M航智能营销平台只读业务查询 MCP。返回租户范围内的知识、本体、活动和处理任务事实。",
+    instructions="东航智能营销平台只读业务查询 MCP。返回租户范围内的知识、本体、活动和处理任务事实。",
 )
 
 
@@ -178,7 +178,7 @@ def get_ontology_schema(query: str = "") -> dict[str, Any]:
         "object_types": objects[:50],
         "relation_types": model["relation_types"][:100],
         "principles": model["principles"],
-        "sources": [{"type": "semantic-model", "id": model["version"], "title": "M航营销本体语义模型", "excerpt": "注册对象、关系和建模原则"}],
+        "sources": [{"type": "semantic-model", "id": model["version"], "title": "东航营销本体语义模型", "excerpt": "注册对象、关系和建模原则"}],
     }
 
 
@@ -190,7 +190,7 @@ def main() -> None:
     PROFILE = args.profile
     server = FastMCP(
         name="ceair-marketing-" + PROFILE,
-        instructions="M航智能营销平台只读业务查询 MCP。当前租户=" + str(TENANT_ID),
+        instructions="东航智能营销平台只读业务查询 MCP。当前租户=" + str(TENANT_ID),
     )
     # Decorators register on the module-level server at import time. The
     # runtime server is rebuilt above, so re-register the functions.

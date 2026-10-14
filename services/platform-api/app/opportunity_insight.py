@@ -91,7 +91,7 @@ def _heuristic(role: str, prompt: str, evidence: list[dict]) -> dict:
     topic = "、".join(keywords[:4]) or "航线经营与市场需求"
     role_names = {"market": "市场信号", "route": "航线经营", "product": "产品商业化"}
     score = min(96, 68 + len(keywords) * 4 + (8 if role == "route" and "航班" in text else 0))
-    return {"role": role, "agent_name": f"{role_names[role]}洞察智能体", "topic": topic, "score": score, "summary": f"基于{topic}识别到可经营信号，建议结合M航航线、客群和可售产品进行人工确认。", "evidence_count": len(evidence)}
+    return {"role": role, "agent_name": f"{role_names[role]}洞察智能体", "topic": topic, "score": score, "summary": f"基于{topic}识别到可经营信号，建议结合东航航线、客群和可售产品进行人工确认。", "evidence_count": len(evidence)}
 
 
 def _provider_config(session, tenant_id: int) -> tuple[ModelProviderRecord | None, LLMConfig | None]:
@@ -115,7 +115,7 @@ def _agent_result(role: str, profile_id: str, run_id: str, tenant_id: int, promp
     runtime = AgentScopeRuntime(emit=lambda event, payload: events.append({"event": event, "payload": payload}), record_usage=None)
     request = json.dumps({"role": role, "prompt": prompt, "evidence": evidence[:12], "required_fields": ["topic", "score", "summary"]}, ensure_ascii=False)
     try:
-        output = runtime.run_sync(profile_id=profile_id, tenant_id=tenant_id, run_id=f"{run_id}-{role}", config=config, system_prompt="你是M航商机洞察智能体，只基于证据输出JSON，不编造航班、价格、库存或旅客个人信息。", user_prompt=request, use_mcp=True)
+        output = runtime.run_sync(profile_id=profile_id, tenant_id=tenant_id, run_id=f"{run_id}-{role}", config=config, system_prompt="你是东航商机洞察智能体，只基于证据输出JSON，不编造航班、价格、库存或旅客个人信息。", user_prompt=request, use_mcp=True)
         parsed = json.loads(output) if output.strip().startswith("{") else {}
         if isinstance(parsed, dict):
             result.update({key: parsed[key] for key in ("topic", "score", "summary") if key in parsed})

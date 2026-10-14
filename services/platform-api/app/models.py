@@ -446,7 +446,7 @@ class InterfacePipelineRequest(BaseModel):
 
 
 class FlightProductPipelineRequest(BaseModel):
-    source_name: str = Field(default="M Airlines flight and product scraper", min_length=2, max_length=160)
+    source_name: str = Field(default="China Eastern flight and product scraper", min_length=2, max_length=160)
     payload: dict[str, Any] = Field(default_factory=dict)
     require_confirmation: bool = True
 

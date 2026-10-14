@@ -1,2 +1,2 @@
-"""M Airlines intelligent marketing platform API."""
+"""China Eastern intelligent marketing platform API."""
 

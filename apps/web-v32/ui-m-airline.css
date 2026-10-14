@@ -1,4 +1,4 @@
-/* M airline identity and shared conversation output. */
+/* Shared conversation output and marketing overview. */
 .dongdong-avatar { display:none !important; }
 body.dongdong-mode #marketingAssistant .assistant-fab,
 body.smartspace-mode #marketingAssistant .assistant-fab { display:flex !important; }

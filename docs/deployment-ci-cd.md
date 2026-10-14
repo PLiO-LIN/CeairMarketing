@@ -46,6 +46,8 @@ A rollback must be recorded as an issue or deployment note.
 
 ## Current server key setup
 
+Branding updates retain existing tenant IDs, channel identifiers and imported data. The deployment bootstrap renames the known legacy `M航营销运营` workspace and seeded App labels to China Eastern labels. Custom workspace names and source provenance remain intact. Both legacy M-airline and China Eastern App aliases resolve to the canonical `App` channel.
+
 The public deployment key has been installed for the `ubuntu` account on `124.220.225.29`. The corresponding private key is intentionally outside the repository at:
 
 ```text

@@ -113,7 +113,7 @@ class MarketingCopilot:
         )
         history = [{"role": item.role if hasattr(item, "role") else item.get("role", "user"), "content": item.content if hasattr(item, "content") else item.get("content", "")} for item in request.history]
         system_prompt = (
-            "你是M航智能营销平台的营销协同智能体。问候和平台功能介绍可以直接简短回答；回答业务问题必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务。"
+            "你是东航智能营销平台的营销协同智能体。问候和平台功能介绍可以直接简短回答；回答业务问题必须先使用工具读取当前租户内的知识、本体、活动、产品或数据处理任务。"
             "当前可调用六大智能域：opportunity-insight、audience-insight、product-match、activity-orchestration、content-generation、effect-analysis。"
             "调用智能域必须提供活动 ID，活动编排和内容生成结果必须保留人工审核。不得杜撰旅客个人信息、库存、价格、权益和活动结果。"
             "你可以查询平台所有授权业务接口。使用query_platform前先用platform_api_catalog查接口及字段；已提供专用工具时直接使用专用工具。"
@@ -205,7 +205,7 @@ class MarketingCopilot:
         observations: list[dict[str, Any]] = []
         history = [{"role": item.role, "content": item.content} for item in request.history]
         system_prompt = (
-            "你是M航智能营销平台的营销协同智能体。你必须先基于工具读取租户内真实知识、本体或活动数据，再回答业务问题。"
+            "你是东航智能营销平台的营销协同智能体。你必须先基于工具读取租户内真实知识、本体或活动数据，再回答业务问题。"
             "可用工具为 search_marketing_knowledge、query_marketing_ontology、inspect_campaign、list_available_products、inspect_data_pipeline、run_marketing_domain。"
             "run_marketing_domain可调用六大智能域，domain_id只能是opportunity-insight、audience-insight、product-match、activity-orchestration、content-generation、effect-analysis，且必须提供campaign_id。"
             "每一步只输出JSON：需要工具时输出{\"action\":工具名,\"arguments\":{...},\"reason\":原因}；"
@@ -233,7 +233,7 @@ class MarketingCopilot:
             result = harness.run_tool(action, lambda action=action, arguments=arguments: tools[action](arguments))
             observations.append({"tool": action, "reason": decision.get("reason", ""), "result": result})
         synthesis_prompt = json.dumps({"question": request.message, "history": history, "tool_observations": observations}, ensure_ascii=False)
-        final_system_prompt = "你是M航营销业务助手。仅根据工具观测回答，给出可执行结论、引用的数据依据、风险和需要人工确认的事项，不得编造。"
+        final_system_prompt = "你是东航营销业务助手。仅根据工具观测回答，给出可执行结论、引用的数据依据、风险和需要人工确认的事项，不得编造。"
         if token_sink:
             return harness.generate_text_stream(config, final_system_prompt, synthesis_prompt, token_sink)
         return harness.generate_text(config, final_system_prompt, synthesis_prompt)

@@ -1,4 +1,4 @@
-/* 首页沿用M航官网的品牌栏、蓝色导航、宽幅主视觉和红色主行动。 */
+/* 首页沿用东航官网的品牌栏、蓝色导航、宽幅主视觉和红色主行动。 */
 body.dongdong-mode .topnav { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:66px 44px; height:110px; padding:0 clamp(18px,3vw,42px); gap:0; border:0; backdrop-filter:blur(10px); }
 body.dongdong-mode .topnav .brand { grid-area:1 / 1; min-width:0; gap:20px; }
 body.dongdong-mode .topnav .logo { flex:0 0 auto; width:auto; padding:0; overflow:visible; }

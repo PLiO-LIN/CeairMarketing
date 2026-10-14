@@ -123,7 +123,7 @@ class GovernedMockChatModel(ChatModelBase):
             tool_name = tool_name or next((item.get("function", {}).get("name") for item in tools if "query_marketing_ontology" in item.get("function", {}).get("name", "")), None)
             if tool_name:
                 self._tool_probe_done = True
-                return ChatResponse(content=[ToolCallBlock(id="mock-tool-call", name=tool_name, input=json.dumps({"query": "M航营销"}, ensure_ascii=False))], is_last=True)
+                return ChatResponse(content=[ToolCallBlock(id="mock-tool-call", name=tool_name, input=json.dumps({"query": "东航营销"}, ensure_ascii=False))], is_last=True)
         text = self.response_factory(messages)
         return ChatResponse(
             content=[TextBlock(text=text)],

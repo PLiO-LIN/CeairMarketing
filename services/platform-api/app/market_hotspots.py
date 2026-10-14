@@ -125,7 +125,7 @@ def process_hotspot(session, context, record):
     if configured and record.content:
         _, config=configured
         try:
-            model=harness.generate_json(config,"你是M航市场热点处理智能体。只输出JSON；新闻是证据，不要把不能映射到航空业务对象的内容写入本体。",json.dumps({"hotspot":item,"heuristic":{"decision":decision,"candidates":candidates}},ensure_ascii=False)); md=model.get("hotspot_decision") if isinstance(model,dict) else None
+            model=harness.generate_json(config,"你是东航市场热点处理智能体。只输出JSON；新闻是证据，不要把不能映射到航空业务对象的内容写入本体。",json.dumps({"hotspot":item,"heuristic":{"decision":decision,"candidates":candidates}},ensure_ascii=False)); md=model.get("hotspot_decision") if isinstance(model,dict) else None
             if isinstance(md,dict): decision.update({k:md[k] for k in ("is_relevant","reason","relevance_score","trend_score","risk_level","summary","topics","keywords") if k in md})
             # Keep the deterministic aviation heuristic when a local/mock
             # model returns an empty optional list. A real non-empty model
@@ -177,8 +177,8 @@ def synthetic_hotspot_rows() -> list[dict[str, Any]]:
     """Return clearly labelled fallback signals when external feeds are unavailable."""
     today = utc_now().date().isoformat()
     return [
-        {"source_name": "M航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-route-{today}", "title": "上海—三亚航线提前预订需求上升，适合开展早鸟产品营销", "content": "系统演示信号：基于航线经营与产品销售样例生成，仅用于验证机会洞察流程，不代表实时市场统计。", "published_at": today, "region": "国内"},
-        {"source_name": "M航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-ancillary-{today}", "title": "亲子旅客对行李与优选座位组合服务的关注度提升", "content": "系统演示信号：用于验证机票与辅营产品组合的营销机会识别，不代表实时市场统计。", "published_at": today, "region": "国内"},
+        {"source_name": "东航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-route-{today}", "title": "上海—三亚航线提前预订需求上升，适合开展早鸟产品营销", "content": "系统演示信号：基于航线经营与产品销售样例生成，仅用于验证机会洞察流程，不代表实时市场统计。", "published_at": today, "region": "国内"},
+        {"source_name": "东航营销平台演示信号", "source_type": "system", "source_url": "", "external_id": f"demo-ancillary-{today}", "title": "亲子旅客对行李与优选座位组合服务的关注度提升", "content": "系统演示信号：用于验证机票与辅营产品组合的营销机会识别，不代表实时市场统计。", "published_at": today, "region": "国内"},
     ]
 def collect_source(name,url,source_type,max_items=30,timeout=6):
     items=fetch_feed(name,url,source_type,timeout=timeout)[:max_items]; return items,[{"name":name,"url":url,"status":"healthy","item_count":len(items),"checked_at":utc_now().isoformat()}]
