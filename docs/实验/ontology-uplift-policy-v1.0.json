@@ -1,0 +1,51 @@
+{
+  "algorithm": "Ontology-Constrained Doubly-Robust Uplift Policy (OC-DRUP)",
+  "seed": 7,
+  "synthetic": true,
+  "data_generation": {
+    "history_rows": 1200,
+    "action_rows": 243,
+    "true_uplift": "0.45*x1 + 0.80*x2 - 0.25*x3"
+  },
+  "constraints": {
+    "budget_yuan": 42.0,
+    "channel_caps": {
+      "App": 28,
+      "SMS": 14,
+      "WeChat": 14
+    },
+    "max_per_frequency_group": 3,
+    "evidence_floor": 0.65
+  },
+  "oc_drup": {
+    "candidate_count": 243,
+    "eligible_count": 240,
+    "selected_count": 42,
+    "budget_used": 33.6,
+    "mean_selected_uplift": 0.777934,
+    "objective_value": 3691.558886,
+    "true_policy_value": 4864.940009,
+    "rejected": [
+      [
+        "bad-pending",
+        "ontology_gate:pending"
+      ],
+      [
+        "bad-low-evidence",
+        "evidence_below_floor"
+      ],
+      [
+        "bad-direction",
+        "ontology_gate:ineligible"
+      ]
+    ]
+  },
+  "response_only": {
+    "selected_count": 42,
+    "true_policy_value": 4834.071616
+  },
+  "random_feasible": {
+    "selected_count": 42,
+    "true_policy_value": 2160.029103
+  }
+}

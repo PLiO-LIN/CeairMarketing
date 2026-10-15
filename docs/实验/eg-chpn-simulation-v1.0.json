@@ -1,0 +1,90 @@
+{
+  "experiment": "EG-CHPN synthetic temporal benchmark",
+  "synthetic": true,
+  "seeds": [
+    13,
+    29,
+    41,
+    53,
+    67
+  ],
+  "n_rows": 25,
+  "data_generation": {
+    "customers_per_seed": 1800,
+    "train_days": "0-62",
+    "test_days": "63-89",
+    "hidden_graph_terms": "route × product and evidence quality affect uplift but are absent from customer-only features"
+  },
+  "summary": [
+    {
+      "method": "eg_chpn_graph_evidence_gate",
+      "n_seeds": 5,
+      "policy_value_mean": 11203.878689106674,
+      "policy_value_ci95": 257.24003578874397,
+      "policy_lift_vs_random_mean": 1595.3550475910629,
+      "policy_lift_vs_random_ci95": 116.48765568699275,
+      "uplift_rmse_mean": 0.18401024054604886,
+      "uplift_rmse_ci95": 0.00835392209498862,
+      "topk_true_uplift_mean": 1.0473961749172844,
+      "topk_true_uplift_ci95": 0.023818521832290995,
+      "invalid_selection_rate_mean": 0.0,
+      "invalid_selection_rate_ci95": 0.0
+    },
+    {
+      "method": "oth_gct_no_evidence_gate",
+      "n_seeds": 5,
+      "policy_value_mean": 5863.456220575021,
+      "policy_value_ci95": 613.5468062627493,
+      "policy_lift_vs_random_mean": -3745.067420940588,
+      "policy_lift_vs_random_ci95": 550.9718749961728,
+      "uplift_rmse_mean": 0.15526487006208387,
+      "uplift_rmse_ci95": 0.0068070595148451455,
+      "topk_true_uplift_mean": 1.0866057305598593,
+      "topk_true_uplift_ci95": 0.03133568175182057,
+      "invalid_selection_rate_mean": 0.3444444444444444,
+      "invalid_selection_rate_ci95": 0.033166951008976146
+    },
+    {
+      "method": "random_feasible",
+      "n_seeds": 5,
+      "policy_value_mean": 9533.270361092516,
+      "policy_value_ci95": 351.45615174944624,
+      "policy_lift_vs_random_mean": -75.25328042309192,
+      "policy_lift_vs_random_ci95": 109.89194625251247,
+      "uplift_rmse_mean": 1.332390246747422,
+      "uplift_rmse_ci95": 0.04192398016820822,
+      "topk_true_uplift_mean": 0.8927102186196775,
+      "topk_true_uplift_ci95": 0.03254223627309694,
+      "invalid_selection_rate_mean": 0.0,
+      "invalid_selection_rate_ci95": 0.0
+    },
+    {
+      "method": "response_only",
+      "n_seeds": 5,
+      "policy_value_mean": 10658.85910711348,
+      "policy_value_ci95": 316.8173290385388,
+      "policy_lift_vs_random_mean": 1050.3354655978703,
+      "policy_lift_vs_random_ci95": 195.25694610857545,
+      "uplift_rmse_mean": 0.6408544179392246,
+      "uplift_rmse_ci95": 0.008403619917292979,
+      "topk_true_uplift_mean": 0.9969313988068038,
+      "topk_true_uplift_ci95": 0.0293349378739388,
+      "invalid_selection_rate_mean": 0.0,
+      "invalid_selection_rate_ci95": 0.0
+    },
+    {
+      "method": "tabular_t_learner",
+      "n_seeds": 5,
+      "policy_value_mean": 10664.762622505184,
+      "policy_value_ci95": 272.1618003434538,
+      "policy_lift_vs_random_mean": 1056.2389809895762,
+      "policy_lift_vs_random_ci95": 191.11771976474105,
+      "uplift_rmse_mean": 0.21192313979515037,
+      "uplift_rmse_ci95": 0.010786490911095794,
+      "topk_true_uplift_mean": 0.9974780206023318,
+      "topk_true_uplift_ci95": 0.02520016669846802,
+      "invalid_selection_rate_mean": 0.0,
+      "invalid_selection_rate_ci95": 0.0
+    }
+  ]
+}
