@@ -23,6 +23,7 @@ services/platform-api/research/egchpn_torch/snapshot_pre_stage3/
 services/platform-api/research/egchpn_torch/bundle_stage/
 services/platform-api/research/egchpn_torch/marshecho_v2_0/
 services/platform-api/research/egchpn_torch/winner_cfg.json
+services/platform-api/research/egchpn_torch/*.out
 services/platform-api/app/algorithms.zip
 services/finalize.out
 tmp/

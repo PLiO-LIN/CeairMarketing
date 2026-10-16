@@ -101,6 +101,8 @@ def test_score_returns_uplift_with_gate_trace() -> None:
         assert payload["accepted_edges"] == 1
         item = payload["items"][0]
         assert item["status"] == "eligible"
+        assert item["product_package_external_id"] == "PP-SCORE1"
+        assert item["action_id"] == "PP-SCORE1-seg-0"
         assert item["accepted"] is True
         assert item["gate_value"] > 0
         assert item["uplift"] == pytest.approx(item["uplift"])
@@ -194,3 +196,64 @@ def test_explain_falls_back_to_template_when_provider_fails(monkeypatch) -> None
         assert response.status_code == 200
         assert response.json()["source"] in {"template", "provider"}
         assert "合成机制验证" in response.json()["text"] or response.json()["source"] == "provider"
+
+
+def test_half_wired_ontology_path_is_scored_instead_of_failing() -> None:
+    """A tenant whose eligibility chain is only partly wired must get a score.
+
+    This used to answer 500: the graph held seven of the nine trained node
+    types (no Route, no Flight), and the runtime demanded an exact vocabulary
+    size.  A real deployment always has half-completed projections, so the
+    response must stay a scored, governed answer with the path degraded by the
+    ontology gate.
+    """
+
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        hq = next(item for item in tenants if item["code"] == "CEA-HQ")
+        created = client.post(
+            "/api/audience-packages",
+            headers=headers(auth, hq["id"]),
+            json={
+                "name": "九皋半接客群-HALF1",
+                "selection_mode": "tag-combination",
+                "tag_ids": [],
+                "expression": {"destination": "三亚"},
+                "estimated_size": 500,
+                "status": "可用",
+            },
+        )
+        assert created.status_code == 201
+        snapshot_id = client.post(
+            f"/api/audience-packages/{created.json()['id']}/snapshots", headers=headers(auth, hq["id"])
+        ).json()["external_id"]
+        with SessionLocal() as session:
+            product = put_entity(session, hq["id"], "PR-HALF1", "Product", "半接行李优选", {"fit": 0.7})
+            fare = put_entity(session, hq["id"], "FR-HALF1", "Fare", "经济舱折扣价", {"fare": 0.6})
+            cabin = put_entity(session, hq["id"], "CB-HALF1", "Cabin", "Y 舱", {})
+            package = put_entity(session, hq["id"], "PP-HALF1", "ProductPackage", "半接产品包", {})
+            rule = put_entity(session, hq["id"], "BR-HALF1", "BusinessRule", "资格规则", {"status": "active"})
+            evidence = put_entity(session, hq["id"], "EV-HALF1", "Evidence", "运价核对记录", {"quality": 0.85}, confidence=0.85)
+            snapshot = put_entity(session, hq["id"], snapshot_id, "AudienceSnapshot", "半接快照", {"value": 0.6})
+            put_relation(session, hq["id"], package, "targets_audience", snapshot)
+            put_relation(session, hq["id"], package, "contains_product", product)
+            put_relation(session, hq["id"], fare, "uses_product", product)
+            put_relation(session, hq["id"], cabin, "has_fare", fare)
+            put_relation(session, hq["id"], evidence, "evidence_for", package)
+            put_relation(session, hq["id"], evidence, "evidence_for", rule)
+            session.commit()
+        response = client.post(
+            "/api/algorithms/marshecho/score",
+            headers=headers(auth, hq["id"]),
+            json={"audience_snapshot_external_id": snapshot_id, "product_package_external_ids": ["PP-HALF1"]},
+        )
+        assert response.status_code == 200, response.text
+        payload = response.json()
+        assert payload["items"][0]["accepted"] is False
+        assert payload["items"][0]["product_package_external_id"] == "PP-HALF1"
+        assert payload["unmatched_paths"] >= 1
+        assert payload["label"] == "流程验证（虚构）"

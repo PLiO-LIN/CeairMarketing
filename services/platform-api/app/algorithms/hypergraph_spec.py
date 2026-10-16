@@ -133,6 +133,10 @@ class HypergraphSpec:
     node_features: np.ndarray
     node_types: tuple[str, ...]
     hyperedges: tuple[Hyperedge, ...]
+    # Business identity of each node.  Synthetic research specs leave it empty;
+    # an ontology projection fills it so governance responses can name the
+    # product package a score belongs to instead of exposing a graph index.
+    node_external_ids: tuple[str, ...] = ()
 
     def incidence(self) -> np.ndarray:
         matrix = np.zeros((len(self.node_types), len(self.hyperedges)), dtype=np.uint8)
@@ -364,7 +368,8 @@ def build_from_ontology(session, tenant_id: int, snapshot_external_id: str, pack
         )
 
     features = np.asarray(feature_rows, dtype=float).reshape(len(node_types), FEATURE_DIM)
-    spec = HypergraphSpec(features, tuple(node_types), tuple(hyperedges))
+    external_by_index = {index: external for external, index in node_indexes.items()}
+    spec = HypergraphSpec(features, tuple(node_types), tuple(hyperedges), tuple(external_by_index[index] for index in range(len(node_types))))
     for edge in spec.hyperedges:
         error = validate_hyperedge(edge, len(node_types), spec.node_types)
         if error:

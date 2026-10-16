@@ -60,6 +60,73 @@ def test_predictions_are_deterministic_across_loads():
     assert np.array_equal(first, second)
 
 
+def test_partial_ontology_graph_is_encoded_against_the_artifact_vocab():
+    """A half-wired tenant path must score, not fail.
+
+    The runtime used to demand that the observed node types equal the training
+    vocabulary in size, so a graph containing only ProductPackage and
+    AudienceSnapshot raised ArtifactSchemaError and the API answered 500.  Type
+    ids now index the artifact vocabulary itself, which is also the only mapping
+    that keeps the trained embedding rows aligned.
+    """
+
+    runtime = load_default_runtime()
+    full = tiny_spec()
+    keep = [index for index, name in enumerate(full.node_types) if name in ("ProductPackage", "AudienceSnapshot")]
+    renumber = {old: new for new, old in enumerate(keep)}
+    edge = Hyperedge(
+        member_nodes=tuple(renumber[node] for node in keep),
+        member_types=("ProductPackage", "AudienceSnapshot"),
+        hops=(("targets_audience", "ProductPackage", "AudienceSnapshot"),),
+        status="pending",
+        confidence=0.8,
+        freshness_days=3.0,
+        rule_agreement=0.9,
+        source_stability=0.7,
+        delta_days=5.0,
+    )
+    partial = HypergraphSpec(
+        full.node_features[keep],
+        tuple(full.node_types[index] for index in keep),
+        (edge,),
+    )
+    tau, trace = runtime.predict_from_spec(partial)
+    assert np.isfinite(tau).all()
+    assert trace.decisions[0].accepted is False
+    assert tuple(runtime.last_encoding["node_types"]) == tuple(sorted(TYPES))
+    assert runtime.last_encoding["missing_node_types"]
+
+
+def test_type_ids_are_invariant_to_how_much_of_the_graph_is_present():
+    """The same node type must land on the same embedding row in any graph.
+
+    Deriving the alphabet from the types observed in one tenant's projection
+    shifts every id as soon as a path is half wired, which changes τ̂ without
+    changing anything the model was trained on.
+    """
+
+    runtime = load_default_runtime()
+    full = tiny_spec()
+    full_ids = runtime.spec_arrays(full)[0]
+    keep = [index for index, name in enumerate(full.node_types) if name in ("Route", "Flight", "AudienceSnapshot")]
+    subset = HypergraphSpec(
+        full.node_features[keep],
+        tuple(full.node_types[index] for index in keep),
+        (),
+    )
+    subset_ids = runtime.spec_arrays(subset)[0]
+    assert [full_ids[index] for index in keep] == list(subset_ids)
+    assert len(set(full_ids)) == len(TYPES)
+
+
+def test_unknown_node_type_is_still_rejected():
+    runtime = load_default_runtime()
+    spec = tiny_spec()
+    corrupted = HypergraphSpec(spec.node_features, tuple(["AlienType"] * len(spec.node_types)), spec.hyperedges)
+    with pytest.raises(ArtifactSchemaError):
+        runtime.predict_from_spec(corrupted)
+
+
 def test_partial_eligibility_path_is_flagged_as_unmatched() -> None:
     """A path missing hops is not in the training vocabulary and must say so."""
 

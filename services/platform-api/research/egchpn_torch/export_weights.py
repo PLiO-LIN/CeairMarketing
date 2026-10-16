@@ -111,7 +111,7 @@ def main() -> None:
                     "schema_version": SCHEMA_VERSION,
                     "config": model_cfg,
                     "train_config": loaded_cfg,
-                    "node_types": list(NODE_TYPES),
+                    "node_types": sorted(NODE_TYPES),  # trainer ids come from sorted(set(node_types))
                     "relation_vocab": ["|".join(relation for relation, _, _ in ELIGIBILITY_HOPS)],
                     "parameters": parameter_count,
                     "torch_version": torch.__version__,

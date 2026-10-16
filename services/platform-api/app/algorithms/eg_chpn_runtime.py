@@ -88,6 +88,11 @@ class EGCHPNRuntime:
         self.meta = meta
         self.config = meta["config"]
         self.node_type_vocab: list[str] = list(meta["node_types"])
+        # The trainer built type ids from ``sorted(set(node_types))``; the exported
+        # vocabulary is in declaration order, so the training alphabet is the
+        # sorted one.  Resolving it once keeps every tenant graph — full or half
+        # wired — on the same embedding rows.
+        self.type_index: dict[str, int] = {name: position for position, name in enumerate(sorted(self.node_type_vocab))}
         self.relation_vocab: list[str] = list(meta["relation_vocab"])
         self.parameters = int(meta["parameters"])
 
@@ -148,13 +153,17 @@ class EGCHPNRuntime:
         and degrades inference while parity tests still pass.
         """
 
-        types = sorted(set(spec.node_types))
-        if len(types) != len(self.node_type_vocab):
-            raise ArtifactSchemaError(
-                f"节点类型数与训练词表不一致：{len(types)} vs {len(self.node_type_vocab)}"
-            )
-        type_ids = np.asarray([types.index(name) for name in spec.node_types], dtype=np.int64)
-        training_vocab = list(types)
+        # Type ids follow the trainer's rule exactly: ``data.py`` builds them from
+        # ``sorted(set(node_types))`` over the full nine-type vocabulary.  Two
+        # failure modes this avoids: indexing by the artifact's declaration order
+        # (exported ``meta["node_types"]`` is NODE_TYPES order, not the training
+        # order) and re-deriving the order from the subset of types present in one
+        # tenant's graph, which shifts every id as soon as a path is half wired.
+        unknown_types = [name for name in spec.node_types if name not in self.type_index]
+        if unknown_types:
+            raise ArtifactSchemaError(f"节点类型不在训练词表中：{sorted(set(unknown_types))}")
+        type_ids = np.asarray([self.type_index[name] for name in spec.node_types], dtype=np.int64)
+        training_vocab = sorted(self.node_type_vocab)
         unknown_relations = [key for key in spec.keys() if key not in self.relation_vocab]
         H = spec.incidence().astype(np.float32)
         degree_v = np.clip(H.sum(axis=1), 1.0, None)
@@ -164,7 +173,11 @@ class EGCHPNRuntime:
             [self.relation_vocab.index(key) if key in self.relation_vocab else 0 for key in spec.keys()],
             dtype=np.int64,
         )
-        self.last_encoding = {"node_types": training_vocab, "unknown_relations": unknown_relations}
+        self.last_encoding = {
+            "node_types": training_vocab,
+            "unknown_relations": unknown_relations,
+            "missing_node_types": sorted(set(self.node_type_vocab) - set(spec.node_types)),
+        }
         return type_ids, H, H_norm, spec.gate_attrs().astype(np.float32), spec.hard_mask().astype(np.float32), spec.delta_days().astype(np.float32), rel_ids
 
     def _forward_member(self, params, x, type_ids, H, H_norm, attrs, hard_mask, delta, rel_ids, *, use_gate: bool = True) -> dict[str, np.ndarray]:

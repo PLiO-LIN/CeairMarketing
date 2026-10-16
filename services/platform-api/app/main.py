@@ -1560,7 +1560,10 @@ def _marshecho_scored(context: TenantContext, session: Session, payload: Marshec
     if not spec.hyperedges:
         raise HTTPException(status_code=404, detail="没有可评分的产品包资格路径")
     runtime = load_default_runtime()
-    tau, trace = runtime.predict_from_spec(spec)
+    try:
+        tau, trace = runtime.predict_from_spec(spec)
+    except ArtifactSchemaError as exc:
+        raise HTTPException(status_code=409, detail=f"权重与本体词表不匹配：{exc}") from exc
     return runtime, spec, tau, trace
 
 
@@ -1590,10 +1593,11 @@ def marshecho_score(payload: MarshechoScoreRequest, context: TenantContext = Dep
         audience = edge.member_types.index("AudienceSnapshot")
         package = edge.member_types.index("ProductPackage")
         decision = trace.decisions[index]
+        package_id = spec.node_external_ids[edge.member_nodes[package]] if spec.node_external_ids else str(edge.member_nodes[package])
         items.append(
             MarshechoScoreItem(
-                action_id=f"{spec.node_features.shape[0]}-{index}",
-                product_package_external_id=str(edge.member_nodes[package]),
+                action_id=f"{package_id}-seg-{index}",
+                product_package_external_id=package_id,
                 uplift=float(tau[edge.member_nodes[audience]]),
                 gate_value=decision.gate_value,
                 gate_reason=decision.reason,
@@ -1621,12 +1625,14 @@ def marshecho_plan(payload: MarshechoPlanRequest, context: TenantContext = Depen
         decision = trace.decisions[index]
         audience_node = edge.member_nodes[edge.member_types.index("AudienceSnapshot")]
         package_node = edge.member_nodes[edge.member_types.index("ProductPackage")]
+        package_id = spec.node_external_ids[package_node] if spec.node_external_ids else str(package_node)
+        audience_id = spec.node_external_ids[audience_node] if spec.node_external_ids else str(audience_node)
         items.append(
             UpliftItem(
-                action_id=f"pkg-{package_node}-seg-{index}",
-                customer_id=f"snap-{audience_node}",
+                action_id=f"{package_id}-seg-{index}",
+                customer_id=audience_id,
                 channel=channels[index % len(channels)],
-                product_id=str(package_node),
+                product_id=package_id,
                 uplift=float(tau[audience_node]),
                 evidence_confidence=edge.confidence,
                 status=edge.status,

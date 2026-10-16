@@ -73,7 +73,7 @@ def main() -> int:
                     "members": len(models),
                     "member_configs": member_cfgs,
                     "config": models[0].cfg,
-                    "node_types": list(NODE_TYPES),
+                    "node_types": sorted(NODE_TYPES),  # trainer ids come from sorted(set(node_types))
                     "relation_vocab": ["|".join(relation for relation, _, _ in ELIGIBILITY_HOPS)],
                     "parameters": parameter_count,
                     "torch_version": torch.__version__,
