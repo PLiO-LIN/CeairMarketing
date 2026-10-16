@@ -32,7 +32,19 @@ from .mock_business import channel_delivery, flight_operations, market_signals, 
 from .imports import import_file
 from .llm import LLMClient, LLMConfig
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
+from .algorithms.eg_chpn_policy import UpliftItem, plan_from_uplift
+from .algorithms.eg_chpn_runtime import WEIGHTS_PATH, ArtifactSchemaError, load_default_runtime
+from .algorithms.hypergraph_spec import build_from_ontology
 from .models import (
+    MarshechoExplainRequest,
+    MarshechoExplainResponse,
+    MarshechoPlanItem,
+    MarshechoPlanRequest,
+    MarshechoPlanResponse,
+    MarshechoScoreItem,
+    MarshechoScoreRequest,
+    MarshechoScoreResponse,
+    MarshechoStatus,
     AgentRun,
     AudiencePackage,
     AudiencePackageBase,
@@ -1517,6 +1529,180 @@ def tenant_graph(context: TenantContext = Depends(get_tenant_context), session: 
 @app.get("/api/graph/stats", response_model=GraphStats)
 def tenant_graph_stats(context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     return graph_stats(session, context.tenant_id)
+
+
+def _marshecho_manifest() -> dict:
+    path = WEIGHTS_PATH.parent / "marshecho_v2_0.manifest.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        return {}
+
+
+def _marshecho_scored(context: TenantContext, session: Session, payload: MarshechoScoreRequest):
+    snapshot = session.scalar(
+        select(AudienceSnapshotRecord).where(
+            AudienceSnapshotRecord.tenant_id == context.tenant_id,
+            AudienceSnapshotRecord.external_id == payload.audience_snapshot_external_id,
+        )
+    )
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="客群快照不存在或不属于当前租户")
+    packages = list(payload.product_package_external_ids)
+    if not packages:
+        packages = [row.external_id for row in session.scalars(select(ProductPackageRecord).where(ProductPackageRecord.tenant_id == context.tenant_id)).all()]
+    try:
+        spec = build_from_ontology(session, context.tenant_id, snapshot.external_id, packages)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=f"本体资格路径无法投影为超图：{exc}") from exc
+    if not spec.hyperedges:
+        raise HTTPException(status_code=404, detail="没有可评分的产品包资格路径")
+    runtime = load_default_runtime()
+    tau, trace = runtime.predict_from_spec(spec)
+    return runtime, spec, tau, trace
+
+
+@app.get("/api/algorithms/marshecho/status", response_model=MarshechoStatus)
+def marshecho_status():
+    try:
+        runtime = load_default_runtime()
+    except ArtifactSchemaError as exc:
+        raise HTTPException(status_code=503, detail=f"研究模型不可用：{exc}") from exc
+    manifest = _marshecho_manifest()
+    meta = runtime.meta
+    return MarshechoStatus(
+        available=True,
+        schema_version=str(meta.get("schema_version", "")),
+        parameters=int(meta.get("parameters", 0)),
+        sha256=str(manifest.get("sha256", "")),
+        bytes=int(manifest.get("bytes", 0)),
+        license=str(meta.get("license", "Apache-2.0")),
+    )
+
+
+@app.post("/api/algorithms/marshecho/score", response_model=MarshechoScoreResponse)
+def marshecho_score(payload: MarshechoScoreRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    _, spec, tau, trace = _marshecho_scored(context, session, payload)
+    items = []
+    for index, edge in enumerate(spec.hyperedges):
+        audience = edge.member_types.index("AudienceSnapshot")
+        package = edge.member_types.index("ProductPackage")
+        decision = trace.decisions[index]
+        items.append(
+            MarshechoScoreItem(
+                action_id=f"{spec.node_features.shape[0]}-{index}",
+                product_package_external_id=str(edge.member_nodes[package]),
+                uplift=float(tau[edge.member_nodes[audience]]),
+                gate_value=decision.gate_value,
+                gate_reason=decision.reason,
+                status=decision.status,
+                accepted=decision.accepted,
+            )
+        )
+    return MarshechoScoreResponse(
+        model="marshecho",
+        audience_snapshot=payload.audience_snapshot_external_id,
+        items=items,
+        accepted_edges=trace.accepted_edges,
+        rejected_edges=trace.rejected_edges,
+        unmatched_paths=trace.unmatched_paths,
+        vocab_note=trace.vocab_note,
+    )
+
+
+@app.post("/api/algorithms/marshecho/plan", response_model=MarshechoPlanResponse)
+def marshecho_plan(payload: MarshechoPlanRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    _, spec, tau, trace = _marshecho_scored(context, session, payload)
+    channels = list(payload.channel_caps) or ["App"]
+    items = []
+    for index, edge in enumerate(spec.hyperedges):
+        decision = trace.decisions[index]
+        audience_node = edge.member_nodes[edge.member_types.index("AudienceSnapshot")]
+        package_node = edge.member_nodes[edge.member_types.index("ProductPackage")]
+        items.append(
+            UpliftItem(
+                action_id=f"pkg-{package_node}-seg-{index}",
+                customer_id=f"snap-{audience_node}",
+                channel=channels[index % len(channels)],
+                product_id=str(package_node),
+                uplift=float(tau[audience_node]),
+                evidence_confidence=edge.confidence,
+                status=edge.status,
+                margin_yuan=payload.margin_yuan,
+                contact_cost_yuan=payload.contact_cost_yuan,
+                frequency_group=f"g-{package_node % 7}",
+            )
+        )
+    result = plan_from_uplift(
+        items,
+        budget=payload.budget_yuan,
+        channel_caps=payload.channel_caps,
+        max_per_group=payload.max_per_frequency_group,
+    )
+    selected = [
+        MarshechoPlanItem(
+            action_id=item.action.action_id,
+            product_package_external_id=item.action.product_id,
+            channel=item.action.channel,
+            uplift=item.uplift,
+            value=item.value,
+            reason=item.reason,
+        )
+        for item in result["selected"]
+    ]
+    return MarshechoPlanResponse(
+        model="marshecho",
+        selected=selected,
+        rejected=[{"action_id": action_id, "reason": reason} for action_id, reason in result["rejected"]],
+        objective_value=float(result["objective_value"]),
+        budget_used=float(result["budget_used"]),
+        constraint_violations=list(result["constraint_violations"]),
+        candidate_count=int(result["candidate_count"]),
+        eligible_count=int(result["eligible_count"]),
+    )
+
+
+@app.get("/api/algorithms/marshecho/experiments/v2")
+def marshecho_experiments():
+    path = WEIGHTS_PATH.parent / "marshecho_v2_0.summary.json"
+    if not path.exists():
+        raise HTTPException(status_code=503, detail="v2 实验汇总尚未导出")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.post("/api/algorithms/marshecho/explain", response_model=MarshechoExplainResponse)
+def marshecho_explain(payload: MarshechoExplainRequest, context: TenantContext = Depends(require_write), session: Session = Depends(get_session)):
+    template = f"动作 {payload.action_id}：本体资格路径已通过证据门，增量价值与预算/渠道/频控约束见计划结果；该结论为合成机制验证，不代表真实经营提升。"
+    record = None
+    if payload.provider_id:
+        record = scoped_provider(session, context.tenant_id, payload.provider_id)
+    else:
+        record = session.scalar(select(ModelProviderRecord).where(ModelProviderRecord.tenant_id == context.tenant_id, ModelProviderRecord.is_default.is_(True)))
+    if record is None or not record.enabled:
+        return MarshechoExplainResponse(text=template, source="template", model="")
+    try:
+        result = llm_client.generate_result(
+            LLMConfig(record.provider_type, record.base_url, record.model_name, cipher.decrypt(record.encrypted_api_key), record.timeout_seconds, record.temperature, min(record.max_tokens, 256)),
+            "你是东方航空智能营销平台的研究模型解释助手，只能复述给定的模型与治理事实，不得编造数字。",
+            f"用不超过 120 字解释动作 {payload.action_id} 的触达建议依据。补充信息：{payload.detail[:400]}",
+        )
+    except Exception:
+        return MarshechoExplainResponse(text=template, source="template", model="")
+    session.add(
+        ModelUsageRecord(
+            tenant_id=context.tenant_id,
+            provider_id=record.id,
+            request_type="marshecho-explain",
+            model_name=result.model_name or record.model_name,
+            prompt_tokens=result.prompt_tokens,
+            completion_tokens=result.completion_tokens,
+            total_tokens=result.total_tokens,
+        )
+    )
+    session.commit()
+    return MarshechoExplainResponse(text=result.content[:160], source="provider", model=result.model_name or record.model_name)
 
 
 @app.get("/api/campaigns/{campaign_id}/graph", response_model=MarketingGraph)

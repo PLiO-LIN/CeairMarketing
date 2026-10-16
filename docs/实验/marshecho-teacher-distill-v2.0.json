@@ -1,0 +1,19 @@
+{
+  "experiment": "Marsh-Echo 证据门 rule_agreement 蒸馏探针",
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "cache": {
+    "path": "D:\\企业管理创新大赛\\CeairMarketing\\services\\platform-api\\research\\egchpn_torch\\cache\\teacher_cloud_frozen.json",
+    "sha256": "3bda915be4388d489f2104b6fe79c54494efa8fd03f2845971c3dccf060abab3",
+    "rows": 48
+  },
+  "probe": {
+    "rows": 48,
+    "threshold": 0.65,
+    "flag_decision_accuracy": 0.8125,
+    "spearman_vs_reference": 0.9492,
+    "mean_abs_error": 0.0525,
+    "mean_agreement_hard_block": 0.3203,
+    "mean_agreement_soft_rule": 0.6272
+  }
+}

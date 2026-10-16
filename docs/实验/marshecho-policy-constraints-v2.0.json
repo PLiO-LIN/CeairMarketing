@@ -1,0 +1,7210 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "runs_recorded": 400,
+  "total_gpu_wall_seconds": 121908.2,
+  "mean_run_seconds": 304.8,
+  "max_lambda_budget": 50.0,
+  "runs": [
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2179839164018631,
+      "wall_seconds": 322.35,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.20427866280078888,
+      "wall_seconds": 318.29,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.20365090668201447,
+      "wall_seconds": 320.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2481817752122879,
+      "wall_seconds": 318.86,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.22795362770557404,
+      "wall_seconds": 324.97,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2194703072309494,
+      "wall_seconds": 317.54,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.214463472366333,
+      "wall_seconds": 320.8,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.21053223311901093,
+      "wall_seconds": 326.69,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.19245576858520508,
+      "wall_seconds": 321.41,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.23367080092430115,
+      "wall_seconds": 313.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.0947966575622559,
+      "wall_seconds": 317.36,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.3902541399002075,
+      "wall_seconds": 373.35,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1465314626693726,
+      "wall_seconds": 371.9,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.7893317937850952,
+      "wall_seconds": 373.14,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.6280888319015503,
+      "wall_seconds": 372.38,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.159049391746521,
+      "wall_seconds": 372.76,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.401963233947754,
+      "wall_seconds": 372.11,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.2818586826324463,
+      "wall_seconds": 372.63,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 0.9682658314704895,
+      "wall_seconds": 372.84,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.5388816595077515,
+      "wall_seconds": 389.11,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.20647437870502472,
+      "wall_seconds": 289.17,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.20501463115215302,
+      "wall_seconds": 289.58,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.19641245901584625,
+      "wall_seconds": 288.84,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.23861567676067352,
+      "wall_seconds": 288.7,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.23138408362865448,
+      "wall_seconds": 229.28,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.2171541154384613,
+      "wall_seconds": 213.36,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.21001477539539337,
+      "wall_seconds": 213.11,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.20581988990306854,
+      "wall_seconds": 213.22,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.19655504822731018,
+      "wall_seconds": 212.86,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.23664328455924988,
+      "wall_seconds": 207.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.20868727564811707,
+      "wall_seconds": 296.72,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.21197590231895447,
+      "wall_seconds": 297.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.19166813790798187,
+      "wall_seconds": 297.45,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.24612601101398468,
+      "wall_seconds": 297.19,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.22456075251102448,
+      "wall_seconds": 297.19,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.2177530974149704,
+      "wall_seconds": 297.29,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.21906061470508575,
+      "wall_seconds": 297.27,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.19571204483509064,
+      "wall_seconds": 296.79,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.17431503534317017,
+      "wall_seconds": 297.24,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.2313895970582962,
+      "wall_seconds": 289.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.20207369327545166,
+      "wall_seconds": 279.55,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.20369893312454224,
+      "wall_seconds": 279.17,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.1948249638080597,
+      "wall_seconds": 279.48,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.23805727064609528,
+      "wall_seconds": 278.84,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.23100513219833374,
+      "wall_seconds": 279.03,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.20818600058555603,
+      "wall_seconds": 278.86,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.20504850149154663,
+      "wall_seconds": 279.52,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.19679556787014008,
+      "wall_seconds": 278.7,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.17717213928699493,
+      "wall_seconds": 279.34,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s1",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_balance",
+      "best_val": 0.23056410253047943,
+      "wall_seconds": 260.15,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.17750796675682068,
+      "wall_seconds": 302.39,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.17715854942798615,
+      "wall_seconds": 300.66,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.15778905153274536,
+      "wall_seconds": 301.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.18651872873306274,
+      "wall_seconds": 299.7,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.14518702030181885,
+      "wall_seconds": 313.22,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.16981109976768494,
+      "wall_seconds": 298.74,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.18439659476280212,
+      "wall_seconds": 298.3,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.1434318572282791,
+      "wall_seconds": 310.86,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.11099787801504135,
+      "wall_seconds": 311.3,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.1817816197872162,
+      "wall_seconds": 298.22,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.08574230223894119,
+      "wall_seconds": 306.99,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.07138320803642273,
+      "wall_seconds": 345.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.07475113123655319,
+      "wall_seconds": 372.2,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.10315132141113281,
+      "wall_seconds": 371.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.08304416388273239,
+      "wall_seconds": 371.6,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.08739355951547623,
+      "wall_seconds": 371.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.08342739939689636,
+      "wall_seconds": 371.87,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.07660569995641708,
+      "wall_seconds": 371.09,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.06604692339897156,
+      "wall_seconds": 371.77,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.09332344681024551,
+      "wall_seconds": 371.9,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.20642025768756866,
+      "wall_seconds": 316.15,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.20952269434928894,
+      "wall_seconds": 291.34,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.18999332189559937,
+      "wall_seconds": 290.3,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.24539873003959656,
+      "wall_seconds": 289.58,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.2276598960161209,
+      "wall_seconds": 284.06,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.21522670984268188,
+      "wall_seconds": 225.38,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.21862486004829407,
+      "wall_seconds": 225.25,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.21351033449172974,
+      "wall_seconds": 224.4,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.19126607477664948,
+      "wall_seconds": 224.49,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.2392338216304779,
+      "wall_seconds": 224.72,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.16020508110523224,
+      "wall_seconds": 266.13,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.18365362286567688,
+      "wall_seconds": 279.99,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.17013703286647797,
+      "wall_seconds": 279.82,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.22215524315834045,
+      "wall_seconds": 278.87,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.2019546627998352,
+      "wall_seconds": 280.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.170681431889534,
+      "wall_seconds": 279.78,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.1851155310869217,
+      "wall_seconds": 279.58,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.17252333462238312,
+      "wall_seconds": 279.68,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.15325498580932617,
+      "wall_seconds": 280.13,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.19527140259742737,
+      "wall_seconds": 279.17,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.1311794519424438,
+      "wall_seconds": 288.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.413326382637024,
+      "wall_seconds": 296.41,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.1942704916000366,
+      "wall_seconds": 296.48,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.8318045139312744,
+      "wall_seconds": 294.92,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.6487200260162354,
+      "wall_seconds": 295.03,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.2193329334259033,
+      "wall_seconds": 295.84,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.4615974426269531,
+      "wall_seconds": 295.75,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.2876843214035034,
+      "wall_seconds": 295.14,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 0.9952700138092041,
+      "wall_seconds": 295.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.57412850856781,
+      "wall_seconds": 295.3,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.38982954621315,
+      "wall_seconds": 159.74,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.29826727509498596,
+      "wall_seconds": 106.18,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2352275848388672,
+      "wall_seconds": 106.33,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.25092005729675293,
+      "wall_seconds": 106.93,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2349812537431717,
+      "wall_seconds": 106.17,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.23470304906368256,
+      "wall_seconds": 105.99,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2695716917514801,
+      "wall_seconds": 107.0,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.28748807311058044,
+      "wall_seconds": 106.47,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.22912533581256866,
+      "wall_seconds": 106.2,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.30971819162368774,
+      "wall_seconds": 106.32,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.33084967732429504,
+      "wall_seconds": 175.93,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.2854774296283722,
+      "wall_seconds": 173.44,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.3980720043182373,
+      "wall_seconds": 172.84,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.3480328321456909,
+      "wall_seconds": 173.53,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.3721802532672882,
+      "wall_seconds": 173.98,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.3406062424182892,
+      "wall_seconds": 172.54,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.36441999673843384,
+      "wall_seconds": 171.94,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.43776676058769226,
+      "wall_seconds": 175.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.362804114818573,
+      "wall_seconds": 175.0,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "tarnet",
+      "best_val": 0.3470786213874817,
+      "wall_seconds": 172.21,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.33084967732429504,
+      "wall_seconds": 173.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.2854774296283722,
+      "wall_seconds": 174.0,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.3980720043182373,
+      "wall_seconds": 175.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.3480328321456909,
+      "wall_seconds": 175.78,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.3721802532672882,
+      "wall_seconds": 176.02,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.3406062424182892,
+      "wall_seconds": 174.39,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.36441999673843384,
+      "wall_seconds": 172.69,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.43776676058769226,
+      "wall_seconds": 171.28,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.362804114818573,
+      "wall_seconds": 169.45,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "dragonnet",
+      "best_val": 0.3470786213874817,
+      "wall_seconds": 169.59,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.2640736699104309,
+      "wall_seconds": 469.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.1542089283466339,
+      "wall_seconds": 469.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.10010099411010742,
+      "wall_seconds": 468.96,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.12207701802253723,
+      "wall_seconds": 468.31,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.09066083282232285,
+      "wall_seconds": 469.24,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.09694681316614151,
+      "wall_seconds": 469.38,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.13574367761611938,
+      "wall_seconds": 476.33,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.15107493102550507,
+      "wall_seconds": 461.27,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.08806147426366806,
+      "wall_seconds": 446.25,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "s3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "gat_trained",
+      "best_val": 0.16746509075164795,
+      "wall_seconds": 445.61,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2091037482023239,
+      "wall_seconds": 458.78,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.001,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.1964462846517563,
+      "wall_seconds": 585.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.001,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19834637641906738,
+      "wall_seconds": 364.48,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.001,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.23371554911136627,
+      "wall_seconds": 387.35,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.001,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2181156873703003,
+      "wall_seconds": 388.21,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.001,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21763074398040771,
+      "wall_seconds": 388.3,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18866218626499176,
+      "wall_seconds": 386.65,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19385401904582977,
+      "wall_seconds": 386.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2302936166524887,
+      "wall_seconds": 386.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20866897702217102,
+      "wall_seconds": 383.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20534175634384155,
+      "wall_seconds": 383.35,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.01,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20334427058696747,
+      "wall_seconds": 382.45,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.01,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20433947443962097,
+      "wall_seconds": 385.82,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.01,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20176196098327637,
+      "wall_seconds": 388.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.01,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2032189816236496,
+      "wall_seconds": 382.54,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.01,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.1920119673013687,
+      "wall_seconds": 436.49,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.1872076839208603,
+      "wall_seconds": 453.2,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18505750596523285,
+      "wall_seconds": 452.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.22964008152484894,
+      "wall_seconds": 446.9,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2134334146976471,
+      "wall_seconds": 444.93,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20429587364196777,
+      "wall_seconds": 444.66,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18716759979724884,
+      "wall_seconds": 449.1,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19261083006858826,
+      "wall_seconds": 446.94,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21587812900543213,
+      "wall_seconds": 445.62,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20469574630260468,
+      "wall_seconds": 447.02,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.001,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21763074398040771,
+      "wall_seconds": 435.42,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.05
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18866218626499176,
+      "wall_seconds": 435.51,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.05
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19385401904582977,
+      "wall_seconds": 435.54,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.05
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2302936166524887,
+      "wall_seconds": 464.97,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.05
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20866897702217102,
+      "wall_seconds": 465.25,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.05
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21763074398040771,
+      "wall_seconds": 464.89,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.2
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18866218626499176,
+      "wall_seconds": 465.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.2
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19385401904582977,
+      "wall_seconds": 465.44,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.2
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2302936166524887,
+      "wall_seconds": 464.74,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.2
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20866897702217102,
+      "wall_seconds": 452.36,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.2
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21763074398040771,
+      "wall_seconds": 418.59,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18866218626499176,
+      "wall_seconds": 400.15,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19385401904582977,
+      "wall_seconds": 398.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2302936166524887,
+      "wall_seconds": 398.55,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w1",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20866897702217102,
+      "wall_seconds": 398.51,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.358207643032074,
+      "wall_seconds": 494.74,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.25927644968032837,
+      "wall_seconds": 491.0,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.22443293035030365,
+      "wall_seconds": 490.57,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.22403590381145477,
+      "wall_seconds": 488.76,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2339673638343811,
+      "wall_seconds": 487.07,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2044125646352768,
+      "wall_seconds": 483.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.239166721701622,
+      "wall_seconds": 482.25,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.23598717153072357,
+      "wall_seconds": 482.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2073071151971817,
+      "wall_seconds": 486.75,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_hypergraph",
+      "best_val": 0.2746037244796753,
+      "wall_seconds": 480.13,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.0881373882293701,
+      "wall_seconds": 434.89,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.390864372253418,
+      "wall_seconds": 435.34,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.147579550743103,
+      "wall_seconds": 435.22,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.7905383110046387,
+      "wall_seconds": 429.11,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.6057637929916382,
+      "wall_seconds": 427.69,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1481351852416992,
+      "wall_seconds": 427.8,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.4106701612472534,
+      "wall_seconds": 428.25,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.2757030725479126,
+      "wall_seconds": 427.52,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 0.9661914706230164,
+      "wall_seconds": 428.24,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.5252801179885864,
+      "wall_seconds": 427.48,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.1253637075424194,
+      "wall_seconds": 429.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.3978283405303955,
+      "wall_seconds": 430.7,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.1691681146621704,
+      "wall_seconds": 430.13,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.8236912488937378,
+      "wall_seconds": 454.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.6232142448425293,
+      "wall_seconds": 458.65,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.1835473775863647,
+      "wall_seconds": 459.01,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.4452489614486694,
+      "wall_seconds": 459.39,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.2915992736816406,
+      "wall_seconds": 459.52,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 0.9857770800590515,
+      "wall_seconds": 459.53,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_gate_deterministic_only",
+      "best_val": 1.5546278953552246,
+      "wall_seconds": 459.49,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.19116055965423584,
+      "wall_seconds": 336.44,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.18582312762737274,
+      "wall_seconds": 330.32,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.1940441131591797,
+      "wall_seconds": 320.64,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.22244136035442352,
+      "wall_seconds": 320.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.21223331987857819,
+      "wall_seconds": 321.19,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.19691680371761322,
+      "wall_seconds": 321.0,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.19428083300590515,
+      "wall_seconds": 266.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.19971750676631927,
+      "wall_seconds": 199.75,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.18369756639003754,
+      "wall_seconds": 199.77,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_dual_tower",
+      "best_val": 0.20499518513679504,
+      "wall_seconds": 199.36,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.20000915229320526,
+      "wall_seconds": 297.27,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.19878028333187103,
+      "wall_seconds": 297.28,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.1825137734413147,
+      "wall_seconds": 245.96,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.2275424301624298,
+      "wall_seconds": 165.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.20644958317279816,
+      "wall_seconds": 166.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.19785000383853912,
+      "wall_seconds": 165.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.20216752588748932,
+      "wall_seconds": 166.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.18553102016448975,
+      "wall_seconds": 165.97,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.17770154774188995,
+      "wall_seconds": 166.39,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w2",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_temporal",
+      "best_val": 0.19285106658935547,
+      "wall_seconds": 166.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.17691287398338318,
+      "wall_seconds": 407.47,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.19230107963085175,
+      "wall_seconds": 528.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.1908784806728363,
+      "wall_seconds": 366.88,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.21267074346542358,
+      "wall_seconds": 351.17,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.2111867368221283,
+      "wall_seconds": 351.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.1900942176580429,
+      "wall_seconds": 352.46,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.19633318483829498,
+      "wall_seconds": 350.93,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.18351975083351135,
+      "wall_seconds": 349.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.1779378354549408,
+      "wall_seconds": 350.36,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_balance",
+      "best_val": 0.21348142623901367,
+      "wall_seconds": 350.89,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.17288708686828613,
+      "wall_seconds": 357.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.17046691477298737,
+      "wall_seconds": 359.1,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.16290093958377838,
+      "wall_seconds": 358.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.17383605241775513,
+      "wall_seconds": 360.21,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.13580255210399628,
+      "wall_seconds": 368.88,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.1537100374698639,
+      "wall_seconds": 357.64,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.1769426465034485,
+      "wall_seconds": 378.12,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.1400270164012909,
+      "wall_seconds": 413.58,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.10815306752920151,
+      "wall_seconds": 416.8,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_counterfactual",
+      "best_val": 0.1741303652524948,
+      "wall_seconds": 411.28,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.08805444091558456,
+      "wall_seconds": 425.6,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.058906275779008865,
+      "wall_seconds": 425.03,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.06534041464328766,
+      "wall_seconds": 425.71,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.0912342518568039,
+      "wall_seconds": 425.49,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.06383737921714783,
+      "wall_seconds": 425.9,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.07815196365118027,
+      "wall_seconds": 425.11,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.06858368963003159,
+      "wall_seconds": 425.94,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.06034291535615921,
+      "wall_seconds": 429.44,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.05578688159584999,
+      "wall_seconds": 429.72,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_evidence_loss",
+      "best_val": 0.06852597743272781,
+      "wall_seconds": 429.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.2124006152153015,
+      "wall_seconds": 371.8,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.19815129041671753,
+      "wall_seconds": 372.83,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.19280318915843964,
+      "wall_seconds": 373.15,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.2273903340101242,
+      "wall_seconds": 372.34,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.20948085188865662,
+      "wall_seconds": 373.0,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.19824114441871643,
+      "wall_seconds": 372.93,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.20249156653881073,
+      "wall_seconds": 372.69,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.19161288440227509,
+      "wall_seconds": 372.59,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.17295634746551514,
+      "wall_seconds": 350.98,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_lagrangian",
+      "best_val": 0.19701558351516724,
+      "wall_seconds": 335.81,
+      "lambda_budget": 0.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.15853479504585266,
+      "wall_seconds": 366.46,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.17337577044963837,
+      "wall_seconds": 365.7,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.16394968330860138,
+      "wall_seconds": 365.68,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.20380815863609314,
+      "wall_seconds": 365.59,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.18255101144313812,
+      "wall_seconds": 284.13,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.16352789103984833,
+      "wall_seconds": 239.51,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.16554833948612213,
+      "wall_seconds": 239.38,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.1677427589893341,
+      "wall_seconds": 270.18,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.1324836164712906,
+      "wall_seconds": 279.84,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_policy_head",
+      "best_val": 0.17771059274673462,
+      "wall_seconds": 279.49,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.27919068932533264,
+      "wall_seconds": 83.32,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.2598990201950073,
+      "wall_seconds": 83.01,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.3666701912879944,
+      "wall_seconds": 82.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.32878977060317993,
+      "wall_seconds": 83.87,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.3152197003364563,
+      "wall_seconds": 82.92,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.30978110432624817,
+      "wall_seconds": 83.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.31093573570251465,
+      "wall_seconds": 83.21,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.4032909870147705,
+      "wall_seconds": 82.89,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.3343132734298706,
+      "wall_seconds": 83.24,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "tarnet",
+      "best_val": 0.33002933859825134,
+      "wall_seconds": 83.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.27919068932533264,
+      "wall_seconds": 83.37,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.2598990201950073,
+      "wall_seconds": 83.73,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.3666701912879944,
+      "wall_seconds": 83.71,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.32878977060317993,
+      "wall_seconds": 83.8,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.3152197003364563,
+      "wall_seconds": 66.04,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.30978110432624817,
+      "wall_seconds": 15.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.31093573570251465,
+      "wall_seconds": 15.15,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.4032909870147705,
+      "wall_seconds": 15.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.3343132734298706,
+      "wall_seconds": 15.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w3",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "dragonnet",
+      "best_val": 0.33002933859825134,
+      "wall_seconds": 15.23,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21763074398040771,
+      "wall_seconds": 195.9,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18866218626499176,
+      "wall_seconds": 192.41,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19385401904582977,
+      "wall_seconds": 193.51,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2302936166524887,
+      "wall_seconds": 200.89,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20866897702217102,
+      "wall_seconds": 204.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21010449528694153,
+      "wall_seconds": 210.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20290744304656982,
+      "wall_seconds": 198.34,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20586629211902618,
+      "wall_seconds": 187.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.17954818904399872,
+      "wall_seconds": 242.02,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21171393990516663,
+      "wall_seconds": 188.79,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.2269255518913269,
+      "wall_seconds": 419.78,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.11520727723836899,
+      "wall_seconds": 566.57,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.0919659286737442,
+      "wall_seconds": 155.52,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.1051185205578804,
+      "wall_seconds": 153.11,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.08593406528234482,
+      "wall_seconds": 155.03,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.06751466542482376,
+      "wall_seconds": 155.46,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.10892774164676666,
+      "wall_seconds": 153.42,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.10053194314241409,
+      "wall_seconds": 156.94,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.0722731277346611,
+      "wall_seconds": 152.31,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "w4",
+      "tree": "runs",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "gat_trained",
+      "best_val": 0.13538452982902527,
+      "wall_seconds": 154.35,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": null,
+      "dr_weight": null
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21819138526916504,
+      "wall_seconds": 284.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.1889066845178604,
+      "wall_seconds": 282.42,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.1944248527288437,
+      "wall_seconds": 282.65,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2308139055967331,
+      "wall_seconds": 281.87,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20919832587242126,
+      "wall_seconds": 282.08,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21051546931266785,
+      "wall_seconds": 282.28,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20347502827644348,
+      "wall_seconds": 282.92,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.20645412802696228,
+      "wall_seconds": 281.4,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.18003293871879578,
+      "wall_seconds": 282.86,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21219027042388916,
+      "wall_seconds": 282.24,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.21870605647563934,
+      "wall_seconds": 282.79,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.20459245145320892,
+      "wall_seconds": 282.67,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.20418503880500793,
+      "wall_seconds": 282.54,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2486291080713272,
+      "wall_seconds": 282.32,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2284473031759262,
+      "wall_seconds": 282.88,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2199561446905136,
+      "wall_seconds": 282.52,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.21506120264530182,
+      "wall_seconds": 282.06,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2111549973487854,
+      "wall_seconds": 281.79,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.1930793821811676,
+      "wall_seconds": 282.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q1",
+      "tree": "runs_final",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2341841757297516,
+      "wall_seconds": 282.5,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.0884896516799927,
+      "wall_seconds": 287.21,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.3914047479629517,
+      "wall_seconds": 287.87,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1481913328170776,
+      "wall_seconds": 281.18,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.7910468578338623,
+      "wall_seconds": 279.71,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.6060783863067627,
+      "wall_seconds": 280.18,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1486438512802124,
+      "wall_seconds": 280.24,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.4113417863845825,
+      "wall_seconds": 281.04,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.276280164718628,
+      "wall_seconds": 280.53,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 0.9666253328323364,
+      "wall_seconds": 281.05,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.5256952047348022,
+      "wall_seconds": 280.56,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.0952695608139038,
+      "wall_seconds": 281.9,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.3907006978988647,
+      "wall_seconds": 280.92,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1470543146133423,
+      "wall_seconds": 280.57,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.7897297143936157,
+      "wall_seconds": 280.14,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.6287121772766113,
+      "wall_seconds": 280.98,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1595940589904785,
+      "wall_seconds": 280.57,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.4024934768676758,
+      "wall_seconds": 280.47,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.2825394868850708,
+      "wall_seconds": 279.92,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 0.9687198996543884,
+      "wall_seconds": 280.05,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "q2",
+      "tree": "runs_final",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.53928804397583,
+      "wall_seconds": 281.98,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.0,
+      "dr_weight": 0.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2182612121105194,
+      "wall_seconds": 306.64,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2243201732635498,
+      "wall_seconds": 304.28,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2165801078081131,
+      "wall_seconds": 304.15,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.22796012461185455,
+      "wall_seconds": 303.99,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2378203570842743,
+      "wall_seconds": 304.89,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19628417491912842,
+      "wall_seconds": 304.18,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.2287255823612213,
+      "wall_seconds": 304.31,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.21919849514961243,
+      "wall_seconds": 303.48,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.19038626551628113,
+      "wall_seconds": 303.64,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_none",
+      "best_val": 0.22354437410831451,
+      "wall_seconds": 303.8,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.22464318573474884,
+      "wall_seconds": 303.32,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2384634166955948,
+      "wall_seconds": 304.06,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2059057205915451,
+      "wall_seconds": 303.27,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.23701834678649902,
+      "wall_seconds": 303.8,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2558949291706085,
+      "wall_seconds": 303.57,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.23467221856117249,
+      "wall_seconds": 304.33,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.24172571301460266,
+      "wall_seconds": 303.91,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.2157575786113739,
+      "wall_seconds": 303.35,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.19593191146850586,
+      "wall_seconds": 237.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g1",
+      "tree": "runs_selq_gcdr",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_none",
+      "best_val": 0.24902108311653137,
+      "wall_seconds": 145.81,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 13,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.0992460250854492,
+      "wall_seconds": 318.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 29,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.417962670326233,
+      "wall_seconds": 310.3,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 41,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1682429313659668,
+      "wall_seconds": 303.25,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 53,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.8191980123519897,
+      "wall_seconds": 302.43,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 67,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.6285947561264038,
+      "wall_seconds": 302.27,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 83,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.164448857307434,
+      "wall_seconds": 302.77,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 97,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.4377912282943726,
+      "wall_seconds": 301.83,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 101,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.2953894138336182,
+      "wall_seconds": 302.2,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 113,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 0.9734860062599182,
+      "wall_seconds": 304.85,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 127,
+      "dgp": "v1",
+      "method": "marshecho_no_gate",
+      "best_val": 1.5381495952606201,
+      "wall_seconds": 303.39,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 13,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.099770426750183,
+      "wall_seconds": 301.99,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 29,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.424170970916748,
+      "wall_seconds": 302.13,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 41,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1735162734985352,
+      "wall_seconds": 302.93,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 53,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.8209056854248047,
+      "wall_seconds": 301.98,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 67,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.647261381149292,
+      "wall_seconds": 301.6,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 83,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.1725962162017822,
+      "wall_seconds": 301.87,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 97,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.4358664751052856,
+      "wall_seconds": 302.45,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 101,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.314544916152954,
+      "wall_seconds": 301.22,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 113,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 0.9813874363899231,
+      "wall_seconds": 229.31,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    },
+    {
+      "worker": "g2",
+      "tree": "runs_selq_gcdr",
+      "seed": 127,
+      "dgp": "v2",
+      "method": "marshecho_no_gate",
+      "best_val": 1.5567348003387451,
+      "wall_seconds": 145.07,
+      "lambda_budget": 50.0,
+      "lambda_group": 0.0,
+      "cfg": {
+        "lr": 0.003,
+        "wd": 0.0,
+        "lam_policy": 0.1
+      },
+      "gate_consistency": 0.5,
+      "dr_weight": 1.0
+    }
+  ]
+}

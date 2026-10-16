@@ -1,0 +1,68 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "experiment": "可执行性损失项在生产配置下的全量确认",
+  "protocol": "seeds [13, 29]、3000 客群、hidden 128 / 3 层 / 2000 epoch、GRID[4]（lr 0.003, wd 0.001）",
+  "measured_at": "2026-10-16T00:59:32.101675+00:00",
+  "rows": [
+    {
+      "seed": 13,
+      "gate_consistency": 0.0,
+      "invalid_rule_rate_pre_filter": 0.5168539325842697,
+      "invalid_latent_rate_pre_filter": 0.15730337078651685,
+      "policy_value": 2219.584810461869,
+      "uplift_rmse": 0.26312211093351595,
+      "qini": 0.9048646597421279,
+      "val_loss": 0.20429587364196777,
+      "wall_seconds": 176.27
+    },
+    {
+      "seed": 13,
+      "gate_consistency": 0.5,
+      "invalid_rule_rate_pre_filter": 0.0056179775280898875,
+      "invalid_latent_rate_pre_filter": 0.1348314606741573,
+      "policy_value": 13764.46585559915,
+      "uplift_rmse": 0.3870178144097138,
+      "qini": 0.9081818545141093,
+      "val_loss": 0.2269509881734848,
+      "wall_seconds": 183.99
+    },
+    {
+      "seed": 29,
+      "gate_consistency": 0.0,
+      "invalid_rule_rate_pre_filter": 0.28651685393258425,
+      "invalid_latent_rate_pre_filter": 0.0,
+      "policy_value": 9659.97424645835,
+      "uplift_rmse": 0.21857634877166385,
+      "qini": 0.926316530712183,
+      "val_loss": 0.18716759979724884,
+      "wall_seconds": 217.88
+    },
+    {
+      "seed": 29,
+      "gate_consistency": 0.5,
+      "invalid_rule_rate_pre_filter": 0.0,
+      "invalid_latent_rate_pre_filter": 0.0,
+      "policy_value": 16706.476958536856,
+      "uplift_rmse": 0.29912781539884403,
+      "qini": 0.91538504100671,
+      "val_loss": 0.25385889410972595,
+      "wall_seconds": 174.82
+    }
+  ],
+  "summary": {
+    "0.0": {
+      "mean_invalid_pre": 0.401685393258427,
+      "mean_policy_value": 5939.77952846011,
+      "mean_rmse": 0.24084922985258989,
+      "mean_qini": 0.9155905952271555
+    },
+    "0.5": {
+      "mean_invalid_pre": 0.0028089887640449437,
+      "mean_policy_value": 15235.471407068002,
+      "mean_rmse": 0.3430728149042789,
+      "mean_qini": 0.9117834477604096
+    }
+  },
+  "verdict": "采用"
+}

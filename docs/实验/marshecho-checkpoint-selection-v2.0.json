@@ -1,0 +1,55 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "decision_rule": "lowest mean training-window validation loss across shared seeds; test metrics never consulted",
+  "dgp_for_decision": "v1",
+  "ranking": [
+    {
+      "tree": "runs_final",
+      "lr": 0.003,
+      "wd": 0.001,
+      "lam_policy": 0.1,
+      "worker": [
+        "drys3"
+      ],
+      "seeds": 1,
+      "mean_best_val": 0.648514,
+      "std_best_val": 0.0,
+      "mean_wall_seconds": 2.0,
+      "shipped_seed_reason": "lowest validation loss among config-tagged checkpoints: 0.648513674736023",
+      "checkpoint_verified": true
+    }
+  ],
+  "winner": {
+    "tree": "runs_final",
+    "lr": 0.003,
+    "wd": 0.001,
+    "lam_policy": 0.1,
+    "worker": [
+      "drys3"
+    ],
+    "seeds": 1,
+    "mean_best_val": 0.648514,
+    "std_best_val": 0.0,
+    "mean_wall_seconds": 2.0,
+    "shipped_seed_reason": "lowest validation loss among config-tagged checkpoints: 0.648513674736023",
+    "checkpoint_verified": true
+  },
+  "shipped_checkpoint": "D:\\企业管理创新大赛\\CeairMarketing\\services\\platform-api\\research\\egchpn_torch\\runs_final\\v1\\checkpoint_seed13_lr0.003_wd0.001_lp0.1_h192_L3_e4.pt",
+  "shipped_seed": 13,
+  "cross_check_v2": [
+    {
+      "tree": "runs_final",
+      "lr": 0.003,
+      "wd": 0.001,
+      "lam_policy": 0.1,
+      "worker": [
+        "drys3"
+      ],
+      "seeds": 1,
+      "mean_best_val": 0.600406,
+      "std_best_val": 0.0,
+      "mean_wall_seconds": 0.3
+    }
+  ]
+}

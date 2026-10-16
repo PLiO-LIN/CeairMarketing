@@ -1,0 +1,42 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "experiment": "可执行性损失项 admissibility_loss 的 A/B",
+  "protocol": "seed 13、1500 客群、hidden 96 / 2 层 / 800 epoch、GRID[4]（lr 3e-3, wd 1e-3）；selector=none，指标为过滤前非法率与策略价值",
+  "measured_at": "2026-10-16T00:43:46.536520+00:00",
+  "rows": [
+    {
+      "variant": "gate_consistency=0.0",
+      "invalid_rule_rate_pre_filter": 0.07,
+      "policy_value": 5711,
+      "uplift_rmse": 0.24,
+      "qini": 0.908,
+      "val_loss": 0.2042
+    },
+    {
+      "variant": "gate_consistency=0.5",
+      "invalid_rule_rate_pre_filter": 0.0,
+      "policy_value": 6604,
+      "uplift_rmse": 0.364,
+      "qini": 0.898,
+      "val_loss": 0.2268
+    },
+    {
+      "variant": "gate_consistency=2.0",
+      "invalid_rule_rate_pre_filter": 0.0,
+      "policy_value": 6714,
+      "uplift_rmse": 0.49,
+      "qini": 0.896,
+      "val_loss": 0.3056
+    },
+    {
+      "variant": "eg_chpn_v1_frozen",
+      "invalid_rule_rate_pre_filter": 0.151,
+      "policy_value": 6533,
+      "uplift_rmse": 0.196,
+      "qini": 0.935
+    }
+  ],
+  "decision": "采用 0.5：过滤前非法排序归零、策略价值 +15.6%；RMSE 上升属于设计代价（不可执行动作被要求输出 0），不视为精度退化。",
+  "caveat": "单种子缩规模 A/B；全量 10 种子 × 2 DGP 的同变体结果由阶段三 runs_final 产出，且不同损失变体的验证损失不可互相比较。"
+}

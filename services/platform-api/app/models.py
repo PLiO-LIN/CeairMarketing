@@ -744,3 +744,88 @@ class OntologySemanticStatus(BaseModel):
     legacy_or_extension_types: dict[str, int]
     registered_instance_relations: dict[str, int]
     legacy_or_extension_relations: dict[str, int]
+
+
+class MarshechoStatus(BaseModel):
+    available: bool
+    model_name: str = "marshecho"
+    model_name_zh: str = "九皋"
+    paper_name: str = "Marsh-Echo"
+    architecture: str = "EG-CHPN v2"
+    schema_version: str = ""
+    parameters: int = 0
+    sha256: str = ""
+    bytes: int = 0
+    runtime: str = "numpy"
+    license: str = "Apache-2.0"
+    synthetic: bool = True
+    label: str = "流程验证（虚构）"
+
+
+class MarshechoScoreRequest(BaseModel):
+    audience_snapshot_external_id: str
+    product_package_external_ids: list[str] = []
+
+
+class MarshechoScoreItem(BaseModel):
+    action_id: str
+    product_package_external_id: str
+    uplift: float
+    gate_value: float
+    gate_reason: str
+    status: str
+    accepted: bool
+
+
+class MarshechoScoreResponse(BaseModel):
+    model: str
+    audience_snapshot: str
+    items: list[MarshechoScoreItem]
+    accepted_edges: int
+    rejected_edges: int
+    unmatched_paths: int = 0
+    vocab_note: str = ""
+    synthetic: bool = True
+    label: str = "流程验证（虚构）"
+
+
+class MarshechoPlanRequest(MarshechoScoreRequest):
+    budget_yuan: float = 50.0
+    channel_caps: dict[str, int] = {"App": 10, "SMS": 10, "WeChat": 10}
+    max_per_frequency_group: int = 3
+    margin_yuan: float = 120.0
+    contact_cost_yuan: float = 1.0
+
+
+class MarshechoPlanItem(BaseModel):
+    action_id: str
+    product_package_external_id: str
+    channel: str
+    uplift: float
+    value: float
+    reason: str
+
+
+class MarshechoPlanResponse(BaseModel):
+    model: str
+    selected: list[MarshechoPlanItem]
+    rejected: list[dict[str, str]]
+    objective_value: float
+    budget_used: float
+    constraint_violations: list[str]
+    candidate_count: int
+    eligible_count: int
+    synthetic: bool = True
+    label: str = "流程验证（虚构）"
+
+
+class MarshechoExplainRequest(BaseModel):
+    action_id: str
+    provider_id: int | None = None
+    detail: str = ""
+
+
+class MarshechoExplainResponse(BaseModel):
+    text: str
+    source: str
+    model: str

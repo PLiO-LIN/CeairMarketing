@@ -1,0 +1,315 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "question": "两个出厂候选相对现有出厂模型，在同一批种子的测试窗上是否更好",
+  "decision_rule": "tag=marshecho_none、selector=oracle_rule，按种子配对比较测试窗指标；基线树=runs",
+  "arms": {
+    "runs_final": {
+      "what_changed": "只换选择判据（去掉拉格朗日惩罚项），配方不变",
+      "by_dgp": {
+        "v1": {
+          "seeds_paired": 10,
+          "seeds": [
+            13,
+            29,
+            41,
+            53,
+            67,
+            83,
+            97,
+            101,
+            113,
+            127
+          ],
+          "metrics": {
+            "policy_value": {
+              "baseline_mean": 15583.697675,
+              "candidate_mean": 15583.697675,
+              "mean_delta": 0.0,
+              "relative_delta": 0.0,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                0.0,
+                0.0
+              ]
+            },
+            "uplift_rmse": {
+              "baseline_mean": 0.220461,
+              "candidate_mean": 0.220461,
+              "mean_delta": 0.0,
+              "relative_delta": 0.0,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                0.0,
+                0.0
+              ]
+            },
+            "qini": {
+              "baseline_mean": 0.927088,
+              "candidate_mean": 0.927088,
+              "mean_delta": 0.0,
+              "relative_delta": 0.0,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                0.0,
+                0.0
+              ]
+            },
+            "auuc": {
+              "baseline_mean": 395.258952,
+              "candidate_mean": 395.258952,
+              "mean_delta": 0.0,
+              "relative_delta": 0.0,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                0.0,
+                0.0
+              ]
+            },
+            "invalid_rule_rate_pre_filter": {
+              "baseline_mean": 0.329775,
+              "candidate_mean": 0.329775,
+              "mean_delta": 0.0,
+              "relative_delta": 0.0,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                0.0,
+                0.0
+              ]
+            }
+          }
+        },
+        "v2": {
+          "seeds_paired": 10,
+          "seeds": [
+            13,
+            29,
+            41,
+            53,
+            67,
+            83,
+            97,
+            101,
+            113,
+            127
+          ],
+          "metrics": {
+            "policy_value": {
+              "baseline_mean": 19410.817368,
+              "candidate_mean": 19398.497919,
+              "mean_delta": -12.319449,
+              "relative_delta": -0.000635,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                -36.958347,
+                0.0
+              ]
+            },
+            "uplift_rmse": {
+              "baseline_mean": 0.249783,
+              "candidate_mean": 0.249754,
+              "mean_delta": -2.9e-05,
+              "relative_delta": -0.000115,
+              "candidate_wins": 1,
+              "delta_ci95_bootstrap_seeds": [
+                -8.6e-05,
+                0.0
+              ]
+            },
+            "qini": {
+              "baseline_mean": 0.927318,
+              "candidate_mean": 0.927069,
+              "mean_delta": -0.00025,
+              "relative_delta": -0.000269,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                -0.000749,
+                0.0
+              ]
+            },
+            "auuc": {
+              "baseline_mean": 414.847472,
+              "candidate_mean": 414.728949,
+              "mean_delta": -0.118523,
+              "relative_delta": -0.000286,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                -0.355569,
+                0.0
+              ]
+            },
+            "invalid_rule_rate_pre_filter": {
+              "baseline_mean": 0.180899,
+              "candidate_mean": 0.180899,
+              "mean_delta": 0.0,
+              "relative_delta": 0.0,
+              "candidate_wins": 0,
+              "delta_ci95_bootstrap_seeds": [
+                0.0,
+                0.0
+              ]
+            }
+          }
+        }
+      }
+    },
+    "runs_selq_gcdr": {
+      "what_changed": "选择判据 + 可执行性项 λ=0.5 + DR 伪结局监督",
+      "by_dgp": {
+        "v1": {
+          "seeds_paired": 10,
+          "seeds": [
+            13,
+            29,
+            41,
+            53,
+            67,
+            83,
+            97,
+            101,
+            113,
+            127
+          ],
+          "metrics": {
+            "policy_value": {
+              "baseline_mean": 15583.697675,
+              "candidate_mean": 17661.157561,
+              "mean_delta": 2077.459886,
+              "relative_delta": 0.13331,
+              "candidate_wins": 10,
+              "delta_ci95_bootstrap_seeds": [
+                1255.6608,
+                2981.429746
+              ]
+            },
+            "uplift_rmse": {
+              "baseline_mean": 0.220461,
+              "candidate_mean": 0.194495,
+              "mean_delta": -0.025966,
+              "relative_delta": -0.117781,
+              "candidate_wins": 8,
+              "delta_ci95_bootstrap_seeds": [
+                -0.042776,
+                -0.012611
+              ]
+            },
+            "qini": {
+              "baseline_mean": 0.927088,
+              "candidate_mean": 0.946468,
+              "mean_delta": 0.01938,
+              "relative_delta": 0.020905,
+              "candidate_wins": 10,
+              "delta_ci95_bootstrap_seeds": [
+                0.012505,
+                0.027388
+              ]
+            },
+            "auuc": {
+              "baseline_mean": 395.258952,
+              "candidate_mean": 403.538015,
+              "mean_delta": 8.279064,
+              "relative_delta": 0.020946,
+              "candidate_wins": 10,
+              "delta_ci95_bootstrap_seeds": [
+                5.315926,
+                11.823843
+              ]
+            },
+            "invalid_rule_rate_pre_filter": {
+              "baseline_mean": 0.329775,
+              "candidate_mean": 0.118539,
+              "mean_delta": -0.211236,
+              "relative_delta": -0.640545,
+              "candidate_wins": 10,
+              "delta_ci95_bootstrap_seeds": [
+                -0.296152,
+                -0.132528
+              ]
+            }
+          }
+        },
+        "v2": {
+          "seeds_paired": 10,
+          "seeds": [
+            13,
+            29,
+            41,
+            53,
+            67,
+            83,
+            97,
+            101,
+            113,
+            127
+          ],
+          "metrics": {
+            "policy_value": {
+              "baseline_mean": 19410.817368,
+              "candidate_mean": 19967.563061,
+              "mean_delta": 556.745693,
+              "relative_delta": 0.028682,
+              "candidate_wins": 9,
+              "delta_ci95_bootstrap_seeds": [
+                310.75291,
+                849.906596
+              ]
+            },
+            "uplift_rmse": {
+              "baseline_mean": 0.249783,
+              "candidate_mean": 0.234867,
+              "mean_delta": -0.014915,
+              "relative_delta": -0.059713,
+              "candidate_wins": 9,
+              "delta_ci95_bootstrap_seeds": [
+                -0.023228,
+                -0.007104
+              ]
+            },
+            "qini": {
+              "baseline_mean": 0.927318,
+              "candidate_mean": 0.941124,
+              "mean_delta": 0.013805,
+              "relative_delta": 0.014887,
+              "candidate_wins": 10,
+              "delta_ci95_bootstrap_seeds": [
+                0.01111,
+                0.016724
+              ]
+            },
+            "auuc": {
+              "baseline_mean": 414.847472,
+              "candidate_mean": 421.042725,
+              "mean_delta": 6.195253,
+              "relative_delta": 0.014934,
+              "candidate_wins": 10,
+              "delta_ci95_bootstrap_seeds": [
+                4.895023,
+                7.615992
+              ]
+            },
+            "invalid_rule_rate_pre_filter": {
+              "baseline_mean": 0.180899,
+              "candidate_mean": 0.050562,
+              "mean_delta": -0.130337,
+              "relative_delta": -0.720497,
+              "candidate_wins": 9,
+              "delta_ci95_bootstrap_seeds": [
+                -0.191124,
+                -0.069087
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "verdicts": {
+    "runs_final": "指标没有实质变化（相对差 <0.1%）：选中的 epoch 与基线一致，说明换选择判据对出厂结果没有影响；残留差异是 GPU 非确定性量级，不是方法差异",
+    "runs_selq_gcdr": "策略价值 +2077.5、RMSE -0.0260、过滤前非法率 -0.2112：三项同向改善，可以出厂"
+  },
+  "winners": [
+    "runs_selq_gcdr"
+  ],
+  "recommendation": "建议用 runs_selq_gcdr 重新导出 10 成员集成并替换出厂权重",
+  "caveat": "10 个种子的配对 bootstrap 区间较宽；过滤前非法率的容差 0.005 是治理口径而非统计结论。"
+}

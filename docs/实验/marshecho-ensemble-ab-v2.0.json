@@ -1,0 +1,75 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "experiment": "同配置多种子 checkpoint 的 τ̂ 集成 vs 单模型",
+  "protocol": "成员=runs/v1 中同一配置（GRID[1]）的 10 个种子 checkpoint；每个成员在独立合成总体上训练；在 dgp v1/v2 × 评估种子 13/29 上用同一 policy_metrics_v2 评估；selector=oracle_rule",
+  "measured_at": "2026-10-16T01:37:46.375710+00:00",
+  "rows": [
+    {
+      "dgp": "v1",
+      "eval_seed": 13,
+      "single_value": 14802.1,
+      "ensemble_value": 17371.9,
+      "single_rmse": 0.2534,
+      "ensemble_rmse": 0.1904,
+      "single_qini": 0.9125,
+      "ensemble_qini": 0.9413
+    },
+    {
+      "dgp": "v1",
+      "eval_seed": 29,
+      "single_value": 16960.1,
+      "ensemble_value": 17927.9,
+      "single_rmse": 0.2161,
+      "ensemble_rmse": 0.1837,
+      "single_qini": 0.9316,
+      "ensemble_qini": 0.9477
+    },
+    {
+      "dgp": "v2",
+      "eval_seed": 13,
+      "single_value": 15864.6,
+      "ensemble_value": 18895.7,
+      "single_rmse": 0.3183,
+      "ensemble_rmse": 0.2581,
+      "single_qini": 0.8766,
+      "ensemble_qini": 0.9173
+    },
+    {
+      "dgp": "v2",
+      "eval_seed": 29,
+      "single_value": 18746.4,
+      "ensemble_value": 19475.5,
+      "single_rmse": 0.2632,
+      "ensemble_rmse": 0.2427,
+      "single_qini": 0.9152,
+      "ensemble_qini": 0.9293
+    }
+  ],
+  "means": {
+    "v1": {
+      "single_value": 15881.1,
+      "ensemble_value": 17649.9,
+      "single_rmse": 0.2348,
+      "ensemble_rmse": 0.187,
+      "single_qini": 0.9221,
+      "ensemble_qini": 0.9445
+    },
+    "v2": {
+      "single_value": 17305.5,
+      "ensemble_value": 19185.6,
+      "single_rmse": 0.2908,
+      "ensemble_rmse": 0.2504,
+      "single_qini": 0.8959,
+      "ensemble_qini": 0.9233
+    }
+  },
+  "runtime_parity": {
+    "numpy_vs_torch_averaged_max_abs": 1.192e-06,
+    "tolerance": 1e-05,
+    "members": 10,
+    "artifact_bytes": 12105838,
+    "parameters_per_member": 299730
+  },
+  "decision": "出厂形态改为 10 成员集成：两个 DGP 上策略价值 +11%、RMSE −14~−20%、Qini 一致提升；推理成本为 10 次前向（本机 <1 秒/3000 节点），仍在纯 numpy 与 12MB 权重内。"
+}

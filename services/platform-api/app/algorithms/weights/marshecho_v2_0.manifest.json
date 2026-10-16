@@ -1,0 +1,9 @@
+{
+  "weights": "app\\algorithms\\weights\\marshecho_v2_0.npz",
+  "sha256": "606a7ffefd694decd981221044a18b84ee3e647475e65d1e48b79fd5ce199bc9",
+  "bytes": 12107558,
+  "members": 10,
+  "parameters_per_member": 299730,
+  "fixture": "tests\\fixtures\\marshecho_v2_parity.npz",
+  "schema_version": "marshecho-egchpn-v2.0"
+}

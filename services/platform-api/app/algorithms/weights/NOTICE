@@ -1,0 +1,15 @@
+Marsh-Echo (九皋) — EG-CHPN v2 research artefacts
+Copyright 2026 丽娃谷风队 (YanYan / CeairMarketing research track)
+
+This product includes research software and model weights developed for the
+ontology-constrained airline marketing policy study, licensed under the
+Apache License, Version 2.0.
+
+The distilled teacher cache (research/egchpn_torch/cache/teacher_cloud_frozen.json)
+is redistributed under CC-BY-4.0; it was produced in a single offline pass by a
+cloud coding agent and is therefore not reproducible by re-calling a model.
+Reproducibility is preserved by shipping the frozen cache together with its
+SHA-256 digest.
+
+All outcome variables used to train the shipped weights are simulated; see
+MODEL_CARD.md for the evidence boundary and the required labelling convention.

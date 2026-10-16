@@ -1,0 +1,443 @@
+{
+  "disclosure": {
+    "teacher_source": "cloud-agent",
+    "teacher_note": "云端编码代理单次离线生成，无固定随机种子、模型版本随时间变化，故以冻存缓存形式发布",
+    "generated_on": "2026-10-16",
+    "license": "CC-BY-4.0",
+    "used_for": "证据门 rule_agreement 先验与解释文案，不作为增量效应标签"
+  },
+  "rows": [
+    {
+      "rule_id": "R01",
+      "condition": "fresh",
+      "rule_text": "中转时间 MCT 不足 45 分钟的联程票，不得挂接行李直挂产品包。",
+      "rule_agreement": 0.55,
+      "rationale": "MCT 阈值明确，需核到具体联程票时长才可放行",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R01",
+      "condition": "stale",
+      "rule_text": "中转时间 MCT 不足 45 分钟的联程票，不得挂接行李直挂产品包。",
+      "rule_agreement": 0.32,
+      "rationale": "时刻数据过期，MCT 判定不可信",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R01",
+      "condition": "absent",
+      "rule_text": "中转时间 MCT 不足 45 分钟的联程票，不得挂接行李直挂产品包。",
+      "rule_agreement": 0.15,
+      "rationale": "无 MCT 证据，按硬性阻断处理",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R02",
+      "condition": "fresh",
+      "rule_text": "国际航线产品包须取得目的地地面服务确认后方可上架。",
+      "rule_agreement": 0.58,
+      "rationale": "地面确认存在，仍缺目的地版本核对",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R02",
+      "condition": "stale",
+      "rule_text": "国际航线产品包须取得目的地地面服务确认后方可上架。",
+      "rule_agreement": 0.3,
+      "rationale": "确认记录过期，上架资格存疑",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R02",
+      "condition": "absent",
+      "rule_text": "国际航线产品包须取得目的地地面服务确认后方可上架。",
+      "rule_agreement": 0.12,
+      "rationale": "无地面服务确认，禁止上架",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R03",
+      "condition": "fresh",
+      "rule_text": "金卡以上客群可优先享受升舱券组合，无需额外审批。",
+      "rule_agreement": 0.9,
+      "rationale": "会员等级证据充分，无需审批",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R03",
+      "condition": "stale",
+      "rule_text": "金卡以上客群可优先享受升舱券组合，无需额外审批。",
+      "rule_agreement": 0.68,
+      "rationale": "等级快照略旧但方向一致",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R03",
+      "condition": "absent",
+      "rule_text": "金卡以上客群可优先享受升舱券组合，无需额外审批。",
+      "rule_agreement": 0.38,
+      "rationale": "缺等级证据，只能降级为候选",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R04",
+      "condition": "fresh",
+      "rule_text": "同一客户在 7 日内通过全渠道接收的营销触达不得超过 3 次。",
+      "rule_agreement": 0.52,
+      "rationale": "频控为硬约束，需按窗口计数核验",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R04",
+      "condition": "stale",
+      "rule_text": "同一客户在 7 日内通过全渠道接收的营销触达不得超过 3 次。",
+      "rule_agreement": 0.28,
+      "rationale": "触达记录过期，无法确认未超限",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R04",
+      "condition": "absent",
+      "rule_text": "同一客户在 7 日内通过全渠道接收的营销触达不得超过 3 次。",
+      "rule_agreement": 0.14,
+      "rationale": "无触达历史，按可能超限处理",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R05",
+      "condition": "fresh",
+      "rule_text": "已退票或改期至非目标航班的客户，应从本次客群快照中剔除。",
+      "rule_agreement": 0.57,
+      "rationale": "退改状态可查，剔除逻辑清晰",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R05",
+      "condition": "stale",
+      "rule_text": "已退票或改期至非目标航班的客户，应从本次客群快照中剔除。",
+      "rule_agreement": 0.33,
+      "rationale": "退改事实可能已变化",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R05",
+      "condition": "absent",
+      "rule_text": "已退票或改期至非目标航班的客户，应从本次客群快照中剔除。",
+      "rule_agreement": 0.18,
+      "rationale": "无退改证据，快照含无效客户风险",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R06",
+      "condition": "fresh",
+      "rule_text": "暑运期间家庭出行客群对儿童餐与前排座位组合的偏好显著上升。",
+      "rule_agreement": 0.88,
+      "rationale": "偏好信号为软先验，不构成阻断",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R06",
+      "condition": "stale",
+      "rule_text": "暑运期间家庭出行客群对儿童餐与前排座位组合的偏好显著上升。",
+      "rule_agreement": 0.66,
+      "rationale": "季节信号衰减但仍正向",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R06",
+      "condition": "absent",
+      "rule_text": "暑运期间家庭出行客群对儿童餐与前排座位组合的偏好显著上升。",
+      "rule_agreement": 0.4,
+      "rationale": "缺偏好证据，仅可作弱先验",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R07",
+      "condition": "fresh",
+      "rule_text": "运价舱位为折扣 R/N 舱的客票，不参与里程加倍活动。",
+      "rule_agreement": 0.54,
+      "rationale": "舱位可核，折扣舱排除规则为硬性",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R07",
+      "condition": "stale",
+      "rule_text": "运价舱位为折扣 R/N 舱的客票，不参与里程加倍活动。",
+      "rule_agreement": 0.31,
+      "rationale": "舱位版本过期，排除判定不稳",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R07",
+      "condition": "absent",
+      "rule_text": "运价舱位为折扣 R/N 舱的客票，不参与里程加倍活动。",
+      "rule_agreement": 0.16,
+      "rationale": "无舱位证据，默认排除",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R08",
+      "condition": "fresh",
+      "rule_text": "近 90 日无乘机记录的客户，短信渠道单次预算上限为 0.6 元。",
+      "rule_agreement": 0.86,
+      "rationale": "预算上限为参数约束，不阻断资格",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R08",
+      "condition": "stale",
+      "rule_text": "近 90 日无乘机记录的客户，短信渠道单次预算上限为 0.6 元。",
+      "rule_agreement": 0.63,
+      "rationale": "乘机记录时间窗略旧",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R08",
+      "condition": "absent",
+      "rule_text": "近 90 日无乘机记录的客户，短信渠道单次预算上限为 0.6 元。",
+      "rule_agreement": 0.36,
+      "rationale": "无乘机记录，只能给保守上限",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R09",
+      "condition": "fresh",
+      "rule_text": "贵宾室产品须与可订舱位同版本发布，版本不一致时禁止推荐。",
+      "rule_agreement": 0.56,
+      "rationale": "版本一致性可校验，属硬性前置",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R09",
+      "condition": "stale",
+      "rule_text": "贵宾室产品须与可订舱位同版本发布，版本不一致时禁止推荐。",
+      "rule_agreement": 0.29,
+      "rationale": "版本对账数据过期",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R09",
+      "condition": "absent",
+      "rule_text": "贵宾室产品须与可订舱位同版本发布，版本不一致时禁止推荐。",
+      "rule_agreement": 0.13,
+      "rationale": "无版本证据，禁止推荐",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R10",
+      "condition": "fresh",
+      "rule_text": "企业客户协议价航线可叠加地面接送服务，需客户经理确认。",
+      "rule_agreement": 0.84,
+      "rationale": "协议航线可叠加，仅需客户经理确认",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R10",
+      "condition": "stale",
+      "rule_text": "企业客户协议价航线可叠加地面接送服务，需客户经理确认。",
+      "rule_agreement": 0.61,
+      "rationale": "确认时间较久，需回看",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R10",
+      "condition": "absent",
+      "rule_text": "企业客户协议价航线可叠加地面接送服务，需客户经理确认。",
+      "rule_agreement": 0.34,
+      "rationale": "无确认记录，暂缓叠加",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R11",
+      "condition": "fresh",
+      "rule_text": "投诉工单未关闭的客户，暂停推送促销类内容。",
+      "rule_agreement": 0.5,
+      "rationale": "投诉状态可查，未关闭即暂停",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R11",
+      "condition": "stale",
+      "rule_text": "投诉工单未关闭的客户，暂停推送促销类内容。",
+      "rule_agreement": 0.27,
+      "rationale": "工单状态可能已更新",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R11",
+      "condition": "absent",
+      "rule_text": "投诉工单未关闭的客户，暂停推送促销类内容。",
+      "rule_agreement": 0.12,
+      "rationale": "无工单证据，按保守暂停处理",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R12",
+      "condition": "fresh",
+      "rule_text": "航班取消或延误超过 60 分钟时，优先推送改签与辅营补偿方案。",
+      "rule_agreement": 0.87,
+      "rationale": "运行事件实时性足够，属正向触发",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R12",
+      "condition": "stale",
+      "rule_text": "航班取消或延误超过 60 分钟时，优先推送改签与辅营补偿方案。",
+      "rule_agreement": 0.62,
+      "rationale": "航班状态已过期",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R12",
+      "condition": "absent",
+      "rule_text": "航班取消或延误超过 60 分钟时，优先推送改签与辅营补偿方案。",
+      "rule_agreement": 0.33,
+      "rationale": "无运行证据，不能触发补偿",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R13",
+      "condition": "fresh",
+      "rule_text": "保险类产品仅可向已购买含托运行李的客票客户展示。",
+      "rule_agreement": 0.53,
+      "rationale": "行李购买记录可核，前置为硬性",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R13",
+      "condition": "stale",
+      "rule_text": "保险类产品仅可向已购买含托运行李的客票客户展示。",
+      "rule_agreement": 0.3,
+      "rationale": "订单记录过期",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R13",
+      "condition": "absent",
+      "rule_text": "保险类产品仅可向已购买含托运行李的客票客户展示。",
+      "rule_agreement": 0.15,
+      "rationale": "无行李购买证据，禁止展示",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R14",
+      "condition": "fresh",
+      "rule_text": "会员积分余额充足的客户，可用积分抵扣部分辅营费用。",
+      "rule_agreement": 0.89,
+      "rationale": "积分余额可查，抵扣为权益类",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R14",
+      "condition": "stale",
+      "rule_text": "会员积分余额充足的客户，可用积分抵扣部分辅营费用。",
+      "rule_agreement": 0.67,
+      "rationale": "余额快照略旧",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R14",
+      "condition": "absent",
+      "rule_text": "会员积分余额充足的客户，可用积分抵扣部分辅营费用。",
+      "rule_agreement": 0.37,
+      "rationale": "无余额证据，只能给保守值",
+      "oracle_hard_block": false,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R15",
+      "condition": "fresh",
+      "rule_text": "涉及未成年人单独乘机的订单，须人工核验后再触达。",
+      "rule_agreement": 0.48,
+      "rationale": "涉未成年人，必须人工核验后放行",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R15",
+      "condition": "stale",
+      "rule_text": "涉及未成年人单独乘机的订单，须人工核验后再触达。",
+      "rule_agreement": 0.26,
+      "rationale": "核验材料时效不明",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R15",
+      "condition": "absent",
+      "rule_text": "涉及未成年人单独乘机的订单，须人工核验后再触达。",
+      "rule_agreement": 0.1,
+      "rationale": "无核验记录，禁止触达",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R16",
+      "condition": "fresh",
+      "rule_text": "目的地执行入境限制的航线，相关套餐在下架前不得新增曝光。",
+      "rule_agreement": 0.51,
+      "rationale": "入境限制为外部硬性条件",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R16",
+      "condition": "stale",
+      "rule_text": "目的地执行入境限制的航线，相关套餐在下架前不得新增曝光。",
+      "rule_agreement": 0.25,
+      "rationale": "限制通告可能已更新",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    },
+    {
+      "rule_id": "R16",
+      "condition": "absent",
+      "rule_text": "目的地执行入境限制的航线，相关套餐在下架前不得新增曝光。",
+      "rule_agreement": 0.11,
+      "rationale": "无官方限制证据，按禁止处理",
+      "oracle_hard_block": true,
+      "source": "cloud-agent"
+    }
+  ]
+}

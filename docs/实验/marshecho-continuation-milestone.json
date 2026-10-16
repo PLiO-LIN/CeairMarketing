@@ -1,0 +1,29 @@
+{
+  "measured_at": "2026-10-16T17:41:33.306107+08:00",
+  "stage2_started_at": "2026-10-16T09:22:00+08:00",
+  "continuation_wall_seconds": 29973.3,
+  "continuation_wall_hours": 8.326,
+  "continuation_gpu_hours": 18.451,
+  "continuation_runs": 166,
+  "goal_wall_hours": 8,
+  "goal_gpu_hours": 8,
+  "goal_met_by_wall": true,
+  "goal_met_by_gpu_hours": true,
+  "chain_complete": false,
+  "verifier": [
+    "PASS     weights sha256 matches manifest  3e4da21e7604dea4",
+    "PASS     manifest declares members and per-member parameter count  members=10",
+    "PASS     torch/numpy parity within 1e-5  max=1.192e-06",
+    "PASS     semantic hard mask zeroes ineligible paths  1 masked",
+    "PASS     runtime pulls in no torch  ",
+    "PASS     ablation artifact marked synthetic  ",
+    "PASS     all 10 seeds present in ablation table  10 seeds",
+    "PASS     gate × selector factorial complete  6/6 cells",
+    "PASS     benchmark artifact for dgp=v1 complete  270 rows",
+    "PASS     benchmark artifact for dgp=v2 complete  270 rows",
+    "PASS     teacher judge passes 0.8 agreement gate  accuracy=0.8125",
+    "PASS     ensemble runtime matches torch within tolerance  members=10",
+    "PASS     admissibility term confirmed at production scale  采用"
+  ],
+  "note": "时间戳按本地墙钟解析（链日志无年份与时区标记）"
+}

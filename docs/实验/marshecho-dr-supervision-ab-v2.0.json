@@ -1,0 +1,68 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "experiment": "AIPW/DR 伪结局监督 τ̂ 的 A/B（叠加在 admissibility 项之上）",
+  "protocol": "seeds 13,29；1500 客群；hidden 96 / 2 层 / 800 epoch；GRID[4]（lr 3e-3, wd 1e-3）；gate_consistency=0.5；selector=none",
+  "leakage_note": "伪结局仅由可观测 Y、T、X 与倾向得分构造（ridge 结果模型 + 截断倾向），不使用潜在结果",
+  "measured_at": "2026-10-16T00:57:54.422112+00:00",
+  "rows": [
+    {
+      "seed": 13,
+      "dr_weight": 0.0,
+      "pearson": 0.2131,
+      "policy_value": 6604.1,
+      "uplift_rmse": 0.364,
+      "qini": 0.8983,
+      "invalid_pre": 0.0,
+      "val": 0.2268
+    },
+    {
+      "seed": 13,
+      "dr_weight": 1.0,
+      "pearson": 0.3823,
+      "policy_value": 6202.3,
+      "uplift_rmse": 0.2241,
+      "qini": 0.9168,
+      "invalid_pre": 0.0,
+      "val": 0.2107
+    },
+    {
+      "seed": 29,
+      "dr_weight": 0.0,
+      "pearson": 0.2094,
+      "policy_value": 7697.1,
+      "uplift_rmse": 0.316,
+      "qini": 0.9006,
+      "invalid_pre": 0.0,
+      "val": 0.2552
+    },
+    {
+      "seed": 29,
+      "dr_weight": 1.0,
+      "pearson": 0.4122,
+      "policy_value": 7413.0,
+      "uplift_rmse": 0.2069,
+      "qini": 0.9263,
+      "invalid_pre": 0.058,
+      "val": 0.2253
+    }
+  ],
+  "means": {
+    "dr0": {
+      "pearson": 0.2112,
+      "policy_value": 7151,
+      "uplift_rmse": 0.34,
+      "qini": 0.8994,
+      "val": 0.241
+    },
+    "dr1": {
+      "pearson": 0.3972,
+      "policy_value": 6808,
+      "uplift_rmse": 0.2155,
+      "qini": 0.9215,
+      "val": 0.218
+    }
+  },
+  "decision": "采用 dr_weight=1.0：验证损失与 CATE 质量（pearson/RMSE/Qini）同时改善；selector=none 的策略价值下降 4.8%，原因是该项恢复了被可执行性项压制的连续增量排序，需在报告中并列披露。",
+  "caveat": "双种子缩规模 A/B；全量结果随阶段三 runs_final 产出。"
+}

@@ -1,0 +1,243 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "question": "6000-epoch / higher-capacity candidates 是否优于已导出的 2000-epoch 配置",
+  "decision_rule": "配对种子训练窗验证损失（早停判据），不读取任何测试窗指标",
+  "constant_across_trees": {
+    "n_customers": 3000,
+    "ablation": "none",
+    "method": "marshecho_none"
+  },
+  "comparisons": [
+    {
+      "dgp": "v1",
+      "baseline_worker": "w4",
+      "candidate_worker": "l1",
+      "candidate": {
+        "hidden": 192,
+        "layers": 4,
+        "epochs": 6000,
+        "lr": 0.003,
+        "role": "long/large candidate"
+      },
+      "baseline": {
+        "hidden": 128,
+        "layers": 3,
+        "epochs": 2000,
+        "lr": 0.003,
+        "role": "shipped sweep (gap fill)"
+      },
+      "seeds_paired": 9,
+      "baseline_mean_best_val": 0.205149,
+      "candidate_mean_best_val": 0.211423,
+      "mean_delta": 0.006274,
+      "std_delta": 0.010331,
+      "candidate_wins": 2,
+      "verdict": "worse",
+      "per_seed": {
+        "13": {
+          "baseline": 0.217631,
+          "candidate": 0.235234
+        },
+        "29": {
+          "baseline": 0.188662,
+          "candidate": 0.193874
+        },
+        "41": {
+          "baseline": 0.193854,
+          "candidate": 0.223131
+        },
+        "53": {
+          "baseline": 0.230294,
+          "candidate": 0.229645
+        },
+        "67": {
+          "baseline": 0.208669,
+          "candidate": 0.209662
+        },
+        "83": {
+          "baseline": 0.210104,
+          "candidate": 0.213704
+        },
+        "101": {
+          "baseline": 0.205866,
+          "candidate": 0.198325
+        },
+        "113": {
+          "baseline": 0.179548,
+          "candidate": 0.186501
+        },
+        "127": {
+          "baseline": 0.211714,
+          "candidate": 0.212729
+        }
+      }
+    },
+    {
+      "dgp": "v1",
+      "baseline_worker": "w4",
+      "candidate_worker": "l2",
+      "candidate": {
+        "hidden": 128,
+        "layers": 3,
+        "epochs": 6000,
+        "lr": 0.001,
+        "role": "long candidate, lower lr"
+      },
+      "baseline": {
+        "hidden": 128,
+        "layers": 3,
+        "epochs": 2000,
+        "lr": 0.003,
+        "role": "shipped sweep (gap fill)"
+      },
+      "seeds_paired": 10,
+      "baseline_mean_best_val": 0.204925,
+      "candidate_mean_best_val": 0.208128,
+      "mean_delta": 0.003203,
+      "std_delta": 0.006253,
+      "candidate_wins": 3,
+      "verdict": "worse",
+      "per_seed": {
+        "13": {
+          "baseline": 0.217631,
+          "candidate": 0.212657
+        },
+        "29": {
+          "baseline": 0.188662,
+          "candidate": 0.194429
+        },
+        "41": {
+          "baseline": 0.193854,
+          "candidate": 0.201634
+        },
+        "53": {
+          "baseline": 0.230294,
+          "candidate": 0.231871
+        },
+        "67": {
+          "baseline": 0.208669,
+          "candidate": 0.21713
+        },
+        "83": {
+          "baseline": 0.210104,
+          "candidate": 0.222359
+        },
+        "97": {
+          "baseline": 0.202907,
+          "candidate": 0.211621
+        },
+        "101": {
+          "baseline": 0.205866,
+          "candidate": 0.197723
+        },
+        "113": {
+          "baseline": 0.179548,
+          "candidate": 0.177796
+        },
+        "127": {
+          "baseline": 0.211714,
+          "candidate": 0.214061
+        }
+      }
+    },
+    {
+      "dgp": "v2",
+      "baseline_worker": "s1",
+      "candidate_worker": "l1",
+      "candidate": {
+        "hidden": 192,
+        "layers": 4,
+        "epochs": 6000,
+        "lr": 0.003,
+        "role": "long/large candidate"
+      },
+      "baseline": {
+        "hidden": 128,
+        "layers": 3,
+        "epochs": 2000,
+        "lr": 0.003,
+        "role": "shipped sweep (dgp v2)"
+      },
+      "seeds_paired": 3,
+      "baseline_mean_best_val": 0.208638,
+      "candidate_mean_best_val": 0.225179,
+      "mean_delta": 0.016541,
+      "std_delta": 0.003272,
+      "candidate_wins": 0,
+      "verdict": "worse",
+      "per_seed": {
+        "13": {
+          "baseline": 0.217984,
+          "candidate": 0.235368
+        },
+        "29": {
+          "baseline": 0.204279,
+          "candidate": 0.216458
+        },
+        "41": {
+          "baseline": 0.203651,
+          "candidate": 0.223711
+        }
+      }
+    },
+    {
+      "dgp": "v2",
+      "baseline_worker": "s1",
+      "candidate_worker": "l2",
+      "candidate": {
+        "hidden": 128,
+        "layers": 3,
+        "epochs": 6000,
+        "lr": 0.001,
+        "role": "long candidate, lower lr"
+      },
+      "baseline": {
+        "hidden": 128,
+        "layers": 3,
+        "epochs": 2000,
+        "lr": 0.003,
+        "role": "shipped sweep (dgp v2)"
+      },
+      "seeds_paired": 4,
+      "baseline_mean_best_val": 0.218524,
+      "candidate_mean_best_val": 0.225219,
+      "mean_delta": 0.006696,
+      "std_delta": 0.006589,
+      "candidate_wins": 1,
+      "verdict": "worse",
+      "per_seed": {
+        "13": {
+          "baseline": 0.217984,
+          "candidate": 0.217061
+        },
+        "29": {
+          "baseline": 0.204279,
+          "candidate": 0.22021
+        },
+        "41": {
+          "baseline": 0.203651,
+          "candidate": 0.205729
+        },
+        "53": {
+          "baseline": 0.248182,
+          "candidate": 0.257877
+        }
+      }
+    }
+  ],
+  "gpu_hours_per_worker": {
+    "s1": 4.188,
+    "w4": 1.177,
+    "l1": 3.769,
+    "l2": 3.766
+  },
+  "summary": {
+    "comparisons": 4,
+    "worse_than_shipped": 4,
+    "mean_delta_best_val": 0.008179,
+    "conclusion": "延长 epoch 预算后配对验证损失升高。train.py 用 CosineAnnealingLR(T_max=epochs)，把 horizon 从 2000 拉到 6000 会同时抬高同一 epoch 处的学习率，所以更长预算并不包含更短预算的训练轨迹；在预注册配方下 2000 epoch 附近就是拐点，额外算力没有换来模型质量提升。"
+  },
+  "lr_schedule_note": "CosineAnnealingLR(T_max=epochs) 使 epoch 预算与学习率轨迹耦合，因此本表比较的是两种完整配方而非同一配方多跑 3× epoch。",
+  "limitation": "验证损失是早停判据的复合值（含反事实、平衡与策略项），只作相对排序；最终交付判定仍以下游基准测试的策略价值与 uplift RMSE 配对 A/B 为准。"
+}

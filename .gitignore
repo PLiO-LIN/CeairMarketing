@@ -15,3 +15,14 @@ apps/web/dist/
 services/platform-api/.agent_workspaces/
 .DS_Store
 Thumbs.db
+
+# EG-CHPN v2 / marshecho: training runs and packaging scratch are hundreds of MB
+# and are reproducible from scripts/continue_training_v3.sh, so they stay out of git.
+services/platform-api/research/egchpn_torch/runs*/
+services/platform-api/research/egchpn_torch/snapshot_pre_stage3/
+services/platform-api/research/egchpn_torch/bundle_stage/
+services/platform-api/research/egchpn_torch/marshecho_v2_0/
+services/platform-api/research/egchpn_torch/winner_cfg.json
+services/platform-api/app/algorithms.zip
+services/finalize.out
+tmp/

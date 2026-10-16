@@ -1,0 +1,74 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "design": "gate {learned, none} x selector {none, oracle_rule, oracle_both}; invalid rates reported pre-filter",
+  "cells": {
+    "learned|none": {
+      "method": "marshecho_none",
+      "policy_value": 15054.260713214177,
+      "policy_value_ci95": 1885.9524556508861,
+      "invalid_rule_rate_pre_filter": 0.11853932584269662,
+      "invalid_rule_rate_selected": 0.11853932584269662,
+      "invalid_latent_rate_pre_filter": 0.02247191011235955,
+      "qini": 0.9464681191502814,
+      "tree": "runs_selq_gcdr",
+      "variant": "shipped"
+    },
+    "learned|oracle_rule": {
+      "method": "marshecho_none",
+      "policy_value": 17661.15756066,
+      "policy_value_ci95": 882.5975069672836,
+      "invalid_rule_rate_pre_filter": 0.11853932584269662,
+      "invalid_rule_rate_selected": 0.0,
+      "invalid_latent_rate_pre_filter": 0.02247191011235955,
+      "qini": 0.9464681191502814,
+      "tree": "runs_selq_gcdr",
+      "variant": "shipped"
+    },
+    "learned|oracle_both": {
+      "method": "marshecho_none",
+      "policy_value": 18044.093690811937,
+      "policy_value_ci95": 577.7052159587519,
+      "invalid_rule_rate_pre_filter": 0.11853932584269662,
+      "invalid_rule_rate_selected": 0.0,
+      "invalid_latent_rate_pre_filter": 0.02247191011235955,
+      "qini": 0.9464681191502814,
+      "tree": "runs_selq_gcdr",
+      "variant": "shipped"
+    },
+    "none|none": {
+      "method": "marshecho_no_gate",
+      "policy_value": 8869.636819642494,
+      "policy_value_ci95": 2576.7278943206907,
+      "invalid_rule_rate_pre_filter": 0.3634831460674157,
+      "invalid_rule_rate_selected": 0.3634831460674157,
+      "invalid_latent_rate_pre_filter": 0.0005617977528089887,
+      "qini": 0.9668592167753948,
+      "tree": "runs_selq_gcdr",
+      "variant": "shipped"
+    },
+    "none|oracle_rule": {
+      "method": "marshecho_no_gate",
+      "policy_value": 17752.56892360447,
+      "policy_value_ci95": 867.3440435744843,
+      "invalid_rule_rate_pre_filter": 0.3634831460674157,
+      "invalid_rule_rate_selected": 0.0,
+      "invalid_latent_rate_pre_filter": 0.0005617977528089887,
+      "qini": 0.9668592167753948,
+      "tree": "runs_selq_gcdr",
+      "variant": "shipped"
+    },
+    "none|oracle_both": {
+      "method": "marshecho_no_gate",
+      "policy_value": 18089.983686474407,
+      "policy_value_ci95": 608.9519119482525,
+      "invalid_rule_rate_pre_filter": 0.3634831460674157,
+      "invalid_rule_rate_selected": 0.0,
+      "invalid_latent_rate_pre_filter": 0.0005617977528089887,
+      "qini": 0.9668592167753948,
+      "tree": "runs_selq_gcdr",
+      "variant": "shipped"
+    }
+  },
+  "reading": "只有当 learned 门在 selector=none 时也压低非法选择率，证据门本身才算被证明；selector 打开时的差异来自过滤器的作用范围。"
+}

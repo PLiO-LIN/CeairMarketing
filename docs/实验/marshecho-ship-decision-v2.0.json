@@ -1,0 +1,125 @@
+{
+  "synthetic": true,
+  "label": "流程验证（虚构）",
+  "decided_at": "2026-10-16T21:18:43.609894+08:00",
+  "shipped_tree": "runs_selq_gcdr",
+  "recipe": "GRID[1] lr=3e-3 wd=0 lam_policy=0.1, hidden128 x3 layers, 2000 epochs, admissibility lambda=0.5 + DR pseudo-outcome weight 1.0, 10-member same-config ensemble",
+  "decision_rule": "tag=marshecho_none、selector=oracle_rule，按种子配对比较测试窗指标；基线树=runs",
+  "members": 10,
+  "parameters_per_member": 299730,
+  "installed_sha256": "606a7ffefd694decd981221044a18b84ee3e647475e65d1e48b79fd5ce199bc9",
+  "manifest_sha256": "606a7ffefd694decd981221044a18b84ee3e647475e65d1e48b79fd5ce199bc9",
+  "superseded_shipment_sha256": "3e4da21e7604dea45ad4ed387e35b733f16aed6c31e7c06b2441caf48d9cd622",
+  "paired_test_window": {
+    "v1": {
+      "policy_value": {
+        "baseline": 15583.697675,
+        "shipped": 17661.157561,
+        "delta": 2077.459886,
+        "delta_ci95": [
+          1255.6608,
+          2981.429746
+        ],
+        "seeds_won": "10/10"
+      },
+      "uplift_rmse": {
+        "baseline": 0.220461,
+        "shipped": 0.194495,
+        "delta": -0.025966,
+        "delta_ci95": [
+          -0.042776,
+          -0.012611
+        ],
+        "seeds_won": "8/10"
+      },
+      "qini": {
+        "baseline": 0.927088,
+        "shipped": 0.946468,
+        "delta": 0.01938,
+        "delta_ci95": [
+          0.012505,
+          0.027388
+        ],
+        "seeds_won": "10/10"
+      },
+      "auuc": {
+        "baseline": 395.258952,
+        "shipped": 403.538015,
+        "delta": 8.279064,
+        "delta_ci95": [
+          5.315926,
+          11.823843
+        ],
+        "seeds_won": "10/10"
+      },
+      "invalid_rule_rate_pre_filter": {
+        "baseline": 0.329775,
+        "shipped": 0.118539,
+        "delta": -0.211236,
+        "delta_ci95": [
+          -0.296152,
+          -0.132528
+        ],
+        "seeds_won": "10/10"
+      }
+    },
+    "v2": {
+      "policy_value": {
+        "baseline": 19410.817368,
+        "shipped": 19967.563061,
+        "delta": 556.745693,
+        "delta_ci95": [
+          310.75291,
+          849.906596
+        ],
+        "seeds_won": "9/10"
+      },
+      "uplift_rmse": {
+        "baseline": 0.249783,
+        "shipped": 0.234867,
+        "delta": -0.014915,
+        "delta_ci95": [
+          -0.023228,
+          -0.007104
+        ],
+        "seeds_won": "9/10"
+      },
+      "qini": {
+        "baseline": 0.927318,
+        "shipped": 0.941124,
+        "delta": 0.013805,
+        "delta_ci95": [
+          0.01111,
+          0.016724
+        ],
+        "seeds_won": "10/10"
+      },
+      "auuc": {
+        "baseline": 414.847472,
+        "shipped": 421.042725,
+        "delta": 6.195253,
+        "delta_ci95": [
+          4.895023,
+          7.615992
+        ],
+        "seeds_won": "10/10"
+      },
+      "invalid_rule_rate_pre_filter": {
+        "baseline": 0.180899,
+        "shipped": 0.050562,
+        "delta": -0.130337,
+        "delta_ci95": [
+          -0.191124,
+          -0.069087
+        ],
+        "seeds_won": "9/10"
+      }
+    }
+  },
+  "rejected_change": {
+    "what": "checkpoint-selection criterion (composite loss -> drop the Lagrangian penalty)",
+    "measured": 0.0,
+    "why_rejected": "H1（早停判据被拉格朗日惩罚污染）被证伪：在同一组权重上同时记录两种判据的 40 个 run 里，惩罚项对复合判据的平均影响只有 0.000934，两个判据选中的 epoch 在 40/40 个 run 上完全一致，把判据换成去掉惩罚项的质量判据后出厂指标一字未变。"
+  },
+  "open_question": "惩罚污染在长预算上真实存在且量级很大（300.0 epoch 选点、复合判据到预算末涨 301.6 倍），但它不改变选点，只使不同 epoch 预算之间的验证损失绝对值不可比——算力审计因此只做同预算内的配对比较。"
+}
