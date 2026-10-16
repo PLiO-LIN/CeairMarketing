@@ -16,6 +16,7 @@ import re
 import importlib.util
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -39,7 +40,7 @@ TREES = {
 # The installed weights come from one particular tree, and that changes whenever
 # a candidate wins a paired A/B, so the label is resolved from the environment
 # instead of being hard-coded to a directory name.
-SHIPPED_TREE = os.environ.get("MARSHECHO_SHIPPED_TREE", "runs")
+SHIPPED_TREE = os.environ.get("MARSHECHO_SHIPPED_TREE", "runs_selq_gcdr")
 TREE_LABEL = {"runs": "sweep", "runs_final": "criterion_ab", "runs_selq_gcdr": "recipe_ab", "runs_long": "long_ab"}
 
 
@@ -227,6 +228,52 @@ def parity() -> dict[str, object]:
     }
 
 
+REFERENCE_METHODS = {"eg_chpn_v1_frozen", "tarnet", "dragonnet", "random_feasible", "response_only", "tabular_t_learner"}
+
+
+def write_image_summary(payload: dict, summary: list[dict], factor: dict, rows: list[dict]) -> str | None:
+    """Ship the part of the experiment record that the platform endpoint serves.
+
+    The full artifacts live under ``docs/``, which the Dockerfile never copies, so
+    ``/api/algorithms/marshecho/experiments/v2`` would otherwise answer 503 in
+    every deployed environment.
+    """
+
+    from app.algorithms.eg_chpn_runtime import WEIGHTS_PATH
+
+    if not WEIGHTS_PATH.exists():
+        return None
+    manifest_path = WEIGHTS_PATH.parent / "marshecho_v2_0.manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {}
+    body = {
+        "experiment": payload["experiment"],
+        "synthetic": True,
+        "label": "流程验证（虚构）",
+        "model": payload["model"],
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "weights": {
+            "sha256": manifest.get("sha256") or hashlib.sha256(WEIGHTS_PATH.read_bytes()).hexdigest(),
+            "bytes": manifest.get("bytes") or WEIGHTS_PATH.stat().st_size,
+            "members": manifest.get("members", 1),
+            "parameters_per_member": manifest.get("parameters_per_member") or manifest.get("parameters"),
+        },
+        "shipped_tree": SHIPPED_TREE,
+        "seeds": sorted({int(row["seed"]) for row in rows}),
+        "shipped_summary": [item for item in summary if item["tree"] == SHIPPED_TREE],
+        "reference_methods": [
+            item
+            for item in summary
+            if item["dgp"] == "v1" and item["selector"] == "oracle_rule" and item["method"] in REFERENCE_METHODS
+        ],
+        "gate_factorial": factor["cells"],
+        "factorial_design": factor["design"],
+        "note": "所有指标来自合成模拟器的流程验证（虚构），不代表真实航司经营提升。",
+    }
+    target = WEIGHTS_PATH.parent / "marshecho_v2_0.summary.json"
+    target.write_text(json.dumps(body, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return str(target)
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     discovered = discover()
@@ -261,6 +308,9 @@ def main() -> None:
             f"| {item['tree']} | {item['dgp']} | {item['method']} | {item['gate']} | {item['selector']} | {item['n_seeds']} | {item['policy_value_mean']:.3f} | ±{item['policy_value_ci95']:.3f} | {item['invalid_rule_rate_pre_filter_mean']:.3f} | {item['qini_mean']:.3f} |"
         )
     (OUT / "marshecho-ablation-table-v2.0.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # ``docs/`` never enters the image, so the platform endpoint that serves the
+    # experiment summary has to read a copy that ships next to the weights.
+    write_image_summary(payload, summary, factorial(summary), rows)
     print(json.dumps({"rows": len(rows), "summary": len(summary), "raw": str(raw_path)}, ensure_ascii=False, indent=2))
 
 

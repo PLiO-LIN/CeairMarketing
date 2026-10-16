@@ -1,3 +1,4 @@
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -257,3 +258,30 @@ def test_half_wired_ontology_path_is_scored_instead_of_failing() -> None:
         assert payload["items"][0]["product_package_external_id"] == "PP-HALF1"
         assert payload["unmatched_paths"] >= 1
         assert payload["label"] == "流程验证（虚构）"
+
+
+def test_experiments_endpoint_serves_the_summary_that_ships_with_the_weights() -> None:
+    """The image contains no ``docs/``, so the summary must live beside the weights.
+
+    Without that copy the endpoint is permanently 503 in every deployment, which
+    is exactly how this went unnoticed.
+    """
+
+    from fastapi.testclient import TestClient
+
+    from app.algorithms.eg_chpn_runtime import WEIGHTS_PATH
+    from app.main import app
+
+    summary_path = WEIGHTS_PATH.parent / "marshecho_v2_0.summary.json"
+    with TestClient(app) as client:
+        response = client.get("/api/algorithms/marshecho/experiments/v2")
+    if not summary_path.exists():
+        assert response.status_code == 503
+        return
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["synthetic"] is True
+    assert payload["label"] == "流程验证（虚构）"
+    assert payload["weights"]["sha256"] == hashlib.sha256(WEIGHTS_PATH.read_bytes()).hexdigest()
+    assert payload["gate_factorial"]
+    assert payload["seeds"]
