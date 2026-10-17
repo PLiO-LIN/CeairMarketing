@@ -201,6 +201,9 @@ html, body {
 .audience-selection-modal .production-modal-body { padding: 16px; }
 .audience-selection-modal .query-builder { margin-bottom: 16px; }
 .audience-selection-modal .table { min-width: 680px; }
+body.preview-ui .marketing-model-modal .table { width: 100%; min-width: 0; table-layout: fixed; }
+body.preview-ui .marketing-model-modal .table th, body.preview-ui .marketing-model-modal .table td { white-space: normal; overflow-wrap: anywhere; padding: 10px; }
+body.preview-ui .marketing-model-modal .table th:first-child { width: 26%; }
 .audience-tag-details { margin-top: 16px; border-top: 1px solid #e0ebf1; padding-top: 14px; }
 .audience-tag-details > summary { cursor: pointer; color: #28536e; font-size: 13px; font-weight: 650; }
 .audience-tag-list { display: grid; gap: 7px; margin-top: 9px; }

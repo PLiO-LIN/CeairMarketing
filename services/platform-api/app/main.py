@@ -38,6 +38,7 @@ from .mock_business import channel_delivery, flight_operations, market_signals, 
 from .imports import import_file
 from .datasets import router as datasets_router
 from .holiday_marketing import router as holiday_router
+from .marketing_models import router as marketing_models_router
 from .llm import LLMClient, LLMConfig, LLMServiceError
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
 from .models import (
@@ -165,6 +166,7 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title=settings.app_name, version="3.20.0", lifespan=lifespan)
 app.include_router(datasets_router)
 app.include_router(holiday_router)
+app.include_router(marketing_models_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,

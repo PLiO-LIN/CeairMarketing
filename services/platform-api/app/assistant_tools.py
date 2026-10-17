@@ -26,6 +26,7 @@ BUSINESS_PREFIXES = (
     "/api/mock/flight-operations", "/api/mock/profile-summary", "/api/mock/market-signals",
     "/api/assistant/tasks", "/api/assistant/conversations", "/api/assistant/memories",
     "/api/holiday-marketing",
+    "/api/marketing-models",
 )
 
 
@@ -189,6 +190,27 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
             return text_tool_result({k:v for k,v in report.items() if k != "cards"})
         except ValueError as exc: return text_tool_result({"ok": False, "error": str(exc)})
 
+    async def analyze_marketing_model(model: str = "evaluation", features_json: str = "{}"):
+        """Show validated marketing support models or score complete source features. model: evaluation, booking_intent, customer_value. Get /api/marketing-models/examples for public booking examples. Never invent missing inputs or treat public-data reference scores as calibrated purchase probabilities. Predictions cannot bypass ontology eligibility, channel consent, product validity or campaign approval."""
+        from .marketing_models import (BookingFeatures, ValueFeatures, score_intent, score_value, evaluation_card)
+        try:
+            if model == "evaluation":
+                card = evaluation_card()
+                widgets.append(card); publish(card, "scenario")
+                return text_tool_result(card)
+            value = json.loads(features_json)
+            if model == "booking_intent": result = score_intent(BookingFeatures(**value))
+            elif model == "customer_value": result = score_value(ValueFeatures(**value))
+            else: raise ValueError("模型可选 evaluation/booking_intent/customer_value")
+            card = {"type":"scenario", "id":"model-"+model, "title":"模型参考结果",
+                "summary":result["scope"], "table":{"columns":["项目","结果"], "rows":[
+                    ["模型版本",result["version"]],["参考评分" if model=="booking_intent" else "价值分层",
+                    result.get("reference_score",result.get("segment"))],["业务资格",result["qualification"]]]}}
+            widgets.append(card); publish(card,"scenario")
+            return text_tool_result(result)
+        except (ValueError, RuntimeError, TypeError) as exc:
+            return text_tool_result({"ok":False,"error":str(exc)})
+
     async def prepare_platform_task(method: str, path: str, title: str, body_json: str = "{}"):
         """Prepare a task for explicit UI confirmation; does NOT execute the business operation. Use catalog schemas and concrete IDs."""
         try:
@@ -230,4 +252,4 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
 
     # These tools either read facts or prepare private tasks/preferences. Actual
     # business mutations only happen through the separately confirmed endpoint.
-    return [make_tool(f, read_only=True) for f in (platform_api_catalog, query_platform, query_statistics, present_insight, recall_conversation, open_platform_page, plan_holiday_marketing)] + [make_tool(f, read_only=False, allow_internal=True) for f in (prepare_platform_task, remember_preference)]
+    return [make_tool(f, read_only=True) for f in (platform_api_catalog, query_platform, query_statistics, present_insight, recall_conversation, open_platform_page, plan_holiday_marketing, analyze_marketing_model)] + [make_tool(f, read_only=False, allow_internal=True) for f in (prepare_platform_task, remember_preference)]

@@ -513,8 +513,8 @@
     layer.innerHTML = `<section class="production-login-brand">
 <img src="./brand/ceair-wordmark.svg" alt="东航">
 <div>
-<h1>东航智慧营销云</h1>
-<p>面向航空营销全生命周期的运营、智能决策与治理平台</p>
+<h1>慧燕·灵眸</h1>
+<p>基于本体的东航智能营销平台</p>
 </div>
 </section>
 <form class="production-login-form">
@@ -818,6 +818,12 @@
     const detailPanel = q('[data-audience-detail]', view);
     const panel = q('.panel-body', listPanel);
     if (!view || !listPanel || !detailPanel || !panel) return;
+    const modelHost = q('.page-head .head-actions', view) || q('.page-head', view);
+    if (modelHost && !q('[data-marketing-models]', modelHost)) {
+      const button = document.createElement('button');
+      button.className = 'btn'; button.dataset.marketingModels = 'true'; button.textContent = '模型评估';
+      modelHost.appendChild(button);
+    }
 
     const packages = tenantData.audiencePackages || [];
     const tags = tenantData.audienceTags || [];
@@ -882,6 +888,29 @@
     document.body.appendChild(layer);
     bindProductionModal(layer);
     if (window.lucide) lucide.createIcons();
+  }
+
+  async function showMarketingModels() {
+    const layer = document.createElement('div'); layer.className = 'production-modal';
+    layer.innerHTML = '<div class="production-modal-card audience-selection-modal marketing-model-modal"><div class="production-modal-head"><b>客群模型评估</b><button class="btn" data-close>关闭</button></div><div class="production-modal-body" data-model-body aria-live="polite">正在读取模型版本与验证结果…</div></div>';
+    document.body.appendChild(layer); bindProductionModal(layer);
+    const body = q('[data-model-body]', layer);
+    try {
+      const result = await request('/api/marketing-models/evaluation');
+      if (!layer.isConnected) return;
+      const v = result.validation, card = result.card;
+      body.innerHTML = `<table class="table compact-table"><thead><tr>${card.table.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${card.table.rows.map(row=>`<tr>${row.map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table><h3>客户价值分层</h3><table class="table compact-table"><thead><tr><th>分层</th><th>样本数</th><th>平均出行次数</th></tr></thead><tbody>${v.profiles.clusters.map(c=>`<tr><td>${escapeHtml(c.name)}</td><td>${Number(c.count).toLocaleString('zh-CN')}</td><td>${c.center.FLIGHT_COUNT.toFixed(1)}</td></tr>`).join('')}</tbody></table><p>版本 ${escapeHtml(v.version)} · 测试集 ${v.booking.results.catboost.n} 条 · 正例 ${v.booking.results.catboost.positives} 条</p><p>公开航空数据验证。跨航司参考评分尚未校准，不代表东航实际购票概率、营销增量或线上收入。分层不替代现有画像体系。</p><button class="btn" data-model-example>运行公开预订样例</button><div data-model-result aria-live="polite"></div>`;
+      q('[data-model-example]', body).addEventListener('click', async event => {
+        const button = event.currentTarget, output = q('[data-model-result]', body);
+        button.disabled = true; output.textContent = '正在计算…';
+        try {
+          const examples = await request('/api/marketing-models/examples');
+          const score = await request('/api/marketing-models/booking-intent/score', {method:'POST',body:JSON.stringify(examples[0].features)});
+          output.textContent = `参考评分 ${score.reference_score.toFixed(4)} · ${score.qualification} · 模型版本 ${score.version}`;
+        } catch (error) { output.textContent = `计算失败：${error.message}`; }
+        finally { button.disabled = false; }
+      });
+    } catch (error) { body.textContent = `模型评估读取失败：${error.message}`; }
   }
 
   function showAgentTrace(run){
@@ -1973,6 +2002,7 @@
       if(canWrite())showCampaignEditor({name:'',stage:'创建',audience_size:0,budget_yuan:0,roi_target:0});
     },true);
     document.addEventListener('click', async event => {
+      if (event.target.closest?.('[data-marketing-models]')) { showMarketingModels(); return; }
       const subviewButton=event.target.closest?.('[data-business-subview]');
       if(subviewButton){const view=subviewButton.closest('.view');if(view?.id==='audiences'&&subviewButton.dataset.businessSubview==='selection'){showAudienceSelectionModal();return;}if(view)activateBusinessSubview(view.id,subviewButton.dataset.businessSubview);return;}
       const openCampaign=event.target.closest?.('[data-open-campaign]');
