@@ -48,6 +48,8 @@ def seed_database(session: Session) -> int:
         headquarters = TenantRecord(code="CEA-HQ", name="东航营销运营中心")
         session.add(headquarters)
         session.flush()
+    if headquarters.name in {"M航营销运营中心", "东方航空营销运营中心"}:
+        headquarters.name = "东航营销运营中心"
     admin = session.scalar(select(UserRecord).where(UserRecord.username == settings.initial_admin_username))
     if admin is None:
         admin = UserRecord(
@@ -105,7 +107,7 @@ def seed_tenant_data(session: Session, headquarters_id: int) -> None:
                 model_name=settings.bootstrap_model_name,
                 encrypted_api_key=SecretCipher().encrypt(settings.bootstrap_model_api_key),
                 timeout_seconds=180,
-                max_tokens=512,
+                max_tokens=4096,
                 enabled=True,
                 is_default=True,
             )
@@ -284,6 +286,9 @@ def seed_demo_business_data(session: Session, tenant_id: int, user_id: int) -> N
         session.add(content)
         session.flush()
 
+    if content.name == "M航App家庭出游内容V3":
+        content.name = "东航App家庭出游内容V3"
+
     version = session.scalar(select(CampaignVersionRecord).where(CampaignVersionRecord.tenant_id == tenant_id, CampaignVersionRecord.external_id == "ACT-2026-0921-V3"))
     if version is None:
         version = CampaignVersionRecord(
@@ -350,15 +355,22 @@ def seed_competition_workspace(session: Session, user_id: int) -> int:
     seed_demo_business_data(session, tenant.id, user_id)
     from .competition_demo import seed_extended_demo
     seed_extended_demo(session, tenant.id, user_id)
+    from .airline_products import seed_airline_products
+    seed_airline_products(session, tenant.id, user_id)
     return tenant.id
 
 
 def seed_opportunity_insight_sources(session: Session, tenant_id: int) -> None:
+    for source in session.scalars(select(OpportunityInsightSourceRecord).where(OpportunityInsightSourceRecord.tenant_id == tenant_id)):
+        if source.source_url in {"https://www.ceair.com/", "https://www.ceair.com"} and source.name in {"东航官方动态", "东方航空官方动态", "M航官方动态"}:
+            source.name = "公开航空行业动态"
+            source.focus = "公开航空服务分类与营销活动参考，不代表东航官方实时数据"
+    session.commit()
     if session.scalar(select(OpportunityInsightSourceRecord.id).where(OpportunityInsightSourceRecord.tenant_id == tenant_id).limit(1)) is not None:
         return
     defaults = [
         {"name": "中国民航行业动态", "source_type": "web", "source_url": "https://www.caac.gov.cn/XWZX/HYDT/", "focus": "关注航线供需、航班运行、机场与民航政策变化", "schedule": "manual", "max_pages": 5},
-        {"name": "东航官方动态", "source_type": "web", "source_url": "https://www.ceair.com/", "focus": "关注东航航线、会员权益、产品服务和营销活动变化", "schedule": "manual", "max_pages": 3},
+        {"name": "公开航空行业动态", "source_type": "web", "source_url": "https://www.ceair.com/", "focus": "用于演示的公开航空服务分类、会员权益与营销活动参考；不代表东航官方实时数据", "schedule": "manual", "max_pages": 3},
         {"name": "文旅热点观察", "source_type": "web", "source_url": "https://www.gov.cn/lianbo/", "focus": "关注节假日、文旅目的地、消费趋势和区域客流信号", "schedule": "manual", "max_pages": 5},
     ]
     for item in defaults:

@@ -1,0 +1,122 @@
+[
+  {
+    "features": {
+      "num_passengers": 1,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 3,
+      "length_of_stay": 48,
+      "flight_hour": 20,
+      "flight_day": "Thu",
+      "route": "AKLDEL",
+      "booking_origin": "New Zealand",
+      "flight_duration": 5.52
+    },
+    "score": 0.05309594065785347
+  },
+  {
+    "features": {
+      "num_passengers": 2,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 238,
+      "length_of_stay": 19,
+      "flight_hour": 14,
+      "flight_day": "Mon",
+      "route": "AKLDEL",
+      "booking_origin": "India",
+      "flight_duration": 5.52
+    },
+    "score": 0.04070256273934413
+  },
+  {
+    "features": {
+      "num_passengers": 1,
+      "sales_channel": "Mobile",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 378,
+      "length_of_stay": 30,
+      "flight_hour": 12,
+      "flight_day": "Sun",
+      "route": "AKLDEL",
+      "booking_origin": "India",
+      "flight_duration": 5.52
+    },
+    "score": 0.020300782464367343
+  },
+  {
+    "features": {
+      "num_passengers": 1,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 8,
+      "length_of_stay": 43,
+      "flight_hour": 2,
+      "flight_day": "Sat",
+      "route": "AKLDEL",
+      "booking_origin": "New Zealand",
+      "flight_duration": 5.52
+    },
+    "score": 0.03808893389128784
+  },
+  {
+    "features": {
+      "num_passengers": 1,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 21,
+      "length_of_stay": 88,
+      "flight_hour": 9,
+      "flight_day": "Wed",
+      "route": "AKLICN",
+      "booking_origin": "South Korea",
+      "flight_duration": 6.62
+    },
+    "score": 0.026941205514283674
+  },
+  {
+    "features": {
+      "num_passengers": 2,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 23,
+      "length_of_stay": 19,
+      "flight_hour": 8,
+      "flight_day": "Mon",
+      "route": "AKLICN",
+      "booking_origin": "New Zealand",
+      "flight_duration": 6.62
+    },
+    "score": 0.032957239583370275
+  },
+  {
+    "features": {
+      "num_passengers": 1,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 101,
+      "length_of_stay": 19,
+      "flight_hour": 11,
+      "flight_day": "Tue",
+      "route": "AKLICN",
+      "booking_origin": "South Korea",
+      "flight_duration": 6.62
+    },
+    "score": 0.021543317829499677
+  },
+  {
+    "features": {
+      "num_passengers": 2,
+      "sales_channel": "Internet",
+      "trip_type": "RoundTrip",
+      "purchase_lead": 346,
+      "length_of_stay": 23,
+      "flight_hour": 8,
+      "flight_day": "Mon",
+      "route": "AKLICN",
+      "booking_origin": "South Korea",
+      "flight_duration": 6.62
+    },
+    "score": 0.014860830873796697
+  }
+]

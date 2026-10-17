@@ -30,8 +30,8 @@
       }
       anchor.innerHTML = result; anchor.classList.add('assistant-formatted');
     }
-    function newChat() { if (api.busy()) return; api.setConversation('', []); messages.innerHTML = '<div class="assistant-welcome"><img src="./brand/dongdong-robot.svg" alt="东东"><h2>开始一个营销任务</h2></div>'; $('[data-chat-title]').textContent = '新对话'; panel.classList.remove('has-conversation'); api.focus(); }
-    function renderer(host) { return window.createA2UIRenderer(host, { ...api, task }); }
+    function newChat() { if (api.busy()) return; api.setConversation('', []); messages.innerHTML = '<div class="assistant-welcome"><h2>开始一个营销任务</h2></div>'; $('[data-chat-title]').textContent = '新对话'; panel.classList.remove('has-conversation'); api.focus(); }
+    function renderer(host) { return window.createA2UIRenderer(host, { ...api, task, formatAnswer }); }
     function widgets(items, anchor) {
       for (const item of items || []) {
         if (item.type === 'navigation') { const card = document.createElement('button'); card.className = 'btn assistant-widget'; card.type = 'button'; card.textContent = '打开' + item.title; card.onclick = () => api.navigate(item.page); anchor.after(card); continue; }
@@ -58,7 +58,7 @@
       try {
         const value = await request('/api/assistant/conversations/' + encodeURIComponent(id));
         panel.classList.add('has-conversation');
-        api.setConversation(value.id, value.messages.filter(m => m.status === 'completed').slice(-12)); $('[data-chat-title]').textContent = value.title; messages.innerHTML = '';
+        api.setConversation(value.id, value.messages.filter(m => m.status === 'completed').slice(-24)); $('[data-chat-title]').textContent = value.title; messages.innerHTML = '';
         const seenTasks = new Set();
         for (const msg of value.messages) {
           const wrapper = document.createElement('div'); wrapper.className = 'assistant-message ' + msg.role + (msg.status === 'failed' ? ' has-error' : '');
@@ -68,9 +68,14 @@
           messages.append(wrapper); const answer = $('.assistant-answer', wrapper); if (msg.role === 'assistant') formatAnswer(answer, msg.content);
           if (msg.status === 'failed') answer.setAttribute('role', 'alert');
           if(msg.role==='assistant'&&msg.detail?.trace?.length)window.createAssistantProcess($('.assistant-live-body',wrapper)).restore(msg.detail.trace,msg.status==='failed');
-          if(msg.detail?.a2ui?.length){
-            const ui=structuredClone(msg.detail.a2ui);
-            ui.forEach(message=>{const data=message.updateDataModel?.value?.content;if(data?.id&&data.id.startsWith('TASK-')){message.updateDataModel.value.content=value.tasks.find(t=>t.id===data.id)||data;seenTasks.add(data.id);}});
+          const savedUi=structuredClone(msg.detail?.a2ui||[]);
+          savedUi.forEach(message=>{const data=message.updateDataModel?.value?.content;if(data?.id&&data.id.startsWith('TASK-')){message.updateDataModel.value.content=value.tasks.find(t=>t.id===data.id)||data;seenTasks.add(data.id);}});
+          if(msg.detail?.timeline?.length){
+            answer.textContent='';
+            const output=$('.assistant-ui-output',wrapper);
+            try{window.createAssistantTranscript(output,renderer(output),formatAnswer).restore(msg.detail.timeline,savedUi,msg.content);}catch{const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';wrapper.append(error);answer.textContent=msg.content;}
+          }else if(msg.detail?.a2ui?.length){
+            const ui=savedUi;
             try{renderer($('.assistant-ui-output',wrapper)).restore(ui);}catch{const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';wrapper.append(error);}
           }else{
             widgets(msg.detail?.widgets, answer);

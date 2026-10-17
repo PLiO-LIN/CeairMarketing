@@ -1,0 +1,8 @@
+{
+  "dataset_count": 29,
+  "namespace": "CE26",
+  "file": "ce26.json.gz",
+  "source_rows": 429996,
+  "sha256": "f7ef6fb373a9a273f5e252a1a9680b5421572a94cb23053d1c9dc3721fa1228a",
+  "provenance": "Public flight source files and explicitly labelled synthetic business fixtures; not real customer or transaction records"
+}

@@ -30,7 +30,7 @@ def test_parked_interrupted_and_empty_replies_fail_explicitly():
     from app.llm import LLMServiceError
     async def events(values):
         for value in values: yield value
-    for value, message in [(RequireUserConfirmEvent(reply_id="r", tool_calls=[]), "人工确认"), (ReplyEndEvent(session_id="s", reply_id="r", finished_reason="exceed_max_iters"), "轮数上限"), (ReplyEndEvent(session_id="s", reply_id="r", finished_reason="interrupted"), "中断")]:
+    for value, message in [(RequireUserConfirmEvent(reply_id="r", tool_calls=[]), "人工确认"), (ReplyEndEvent(session_id="s", reply_id="r", finished_reason="exceed_max_iters"), "状态异常"), (ReplyEndEvent(session_id="s", reply_id="r", finished_reason="interrupted"), "中断")]:
         with pytest.raises(LLMServiceError, match=message):
             asyncio.run(AgentScopeRuntime()._consume_reply(events([value]), None, {}))
     with pytest.raises(LLMServiceError, match="正文"):
@@ -68,3 +68,27 @@ def test_legacy_unified_harness_delegates_to_agentscope() -> None:
     assert value["ontology_gate"]["decision"] == "knowledge_only"
     context_events = [payload for event, payload in events if event == "harness/context-loaded"]
     assert context_events[0]["framework"] == "agentscope"
+
+
+def test_agent_completes_more_than_eight_tool_rounds(monkeypatch):
+    from agentscope.message import TextBlock, ToolCallBlock
+    from agentscope.model import ChatResponse
+    from app.agents.agentscope_runtime import GovernedMockChatModel, make_tool, text_tool_result
+    class LongTaskModel(GovernedMockChatModel):
+        calls = 0
+        async def _call_api(self, model_name, messages, tools=None, tool_choice=None, **kwargs):
+            self.calls += 1
+            if self.calls <= 12:
+                return ChatResponse(content=[ToolCallBlock(id=f'round-{self.calls}', name='read_progress', input='{}')], is_last=True)
+            return ChatResponse(content=[TextBlock(text='十二步任务完成')], is_last=True)
+    model = LongTaskModel('long-task', lambda messages: '')
+    calls = []
+    async def read_progress():
+        """Read the current task progress."""
+        calls.append(len(calls) + 1)
+        return text_tool_result({'step': calls[-1]})
+    runtime = AgentScopeRuntime()
+    monkeypatch.setattr(runtime, '_model', lambda *args: model)
+    result = runtime.run_sync(profile_id='marketing-copilot', tenant_id=1, run_id='LONG-TEST', config=mock_config(), system_prompt='Complete all steps.', user_prompt='Run.', python_tools=[make_tool(read_progress, read_only=True)], use_mcp=False)
+    assert result == '十二步任务完成'
+    assert len(calls) == 12

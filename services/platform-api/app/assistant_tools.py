@@ -9,7 +9,7 @@ import httpx
 from fastapi import HTTPException
 from sqlalchemy import select
 from .auth import create_token
-from .db_models import AssistantTaskRecord, CampaignRecord, OpportunityRecord, AudiencePackageRecord, ProductPackageRecord, ContentAssetRecord, ExecutionBatchRecord, ChannelTaskRecord
+from .db_models import AssistantTaskRecord, CampaignRecord, OpportunityRecord, AudiencePackageRecord, ProductPackageRecord, ContentAssetRecord, ExecutionBatchRecord, ChannelTaskRecord, DatasetRecord, AssistantMessageRecord
 from .assistant_store import task_view, remember
 from .agents.agentscope_runtime import make_tool, text_tool_result
 
@@ -22,9 +22,11 @@ BUSINESS_PREFIXES = (
     "/api/data-pipelines", "/api/data-sources", "/api/integrations/profile", "/api/integrations/products",
     "/api/model-providers", "/api/ndc/sync-flight-products",
     "/api/platform/tenants", "/api/platform/users", "/api/imports",
-    "/api/audit-logs", "/api/agent-evaluations",
+    "/api/audit-logs", "/api/agent-evaluations", "/api/datasets",
     "/api/mock/flight-operations", "/api/mock/profile-summary", "/api/mock/market-signals",
     "/api/assistant/tasks", "/api/assistant/conversations", "/api/assistant/memories",
+    "/api/holiday-marketing",
+    "/api/marketing-models",
 )
 
 
@@ -71,6 +73,17 @@ async def call_platform(context, method, path, body=None, params=None):
 
 
 def statistics(session, context, metric):
+    if metric == "datasets":
+        rows = list(session.scalars(select(DatasetRecord).where(DatasetRecord.tenant_id == context.tenant_id)))
+        return {"type": "bar", "title": "数据目录记录数", "labels": [r.name for r in rows], "values": [r.row_count for r in rows],
+            "unit": "行", "source": "不同业务粒度的表记录，不可相加为旅客数；来源和模拟标识见数据目录", "metric": metric, "total": len(rows)}
+    if metric == "customer_segments":
+        dataset = session.scalar(select(DatasetRecord).where(DatasetRecord.tenant_id == context.tenant_id,
+            DatasetRecord.name == "客户画像").order_by(DatasetRecord.id.desc()).limit(1))
+        if dataset is None: raise ValueError("当前工作区未导入客户画像")
+        counts = json.loads(dataset.metadata_json).get("statistics", {}).get("segment_counts", {})
+        return {"type": "bar", "title": "客户分群", "labels": list(counts), "values": list(counts.values()), "unit": "人",
+            "source": dataset.dataset_key + "；模拟客户、互斥分群、去重客户", "metric": metric, "total": sum(counts.values())}
     tables = {
         "campaigns": (CampaignRecord, "活动阶段分布", "stage"),
         "opportunities": (OpportunityRecord, "机会状态分布", "status"),
@@ -80,7 +93,7 @@ def statistics(session, context, metric):
         "execution": (ChannelTaskRecord, "渠道送达量", "delivered_count"),
     }
     if metric not in tables:
-        raise ValueError("统计指标可选 campaigns/opportunities/audiences/products/contents/execution")
+        raise ValueError("统计指标可选 campaigns/opportunities/audiences/products/contents/execution/datasets/customer_segments")
     model, title, field = tables[metric]
     rows = session.scalars(select(model).where(model.tenant_id == context.tenant_id)).all()
     if metric == "audiences":
@@ -104,20 +117,26 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
         found = [op for op in catalog() if not keyword or keyword.lower() in json.dumps(op, ensure_ascii=False).lower()]
         return text_tool_result({"operations": found[:35], "total": len(found)})
 
-    async def query_platform(path: str, query_json: str = "{}"):
+    async def query_platform(path: str, query_json: str = "{}", show_ui: bool = True):
         """Read any authorized platform GET API by concrete path, including tasks, profiles and campaign results."""
         try:
             params = json.loads(query_json)
             if not isinstance(params, dict): raise ValueError("查询参数必须为对象")
             value = await call_platform(context, "GET", path, params=params)
             columns = {
+                "/api/product-packages": ("产品包", [("name", "产品"), ("product_type", "类别"), ("status", "状态")], "products"),
                 "/api/campaigns": ("活动记录", [("name", "活动"), ("stage", "阶段"), ("status", "状态")], "campaigns"),
                 "/api/opportunities": ("营销机会", [("name", "机会"), ("status", "状态")], "opportunities"),
                 "/api/content-assets": ("内容记录", [("name", "内容"), ("channel", "渠道"), ("status", "状态")], "contents"),
                 "/api/agent-runs": ("历史智能任务", [("domain_id", "智能域"), ("status", "状态"), ("summary", "摘要")], "campaigns"),
                 "/api/data-pipelines": ("数据处理任务", [("file_name", "文件"), ("status", "状态"), ("current_stage", "阶段")], "imports"),
+                "/api/datasets": ("数据目录", [("name", "数据集"), ("row_count", "记录数"), ("data_mode", "口径")], "imports"),
             }
-            if path in columns and isinstance(value, list) and not any(w.get("path") == path for w in widgets):
+            if show_ui and path == "/api/product-catalog" and isinstance(value, dict):
+                rows = value.get("products", [])
+                card = {"type": "table", "title": "产品参考目录", "columns": ["产品", "类别", "状态"], "rows": [[r.get("name", ""), r.get("category", ""), r.get("status", "待核验")] for r in rows], "total": len(rows), "path": path, "page": "products"}
+                widgets.append(card); publish(card)
+            if show_ui and path in columns and isinstance(value, list) and not any(w.get("path") == path for w in widgets):
                 title, fields, page = columns[path]
                 card = {"type": "table", "title": title, "columns": [label for key, label in fields], "rows": [[row.get(key, "") for key, label in fields] for row in value[:8]], "total": len(value), "path": path, "page": page}
                 widgets.append(card); publish(card)
@@ -125,14 +144,72 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
         except (HTTPException, ValueError) as exc:
             return text_tool_result({"ok": False, "error": getattr(exc, "detail", str(exc))})
 
-    async def query_statistics(metric: str = "campaigns"):
-        """Calculate trusted BI charts from saved backend records. Metrics: campaigns, opportunities, audiences, products, contents, execution."""
+    async def query_statistics(metric: str = "campaigns", view: str = "bar", caption: str = ""):
+        """Calculate trusted BI from saved backend records.
+
+        Args:
+            metric: campaigns, opportunities, audiences, products, contents, execution, datasets or customer_segments.
+            view: bar/donut for categorical comparison, table for exact values. line needs an ordered progression; radar compares axes; funnel needs nested stages. Do not imply time or conversion stages where the metric does not support them.
+            caption: Concise public explanation displayed directly above the chart.
+        """
         try:
-            chart = statistics(session, context, metric)
-            if not any(w.get("metric") == metric for w in widgets):
+            if view not in {"bar", "donut", "line", "radar", "funnel", "table"}: raise ValueError("不支持的图表类型")
+            chart = {**statistics(session, context, metric), "view": view, "caption": caption[:1200]}
+            if not any(w.get("metric") == metric and w.get("view") == view for w in widgets):
                 widgets.append(chart); publish(chart)
             return text_tool_result(chart)
         except ValueError as exc: return text_tool_result({"ok": False, "error": str(exc)})
+
+    async def present_insight(text: str):
+        """Publish a concise user-facing explanation inline before/between charts. Never publish private thoughts or credentials. Avoid repeating it in the final answer."""
+        from .agent_process import public_value
+        card = {"type": "text", "id": uuid4().hex, "text": public_value(text), "title": "阶段说明"}
+        publish(card, "text")
+        return text_tool_result({"published": True})
+
+    async def recall_conversation(query: str):
+        """Retrieve original earlier messages in this user's current conversation when summary omits an exact requirement. No other users or conversations are searched."""
+        from .assistant_store import scoped_conversation
+        from .agent_process import public_value
+        scoped_conversation(session, context, conversation_id)
+        if not query.strip(): return text_tool_result({"ok": False, "error": "请提供历史检索词"})
+        rows = session.scalars(select(AssistantMessageRecord).where(
+            AssistantMessageRecord.conversation_id == conversation_id,
+            AssistantMessageRecord.status == "completed",
+            AssistantMessageRecord.content.contains(query.strip()[:120], autoescape=True))
+            .order_by(AssistantMessageRecord.id.desc()).limit(8)).all()
+        return text_tool_result({"messages": [{"role": m.role, "content": public_value(m.content)} for m in reversed(rows)]})
+
+    async def plan_holiday_marketing(parameters_json: str = "{}"):
+        """Analyze holiday travel marketing through imported data and typed ontology. Parameters: start/end YYYY-MM-DD, as_of local timestamp, segment, route_id, channel, budget_yuan. Emits the complete interactive charts, evidence graph, rules, plan and measurement. Never executes a campaign. After success, finish with a concise conclusion; the UI is already published and no catalog/graph/statistics calls are needed for this analysis."""
+        from .holiday_marketing import analyze_holiday, HolidayParameters
+        try:
+            def output(card, kind):
+                widgets.append(card); publish(card, kind)
+            report = analyze_holiday(session, context.tenant_id, HolidayParameters(**json.loads(parameters_json)), output, emit)
+            return text_tool_result({k:v for k,v in report.items() if k != "cards"})
+        except ValueError as exc: return text_tool_result({"ok": False, "error": str(exc)})
+
+    async def analyze_marketing_model(model: str = "evaluation", features_json: str = "{}"):
+        """Show validated marketing support models or score complete source features. model: evaluation, booking_intent, customer_value. Get /api/marketing-models/examples for public booking examples. Never invent missing inputs or treat public-data reference scores as calibrated purchase probabilities. Predictions cannot bypass ontology eligibility, channel consent, product validity or campaign approval."""
+        from .marketing_models import (BookingFeatures, ValueFeatures, score_intent, score_value, evaluation_card)
+        try:
+            if model == "evaluation":
+                card = evaluation_card()
+                widgets.append(card); publish(card, "scenario")
+                return text_tool_result(card)
+            value = json.loads(features_json)
+            if model == "booking_intent": result = score_intent(BookingFeatures(**value))
+            elif model == "customer_value": result = score_value(ValueFeatures(**value))
+            else: raise ValueError("模型可选 evaluation/booking_intent/customer_value")
+            card = {"type":"scenario", "id":"model-"+model, "title":"模型参考结果",
+                "summary":result["scope"], "table":{"columns":["项目","结果"], "rows":[
+                    ["模型版本",result["version"]],["参考评分" if model=="booking_intent" else "价值分层",
+                    result.get("reference_score",result.get("segment"))],["业务资格",result["qualification"]]]}}
+            widgets.append(card); publish(card,"scenario")
+            return text_tool_result(result)
+        except (ValueError, RuntimeError, TypeError) as exc:
+            return text_tool_result({"ok":False,"error":str(exc)})
 
     async def prepare_platform_task(method: str, path: str, title: str, body_json: str = "{}"):
         """Prepare a task for explicit UI confirmation; does NOT execute the business operation. Use catalog schemas and concrete IDs."""
@@ -175,4 +252,4 @@ def build_tools(session, context, conversation_id, widgets, tasks, emit, ui_sink
 
     # These tools either read facts or prepare private tasks/preferences. Actual
     # business mutations only happen through the separately confirmed endpoint.
-    return [make_tool(f, read_only=True) for f in (platform_api_catalog, query_platform, query_statistics, open_platform_page)] + [make_tool(f, read_only=False, allow_internal=True) for f in (prepare_platform_task, remember_preference)]
+    return [make_tool(f, read_only=True) for f in (platform_api_catalog, query_platform, query_statistics, present_insight, recall_conversation, open_platform_page, plan_holiday_marketing, analyze_marketing_model)] + [make_tool(f, read_only=False, allow_internal=True) for f in (prepare_platform_task, remember_preference)]

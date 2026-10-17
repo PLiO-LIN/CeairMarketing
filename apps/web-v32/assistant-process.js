@@ -10,10 +10,13 @@
     function section(s,title,data){if(!s||data==null||data==='')return;const d=element('div','process-evidence');d.append(element('b','',title),element('pre','',typeof data==='string'?data:JSON.stringify(data,null,2)));s.body.append(d);}
     function finishStep(s,item,failed=false){if(!s)return;s.e.classList.add(failed?'is-error':'is-complete');const elapsed=Math.max(0,((Date.parse(item.timestamp)||Date.now())-s.start)/1000);s.state.textContent=(failed?'失败':'完成')+' · '+elapsed.toFixed(1)+'s';}
     function add(item){const key=JSON.stringify(item);if(seen.has(key))return;seen.add(key);start??=Date.parse(item.timestamp)||Date.now();const event=item.event;
+      if(event==='harness/context-compacted'||event==='harness/memory-restored')list.append(element('div','process-note',item.summary));
       if(event==='harness/context-loaded'){const line=element('div','process-note','已加载当前工作区、业务权限与本体上下文');list.append(line);}
       if(event==='harness/model-started'){model=step('分析任务',item);section(model,'动作说明',item.summary||'分析任务并选择下一步操作');status.textContent='分析任务';}
       if(event==='harness/model-finished'){finishStep(model,item);section(model,'输出',item.summary||'模型输出完成');if(item.total_tokens)section(model,'用量',item.total_tokens+' tokens');}
       if(event==='agent/plan'){const line=element('div','process-note',item.summary);list.append(line);}
+      if(event==='marketing/stage-started'){tools.set('holiday-'+item.stage,step(item.title,item));status.textContent=item.title;}
+      if(event==='marketing/stage-completed'){const s=tools.get('holiday-'+item.stage)||step(item.title,item);section(s,'动作与结论',item.summary);section(s,'数据依据',item.evidence);section(s,'规则检查',item.checks);finishStep(s,item);status.textContent=item.title;}
       if(event==='harness/tool-started'){const s=step(names[item.tool]||item.tool||'业务查询',item);tools.set(item.tool_call_id||item.tool,s);status.textContent=names[item.tool]||'执行业务查询';}
       if(event==='harness/tool-input')section(tools.get(item.tool_call_id),'输入参数',item.arguments);
       if(event==='harness/tool-finished'||event==='harness/tool-failed'){const s=tools.get(item.tool_call_id||item.tool);finishStep(s,item,event==='harness/tool-failed');if(s)section(s,'工具输出',item.result??item.summary??'已返回');status.textContent=event==='harness/tool-failed'?'工具返回错误':'整理结果';}

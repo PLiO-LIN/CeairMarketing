@@ -1,0 +1,223 @@
+{
+  "version": "holiday-20261017",
+  "purpose": "Support models for ontology-driven marketing",
+  "scope": "Public anonymous aviation data; not calibrated China Eastern production probabilities",
+  "booking": {
+    "source": "https://github.com/adityanaranje/British-airways-forage",
+    "raw_rows": 50000,
+    "deduplicated_rows": 49281,
+    "features": [
+      "num_passengers",
+      "sales_channel",
+      "trip_type",
+      "purchase_lead",
+      "length_of_stay",
+      "flight_hour",
+      "flight_day",
+      "route",
+      "booking_origin",
+      "flight_duration"
+    ],
+    "excluded": [
+      "booking_complete",
+      "source_row",
+      "split",
+      "route_holdout_split",
+      "wants_extra_baggage",
+      "wants_preferred_seat",
+      "wants_in_flight_meals"
+    ],
+    "label": "booking_complete",
+    "protocol": "Fixed 70/15/15 stratified split; selection and threshold on validation only",
+    "splits": {
+      "test": 7393,
+      "train": 34496,
+      "val": 7392
+    },
+    "results": {
+      "logistic_regression": {
+        "n": 7393,
+        "positives": 1109,
+        "positive_rate": 0.15000676315433517,
+        "roc_auc": 0.7747315379807247,
+        "pr_auc": 0.3418865796351528,
+        "f1": 0.4329078014184397,
+        "threshold": 0.1853426940680907,
+        "top20_precision": 0.35496957403651114,
+        "top20_recall": 0.4733994589720469,
+        "top20_lift": 2.3663571333200424
+      },
+      "catboost": {
+        "n": 7393,
+        "positives": 1109,
+        "positive_rate": 0.15000676315433517,
+        "roc_auc": 0.7870635142480452,
+        "pr_auc": 0.36601135557971537,
+        "f1": 0.4386261261261261,
+        "threshold": 0.20924805348564968,
+        "top20_precision": 0.3705206220419202,
+        "top20_recall": 0.49413886384129846,
+        "top20_lift": 2.4700261124940632
+      },
+      "constant_prior": {
+        "n": 7393,
+        "positives": 1109,
+        "positive_rate": 0.15000676315433517,
+        "roc_auc": 0.5,
+        "pr_auc": 0.15000676315433517,
+        "f1": 0.0,
+        "threshold": 1.0,
+        "top20_precision": 0.15000676315433517,
+        "top20_recall": 0.2,
+        "top20_lift": 1.0,
+        "selection": "Expected random selection; constant scores have no ordering information"
+      }
+    },
+    "selected_depth": 7,
+    "trees": 266,
+    "validation_grid": [
+      {
+        "depth": 5,
+        "pr_auc": 0.3633108984158579
+      },
+      {
+        "depth": 7,
+        "pr_auc": 0.3651822516490888
+      }
+    ],
+    "paired_pr_auc_delta_ci95": [
+      0.0048811687643096555,
+      0.04409377382212624
+    ],
+    "route_holdout": {
+      "splits": {
+        "train": 36138,
+        "val": 4612,
+        "test": 8531
+      },
+      "roc_auc": 0.7375505179443755,
+      "pr_auc": 0.30756914853899014
+    },
+    "global_importance": [
+      {
+        "feature": "booking_origin",
+        "importance": 42.66438857350441
+      },
+      {
+        "feature": "route",
+        "importance": 21.32802902112953
+      },
+      {
+        "feature": "sales_channel",
+        "importance": 7.841739539327828
+      },
+      {
+        "feature": "length_of_stay",
+        "importance": 7.390390449016855
+      },
+      {
+        "feature": "purchase_lead",
+        "importance": 5.964461850596981
+      },
+      {
+        "feature": "flight_duration",
+        "importance": 4.483890216284884
+      },
+      {
+        "feature": "trip_type",
+        "importance": 3.470522431008879
+      },
+      {
+        "feature": "flight_hour",
+        "importance": 2.625949344689526
+      },
+      {
+        "feature": "flight_day",
+        "importance": 2.4201379769977724
+      },
+      {
+        "feature": "num_passengers",
+        "importance": 1.8104905974433574
+      }
+    ]
+  },
+  "profiles": {
+    "source": "https://tianchi.aliyun.com/dataset/64977",
+    "raw_rows": 62988,
+    "valid_rows": 62980,
+    "features": [
+      "membership_days",
+      "LAST_TO_END",
+      "FLIGHT_COUNT",
+      "SEG_KM_SUM",
+      "avg_discount"
+    ],
+    "method": "Log1p + StandardScaler + KMeans(k=5,n_init=20,seed=2026)",
+    "silhouette_sample_n": 5000,
+    "silhouette": 0.20481600532202557,
+    "clusters": [
+      {
+        "name": "高价值常旅客",
+        "count": 12168,
+        "center": {
+          "membership_days": 1815.403528111514,
+          "LAST_TO_END": 14.797584366140088,
+          "FLIGHT_COUNT": 27.948341265610413,
+          "SEG_KM_SUM": 38289.668428001154,
+          "avg_discount": 0.7731518027885711
+        }
+      },
+      {
+        "name": "稳定出行",
+        "count": 14741,
+        "center": {
+          "membership_days": 2144.276802099365,
+          "LAST_TO_END": 93.90197889655984,
+          "FLIGHT_COUNT": 7.136069092904304,
+          "SEG_KM_SUM": 10345.147424375937,
+          "avg_discount": 0.6844442094727179
+        }
+      },
+      {
+        "name": "低频发展",
+        "count": 11954,
+        "center": {
+          "membership_days": 1128.439359260234,
+          "LAST_TO_END": 250.18663950859118,
+          "FLIGHT_COUNT": 3.1546321075095136,
+          "SEG_KM_SUM": 3680.3339477801574,
+          "avg_discount": 0.8844850220369289
+        }
+      },
+      {
+        "name": "活跃成长",
+        "count": 12948,
+        "center": {
+          "membership_days": 695.444980716912,
+          "LAST_TO_END": 50.68561028583727,
+          "FLIGHT_COUNT": 10.674344319208334,
+          "SEG_KM_SUM": 15527.652201310499,
+          "avg_discount": 0.7076749688627428
+        }
+      },
+      {
+        "name": "低频待唤醒",
+        "count": 11169,
+        "center": {
+          "membership_days": 858.7651764208966,
+          "LAST_TO_END": 216.75314071322038,
+          "FLIGHT_COUNT": 3.07387411691243,
+          "SEG_KM_SUM": 4336.858910311576,
+          "avg_discount": 0.5244940181863662
+        }
+      }
+    ],
+    "scope": "Unsupervised value segmentation; no classification accuracy or churn claims"
+  },
+  "seconds": 104.79,
+  "files": {
+    "booking_examples.json": "9b4944ebb3f79374a547ff23d5e4c752df6a71ccaafbacdb71d91fb22d15c309",
+    "booking_intent.cbm": "e264dac941d3450dafba37fcda2a182862ef4f60ecb984e2441d0858b9897895",
+    "customer_value.json": "8e1c4b5f9a712c31c38ae8ac2c0fa5b77f02a1f6d100ba15751402fdbc7d7227"
+  }
+}

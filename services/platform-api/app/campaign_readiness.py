@@ -8,7 +8,7 @@ from .db_models import AudienceSnapshotRecord, ProductPackageRecord, ContentAsse
 
 
 def canonical_channel(value):
-    return {"东航App": "App", "东航 App": "App", "app": "App", "SMS": "短信", "sms": "短信"}.get(value, value)
+    return {"东航App": "App", "东航 App": "App", "M航App": "App", "M航 App": "App", "app": "App", "SMS": "短信", "sms": "短信"}.get(value, value)
 
 
 def campaign_readiness(session, tenant_id, version, business_date=None):

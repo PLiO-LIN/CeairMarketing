@@ -30,7 +30,7 @@
     sidebar.className = 'preview-sidebar';
     sidebar.id = 'previewSidebar';
     sidebar.setAttribute('aria-label', '内页导航');
-    sidebar.innerHTML = `<div class="preview-sidebar-head"><button class="preview-home" type="button" data-view="dongdong"><i data-lucide="bot"></i><span>东东首页</span></button><button class="preview-home" type="button" data-view="smartspace"><i data-lucide="messages-square"></i><span>智能空间</span></button></div><div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span></button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
+    sidebar.innerHTML = `<div class="preview-sidebar-scroll">${groups.map(group => `<section class="preview-nav-group" data-preview-group="${group.key}"><button type="button" class="preview-nav-label" data-toggle-group="${group.key}" aria-expanded="${!collapsed[group.key]}" aria-controls="preview-group-${group.key}"><i data-lucide="${group.icon}"></i><span>${group.label}</span><i class="preview-group-chevron" data-lucide="chevron-down"></i></button><div class="preview-nav-items" id="preview-group-${group.key}"${collapsed[group.key] ? ' hidden' : ''}>${group.items.map(([view, label, icon]) => `<button type="button" data-view="${view}" data-preview-view="${view}"><i data-lucide="${icon}"></i><span>${label}</span></button>`).join('')}</div></section>`).join('')}</div><div class="preview-sidebar-foot"><div class="preview-tenant"><span class="preview-avatar">用</span><div><b>当前工作区</b><small>当前用户</small></div></div></div>`;
     const app = query('.app');
     app?.insertBefore(sidebar, query('.main'));
     if (!sidebarToggle && app) {
@@ -93,7 +93,7 @@
     if (!topbar || query('.preview-topbar-actions')) return;
     const actions = document.createElement('div');
     actions.className = 'preview-topbar-actions';
-    actions.innerHTML = `<button type="button" class="preview-topbar-home" data-view="dongdong"><i data-lucide="arrow-left"></i><span>东东首页</span></button>`;
+    actions.innerHTML = `<button type="button" class="preview-topbar-home" data-view="dongdong"><i data-lucide="arrow-left"></i><span>首页</span></button>`;
     topbar.appendChild(actions);
     if (window.lucide) window.lucide.createIcons({ root: actions });
   }

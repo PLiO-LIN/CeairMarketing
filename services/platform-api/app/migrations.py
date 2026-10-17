@@ -1,7 +1,7 @@
 from sqlalchemy import inspect, text
 from sqlalchemy.engine import Engine
 
-CURRENT_SCHEMA_VERSION = "20261010.1"
+CURRENT_SCHEMA_VERSION = "20261012.1"
 
 
 def record_schema_version(engine: Engine) -> None:

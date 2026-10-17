@@ -1,3 +1,7 @@
+import queue
+from types import SimpleNamespace
+
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -63,3 +67,41 @@ def test_chat_follows_saved_campaign_changes():
                 record = session.get(CampaignRecord, (hq['id'], original['id']))
                 record.name = original['name']
                 session.commit()
+
+
+@pytest.mark.parametrize('progressing', [True, False])
+def test_stream_allows_long_progress_but_reports_inactivity(monkeypatch, progressing):
+    with TestClient(app) as client:
+        auth, tenants = login(client)
+        clock = SimpleNamespace(now=0)
+        scheduled = [
+            (180, {'type': 'trace', 'item': {'event': 'harness/tool-finished'}}),
+            (360, {'type': 'a2ui', 'item': {'updateDataModel': {'value': {}}}}),
+            (540, {'type': 'token', 'text': '分析完成'}),
+            (600, {'type': 'result', 'result': {'answer': '已完成'}}),
+            (600, {'type': 'done'}),
+        ] if progressing else []
+
+        class ScheduledQueue:
+            def get(self, timeout):
+                if scheduled and scheduled[0][0] <= clock.now + timeout:
+                    clock.now, item = scheduled.pop(0)
+                    return item
+                clock.now += timeout
+                raise queue.Empty
+
+        monkeypatch.setattr('app.main.time', SimpleNamespace(monotonic=lambda: clock.now))
+        monkeypatch.setattr('app.main.queue', SimpleNamespace(Queue=ScheduledQueue, Empty=queue.Empty))
+        monkeypatch.setattr('app.main.threading', SimpleNamespace(
+            Thread=lambda **kwargs: SimpleNamespace(start=lambda: None)))
+        response = client.post('/api/agent-chat/stream',
+            headers=tenant_headers(auth, tenants[0]['id']), json={'message': '分析营销机会'})
+        if progressing:
+            assert clock.now == 600
+            assert 'event: complete' in response.text
+            assert 'event: a2ui' in response.text
+            assert 'event: error' not in response.text
+        else:
+            assert clock.now == 230
+            assert '长时间没有返回进展' in response.text
+            assert 'event: complete' not in response.text

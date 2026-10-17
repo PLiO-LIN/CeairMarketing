@@ -101,6 +101,9 @@ jobs:
               sleep 5
             done
             curl -fsS "http://127.0.0.1:${PUBLIC_PORT_VALUE}/health" >/dev/null
+            # Data belongs to the presentation tenant, never the HQ tenant.
+            # A matching fingerprint makes subsequent deployments a no-op.
+            sudo docker compose -f compose.yml -f compose.demo.yml run --rm --no-deps -T api python -m app.bootstrap_demo
             ln -sfn "$RELEASE_DIR" "$APP_ROOT/current"
             find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -name "$RELEASE_SHA" -printf '%T@ %p\n' | sort -nr | tail -n +6 | cut -d' ' -f2- | xargs -r sudo rm -rf
             rm -f "$ARCHIVE"

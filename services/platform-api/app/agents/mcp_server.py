@@ -108,10 +108,19 @@ def list_available_products(query: str = "", limit: int = 12) -> dict[str, Any]:
         f"SELECT external_id, entity_type, label, confidence FROM ontology_entities WHERE tenant_id = ? AND entity_type IN ({marks}) ORDER BY updated_at DESC LIMIT 100",
         (TENANT_ID, *types),
     )
+    # The seeded reference catalog is available even when a tenant has no
+    # approved ProductPackageRecord yet. Keep the result explicit about its
+    # synthetic/reference status so the assistant never implies live stock.
+    if not rows:
+        try:
+            from app.airline_products import catalog_products
+            rows = [{"external_id": item["code"], "entity_type": "Product", "label": item["name"], "confidence": 0.72, "synthetic": True, "source": item["source"]} for item in catalog_products()]
+        except Exception:
+            rows = []
     matched = [row for row in rows if not terms or any(term in (row.get("label") or "").lower() for term in terms)][: max(1, min(limit, 30))]
     result = envelope([], key="items")
     for row in matched:
-        item = {"id": row["external_id"], "type": row["entity_type"], "label": row["label"], "confidence": row["confidence"]}
+        item = {"id": row["external_id"], "type": row["entity_type"], "label": row["label"], "confidence": row["confidence"], "data_mode": "演示参考目录" if row.get("synthetic") else "本体目录"}
         result["items"].append(item)
         add_source(result, "product", row["external_id"], row["label"], row["entity_type"])
     return result

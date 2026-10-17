@@ -1770,3 +1770,16 @@ body.preview-ui #search .search-suggest { position: relative; z-index: 1; margin
   font-size: 14px;
   line-height: 1.55;
 }
+
+.dataset-modal .production-modal-card { width: min(1160px, 95vw); }
+.dataset-table-scroll { overflow: auto; max-height: 55vh; margin: 16px 0; }
+.dataset-modal .table { width: 100%; }
+.dataset-detail-table { min-width: 100%; width: max-content !important; }
+.dataset-detail-table th { white-space: nowrap; }
+.dataset-detail-table td { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dataset-detail-table th:first-child, .dataset-detail-table td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; }
+.dataset-search { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+.dataset-search input, .dataset-search select { min-width: 160px; border: 1px solid #dce3ed; padding: 9px 12px; border-radius: 6px; font: inherit; }
+.dataset-search input { flex: 1; }
+.dataset-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+.dataset-record { font-size: 14px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow: auto; }

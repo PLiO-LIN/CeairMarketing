@@ -104,7 +104,11 @@ def sync_business_graph(session, tenant_id):
             rn = node("REVIEW-" + batch.external_id, "Review", "渠道效果复盘 · " + batch.campaign_id, {"campaign_id": batch.campaign_id, "status": "待人工确认", "conclusion": "对比送达、点击与转化事件；收入、ROI等待交易归因", "revenue_status": "待交易归因", "synthetic": True})
             link(nodes[batch.campaign_id], "reviewed_by", rn)
     # Remove only stale projection objects; tenant-authored knowledge is retained.
-    stale = [e.id for e in rows(OntologyEntityRecord) if json.loads(e.attributes_json or "{}").get("business_projection") and e.external_id not in nodes]
+    projection_records = session.scalars(select(OntologyEntityRecord).where(
+        OntologyEntityRecord.tenant_id == tenant_id,
+        OntologyEntityRecord.attributes_json.contains('"business_projection": true') |
+        OntologyEntityRecord.attributes_json.contains('"business_projection":true')))
+    stale = [e.id for e in projection_records if json.loads(e.attributes_json or "{}").get("business_projection") and e.external_id not in nodes]
     if stale:
         session.execute(delete(OntologyRelationRecord).where(OntologyRelationRecord.tenant_id == tenant_id, (OntologyRelationRecord.source_entity_id.in_(stale)) | (OntologyRelationRecord.target_entity_id.in_(stale))))
         session.execute(delete(OntologyEntityRecord).where(OntologyEntityRecord.id.in_(stale)))

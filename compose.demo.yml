@@ -1,0 +1,8 @@
+# Explicit opt-in data import job. It exits before reading the large bundle when
+# the matching version has already been imported. Normal API limits stay intact.
+services:
+  api:
+    deploy:
+      resources:
+        limits:
+          memory: 2560M

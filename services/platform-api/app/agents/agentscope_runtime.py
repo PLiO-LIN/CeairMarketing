@@ -40,6 +40,7 @@ try:
         ToolResultStartEvent,
         ToolResultTextDeltaEvent,
     )
+    from agentscope.middleware import MiddlewareBase
     from agentscope.message import Msg, TextBlock, ToolCallBlock, UserMsg
     from agentscope.formatter import OpenAIChatFormatter
     from agentscope.mcp import MCPClient, StdioMCPConfig
@@ -145,6 +146,19 @@ def _mock_response(messages: list[Any]) -> str:
     return "已通过 AgentScope 2.0.8 本地治理模型完成处理；真实业务结论需要配置租户模型并核验工具来源。"
 
 
+class ContextProgressMiddleware(MiddlewareBase):
+    """Publish compaction status without transporting private model thoughts."""
+    def __init__(self, runtime):
+        self.runtime = runtime
+
+    async def on_compress_context(self, agent, input_kwargs, next_handler):
+        before = (agent.state.summary, len(agent.state.context))
+        await next_handler(**input_kwargs)
+        after = (agent.state.summary, len(agent.state.context))
+        if before != after:
+            self.runtime.emit("harness/context-compacted", summary="已自动压缩上下文，保留任务目标、业务约束与工具证据，继续执行")
+
+
 class AgentScopeRuntime:
     """Build and execute one AgentScope agent with a governed profile."""
 
@@ -244,14 +258,20 @@ class AgentScopeRuntime:
                     model=self._model(config, profile_id),
                     toolkit=toolkit,
                     offloader=workspace,
-                    context_config=ContextConfig(trigger_ratio=0.75, reserve_ratio=0.2, tool_result_limit=4000),
-                    react_config=ReActConfig(max_iters=8, structured_output_grace_iters=2, stop_on_reject=True),
+                    context_config=ContextConfig(trigger_ratio=0.65, reserve_ratio=0.2, tool_result_limit=4000, compression_tool_enabled=True),
+                    middlewares=[ContextProgressMiddleware(self)],
+                    react_config=ReActConfig(max_iters=50, structured_output_grace_iters=2, stop_on_reject=True),
                 )
                 self.emit("agentscope/agent-created", agent_id=profile_id, workspace=str(workspace_path), skill=profile.skill, mcp=profile.mcp if mcp_client else None)
-                return await self._consume_reply(
-                    agent.reply_stream(UserMsg(name="营销平台", content=user_prompt), yield_final_msg=True),
-                    token_sink, tool_result_buffers,
-                )
+                # The SDK requires an integer budget. Grow it before each round;
+                # the user task has no fixed iteration cap and context compression
+                # runs independently. Timeouts/cancellation remain real errors.
+                async def progressing_events():
+                    async for event in agent.reply_stream(UserMsg(name="营销平台", content=user_prompt), yield_final_msg=True):
+                        if isinstance(event, ModelCallStartEvent):
+                            agent.react_config.max_iters = max(agent.react_config.max_iters, agent.state.cur_iter + 50)
+                        yield event
+                return await self._consume_reply(progressing_events(), token_sink, tool_result_buffers)
         finally:
             if mcp_client is not None:
                 await mcp_client.close()
@@ -372,7 +392,7 @@ class AgentScopeRuntime:
                 finished_reason = str(getattr(event.finished_reason, "value", event.finished_reason))
                 if event.error or finished_reason != "completed":
                     message = {
-                        "exceed_max_iters": "智能体达到处理轮数上限，请缩小问题范围后重试。",
+                        "exceed_max_iters": "智能体执行状态异常，已保留过程记录，请重试继续。",
                         "interrupted": "智能体回复已中断，请重试。",
                     }.get(finished_reason, "模型执行失败，请检查模型配置或稍后重试。")
                     self.emit("agentscope/reply-failed", reason=finished_reason)

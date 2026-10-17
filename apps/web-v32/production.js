@@ -80,7 +80,8 @@
     if (typeof layer.__closeProductionModal === 'function') layer.__closeProductionModal();
     else layer.remove();
   });
-  const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const brandText = value => String(value ?? '').replace(/M\s*航空|M\s*航/g, '东航').replace(/M\s+AIRLINES/gi, 'China Eastern');
+  const escapeHtml = value => brandText(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const decodeEscapedText = value => {
     let text = String(value ?? '');
     for (let pass = 0; pass < 2; pass += 1) {
@@ -93,7 +94,7 @@
     return text;
   };
   const displayText = (value, fallback = '') => {
-    const text = decodeEscapedText(value);
+    const text = brandText(decodeEscapedText(value));
     return !text.trim() || /^\?+$/.test(text.trim()) ? fallback : text;
   };
   const statusClass = value => /待|草稿|暂停|失败|停用|未配置/.test(String(value || '')) ? 'warn' : 'good';
@@ -138,6 +139,7 @@
     }
     if(viewId==='graph'&&(selected==='schema'||selected==='instances')){const target=q(`[data-knowledge-view=${selected}]`,view);if(target&&!target.classList.contains('active'))target.click();}
     if(viewId==='graph'&&selected==='instances')requestAnimationFrame(()=>renderDynamicGraph());
+    if(viewId==='graph'&&selected==='documents'){window.ceairGraphSimulation?.stop();window.ceairSchemaSimulation?.stop();}
     if(!options.silent)q(`[data-business-subview=${selected}]`,view)?.focus({preventScroll:true});
   }
   function ensureBusinessSubviewNavigation(viewId){
@@ -368,7 +370,7 @@
         { name: 'campaign_id', label: '关联活动', type: 'select', required: false, options: [{value:'',label:'未关联活动'}, ...(tenantData.campaigns || []).map(campaign => ({value:campaign.id,label:`${campaign.name} · ${campaign.id}`}))] },
         { name: 'audience_package_id', label: '目标客群包', type: 'select', required: false, options: [{value:'',label:'未关联客群包'}, ...(tenantData.audiencePackages || []).map(item => ({value:item.id,label:`${item.name} · ${Number(item.estimated_size||0).toLocaleString('zh-CN')}人`}))] },
         { name: 'product_package_id', label: '活动产品包', type: 'select', required: false, options: [{value:'',label:'未关联产品包'}, ...(tenantData.productPackages || []).map(item => ({value:item.id,label:`${item.name} · ${item.version||'V1'}`}))] },
-        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'东航 App'}, '东航App', '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
+        { name: 'channel', label: '触达渠道', type: 'select', options: [{value:'App',label:'东航 App'}, '短信', '微信', '邮件', '小程序', '官网', '客服外呼', '企业渠道'] },
         { name: 'version', label: '内容版本', type: 'text' },
         { name: 'generation_objective', label: '内容目标', type: 'text', required: false },
         { name: 'status', label: '内容状态', type: 'select', options: ['草稿', '待审核', '停用'], help: '已审核内容变更后需重新审核。' },
@@ -411,7 +413,7 @@
     const tagOptions = (tenantData.audienceTags || []).filter(tag => tag.enabled || (item.tag_ids || []).includes(tag.id)).map(tag => ({ value: tag.id, label: `${tag.name} · ${tag.enabled ? (tag.category || '画像标签') : '已停用'}` }));
     return [
       { name: 'name', label: '客群包名称', type: 'text', placeholder: '例如：暑期亲子出行转化包' },
-      { name: 'selection_mode', label: '组合方式', type: 'select', options: [{ value: 'tag-combination', label: '画像条件组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }] },
+      { name: 'selection_mode', label: '组合方式', type: 'select', options: [{ value: 'tag-combination', label: '画像条件组合' }, { value: 'ai-selection', label: 'AI 智能圈选' }, { value: 'expression', label: '源数据条件' }] },
       { name: 'estimated_size', label: '预计客群规模', type: 'number', min: 0 },
       { name: 'status', label: '客群包状态', type: 'select', options: ['草稿', '可用', '停用'] },
       { name: 'dimension_ids', label: '组合画像字段', type: 'multiselect', required: false, options: audienceDimensionOptions(), help: '从职业、性别、年龄、地域、订单、航线等底层画像字段中选择组合条件。' },
@@ -509,10 +511,10 @@
     const layer = document.createElement('div');
     layer.className = 'production-login';
     layer.innerHTML = `<section class="production-login-brand">
-<img src="./brand/ceair-wordmark.svg" alt="中国东方航空">
+<img src="./brand/ceair-wordmark.svg" alt="东航">
 <div>
-<h1>东航智慧营销云</h1>
-<p>面向航空营销全生命周期的运营、智能决策与治理平台</p>
+<h1>慧燕·灵眸</h1>
+<p>基于本体的东航智能营销平台</p>
 </div>
 </section>
 <form class="production-login-form">
@@ -556,7 +558,7 @@
 </i>租户与用户</button>`);
     const content = q('.content');
     if (!q('#imports')) content.insertAdjacentHTML('beforeend', `<section id="imports" class="view">
-<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1></div><div class="page-actions"><button class="btn" id="syncNdcFlight"><i data-lucide="plane-takeoff"></i>同步 NDC24.1 模拟航班</button><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div></div>
+<div class="page-head"><div><h1>\u6570\u636e\u63a5\u5165</h1></div><div class="page-actions"><button class="btn" id="datasetCatalog">数据目录</button><button class="btn" id="syncNdcFlight"><i data-lucide="plane-takeoff"></i>同步 NDC24.1 模拟航班</button><button class="btn" id="refreshPipelines"><i data-lucide="refresh-cw"></i>\u5237\u65b0\u72b6\u6001</button></div></div>
 <div class="ingestion-workbench">
 <div class="panel ingestion-entry"><div class="panel-head"><h2>\u6295\u9012\u6570\u636e\u6587\u4ef6</h2><span>\u5355\u6587\u4ef6\u4e0d\u8d85\u8fc7 20MB</span></div><div class="panel-body">
 <div class="pipeline-dropzone" id="pipelineDropzone" tabindex="0" role="button" aria-label="\u9009\u62e9\u6216\u62d6\u62fd\u6587\u4ef6"><input id="pipelineFiles" type="file" multiple accept=".txt,.md,.json,.csv,.pdf,.png,.jpg,.jpeg,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.html"><span class="dropzone-icon"><i data-lucide="cloud-upload"></i></span><b>\u5c06\u6587\u4ef6\u62d6\u5230\u8fd9\u91cc</b><p>\u6216\u70b9\u51fb\u9009\u62e9\u6587\u4ef6\uff0c\u53ef\u4e00\u6b21\u6295\u9012\u591a\u4e2a</p><small>PDF / Word / Excel / PPT / CSV / JSON / TXT / \u56fe\u7247</small></div>
@@ -816,6 +818,12 @@
     const detailPanel = q('[data-audience-detail]', view);
     const panel = q('.panel-body', listPanel);
     if (!view || !listPanel || !detailPanel || !panel) return;
+    const modelHost = q('.page-head .head-actions', view) || q('.page-head', view);
+    if (modelHost && !q('[data-marketing-models]', modelHost)) {
+      const button = document.createElement('button');
+      button.className = 'btn'; button.dataset.marketingModels = 'true'; button.textContent = '模型评估';
+      modelHost.appendChild(button);
+    }
 
     const packages = tenantData.audiencePackages || [];
     const tags = tenantData.audienceTags || [];
@@ -834,7 +842,7 @@
     const packageRows = packages.map(item => {
       const protectedPackage = ['已冻结', '已使用', '执行中', '已归档'].includes(item.status);
       const dimensionCount = expressionDimensionIds(item).length;
-      const composition = [dimensionCount ? `${dimensionCount} 项画像` : '', (item.tag_ids || []).length ? `${item.tag_ids.length} 个标签` : '', item.selection_mode === 'ai-selection' ? 'AI 条件' : '规则组合'].filter(Boolean).join(' + ');
+      const composition = [dimensionCount ? `${dimensionCount} 项画像` : '', (item.tag_ids || []).length ? `${item.tag_ids.length} 个标签` : '', item.selection_mode === 'ai-selection' ? 'AI 条件' : item.selection_mode === 'expression' ? '源数据条件' : '规则组合'].filter(Boolean).join(' + ');
       return `<tr>
         <td><strong>${escapeHtml(displayText(item.name, '未命名客群包'))}</strong><small>${escapeHtml(displayText(item.external_id, 'PACKAGE'))} <span class="package-source-tag created">已创建</span></small></td>
         <td>${Number(item.estimated_size || 0).toLocaleString('zh-CN')} 人</td>
@@ -880,6 +888,29 @@
     document.body.appendChild(layer);
     bindProductionModal(layer);
     if (window.lucide) lucide.createIcons();
+  }
+
+  async function showMarketingModels() {
+    const layer = document.createElement('div'); layer.className = 'production-modal';
+    layer.innerHTML = '<div class="production-modal-card audience-selection-modal marketing-model-modal"><div class="production-modal-head"><b>客群模型评估</b><button class="btn" data-close>关闭</button></div><div class="production-modal-body" data-model-body aria-live="polite">正在读取模型版本与验证结果…</div></div>';
+    document.body.appendChild(layer); bindProductionModal(layer);
+    const body = q('[data-model-body]', layer);
+    try {
+      const result = await request('/api/marketing-models/evaluation');
+      if (!layer.isConnected) return;
+      const v = result.validation, card = result.card;
+      body.innerHTML = `<table class="table compact-table"><thead><tr>${card.table.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>${card.table.rows.map(row=>`<tr>${row.map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}</tbody></table><h3>客户价值分层</h3><table class="table compact-table"><thead><tr><th>分层</th><th>样本数</th><th>平均出行次数</th></tr></thead><tbody>${v.profiles.clusters.map(c=>`<tr><td>${escapeHtml(c.name)}</td><td>${Number(c.count).toLocaleString('zh-CN')}</td><td>${c.center.FLIGHT_COUNT.toFixed(1)}</td></tr>`).join('')}</tbody></table><p>版本 ${escapeHtml(v.version)} · 测试集 ${v.booking.results.catboost.n} 条 · 正例 ${v.booking.results.catboost.positives} 条</p><p>公开航空数据验证。跨航司参考评分尚未校准，不代表东航实际购票概率、营销增量或线上收入。分层不替代现有画像体系。</p><button class="btn" data-model-example>运行公开预订样例</button><div data-model-result aria-live="polite"></div>`;
+      q('[data-model-example]', body).addEventListener('click', async event => {
+        const button = event.currentTarget, output = q('[data-model-result]', body);
+        button.disabled = true; output.textContent = '正在计算…';
+        try {
+          const examples = await request('/api/marketing-models/examples');
+          const score = await request('/api/marketing-models/booking-intent/score', {method:'POST',body:JSON.stringify(examples[0].features)});
+          output.textContent = `参考评分 ${score.reference_score.toFixed(4)} · ${score.qualification} · 模型版本 ${score.version}`;
+        } catch (error) { output.textContent = `计算失败：${error.message}`; }
+        finally { button.disabled = false; }
+      });
+    } catch (error) { body.textContent = `模型评估读取失败：${error.message}`; }
   }
 
   function showAgentTrace(run){
@@ -1100,9 +1131,31 @@
     body.innerHTML=metric('渠道送达率',delivery,'green')+metric('渠道任务回执覆盖率',state.channelTasks.length?withReceipts/state.channelTasks.length*100:null,'')+metric('审批处理率',approval,'amber');
   }
 
+
+  function renderMiddleScreen(state) {
+    const overview=q('#overview');if(!overview)return;
+    let grid=q('.overview-middle-screen',overview);
+    if(!grid){grid=document.createElement('div');grid.className='overview-middle-screen';q('.kpis',overview).after(grid);}
+    const d=tenantData.demo||{}, profile=d.profile||{}, synthetic=d.enabled;
+    const sum=key=>state.channelTasks.reduce((n,t)=>n+Number(t[key]||0),0);
+    const stages=[['目标触达',sum('target_count')],['实际送达',sum('delivered_count')],['渠道点击',sum('clicked_count')],['订单转化',sum('converted_count')]],max=Math.max(...stages.map(x=>x[1]),1);
+    const funnel=stages.map(([l,v],i)=>`<div style="width:${35+v/max*65}%;background:${['#245b9e','#417ab4','#6d9ec8','#c62340'][i]}"><span>${l}</span><b>${v.toLocaleString()}</b></div>`).join('');
+    const measures=[['客群准备',state.audiencePackages.filter(x=>x.status==='可用').length/Math.max(state.audiencePackages.length,1)],['产品审批',state.productPackages.filter(x=>/已审批|可用/.test(x.status)).length/Math.max(state.productPackages.length,1)],['审批处理',state.approvals.filter(x=>!approvalIsPending(x)).length/Math.max(state.approvals.length,1)],['送达比例',sum('delivered_count')/Math.max(sum('target_count'),1)],['回执覆盖',state.channelTasks.filter(x=>x.last_feedback_at).length/Math.max(state.channelTasks.length,1)]];
+    const pt=(i,r)=>[180+Math.cos(i*2*Math.PI/5-Math.PI/2)*r,115+Math.sin(i*2*Math.PI/5-Math.PI/2)*r];
+    const radar=`<svg viewBox="0 0 360 230" role="img" aria-label="业务准备与执行指标雷达图">${[25,50,75].map(r=>`<polygon points="${measures.map((_,i)=>pt(i,r).join(',')).join(' ')}" fill="none" stroke="#dce6ef"/>`).join('')}<polygon points="${measures.map((x,i)=>pt(i,Math.min(1,x[1])*75).join(',')).join(' ')}" fill="#245b9e30" stroke="#245b9e" stroke-width="2"/>${measures.map((x,i)=>{const [a,b]=pt(i,95);return `<text x="${a}" y="${b}" text-anchor="middle" fill="#62778d" font-size="11">${x[0]} ${(x[1]*100).toFixed(0)}%</text>`;}).join('')}</svg>`;
+    const regions=profile.regions||[];
+    const segments=regions.length?regions:state.audiencePackages.slice(0,5).map(x=>({label:x.name,value:x.estimated_size}));const segmentMax=Math.max(...segments.map(x=>x.value),1);
+    const bars=segments.map(x=>`<div class="dashboard-segment-line"><span title="${escapeHtml(x.label)}">${escapeHtml(x.label)}</span><i><em style="width:${x.value/segmentMax*100}%"></em></i><b>${Number(x.value).toLocaleString()}</b></div>`).join('');
+    const note='工作区经营记录';
+    grid.innerHTML=`<section class="panel"><div class="panel-head"><h2>经营准备度</h2><i data-lucide="radar"></i></div><div class="panel-body">${radar}<small class="dashboard-chart-note">各项准备率独立计算，非综合预测分</small></div></section><section class="panel"><div class="panel-head"><h2>营销转化漏斗</h2><i data-lucide="filter"></i></div><div class="panel-body"><div class="dashboard-funnel">${funnel}</div><small class="dashboard-chart-note">${note} · 次数口径，未去重</small></div></section><section class="panel"><div class="panel-head"><h2>${regions.length?'客群地域画像':'客群规模'}</h2><i data-lucide="users-round"></i></div><div class="panel-body"><div class="dashboard-segments">${bars||'暂无画像数据'}</div>${(profile.preferences||[]).map(p=>`<span class="tag blue">${escapeHtml(p.label)} ${p.value}%</span>`).join('')}<small class="dashboard-chart-note">${regions.length?'三亚目标客群；偏好可重叠':'客群包可重叠，不作为去重旅客数'}</small></div></section>`;
+    let recent=q('.dashboard-recent',overview);if(!recent){recent=document.createElement('section');recent.className='panel dashboard-recent';overview.append(recent);}
+    const records=[...state.channelTasks].sort((a,b)=>String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at))).slice(0,6);
+    recent.innerHTML=`<div class="panel-head"><h2>近期运营记录</h2><span>${note}</span></div><div class="panel-body"><table class="table"><thead><tr><th>活动</th><th>渠道</th><th>状态</th><th>送达</th><th>点击</th><th>转化</th><th>更新时间</th></tr></thead><tbody>${records.map(t=>`<tr><td>${escapeHtml(state.campaigns.find(c=>c.id===t.campaign_id)?.name||t.campaign_id)}</td><td>${escapeHtml(t.channel)}</td><td><span class="status ${statusClass(t.status)}">${escapeHtml(t.status)}</span></td><td>${Number(t.delivered_count||0).toLocaleString()}</td><td>${Number(t.clicked_count||0).toLocaleString()}</td><td>${Number(t.converted_count||0).toLocaleString()}</td><td>${businessTime(t.updated_at||t.created_at)}</td></tr>`).join('')||'<tr><td colspan="7">暂无运营记录</td></tr>'}</tbody></table></div>`;
+  }
+
   function renderDashboard() {
     const state=dashboardState();
-    renderDashboardKpis(state);renderDashboardActivity(state);renderDashboardTodos(state);renderDashboardCharts(state);renderDashboardHealth(state);
+    renderDashboardKpis(state);renderDashboardActivity(state);renderDashboardTodos(state);renderDashboardCharts(state);renderDashboardHealth(state);renderMiddleScreen(state);
   }
 
   function renderProducts(){
@@ -1113,8 +1166,17 @@
     let baseCatalog=q('#productCatalog');
     if(!baseCatalog){baseCatalog=document.createElement('div');baseCatalog.id='productCatalog';baseCatalog.className='base-product-catalog';body.insertBefore(baseCatalog,table);}
     const baseProducts=tenantData.productCatalog?.products||[];
-    baseCatalog.innerHTML=`<div class="catalog-section-head"><div><b>基础产品目录</b><span>来自产品管理平台的可售产品，是产品包组合和活动匹配的底层对象</span></div><span class="catalog-count">${baseProducts.length} 个</span></div><div class="catalog-grid product-catalog-grid">${baseProducts.map(item=>`<div class="catalog-card product-card"><div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="ticket"></i></span><span class="status good">可引用</span></div><strong>${escapeHtml(displayText(item.name,'未命名产品'))}</strong><small>${escapeHtml(displayText(item.category,'航空产品'))} · ${escapeHtml(displayText(item.code,'产品编码'))}</small><div class="catalog-card-meta"><span>${(item.benefits||[]).length} 项权益</span><button class="btn" data-product-catalog-view="${escapeHtml(item.code)}">查看产品</button></div></div>`).join('')||'<div class="empty-action">暂无基础产品，可从产品管理平台同步</div>'}</div>`;
-    q('.catalog-section-head span',baseCatalog).textContent='联调产品目录；实际价格、库存与权益等待上游核验';
+    const previewProducts=baseProducts.slice(0,6);
+    baseCatalog.innerHTML=`<div class="catalog-section-head"><div><b>基础产品目录</b><span>来自产品管理平台的可售产品，是产品包组合和活动匹配的底层对象</span></div><span class="catalog-count">${baseProducts.length} 个</span></div><div class="catalog-grid product-catalog-grid">${previewProducts.map(item=>`<div class="catalog-card product-card"><div class="catalog-card-top"><span class="catalog-icon"><i data-lucide="ticket"></i></span><span class="status">${escapeHtml(item.status||"待核验")}</span></div><strong>${escapeHtml(displayText(item.name,'未命名产品'))}</strong><small>${escapeHtml(displayText(item.category,'航空产品'))} · ${escapeHtml(displayText(item.code,'产品编码'))}</small><div class="catalog-card-meta"><span>${(item.benefits||[]).length} 项权益</span><button class="btn" data-product-catalog-view="${escapeHtml(item.code)}">查看产品</button></div></div>`).join('')||'<div class="empty-action">暂无基础产品，可从产品管理平台同步</div>'}</div>`;
+    q('.catalog-section-head span',baseCatalog).textContent=tenantData.productCatalog?.source||'产品目录';
+    if(baseProducts.length>6){
+      const more=document.createElement('button');more.className='btn';more.textContent='全部产品（'+baseProducts.length+'）';
+      more.onclick=()=>{
+        const layer=dataDialog('基础产品目录',`<div class="dataset-table-scroll"><table class="table"><tr><th>产品</th><th>类别</th><th>口径</th><th></th></tr>${baseProducts.map((p,i)=>`<tr><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category)}</td><td>${escapeHtml(p.data_mode||p.source||p.status)}</td><td><button class="btn" data-catalog-index="${i}">查看</button></td></tr>`).join('')}</table></div>`);
+        qa('[data-catalog-index]',layer).forEach(button=>button.onclick=()=>showBaseProductDetail(baseProducts[Number(button.dataset.catalogIndex)]));
+      };q('.catalog-section-head',baseCatalog).append(more);
+    }
+    qa('[data-product-catalog-view]',baseCatalog).forEach(button=>button.onclick=()=>{const item=baseProducts.find(p=>p.code===button.dataset.productCatalogView);if(item)showBaseProductDetail(item);});
     const services=q('#products > .grid3');
     if(services)services.innerHTML='<div class="small-panel"><b>产品资格</b><span>价格、库存、航班与权益</span><em>等待上游可售校验</em></div><div class="small-panel"><b>标准接口</b><span>产品包导入、版本与来源追踪</span><em>可通过同步业务数据导入</em></div><div class="small-panel"><b>履约回流</b><span>购买、使用与异常状态</span><em>等待实际履约系统接入</em></div>';
     if(window.lucide)lucide.createIcons();
@@ -1501,7 +1563,7 @@
     writeAudienceDetail(displayText(item.segment_name, '预置客群包'), `${displayText(item.segment_code, 'PRESET')} · 预置客群包组合`, `<div class="campaign-detail-summary"><span><b>客群包类型</b>${escapeHtml(displayText(item.primary_persona_name, '未分类'))}</span><span><b>画像条件</b>${item.rules?.length || 0} 项</span><span><b>推荐触达</b>${escapeHtml((item.recommended_channels || []).join('、') || '待配置')}</span></div><section class="detail-block"><h3>组合画像条件</h3><ul class="catalog-detail-list">${rules || '<li><span>暂无明细条件</span></li>'}</ul></section><section class="detail-block"><h3>推荐产品与使用方式</h3><p>${escapeHtml((item.recommended_products || []).join('、') || '可在活动中继续匹配产品包')}。该预置客群包由多个底层画像字段组合而成，运营人员可以据此新建租户客群包并继续调整条件。</p></section>`);
   }  function showBaseProductDetail(item){
     const layer=document.createElement('div'); layer.className='production-modal';
-    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.name,'\u57fa\u7840\u4ea7\u54c1'))}</b><small>${escapeHtml(displayText(item.code,'\u4ea7\u54c1\u7f16\u7801'))} · \u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0</small></div><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>\u4ea7\u54c1\u7c7b\u522b</b>${escapeHtml(displayText(item.category,'\u822a\u7a7a\u4ea7\u54c1'))}</span><span><b>\u6743\u76ca\u9879</b>${(item.benefits||[]).length} \u9879</span></div><section><h3>\u9002\u7528\u6761\u4ef6</h3><p>${escapeHtml(displayText(item.eligibility,'\u4ee5\u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0\u5b9e\u9645\u8d44\u683c\u89c4\u5219\u4e3a\u51c6'))}</p></section><section><h3>\u5305\u542b\u6743\u76ca</h3><ul class="catalog-detail-list">${(item.benefits||[]).map(value=>`<li><span>${escapeHtml(value)}</span><small>\u53ef\u88ab\u4ea7\u54c1\u5305\u7ec4\u5408</small></li>`).join('')||'<li><span>\u6682\u65e0\u6743\u76ca\u660e\u7ec6</span></li>'}</ul></section></div></div>`;
+    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><div><b>${escapeHtml(displayText(item.name,'\u57fa\u7840\u4ea7\u54c1'))}</b><small>${escapeHtml(displayText(item.code,'\u4ea7\u54c1\u7f16\u7801'))} · ${escapeHtml(item.data_mode||item.source||"产品目录")}</small></div><button class="btn" data-close>\u5173\u95ed</button></div><div class="production-modal-body"><div class="campaign-detail-summary"><span><b>\u4ea7\u54c1\u7c7b\u522b</b>${escapeHtml(displayText(item.category,'\u822a\u7a7a\u4ea7\u54c1'))}</span><span><b>\u6743\u76ca\u9879</b>${(item.benefits||[]).length} \u9879</span></div><section><h3>\u9002\u7528\u6761\u4ef6</h3><p>${escapeHtml(displayText(item.eligibility,'\u4ee5\u4ea7\u54c1\u7ba1\u7406\u5e73\u53f0\u5b9e\u9645\u8d44\u683c\u89c4\u5219\u4e3a\u51c6'))}</p></section><section><h3>\u5305\u542b\u6743\u76ca</h3><ul class="catalog-detail-list">${(item.benefits||[]).map(value=>`<li><span>${escapeHtml(value)}</span><small>\u53ef\u88ab\u4ea7\u54c1\u5305\u7ec4\u5408</small></li>`).join('')||'<li><span>\u6682\u65e0\u6743\u76ca\u660e\u7ec6</span></li>'}</ul></section></div></div>`;
     document.body.appendChild(layer); layer.addEventListener('click',event=>{if(event.target===layer||event.target.closest('[data-close]'))layer.remove();}); if(window.lucide)lucide.createIcons();
   }
   function showProductDetail(item){
@@ -1627,6 +1689,7 @@
     const host=q('#ontologySchema'); if(!host)return;
     let model; try{model=await request('/api/ontology/semantic-model');}catch{model={object_types:[],relation_types:[]};}
     if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
+    if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
     const types=model.object_types||[], relations=model.relation_types||[];
     const W=220,H=116,cols=5,gx=258,gy=150,width=Math.max(1320,cols*gx+20),height=Math.max(760,Math.ceil(types.length/cols)*gy+36);
     const positions=new Map(types.map((item,index)=>[item.id,{x:18+(index%cols)*gx,y:18+Math.floor(index/cols)*gy}]));
@@ -1643,44 +1706,113 @@
     qa('.ontology-schema-node').forEach(element=>{const item=types.find(value=>value.id===element.dataset.schemaType);element.addEventListener('click',()=>item&&detailFor(item));element.addEventListener('keydown',event=>{if(item&&(event.key==='Enter'||event.key===' ')){event.preventDefault();detailFor(item);}});let moving=false;element.addEventListener('pointerdown',event=>{moving=true;element.setPointerCapture(event.pointerId);});element.addEventListener('pointermove',event=>{if(moving){const p=point(item.id);p.x=Math.max(0,p.x+event.movementX);p.y=Math.max(0,p.y+event.movementY);element.setAttribute('transform','translate('+p.x+','+p.y+')');updateEdges();}});element.addEventListener('pointerup',()=>{moving=false;});element.addEventListener('pointercancel',()=>{moving=false;});});
     if(types[0])detailFor(types[0]);
   }
+
+  function renderCircleOntology(host, objects, relationships, options={}) {
+    host.__circleGraph?.destroy();
+    const width=1100,height=500,reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const colors={data:'#6585a4',aviation:'#447db3',customer:'#3c9d94',product:'#b58a43',strategy:'#8072b3',marketing:'#295c98',governance:'#8072b3',execution:'#295c98',measurement:'#3c9d94',knowledge:'#6585a4',semantic:'#6585a4'};
+    const kinds={campaign:'marketing',campaignversion:'marketing',opportunity:'strategy',audiencesnapshot:'customer',audience:'customer',product:'product',productpackage:'product',route:'aviation',flight:'aviation',cabin:'aviation',fare:'aviation',airport:'aviation',evidence:'knowledge',businessrule:'governance',approvaltask:'governance',executionbatch:'execution',feedback:'measurement',review:'measurement'};
+    const nodes=objects.map((n,i)=>({...n,r:n.id===options.selected?39:33,x:width/2+Math.cos(i/objects.length*Math.PI*2)*210,y:height/2+Math.sin(i/objects.length*Math.PI*2)*160}));
+    const ids=new Set(nodes.map(n=>n.id)),links=relationships.filter(l=>ids.has(l.source)&&ids.has(l.target)).map(l=>({...l}));
+    const color=n=>colors[n.module||kinds[String(n.type||'').toLowerCase()]||'semantic'];
+    host.innerHTML='<div class="circle-graph-controls"><button type="button" class="btn" data-circle-fit aria-label="适配图谱">适配</button><button type="button" class="btn" data-circle-pause aria-pressed="false">暂停</button></div>';
+    const svg=d3.select(host).append('svg').attr('class','circle-graph-svg').attr('viewBox',`0 0 ${width} ${height}`).attr('role','img').attr('aria-label',options.label||'本体圆形动态图谱');
+    const arrow='circle-arrow-'+Math.random().toString(36).slice(2),defs=svg.append('defs');
+    defs.append('marker').attr('id',arrow).attr('viewBox','0 0 10 10').attr('refX',9).attr('refY',5).attr('markerWidth',5).attr('markerHeight',5).attr('orient','auto').append('path').attr('d','M0,0 L10,5 L0,10 z').attr('fill','#9ab0c5');
+    const root=svg.append('g');let paused=reduced,simulation,selected=options.selected||null;
+    const zoom=d3.zoom().scaleExtent([.18,3]).on('zoom',e=>root.attr('transform',e.transform));svg.call(zoom).on('dblclick.zoom',null);
+    const edge=root.append('g').selectAll('path').data(links).join('path').attr('class','circle-graph-edge').attr('marker-end',`url(#${arrow})`);
+    const labels=root.append('g').selectAll('text').data(links).join('text').attr('class','circle-graph-relation').attr('text-anchor','middle').text(l=>l.label||l.relation||'关联');
+    const node=root.append('g').selectAll('g').data(nodes).join('g').attr('class','circle-graph-node').attr('data-circle-id',n=>n.id).attr('role','button').attr('tabindex',0).attr('aria-label',n=>n.title||n.name||n.label||n.id);
+    node.append('circle').attr('class','circle-graph-halo').attr('r',n=>n.r+7).attr('stroke',color);
+    node.append('circle').attr('class','circle-graph-body').attr('r',n=>n.r).attr('fill',color);
+    node.append('title').text(n=>(n.title||n.name||n.label||n.id)+'\n'+n.id);
+    node.each(function(n){
+      const value=String(n.shortLabel||n.name||n.title||n.typeLabel||n.id),parts=value.length>5?[value.slice(0,4),value.slice(4,8)+(value.length>8?'…':'')]:[value];
+      const t=d3.select(this).append('text').attr('class','circle-graph-name').attr('text-anchor','middle');
+      parts.forEach((part,i)=>t.append('tspan').attr('x',0).attr('y',(i-(parts.length-1)/2)*17+5).text(part));
+    });
+    const highlight=id=>{
+      const near=new Set([id]);links.forEach(l=>{if(l.source.id===id)near.add(l.target.id);if(l.target.id===id)near.add(l.source.id);});
+      node.classed('is-selected',n=>n.id===selected).classed('is-dimmed',n=>!!id&&!near.has(n.id));
+      edge.classed('is-active',l=>l.source.id===id||l.target.id===id).classed('is-dimmed',l=>!!id&&l.source.id!==id&&l.target.id!==id);
+      labels.classed('is-visible',l=>!!id&&(l.source.id===id||l.target.id===id));
+    };
+    const choose=n=>{selected=n.id;highlight(selected);options.onSelect?.(n);};
+    node.on('click',(e,n)=>{e.stopPropagation();choose(n);}).on('keydown',(e,n)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(n);}}).on('mouseenter',(e,n)=>highlight(n.id)).on('mouseleave',()=>highlight(selected));
+    svg.on('click',e=>{if(e.target===svg.node()){selected=null;highlight(null);}});
+    const tick=()=>{
+      edge.attr('d',l=>{const dx=l.target.x-l.source.x,dy=l.target.y-l.source.y,dist=Math.max(1,Math.hypot(dx,dy));return `M${l.source.x+dx/dist*(l.source.r+3)},${l.source.y+dy/dist*(l.source.r+3)} L${l.target.x-dx/dist*(l.target.r+7)},${l.target.y-dy/dist*(l.target.r+7)}`;});
+      labels.attr('x',l=>(l.source.x+l.target.x)/2).attr('y',l=>(l.source.y+l.target.y)/2-8);
+      node.attr('transform',n=>`translate(${n.x},${n.y})`);
+    };
+    simulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(n=>n.id).distance(148).strength(.45)).force('charge',d3.forceManyBody().strength(-520)).force('collide',d3.forceCollide(58).iterations(3)).force('x',d3.forceX(width/2).strength(.065)).force('y',d3.forceY(height/2).strength(.16)).alphaDecay(.035).on('tick',()=>{if(!host.isConnected||host.closest('[hidden]')||host.getClientRects().length===0)simulation.stop();tick();});
+    simulation.stop();for(let i=0;i<85;i++)simulation.tick();tick();
+    const fit=()=>{const x0=Math.min(...nodes.map(n=>n.x-55)),x1=Math.max(...nodes.map(n=>n.x+55)),y0=Math.min(...nodes.map(n=>n.y-55)),y1=Math.max(...nodes.map(n=>n.y+55));const scale=Math.min(1.45,(width-90)/(x1-x0),(height-50)/(y1-y0));svg.call(zoom.transform,d3.zoomIdentity.translate((width-scale*(x0+x1))/2,(height-scale*(y0+y1))/2).scale(scale));};fit();
+    node.call(d3.drag().on('start',(e,n)=>{if(!e.active&&!paused)simulation.alphaTarget(.18).restart();n.fx=n.x;n.fy=n.y;}).on('drag',(e,n)=>{n.fx=e.x;n.fy=e.y;if(paused){n.x=e.x;n.y=e.y;tick();}}).on('end',(e,n)=>{simulation.alphaTarget(0);n.fx=null;n.fy=null;}));
+    const pause=host.querySelector('[data-circle-pause]');const sync=()=>{pause.textContent=paused?'继续':'暂停';pause.setAttribute('aria-pressed',String(paused));host.classList.toggle('is-paused',paused);};
+    pause.onclick=()=>{paused=!paused;if(paused)simulation.stop();else simulation.alpha(.22).restart();sync();};host.querySelector('[data-circle-fit]').onclick=fit;
+    if(!paused)simulation.alpha(.22).restart();sync();highlight(selected);
+    const controller={simulation,destroy(){simulation.stop();svg.on('.zoom',null);}};host.__circleGraph=controller;return controller;
+  }
   async function renderOntologySchemaGraphV2(){
     const host=q('#ontologySchema'); if(!host)return;
-    let model; try{model=await request('/api/ontology/semantic-model');}catch{model={object_types:[],relation_types:[]};}
+    const generation=(host.__schemaGeneration||0)+1;host.__schemaGeneration=generation;
     if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();
-    const types=model.object_types||[], relations=model.relation_types||[];
-    if(!types.length){host.innerHTML='<div class="ontology-map-empty"><i data-lucide="network"></i><b>暂无本体结构</b><span>完成数据处理或配置语义模型后，这里会展示业务对象与关系。</span></div>';if(window.lucide)lucide.createIcons();return;}
-    const moduleLabels={data:'数据来源',aviation:'航空业务',customer:'客户与客群',product:'产品与权益',strategy:'策略规划',marketing:'营销活动',governance:'治理审批',execution:'执行触达',measurement:'效果度量',agent:'智能体',knowledge:'知识底座',semantic:'语义配置'};
-    const colors={data:'#5b8db8',aviation:'#3d91b7',customer:'#43a584',product:'#c59435',strategy:'#806dc0',marketing:'#438bc5',governance:'#bd7853',execution:'#4d9e9c',measurement:'#687fac',agent:'#b15e9b',knowledge:'#6c9078',semantic:'#7e8795'};
-    const modules=[...new Set(types.map(item=>item.module||'semantic'))];
-    const typeMap=new Map(types.map(item=>[item.id,item]));
-    const links=[];relations.forEach(rel=>(rel.from_types||[]).forEach(from=>(rel.to_types||[]).forEach(to=>{if(typeMap.has(from)&&typeMap.has(to))links.push({source:from,target:to,label:rel.name||rel.id});})));
-    host.innerHTML='<div class="ontology-map-summary"><div><b>本体语义拓扑</b><span></span></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象类、业务域或属性"></label><select data-ontology-module><option value="all">全部业务域</option>'+modules.map(item=>'<option value="'+escapeHtml(item)+'">'+escapeHtml(moduleLabels[item]||item)+'</option>').join('')+'</select><button type="button" class="btn" data-ontology-reset><i data-lucide="scan-search"></i>重置视图</button><span class="ontology-map-hint">拖动节点 · 滚轮缩放 · 点击聚焦</span></div><div class="ontology-map-legend">'+modules.map(item=>'<span><i style="background:'+colors[item]+'"></i>'+escapeHtml(moduleLabels[item]||item)+'</span>').join('')+'</div><div class="ontology-map-viewport"><svg class="ontology-map-canvas" viewBox="0 0 1240 690" role="img" aria-label="本体语义拓扑图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#9bb6c6"></path></marker></defs><g class="ontology-map-root"><g class="ontology-map-edges"></g><g class="ontology-map-edge-labels"></g><g class="ontology-map-nodes"></g></g></svg></div>';
+    if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
+    let model;
+    try{model=await request('/api/ontology/semantic-model');}
+    catch(error){host.innerHTML='<div class="ontology-map-empty"><b>本体结构加载失败</b><span>'+escapeHtml(error.message||'请重新进入知识中心')+'</span></div>';return;}
+    if(host.__schemaGeneration!==generation||!host.isConnected)return;
+    const types=model.object_types||[],relations=model.relation_types||[];
+    if(!types.length){host.innerHTML='<div class="ontology-map-empty"><b>暂无本体结构</b></div>';return;}
+    const labels={data:'数据来源',aviation:'航空供给',customer:'客户与客群',product:'产品与权益',strategy:'策略规划',marketing:'营销活动',governance:'治理审批',execution:'执行触达',measurement:'效果度量',agent:'智能体',knowledge:'知识底座',semantic:'语义配置'};
+    const typeMap=new Map(types.map(t=>[t.id,t]));
+    const links=[];
+    relations.forEach(r=>(r.from_types||[]).forEach(source=>(r.to_types||[]).forEach(target=>{if(source!==target&&typeMap.has(source)&&typeMap.has(target))links.push({source,target,label:r.name||r.id,id:r.id});})));
+    const core=['Opportunity','AudienceSnapshot','ProductPackage','Campaign','ExecutionBatch','Feedback'];
+    const supporting=['Route','Product','CampaignVersion','ApprovalTask','Evidence','BusinessRule'];
+    const mainRelations=new Set(['targets_audience','uses_product_package','executes','produces_feedback','has_campaign_version','requires_approval','contains_product','concerns_route']);
+    const modules=[...new Set(types.map(t=>t.module||'semantic'))];
+    host.innerHTML='<div class="ontology-map-summary"><div><b>营销业务本体</b></div><strong>'+types.length+'<small> 类对象</small><i>·</i>'+relations.length+'<small> 条关系</small></strong></div><div class="ontology-map-toolbar"><label class="ontology-map-search"><i data-lucide="search"></i><input data-ontology-search placeholder="搜索对象、业务域或属性"></label><select data-ontology-module aria-label="筛选本体业务域"><option value="all">营销主线</option>'+modules.map(m=>'<option value="'+escapeHtml(m)+'">'+escapeHtml(labels[m]||m)+'</option>').join('')+'</select><button class="btn" data-ontology-reset>返回主线</button><button class="btn" data-ontology-catalog>对象目录</button><button class="btn" data-ontology-detail>对象详情</button><span class="ontology-map-hint">点击对象展开关联</span></div><div class="ontology-map-viewport ontology-map-clean circle-graph-host"><svg class="ontology-map-canvas" viewBox="0 0 1240 560" role="img" aria-label="营销业务本体关系图"><defs><marker id="ontology-map-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8aa3ba"></path></marker></defs><g class="ontology-map-root"></g></svg></div><div class="ontology-map-caption" aria-live="polite"></div>';
     if(window.lucide)lucide.createIcons();
-    const width=1240,height=690,svg=d3.select('.ontology-map-canvas',host),root=svg.select('.ontology-map-root'),edgeLayer=root.select('.ontology-map-edges'),labelLayer=root.select('.ontology-map-edge-labels'),nodeLayer=root.select('.ontology-map-nodes');
-    const nodes=types.map(item=>({...item,title:item.name||item.id,module:item.module||'semantic',attributes:item.attributes||[]}));
-    const nodeById=new Map(nodes.map(item=>[item.id,item]));
-    const simLinks=links.map(item=>({...item,source:nodeById.get(item.source),target:nodeById.get(item.target)}));
-    const edge=edgeLayer.selectAll('path').data(simLinks).join('path').attr('class','ontology-map-edge').attr('marker-end','url(#ontology-map-arrow)');
-    const edgeLabel=labelLayer.selectAll('text').data(simLinks).join('text').attr('class','ontology-map-edge-label').text(item=>item.label);
-    const node=nodeLayer.selectAll('g').data(nodes,d=>d.id).join('g').attr('class','ontology-map-node').attr('data-schema-type',d=>d.id).attr('tabindex',0);
-    node.append('rect').attr('class','ontology-map-card').attr('width',186).attr('height',92).attr('rx',10).attr('stroke',d=>colors[d.module]||colors.semantic);
-    node.append('rect').attr('class','ontology-map-card-top').attr('width',186).attr('height',7).attr('rx',6).attr('fill',d=>colors[d.module]||colors.semantic);
-    node.append('text').attr('class','ontology-map-module').attr('x',12).attr('y',27).text(d=>moduleLabels[d.module]||d.module);
-    node.append('text').attr('class','ontology-map-title').attr('x',12).attr('y',49).text(d=>String(d.title).slice(0,13));
-    node.append('text').attr('class','ontology-map-id').attr('x',12).attr('y',66).text(d=>d.id);
-    node.append('text').attr('class','ontology-map-attrs').attr('x',12).attr('y',83).text(d=>(d.attributes||[]).slice(0,3).join(' · ')||'核心属性待补充');
-    const zoom=d3.zoom().scaleExtent([.45,2.2]).on('zoom',event=>root.attr('transform',event.transform));svg.call(zoom);
-    const updateEdges=()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);edgeLabel.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);};
-    const connected=new Map(nodes.map(item=>[item.id,new Set()]));links.forEach(item=>{connected.get(item.source)?.add(item.target);connected.get(item.target)?.add(item.source);});
-    const showDetail=item=>{const out=relations.filter(rel=>(rel.from_types||[]).includes(item.id)),input=relations.filter(rel=>(rel.to_types||[]).includes(item.id)),detail=q('#entityDetail');if(!detail)return;detail.innerHTML='<div class="entity-title"><b>'+escapeHtml(item.title)+'</b><span>本体类 · '+escapeHtml(item.id)+'</span></div><dl><dt>业务域</dt><dd>'+escapeHtml(moduleLabels[item.module]||item.module)+'</dd><dt>业务定义</dt><dd>'+escapeHtml(item.description||'暂无业务定义')+'</dd><dt>核心属性</dt><dd>'+((item.attributes||[]).map(value=>'<code>'+escapeHtml(value)+'</code>').join(' ')||'暂无属性定义')+'</dd></dl><div class="ai-result"><b>关系使用</b><p>出边 '+out.length+' 条 · 入边 '+input.length+' 条</p><p>'+escapeHtml(out.slice(0,5).map(rel=>(item.title)+' —'+(rel.name||rel.id)+'→ '+(rel.to_types||[]).join('/')).join('；')||'暂无出边关系')+'</p></div>';node.classed('is-selected',value=>value.id===item.id).classed('is-neighbor',value=>value.id!==item.id&&(connected.get(item.id)?.has(value.id)));};
-    const applyFilter=()=>{const query=(q('[data-ontology-search]',host)?.value||'').trim().toLowerCase(),module=q('[data-ontology-module]',host)?.value||'all';const visible=new Set(nodes.filter(item=>{const hay=[item.id,item.title,item.description,item.module,...(item.attributes||[])].join(' ').toLowerCase();return (!query||hay.includes(query))&&(module==='all'||item.module===module);}).map(item=>item.id));node.classed('is-muted',item=>!visible.has(item.id));edge.classed('is-hidden',item=>!visible.has(item.source.id)||!visible.has(item.target.id));edgeLabel.classed('is-hidden',item=>!visible.has(item.source.id)||!visible.has(item.target.id));};
-    node.on('click',(event,item)=>{event.stopPropagation();showDetail(item);}).on('keydown',(event,item)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();showDetail(item);}}).call(d3.drag().on('start',(event,item)=>{if(!event.active)simulation.alphaTarget(.25).restart();item.fx=item.x;item.fy=item.y;}).on('drag',(event,item)=>{item.fx=event.x;item.fy=event.y;updateEdges();}).on('end',(event,item)=>{if(!event.active)simulation.alphaTarget(0);item.fx=null;item.fy=null;}));
-    const simulation=window.ceairSchemaSimulation=d3.forceSimulation(nodes).force('link',d3.forceLink(simLinks).id(item=>item.id).distance(150).strength(.55)).force('charge',d3.forceManyBody().strength(-430)).force('collide',d3.forceCollide().radius(112)).force('center',d3.forceCenter(width/2,height/2)).force('x',d3.forceX(width/2).strength(.045)).force('y',d3.forceY(height/2).strength(.045)).on('tick',()=>{node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);updateEdges();});
-    q('[data-ontology-search]',host)?.addEventListener('input',applyFilter);q('[data-ontology-module]',host)?.addEventListener('change',applyFilter);q('[data-ontology-reset]',host)?.addEventListener('click',()=>{q('[data-ontology-search]',host).value='';q('[data-ontology-module]',host).value='all';applyFilter();svg.transition().duration(350).call(zoom.transform,d3.zoomIdentity);node.classed('is-selected',false).classed('is-neighbor',false);});
-    simulation.stop();for(let tick=0;tick<150;tick++)simulation.tick();updateEdges();node.attr('transform',item=>`translate(${item.x-93},${item.y-46})`);
-    const minX=Math.min(...nodes.map(n=>n.x-95)),maxX=Math.max(...nodes.map(n=>n.x+95)),minY=Math.min(...nodes.map(n=>n.y-48)),maxY=Math.max(...nodes.map(n=>n.y+48));const scale=Math.min(1,(width-40)/(maxX-minX),(height-40)/(maxY-minY));const fit=d3.zoomIdentity.translate((width-scale*(maxX+minX))/2,(height-scale*(maxY+minY))/2).scale(scale);svg.call(zoom.transform,fit);
-    if(nodes[0])showDetail(nodes[0]);applyFilter();
+    const viewport=q('.ontology-map-viewport',host);
+    let focused=null;
+    const showDetail=item=>{
+      const detail=q('#entityDetail'); if(!detail)return;
+      const related=relations.filter(r=>(r.from_types||[]).includes(item.id)||(r.to_types||[]).includes(item.id));
+      detail.innerHTML='<div class="entity-title"><b>'+escapeHtml(item.name||item.id)+'</b><span>'+escapeHtml(item.id)+' · '+escapeHtml(labels[item.module]||item.module)+'</span></div><dl><dt>业务定义</dt><dd>'+escapeHtml(item.description||'暂无定义')+'</dd><dt>核心属性</dt><dd>'+((item.attributes||[]).map(a=>'<code>'+escapeHtml(a)+'</code>').join(' ')||'暂无属性定义')+'</dd></dl><div class="ontology-detail-relations"><h3>关联关系</h3>'+related.map(r=>'<p><b>'+escapeHtml(r.name||r.id)+'</b><span>'+escapeHtml((r.from_types||[]).map(id=>typeMap.get(id)?.name||id).join('、'))+' → '+escapeHtml((r.to_types||[]).map(id=>typeMap.get(id)?.name||id).join('、'))+'</span></p>').join('')+'</div>';
+    };
+    const render=()=>{
+      const term=q('[data-ontology-search]',host).value.trim().toLowerCase(),module=q('[data-ontology-module]',host).value;
+      let visible,visibleLinks,heading;
+      if(focused){
+        visibleLinks=links.filter(l=>l.source===focused||l.target===focused);
+        visible=[focused,...new Set(visibleLinks.flatMap(l=>[l.source,l.target]).filter(id=>id!==focused))];
+        heading=(typeMap.get(focused)?.name||focused)+'的直接关联';
+      }else if(term||module!=='all'){
+        visible=types.filter(t=>(module==='all'||t.module===module)&&(!term||[t.id,t.name,t.description,labels[t.module],...(t.attributes||[])].join(' ').toLowerCase().includes(term))).map(t=>t.id);
+        heading='筛选结果';
+      }else{visible=[...core,...supporting].filter(id=>typeMap.has(id));heading='营销主线';}
+      const ids=new Set(visible);
+      visibleLinks=(visibleLinks||links).filter(l=>ids.has(l.source)&&ids.has(l.target));
+      if(!focused&&!term&&module==='all'){
+        const overviewPairs=new Set(['Opportunity|AudienceSnapshot','Opportunity|Route','AudienceSnapshot|ProductPackage','Campaign|ProductPackage','Campaign|ExecutionBatch','ExecutionBatch|Feedback','ProductPackage|Product','Campaign|CampaignVersion','CampaignVersion|ApprovalTask','Evidence|BusinessRule']);
+        visibleLinks=visibleLinks.filter(l=>overviewPairs.has(l.source+'|'+l.target)&&(mainRelations.has(l.id)||l.id==='supports_claim'));
+      }
+      if(!visible.length){viewport.__circleGraph?.destroy();viewport.innerHTML='<div class="ontology-map-empty">没有匹配对象</div>';q('.ontology-map-caption',host).textContent='没有匹配对象，请调整搜索条件';return;}
+      const controller=renderCircleOntology(viewport,visible.map(id=>({...typeMap.get(id),title:typeMap.get(id).name})),visibleLinks,{selected:focused,onSelect:item=>{if(focused===item.id){showDetail(item);return;}focused=item.id;showDetail(item);render();}});
+      window.ceairSchemaSimulation=controller.simulation;
+      q('.ontology-map-caption',host).textContent=heading+' · '+visible.length+' 个对象 · '+visibleLinks.length+' 条关联';
+    };
+    q('[data-ontology-search]',host).addEventListener('input',()=>{focused=null;render();});
+    q('[data-ontology-module]',host).addEventListener('change',()=>{focused=null;render();});
+    q('[data-ontology-reset]',host).addEventListener('click',()=>{focused=null;q('[data-ontology-search]',host).value='';q('[data-ontology-module]',host).value='all';render();showDetail(typeMap.get('Campaign')||types[0]);});
+    q('[data-ontology-catalog]',host).addEventListener('click',()=>{dataDialog('本体对象目录','<div class="ontology-class-directory">'+types.map(t=>'<button class="btn" data-select-ontology-class="'+escapeHtml(t.id)+'">'+escapeHtml(t.name||t.id)+'</button>').join('')+'</div>');qa('[data-select-ontology-class]').forEach(b=>b.addEventListener('click',()=>{focused=b.dataset.selectOntologyClass;b.closest('.production-modal')?.remove();showDetail(typeMap.get(focused));render();}));});
+    q('[data-ontology-detail]',host).addEventListener('click',()=>dataDialog('业务对象详情',q('#entityDetail').innerHTML));
+    render();showDetail(typeMap.get('Campaign')||types[0]);
   }
+
 
   function setupKnowledgeViews(){
     const canvas=q('#graphCanvas'); if(!canvas) return; const body=canvas.closest('.panel-body'); if(!body||q('#knowledgeViewTabs',body)) return;
@@ -1690,14 +1822,93 @@
     qa('[data-knowledge-view]').forEach(button=>button.addEventListener('click',()=>{const mode=button.dataset.knowledgeView;qa('[data-knowledge-view]').forEach(item=>item.classList.toggle('active',item===button));schema.hidden=mode!=='schema';canvas.hidden=mode!=='instances';const bar=q('[data-instance-toolbar]');if(bar)bar.hidden=mode!=='instances';if(mode==='instances')renderDynamicGraph();else renderOntologySchemaGraphV2();})); renderOntologySchemaGraphV2();
   }
 
+  function dataDialog(title, html) {
+    const layer=document.createElement('div');layer.className='production-modal dataset-modal';
+    layer.innerHTML=`<div class="production-modal-card"><div class="production-modal-head"><b>${escapeHtml(title)}</b><button class="btn" data-close>关闭</button></div><div class="production-modal-body">${html}</div></div>`;
+    document.body.append(layer);bindProductionModal(layer);return layer;
+  }
+  async function showDatasetCatalog() {
+    const layer=dataDialog('数据目录','<p>正在加载…</p>'),body=q('.production-modal-body',layer);
+    try {
+      const rows=await request('/api/datasets');
+      if(!layer.isConnected)return;
+      body.innerHTML=`<div class="catalog-section-head"><b>${rows.length} 个数据集 · ${rows.reduce((n,r)=>n+r.row_count,0).toLocaleString('zh-CN')} 条源记录</b><button class="btn" data-open-ontology>检索本体</button></div><div class="dataset-table-scroll"><table class="table"><thead><tr><th>数据集</th><th>记录数</th><th>来源</th><th>口径</th><th></th></tr></thead><tbody>${rows.map(row=>`<tr><td><b>${escapeHtml(row.name)}</b></td><td>${row.row_count.toLocaleString('zh-CN')}</td><td>${escapeHtml(row.source)}</td><td>${escapeHtml(row.data_mode)}</td><td><button class="btn" data-dataset="${escapeHtml(row.dataset_key)}">查看明细</button></td></tr>`).join('')||'<tr><td colspan="5">暂无已导入数据</td></tr>'}</tbody></table></div>`;
+      q('[data-open-ontology]',body).onclick=()=>showOntologyCatalog();
+      qa('[data-dataset]',body).forEach(button=>button.onclick=()=>showDatasetRows(button.dataset.dataset));
+    }catch(error){body.textContent=error.message;}
+  }
+  async function showDatasetRows(datasetKey) {
+    const layer=dataDialog('数据明细','<p>正在加载…</p>'),body=q('.production-modal-body',layer);
+    let offset=0,params={},sequence=0;
+    const fetchRows=async()=>{
+      const current=++sequence;
+      try{
+        const query=new URLSearchParams({...params,offset,limit:20});
+        const result=await request('/api/datasets/'+encodeURIComponent(datasetKey)+'/rows?'+query);
+        if(!layer.isConnected||current!==sequence)return;
+        const d=result.dataset,fields=d.fields;
+        body.innerHTML=`<div class="catalog-section-head"><b>${escapeHtml(d.name)} · ${result.total.toLocaleString('zh-CN')} 条</b><span>${escapeHtml(d.data_mode)}</span></div><details><summary>字段、用途与来源</summary><p>${escapeHtml(d.source)} · ${escapeHtml(d.grain)}</p><p>${escapeHtml(d.usage)}</p><p>${escapeHtml(d.description)}</p><p>版本：${escapeHtml(d.dataset_key)} · 主键：${escapeHtml(d.metadata.pk)}</p><div class="dataset-table-scroll"><table class="table"><tr><th>字段</th><th>名称</th><th>类型</th></tr>${fields.map(f=>`<tr><td>${escapeHtml(f.code)}</td><td>${escapeHtml(f.label)}</td><td>${escapeHtml(f.type)}</td></tr>`).join('')}</table></div></details><form data-row-search class="dataset-search"><select name="field"><option value="record_key">主键</option><option value="route_id">航线 ID</option><option value="flight_id">航班 ID</option><option value="customer_id">客户 ID</option></select><input name="value" placeholder="输入完整 ID" value="${escapeHtml(Object.values(params)[0]||'')}"><button class="btn" type="submit">查询</button><button class="btn" type="button" data-reset>重置</button></form><div class="dataset-table-scroll"><table class="table dataset-detail-table"><thead><tr>${fields.map(f=>`<th>${escapeHtml(f.label||f.code)}</th>`).join('')}<th></th></tr></thead><tbody>${result.rows.map((row,i)=>`<tr>${fields.map(f=>`<td title="${escapeHtml(row[f.code])}">${escapeHtml(row[f.code]===null?'—':typeof row[f.code]==='object'?JSON.stringify(row[f.code]):row[f.code])}</td>`).join('')}<td><button class="btn" data-row-detail="${i}">完整记录</button></td></tr>`).join('')||`<tr><td colspan="${fields.length+1}">无匹配记录</td></tr>`}</tbody></table></div><div class="dataset-pagination"><button class="btn" data-prev ${offset===0?'disabled':''}>上一页</button><span>${result.total?offset+1:0}–${Math.min(offset+20,result.total)} / ${result.total.toLocaleString('zh-CN')}</span><button class="btn" data-next ${offset+20>=result.total?'disabled':''}>下一页</button></div>`;
+        q('[data-row-search]',body).onsubmit=event=>{event.preventDefault();const f=new FormData(event.target),value=String(f.get('value')).trim();params=value?{[f.get('field')]:value}:{};offset=0;fetchRows();};
+        q('[data-reset]',body).onclick=()=>{params={};offset=0;fetchRows();};
+        q('[data-prev]',body).onclick=()=>{offset=Math.max(0,offset-20);fetchRows();};
+        q('[data-next]',body).onclick=()=>{offset+=20;fetchRows();};
+        qa('[data-row-detail]',body).forEach(button=>button.onclick=()=>dataDialog('完整源记录',`<pre class="dataset-record">${escapeHtml(JSON.stringify(result.rows[Number(button.dataset.rowDetail)],null,2))}</pre>`));
+      }catch(error){if(current===sequence)body.textContent=error.message;}
+    };await fetchRows();
+  }
+  async function showOntologyCatalog() {
+    const objectLabels={Airport:'机场',Flight:'航班',FlightSegment:'航段',Cabin:'舱位',Fare:'报价',Product:'产品',AncillaryProduct:'辅营产品',MetricObservation:'指标观测',AttributionResult:'归因结果'};
+    const relationLabels={has_fare:'提供报价',uses_product:'适用产品',has_cabin:'包含舱位',has_segment:'包含航段',operates_on:'运营航线',departs_from:'出发机场',arrives_at:'到达机场',has_metric:'指标观测',produces_feedback:'产生反馈',produces_attribution:'产生归因',attributes_to:'归因对象',includes_ancillary:'包含辅营',targets_audience:'面向客群',uses_product_package:'使用产品包',has_campaign_version:'包含活动版本',generates_content:'生成内容'};
+    const layer=dataDialog('本体对象检索','<form class="dataset-search" data-entity-search><input name="q" placeholder="名称或对象 ID"><input name="entity_type" placeholder="对象类型，如 Flight / Fare"><button class="btn">查询</button></form><div data-entity-results>正在加载…</div>');
+    const host=q('[data-entity-results]',layer);let offset=0,params={},sequence=0;
+    const fetchEntities=async()=>{
+      const current=++sequence;
+      try{
+        const result=await request('/api/ontology/entities?'+new URLSearchParams({...params,offset,limit:20}));
+        if(!layer.isConnected||current!==sequence)return;
+        host.innerHTML=`<div class="dataset-table-scroll"><table class="table"><tr><th>对象</th><th>类型</th><th>来源</th><th></th></tr>${result.rows.map(row=>`<tr><td><b>${escapeHtml(row.label)}</b><small>${escapeHtml(row.external_id)}</small></td><td>${escapeHtml(window.ceairOntologyLabels?.[row.type]||objectLabels[row.type]||row.type)}</td><td>${escapeHtml(row.source)}</td><td><button class="btn" data-entity-id="${escapeHtml(row.external_id)}">关系与属性</button></td></tr>`).join('')||'<tr><td colspan="4">无匹配对象</td></tr>'}</table></div><div class="dataset-pagination"><button class="btn" data-prev ${offset===0?'disabled':''}>上一页</button><span>${result.total?offset+1:0}–${Math.min(offset+20,result.total)} / ${result.total.toLocaleString('zh-CN')}</span><button class="btn" data-next ${offset+20>=result.total?'disabled':''}>下一页</button></div>`;
+        q('[data-prev]',host).onclick=()=>{offset=Math.max(0,offset-20);fetchEntities();};q('[data-next]',host).onclick=()=>{offset+=20;fetchEntities();};
+        qa('[data-entity-id]',host).forEach(button=>button.onclick=async()=>{
+          const detail=dataDialog('关系与属性','<p>正在加载…</p>'),area=q('.production-modal-body',detail);
+          try{
+            const neighborhood=await request('/api/ontology/entities/'+encodeURIComponent(button.dataset.entityId)+'/neighbors');
+            const node=neighborhood.nodes.find(n=>n.external_id===button.dataset.entityId);
+            if(!detail.isConnected)return;
+            const labels=Object.fromEntries(neighborhood.nodes.map(n=>[n.external_id,n.label]));
+            area.innerHTML=`<h3>${escapeHtml(node.label)}</h3><p>${escapeHtml(node.source)} · ${escapeHtml(node.external_id)}</p><details open><summary>对象属性</summary><pre class="dataset-record">${escapeHtml(JSON.stringify(node.attributes,null,2))}</pre></details><h3>关联关系 · ${neighborhood.total_relations.toLocaleString('zh-CN')}</h3><div class="dataset-table-scroll"><table class="table"><tr><th>起点</th><th>关系</th><th>终点</th><th>证据</th></tr>${neighborhood.edges.map(e=>`<tr><td>${escapeHtml(labels[e.source])}</td><td>${escapeHtml(relationLabels[e.relation]||e.relation)}</td><td>${escapeHtml(labels[e.target])}</td><td>${escapeHtml(e.evidence)}</td></tr>`).join('')}</table></div>${neighborhood.total_relations>neighborhood.edges.length?'<p>当前展示前 40 条关系；其余可通过标准邻接查询接口分页查看。</p>':''}${node.attributes.dataset_key?'<button class="btn" data-source-rows>查看来源数据</button>':''}`;
+            q('[data-source-rows]',area)?.addEventListener('click',()=>showDatasetRows(node.attributes.dataset_key));
+          }catch(error){area.textContent=error.message;}
+        });
+      }catch(error){if(current===sequence)host.textContent=error.message;}
+    };
+    q('[data-entity-search]',layer).onsubmit=event=>{event.preventDefault();params=Object.fromEntries([...new FormData(event.target)].filter(([,v])=>String(v).trim()));offset=0;fetchEntities();};await fetchEntities();
+  }
+
   function renderDynamicGraph() {
     setupKnowledgeViews();
-    const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return; canvas.innerHTML='';
+    const toolbar=q('[data-instance-toolbar]');
+    if(toolbar&&!q('[data-ontology-catalog]',toolbar)){
+      const button=document.createElement('button');button.className='btn';button.dataset.ontologyCatalog='true';button.textContent='检索本体对象';
+      button.onclick=()=>showOntologyCatalog();toolbar.append(button);
+    }
+    if(toolbar&&!q('[data-instance-detail]',toolbar)){
+      const button=document.createElement('button');button.type='button';button.className='btn';button.dataset.instanceDetail='true';button.textContent='对象详情';button.onclick=()=>dataDialog('业务对象详情',q('#entityDetail')?.innerHTML||'请先选择对象');toolbar.append(button);
+    }
+    const canvas=q('#graphCanvas'); if (!canvas || canvas.hidden || !window.d3) return;
+    canvas.__circleGraph?.destroy();if(window.ceairSchemaSimulation)window.ceairSchemaSimulation.stop();canvas.innerHTML='';canvas.classList.add('circle-graph-host');
     let source=tenantData.graph; if (!source.nodes.length) { canvas.innerHTML='<div class="graph-empty">当前租户暂无营销知识数据，请先在数据接入中投递业务文件。</div>'; return; }
     let picker=q('[data-graph-case]');
     if(!picker){picker=document.createElement('select');picker.dataset.graphCase='true';picker.setAttribute('aria-label','选择图谱活动');q('[data-instance-toolbar]')?.append(picker);picker.onchange=()=>{window.ceairSetChainCase?.(picker.value);renderDynamicGraph();};}
     const selected=picker.value||(tenantData.demo?.enabled?'ACT-2026-0921':tenantData.campaigns[0]?.id)||'';
     picker.innerHTML='<option value="all">全部本体对象</option>'+tenantData.campaigns.map(c=>'<option value="'+escapeHtml(c.id)+'">'+escapeHtml(c.name)+'</option>').join('');picker.value=selected;
+    if(selected!=='all'&&tenantData.graph.campaign_id!==selected){
+      canvas.innerHTML='<div class="graph-empty">正在加载活动关系…</div>';
+      request('/api/campaigns/'+encodeURIComponent(selected)+'/graph').then(graph=>{if(picker.value===selected){tenantData.graph=graph;renderDynamicGraph();}}).catch(error=>{canvas.textContent=error.message;});return;
+    }
+    if(selected==='all'&&tenantData.graph.campaign_id){
+      canvas.innerHTML='<div class="graph-empty">正在加载本体概览…</div>';
+      request('/api/graph').then(graph=>{if(picker.value==='all'){tenantData.graph=graph;renderDynamicGraph();}}).catch(error=>{canvas.textContent=error.message;});return;
+    }
     if(selected!=='all'){
       const ids=new Set(source.nodes.filter(n=>n.id===selected||n.attributes?.campaign_id===selected).map(n=>n.id));
       for(let pass=0;pass<3;pass++)source.edges.forEach(e=>{const target=source.nodes.find(n=>n.id===e.target);if(ids.has(e.source)&&target&&(!target.attributes?.campaign_id||target.attributes.campaign_id===selected)&&!String(e.target).startsWith('ACT-'))ids.add(e.target);});
@@ -1715,40 +1926,20 @@
     qa('[data-graph-filter]').forEach(button=>{button.onclick=()=>{if(search)search.value='';if(typeSelect)typeSelect.value='all';picker.value=button.dataset.graphFilter==='all'?'all':(tenantData.demo?.enabled?'ACT-2026-0921':tenantData.campaigns[0]?.id||'all');renderDynamicGraph();};});
     if(!source.nodes.length){canvas.innerHTML='<div class="graph-empty">没有符合筛选条件的本体对象</div>';return;}
     if(window.ceairGraphSimulation)window.ceairGraphSimulation.stop();
-    const box=canvas.getBoundingClientRect(), width=box.width||900, height=box.height||500;
     const typeLabels={opportunity:'营销机会',audience:'客群',customer:'客户',product:'产品包',product_package:'产品包',content:'内容',campaign:'营销活动',channel:'渠道',flight:'航班',flight_segment:'航段',airport:'机场',route:'航线',fare:'运价',cabin:'舱位',result:'营销结果',entity:'业务对象',audiencesnapshot:'冻结客群',customeraggregate:'聚合客群',productpackage:'产品包',contentasset:'内容资产',campaignversion:'活动版本',approvaltask:'审批任务',executionbatch:'执行批次',feedback:'渠道反馈',review:'效果复盘',agentRun:'智能体运行',agentrun:'智能体运行',evidence:'证据',marketsignal:'市场信号',knowledgedocument:'来源文档',knowledgechunk:'知识片段',strategyplan:'策略计划',touchpointplan:'触点计划',humandecision:'人工决策',valueproposition:'价值主张',customerneed:'旅客需求',recommendation:'机会建议'};
     const nodes=source.nodes.map(item=>({...item,title:displayText(item.label,'未命名对象'),type:String(item.type||'entity').toLowerCase(),typeLabel:typeLabels[String(item.type||'entity').toLowerCase()]||'业务对象',w:172,h:60}));
     const byId=new Map(nodes.map(item=>[item.id,item])); const links=source.edges.filter(item=>byId.has(item.source)&&byId.has(item.target)).map(item=>({...item,source:byId.get(item.source),target:byId.get(item.target),label:displayText(({has_campaign_version:'包含版本',targets_audience:'面向客群',uses_product_package:'使用产品包',generates_content:'生成内容',requires_approval:'需要审批',confirmed_by_human:'人工确认',executes:'产生执行',uses_channel:'使用渠道',produces_feedback:'产生反馈',reviewed_by:'效果复盘',supports_campaign:'支撑活动',has_evidence:'具有证据',derived_from:'来源于',contains_chunk:'包含片段',has_strategy_plan:'策略方案',uses_touchpoint_plan:'触点计划',produces_object:'形成对象',evidence_for:'提供证据',addresses_opportunity:'响应机会'})[item.relation]||item.relation,'关联')})); const neighbors=new Map(nodes.map(item=>[item.id,new Set()])); links.forEach(item=>{neighbors.get(item.source.id)?.add(item.target.id);neighbors.get(item.target.id)?.add(item.source.id);});
-    const svg=d3.select(canvas).append('svg').attr('width',width).attr('height',height), defs=svg.append('defs');
-    defs.append('marker').attr('id','production-arrow').attr('viewBox','0 0 8 8').attr('refX',7).attr('refY',4).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto').append('path').attr('d','M0,0 L8,4 L0,8 z').attr('fill','#93b2c4');
-    const root=svg.append('g'),zoom=d3.zoom().scaleExtent([.08,2]).on('zoom',event=>root.attr('transform',event.transform));svg.call(zoom);
-    const edge=root.append('g').selectAll('path').data(links).join('path').attr('class','graph-edge').attr('marker-end','url(#production-arrow)');
-    const labels=root.append('g').selectAll('text').data(links).join('text').attr('class','edge-label').text(item=>item.label);
-    const node=root.append('g').selectAll('g').data(nodes).join('g').attr('class',item=>`graph-node dynamic ${item.type}`).call(d3.drag().on('start',(event,item)=>{if(!event.active)simulation.alphaTarget(.25).restart();item.fx=item.x;item.fy=item.y}).on('drag',(event,item)=>{item.fx=event.x;item.fy=event.y}).on('end',(event,item)=>{if(!event.active)simulation.alphaTarget(0);item.fx=null;item.fy=null}));
-    node.append('rect').attr('x',item=>-item.w/2).attr('y',item=>-item.h/2).attr('width',item=>item.w).attr('height',item=>item.h).attr('rx',4);
-    node.append('text').attr('class','title').attr('x',item=>-item.w/2+10).attr('y',-5).text(item=>item.title.slice(0,16)); node.append('text').attr('class','type').attr('x',item=>-item.w/2+10).attr('y',17).text(item=>item.typeLabel);
-    node.on('click',(event,item)=>{event.stopPropagation();const near=neighbors.get(item.id)||new Set();node.classed('is-selected',value=>value.id===item.id).classed('is-neighbor',value=>near.has(value.id)).classed('is-muted',value=>value.id!==item.id&&!near.has(value.id));edge.classed('is-muted',value=>value.source.id!==item.id&&value.target.id!==item.id);labels.classed('is-muted',value=>value.source.id!==item.id&&value.target.id!==item.id);q('#entityDetail').innerHTML=`<div class="entity-title">
-<b>${escapeHtml(item.title)}</b>
-<span>${escapeHtml(item.typeLabel)}</span>
-</div>
-<dl>
-<dt>对象 ID</dt>
-<dd>${escapeHtml(item.id)}</dd>
-<dt>数据来源</dt>
-<dd>${escapeHtml(displayText(item.source,'未知来源'))}</dd>
-<dt>置信度</dt>
-<dd>${item.attributes?.confidence_status==='未评估'?'未评估':Math.round((item.confidence||0)*100)+'%'}</dd>
-</dl>
-<div class="ai-result">
-<b>对象属性（入库记录）</b>
-<p>${escapeHtml(Object.entries(item.attributes||{}).slice(0,6).map(([key,value])=>`${key}：${typeof value==='object'?JSON.stringify(value):value}`).join('；')||'暂无扩展属性')}</p>
-</div>`;});
-    const simulation=window.ceairGraphSimulation=d3.forceSimulation(nodes).force('link',d3.forceLink(links).id(item=>item.id).distance(145).strength(.7)).force('charge',d3.forceManyBody().strength(-420)).force('collide',d3.forceCollide().radius(90)).force('center',d3.forceCenter(width/2,height/2)).on('tick',()=>{edge.attr('d',item=>`M${item.source.x},${item.source.y} L${item.target.x},${item.target.y}`);labels.attr('x',item=>(item.source.x+item.target.x)/2).attr('y',item=>(item.source.y+item.target.y)/2-5);node.attr('transform',item=>`translate(${item.x},${item.y})`)});
-    simulation.stop();for(let tick=0;tick<160;tick++)simulation.tick();
-    const bounds={minX:Math.min(...nodes.map(n=>n.x-90)),maxX:Math.max(...nodes.map(n=>n.x+90)),minY:Math.min(...nodes.map(n=>n.y-35)),maxY:Math.max(...nodes.map(n=>n.y+35))};
-    const scale=Math.min(.95,(width-30)/(bounds.maxX-bounds.minX),(height-30)/(bounds.maxY-bounds.minY));
-    svg.call(zoom.transform,d3.zoomIdentity.translate((width-scale*(bounds.maxX+bounds.minX))/2,(height-scale*(bounds.maxY+bounds.minY))/2).scale(scale));simulation.alpha(.03).restart();
-    node.filter((_,index)=>index===0).dispatch('click');
+    const ranked=nodes.slice().sort((a,b)=>(neighbors.get(b.id)?.size||0)-(neighbors.get(a.id)?.size||0));
+    const visible=ranked.slice(0,48),visibleIds=new Set(visible.map(n=>n.id));
+    const visibleLinks=links.filter(l=>visibleIds.has(l.source.id)&&visibleIds.has(l.target.id)).map(l=>({...l,source:l.source.id,target:l.target.id}));
+    const onSelect=item=>{
+      const detail=q('#entityDetail');if(!detail)return;
+      detail.innerHTML=`<div class="entity-title"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.typeLabel)}</span></div><dl><dt>对象 ID</dt><dd>${escapeHtml(item.id)}</dd><dt>数据来源</dt><dd>${escapeHtml(displayText(item.source,'未知来源'))}</dd><dt>置信度</dt><dd>${item.attributes?.confidence_status==='未评估'?'未评估':Math.round((item.confidence||0)*100)+'%'}</dd></dl><details open><summary>对象属性</summary><dl>${Object.entries(item.attributes||{}).map(([key,value])=>`<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(typeof value==='object'?JSON.stringify(value):value)}</dd>`).join('')}</dl></details>`;
+    };
+    const controller=renderCircleOntology(canvas,visible,visibleLinks,{label:'本体实例圆形动态图谱',onSelect});window.ceairGraphSimulation=controller.simulation;
+    const caption=document.createElement('div');caption.className='circle-graph-count';caption.textContent=`${visible.length} 个对象 · ${visibleLinks.length} 条关联`+(nodes.length>visible.length?` · 共 ${nodes.length} 个对象，可筛选或检索查看`:'');canvas.append(caption);
+    if(visible[0])onSelect(visible[0]);
+
   }
 
   const pipelineStages={queued:['\u7b49\u5f85\u5904\u7406',6],received:['\u6587\u4ef6\u68c0\u67e5',16],extracting:['\u5185\u5bb9\u89e3\u6790',32],extracted:['\u6e05\u6d17\u5207\u5206',48],classifying:['AI \u8bed\u4e49\u62bd\u53d6',65],classified:['\u4e1a\u52a1\u6821\u9a8c',78],persisting:['\u77e5\u8bc6\u5165\u5e93',90],'ontology-updated':['\u5904\u7406\u5b8c\u6210',100],failed:['\u5904\u7406\u5931\u8d25',100]};
@@ -1758,11 +1949,11 @@
   function renderImports() {
     const table=q('#importTable'); if(!table)return;
     const pipelines=tenantData.pipelines||[];
-    const syncs=(tenantData.imports||[]).filter(item=>['audience','product'].includes(item.dataset_type));
+    const syncs=(tenantData.imports||[]).filter(item=>['audience','product','bundle'].includes(item.dataset_type));
     q('#importCount').textContent=(pipelines.length+syncs.length)+' 个批次';
     const rows=[
       ...pipelines.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:'业务对象 '+item.accepted_entities+' · 关系 '+item.accepted_relations+(item.rejected_items?' · 待复核 '+item.rejected_items:''),error:item.error_message})),
-      ...syncs.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:(item.dataset_type==='audience'?'聚合客群':'产品包')+' · 接收 '+item.accepted_rows+' / '+item.total_rows+' 条',error:item.rejected_rows?'待复核 '+item.rejected_rows+' 条':''}))
+      ...syncs.map(item=>({id:item.id,name:item.file_name,format:item.file_format,status:item.status,time:item.completed_at||item.created_at,result:(item.dataset_type==='bundle'?'数据集与本体':item.dataset_type==='audience'?'聚合客群':'产品包')+' · 接收 '+Number(item.accepted_rows).toLocaleString('zh-CN')+' / '+Number(item.total_rows).toLocaleString('zh-CN')+' 条',error:item.rejected_rows?'待复核 '+item.rejected_rows+' 条':''}))
     ].sort((a,b)=>String(b.time||'').localeCompare(String(a.time||'')));
     table.innerHTML='<tr><th>文件 / 来源</th><th>格式</th><th>处理结果</th><th>状态</th><th>完成时间（北京时间）</th></tr>'+(rows.length?rows.map(item=>'<tr><td><strong>'+escapeHtml(item.name)+'</strong><small>'+escapeHtml(item.id)+'</small></td><td>'+escapeHtml(String(item.format||'').toUpperCase())+'</td><td>'+escapeHtml(item.result)+'</td><td><span class="status '+(item.status==='failed'?'warn':'good')+'">'+escapeHtml(pipelineStatusText[item.status]||item.status)+'</span>'+(item.error?'<small class="pipeline-error">'+escapeHtml(item.error)+'</small>':'')+'</td><td>'+escapeHtml(businessTime(item.time))+'</td></tr>').join(''):'<tr><td colspan="5" class="table-empty">暂无处理记录。可投递文件，或在客群与产品页同步标准 JSON。</td></tr>');
   }
@@ -1811,6 +2002,7 @@
       if(canWrite())showCampaignEditor({name:'',stage:'创建',audience_size:0,budget_yuan:0,roi_target:0});
     },true);
     document.addEventListener('click', async event => {
+      if (event.target.closest?.('[data-marketing-models]')) { showMarketingModels(); return; }
       const subviewButton=event.target.closest?.('[data-business-subview]');
       if(subviewButton){const view=subviewButton.closest('.view');if(view?.id==='audiences'&&subviewButton.dataset.businessSubview==='selection'){showAudienceSelectionModal();return;}if(view)activateBusinessSubview(view.id,subviewButton.dataset.businessSubview);return;}
       const openCampaign=event.target.closest?.('[data-open-campaign]');
@@ -1908,6 +2100,7 @@
     ['dragleave','drop'].forEach(name=>dropzone.addEventListener(name,event=>{event.preventDefault();dropzone.classList.remove('is-dragging');}));
     dropzone.addEventListener('drop',event=>queuePipelineFiles(event.dataTransfer.files));
     q('#refreshPipelines')?.addEventListener('click',()=>refreshPipelines().then(()=>toast('\u5904\u7406\u72b6\u6001\u5df2\u5237\u65b0')).catch(cause=>toast(cause.message)));
+    q('#datasetCatalog')?.addEventListener('click',()=>showDatasetCatalog());
     q('#syncNdcFlight')?.addEventListener('click',async()=>{if(!canWrite())return;const button=q('#syncNdcFlight');button.disabled=true;try{const result=await request('/api/ndc/sync-flight-products',{method:'POST',body:JSON.stringify({origin:'SHA',destination:'SYX',departure_date:'2026-09-14',sales_channel:'10000'})});toast('NDC24.1航班产品已进入流水线：'+result.job.id);await loadTenantData();showAgentTrace({summary:'NDC24.1模拟航班产品已完成标准化，等待人工确认',events:result.stages||[]});}catch(cause){toast(cause.message||'NDC航班同步失败');}finally{button.disabled=false;}});
     q('#tenantForm')?.addEventListener('submit',async event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.currentTarget));values.code=String(values.code).toUpperCase();await request('/api/platform/tenants',{method:'POST',body:JSON.stringify(values)});event.currentTarget.reset();toast('租户已创建');await loadPlatform();});
   }
@@ -1934,9 +2127,9 @@ function mountMarketingAssistantV2(){
     const traceLabel={'harness/context-loaded':'加载业务上下文','harness/model-started':'分析任务','harness/model-finished':'整理结果','harness/tool-started':'调用业务能力','harness/tool-failed':'工具返回错误','agent/plan':'执行计划'};
     const stateKey='ceair-marketing-assistant-layout-v2';
     const readLayout=()=>{try{return JSON.parse(localStorage.getItem(stateKey)||'{}')}catch{return {}}};
-    const saveLayout=()=>{if(panel.classList.contains('is-docked'))return;const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();localStorage.setItem(stateKey,JSON.stringify({panel:{left:panelRect.left,top:panelRect.top,width:panelRect.width,height:panelRect.height},fab:{left:fabRect.left,top:fabRect.top},collapsed:panel.classList.contains('is-collapsed')}));};
+    const saveLayout=()=>{const state=readLayout(),fabRect=fab.getBoundingClientRect();state.fab={left:fabRect.left,top:fabRect.top};if(!panel.classList.contains('is-docked')){const rect=panel.getBoundingClientRect();state.panel={left:rect.left,top:rect.top,width:rect.width,height:rect.height};state.collapsed=panel.classList.contains('is-collapsed');}localStorage.setItem(stateKey,JSON.stringify(state));};
     const clamp=(value,min,max)=>Math.min(Math.max(value,min),Math.max(min,max));
-    const positionElement=(element,left,top)=>{const rect=element.getBoundingClientRect();element.style.setProperty('right','auto','important');element.style.setProperty('bottom','auto','important');element.style.setProperty('left',clamp(left,8,window.innerWidth-rect.width-8)+'px','important');element.style.setProperty('top',clamp(top,8,window.innerHeight-rect.height-8)+'px','important');};
+    const positionElement=(element,left,top)=>{const rect=element.getBoundingClientRect(),priority=element===fab?'important':'';element.style.setProperty('right','auto',priority);element.style.setProperty('bottom','auto',priority);element.style.setProperty('left',clamp(left,8,window.innerWidth-rect.width-8)+'px',priority);element.style.setProperty('top',clamp(top,8,window.innerHeight-rect.height-8)+'px',priority);};
     const restoreLayout=()=>{const state=readLayout();if(state.panel){panel.style.width=clamp(Number(state.panel.width)||410,340,Math.max(340,window.innerWidth-16))+'px';panel.style.height=clamp(Number(state.panel.height)||640,360,Math.max(360,window.innerHeight-16))+'px';positionElement(panel,Number(state.panel.left)||24,Number(state.panel.top)||24);}if(state.fab)positionElement(fab,Number(state.fab.left)||window.innerWidth-160,Number(state.fab.top)||window.innerHeight-72);if(state.collapsed)panel.classList.add('is-collapsed');};
     let suppressFabClick=false;
     const makeDraggable=(handle,target,isFab=false)=>{
@@ -1976,7 +2169,8 @@ function mountMarketingAssistantV2(){
       if(!retryWrap)messages.insertAdjacentHTML('beforeend','<div class="assistant-message user"><div class="assistant-user-body"><div class="assistant-answer">'+escapeHtml(message)+'</div></div></div>');
       const wrap=retryWrap||document.createElement('div');wrap.className='assistant-message assistant live-message';wrap.innerHTML='<div class="assistant-live-body"><div class="assistant-streaming"><span></span><span></span><span></span><b>正在读取业务数据</b></div><div class="assistant-answer is-streaming" aria-live="polite"></div><div class="assistant-ui-output"></div></div>';if(!retryWrap)messages.appendChild(wrap);
       const answer=q('.assistant-answer',wrap),streaming=q('.assistant-streaming',wrap),process=window.createAssistantProcess(q('.assistant-live-body',wrap)),ui=workspace.renderer(q('.assistant-ui-output',wrap));messages.scrollTop=messages.scrollHeight;
-      const acceptUI=message=>{try{ui.accept(message);}catch{if(!q('.assistant-ui-error',wrap)){const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';q('.assistant-ui-output',wrap).append(error);}}};
+      const transcript=window.createAssistantTranscript(q('.assistant-ui-output',wrap),ui,workspace.formatAnswer);
+      const acceptUI=message=>{try{transcript.ui(message);}catch{if(!q('.assistant-ui-error',wrap)){const error=document.createElement('div');error.className='assistant-ui-error';error.setAttribute('role','alert');error.textContent='结果界面暂时无法显示，请查看文字答复。';q('.assistant-ui-output',wrap).append(error);}}};
       let finalAnswer='';
       try{
         const result=await window.CeairAgentStream.chat(`${mount}/api/agent-chat/stream`,{
@@ -1984,16 +2178,16 @@ function mountMarketingAssistantV2(){
           headers:{'Content-Type':'application/json',Authorization:`Bearer ${session?.access_token||''}`,'X-Tenant-ID':String(requestTenantId||'')},
           payload:{message,conversation_id:conversationId,domain_id:'marketing-copilot',history:conversation.slice(-12)},
           onEvent:(event,value)=>{
-            if(event==='trace'){process.add(value);if(value.event==='harness/model-started'){finalAnswer='';answer.textContent='';}const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
+            if(event==='trace'){process.add(value);if(value.event==='harness/model-started'){finalAnswer='';transcript.round();}const status=q('.assistant-streaming b',wrap);if(status)status.textContent=traceLabel[value.event]||'正在处理';}
             if(event==='a2ui')acceptUI(value);
             if(event==='conversation'&&value.conversation_id){conversationId=value.conversation_id;}
-            if(event==='token'){finalAnswer+=value.text||'';answer.textContent=finalAnswer;messages.scrollTop=messages.scrollHeight;}
+            if(event==='token'){finalAnswer+=value.text||'';transcript.token(value.text||'');messages.scrollTop=messages.scrollHeight;}
           }
         });
         finalAnswer=result.answer||finalAnswer;
         if(!finalAnswer)throw new Error('后台未返回答复，请重试。');
         answer.textContent=finalAnswer;conversationId=result.conversation_id||conversationId;
-        workspace.formatAnswer(answer,finalAnswer);
+        answer.textContent='';transcript.finish(finalAnswer);
         conversation.push({role:'user',content:message},{role:'assistant',content:finalAnswer});
         process.finish();setLive('就绪');
         if(result.a2ui?.length){try{ui.restore(result.a2ui);}catch{if(!q('.assistant-ui-error',wrap))q('.assistant-ui-output',wrap).insertAdjacentHTML('beforeend','<div class="assistant-ui-error" role="alert">结果界面暂时无法显示，请查看文字答复。</div>');}}
@@ -2018,8 +2212,8 @@ function mountMarketingAssistantV2(){
       }
       finally{streaming?.remove();answer.classList.remove('is-streaming');form.dataset.busy='';input.disabled=false;submitButton.disabled=false;stopButton.hidden=true;currentRequest=null;if(!panel.hidden)input.focus();messages.scrollTop=messages.scrollHeight;}
     };
-    workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
-    fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}if(typeof window.activate==='function'){window.activate('smartspace');}else{setDocked?.('smartspace');}});
+    workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),ask:message=>send(message),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
+    fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}if(typeof window.activate==='function'){window.activate('smartspace');}else{setDocked('smartspace');}input.focus();});
     q('[data-assistant-history]',root).addEventListener('click',()=>workspace.show());
     q('[data-assistant-close]',root).addEventListener('click',()=>{panel.hidden=true;saveLayout();});
     collapseButton.addEventListener('click',()=>setCollapsed(!panel.classList.contains('is-collapsed')));
@@ -2321,7 +2515,7 @@ function mountMarketingAssistantV2(){
     (tenantData.personaDimensions || []).forEach(item => searchPush(rows, 'dimension', item.field_name, searchTag(item.field_code, item.applicable_personas).join(' · '), [item.module_name, item.data_type, item.update_frequency, item.required_mode], item.module_key, item.id));
     (tenantData.campaigns || []).forEach(item => searchPush(rows, 'campaign', item.name, `编号 ${item.id} · 负责人 ${item.owner || '未指定'}`, [item.stage, item.status, item.product_package, item.version], item.id, item.id));
     (tenantData.opportunities || []).forEach(item => searchPush(rows, 'opportunity', item.name, searchTag(item.route, item.signal_summary).join(' · '), [item.market_scope, item.status, item.score ? `评分 ${item.score}` : '', item.owner], item.id, item.id));
-    (tenantData.audiencePackages || []).forEach(item => searchPush(rows, 'audience', item.name, `圈选方式：${item.selection_mode === 'ai-selection' ? 'AI 圈选' : '标签组合'}`, [item.status, `${item.estimated_size || 0} 人`], item.id, item.id));
+    (tenantData.audiencePackages || []).forEach(item => searchPush(rows, 'audience', item.name, `圈选方式：${item.selection_mode === 'ai-selection' ? 'AI 圈选' : item.selection_mode === 'expression' ? '源数据条件' : '标签组合'}`, [item.status, `${item.estimated_size || 0} 人`], item.id, item.id));
     (tenantData.productPackages || []).forEach(item => searchPush(rows, 'product', item.name, item.description, [item.product_type, item.status, item.version], item.id, item.id));
     (tenantData.contentAssets || []).forEach(item => searchPush(rows, 'content', item.title || item.name, item.body, [item.channel, item.status, item.version, item.campaign_id], item.id, item.id));
     (tenantData.domains || []).forEach(item => searchPush(rows, 'domain', item.name, item.responsibility, [item.module, item.status], '', item.id));

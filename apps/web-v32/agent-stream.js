@@ -15,7 +15,8 @@
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => abort('连接长时间没有响应，请检查网络后重试。', 'timeout'), options.idleTimeoutMs ?? 90000);
     };
-    const totalTimer = setTimeout(() => abort('智能体响应超时，请查看运行记录后再重试。', 'timeout'), options.timeoutMs ?? 240000);
+    const totalTimer = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+      ? setTimeout(() => abort('智能体响应超时，请查看运行记录后再重试。', 'timeout'), options.timeoutMs) : undefined;
     options.signal?.addEventListener('abort', cancel, { once: true });
     if (options.signal?.aborted) cancel();
     resetIdle();

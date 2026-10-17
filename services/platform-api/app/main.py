@@ -36,6 +36,9 @@ from .market_hotspots import collect_source, confirm_hotspot_ontology, create_op
 from .opportunity_insight import launch_opportunity_insight
 from .mock_business import channel_delivery, flight_operations, market_signals, product_catalog, profile_summary
 from .imports import import_file
+from .datasets import router as datasets_router
+from .holiday_marketing import router as holiday_router
+from .marketing_models import router as marketing_models_router
 from .llm import LLMClient, LLMConfig, LLMServiceError
 from .migrations import assign_legacy_records, enforce_postgres_tenant_constraints, migrate_legacy_schema, record_schema_version, CURRENT_SCHEMA_VERSION
 from .models import (
@@ -160,7 +163,10 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title=settings.app_name, version="3.17.0", lifespan=lifespan)
+app = FastAPI(title=settings.app_name, version="3.20.0", lifespan=lifespan)
+app.include_router(datasets_router)
+app.include_router(holiday_router)
+app.include_router(marketing_models_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
@@ -1385,17 +1391,24 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
         conversation_id = ""
         public_trace = []
         ui_messages = []
+        timeline = []
+        def token_sink(token):
+            if timeline and timeline[-1]["type"] == "text": timeline[-1]["text"] += token
+            else: timeline.append({"type": "text", "text": token})
+            events.put({"type": "token", "text": token})
         def trace_sink(item):
+            if item.get("event") == "harness/model-started": timeline.append({"type": "round"})
             public_trace.append(item)
             events.put({"type": "trace", "item": item})
         def ui_sink(item):
+            timeline.append({"type": "ui", "index": len(ui_messages)})
             ui_messages.append(item)
             events.put({"type": "a2ui", "item": item})
         def failed(message):
             if conversation_id:
                 try:
                     with SessionLocal() as failed_session:
-                        finish_turn(failed_session, context, conversation_id, message, {"trace": public_trace, "a2ui": ui_messages}, failed=True)
+                        finish_turn(failed_session, context, conversation_id, message, {"trace": public_trace, "a2ui": ui_messages, "timeline": timeline}, failed=True)
                 except Exception:
                     logging.getLogger(__name__).exception("Failed to persist chat failure")
             events.put({"type": "error", "message": message})
@@ -1409,10 +1422,12 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
                     context,
                     scoped_payload,
                     event_sink=trace_sink,
-                    token_sink=lambda token: events.put({"type": "token", "text": token}),
+                    token_sink=token_sink,
                     ui_sink=ui_sink,
                 )
-                finish_turn(worker_session, context, conversation_id, result.answer, result.model_dump(mode="json"))
+                details = result.model_dump(mode="json")
+                details["timeline"] = timeline
+                finish_turn(worker_session, context, conversation_id, result.answer, details)
                 events.put({"type": "result", "result": result.model_dump(mode="json")})
         except (ValueError, LLMServiceError) as exc:
             failed(str(exc))
@@ -1431,16 +1446,19 @@ def run_agent_chat_stream(payload: AgentChatRequest, context: TenantContext = De
 
     def stream():
         yield ": ceair-agent-stream\n\n"
-        deadline = time.monotonic() + 230
+        # Limit inactivity, not the total duration of a progressing task.
+        idle_timeout = 230
+        deadline = time.monotonic() + idle_timeout
         while True:
             if time.monotonic() >= deadline:
-                yield encode("error", {"message": "智能体响应超时，请查看运行记录后重试。"})
+                yield encode("error", {"message": "智能体长时间没有返回进展，请查看运行记录后重试。"})
                 break
             try:
                 item = events.get(timeout=min(15, max(0.01, deadline - time.monotonic())))
             except queue.Empty:
                 yield ": heartbeat\n\n"
                 continue
+            deadline = time.monotonic() + idle_timeout
             kind = item.get("type")
             if kind == "trace":
                 yield encode("trace", item["item"])
@@ -1583,7 +1601,7 @@ def delete_assistant_memory(memory_id: int, context: TenantContext = Depends(req
 @app.get("/api/assistant/capabilities")
 def assistant_capabilities(_context: TenantContext = Depends(get_tenant_context)):
     from .a2ui import CATALOG_ID, VERSION
-    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution"], "a2ui": {"version": VERSION, "supportedCatalogIds": [CATALOG_ID]}}
+    return {"operations": catalog(), "statistics": ["campaigns", "opportunities", "audiences", "products", "contents", "execution", "datasets", "customer_segments"], "a2ui": {"version": VERSION, "supportedCatalogIds": [CATALOG_ID]}}
 
 
 @app.get("/api/assistant/ui-catalog")
@@ -1593,7 +1611,7 @@ def assistant_ui_catalog(_context: TenantContext = Depends(get_tenant_context)):
 
 
 @app.post("/api/assistant/ui-action")
-def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_tenant_context)):
+def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     from .a2ui import ACTION_VALIDATOR
     from jsonschema import ValidationError
     try:
@@ -1601,6 +1619,30 @@ def assistant_ui_action(payload: dict, _context: TenantContext = Depends(get_ten
     except ValidationError as exc:
         raise HTTPException(422, "界面操作格式无效") from exc
     action = payload.get("action", {})
+    if action.get("name") == "prepare_holiday_draft":
+        if _context.role not in {"admin", "manager", "analyst"}:
+            raise HTTPException(403, "当前角色不能创建活动草稿")
+        from .holiday_marketing import HolidayParameters, analyze_holiday, prepare_draft_task
+        ctx = action.get("context", {})
+        conversation = scoped_conversation(session, _context, ctx.get("conversation_id", ""))
+        messages = session.scalars(select(AssistantMessageRecord).where(AssistantMessageRecord.conversation_id == conversation.id,
+            AssistantMessageRecord.role == "assistant").order_by(AssistantMessageRecord.id.desc()).limit(50))
+        params = None
+        for msg in messages:
+            for message in json.loads(msg.detail_json).get("a2ui", []):
+                data = message.get("updateDataModel", {})
+                content = data.get("value", {}).get("content", {})
+                if data.get("surfaceId") == action.get("surfaceId") and content.get("id") == "holiday-plan":
+                    params = content.get("params")
+        if params is None or action.get("sourceComponentId") != "content":
+            raise HTTPException(422, "未找到当前对话的活动方案界面")
+        try:
+            validated = HolidayParameters(**params)
+            report = analyze_holiday(session, _context.tenant_id, validated)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        if not report["ready"]: raise HTTPException(409, "当前条件未通过，请重新分析")
+        return {"task": prepare_draft_task(session, _context, conversation.id, params)}
     pages = {"overview", "campaigns", "opportunities", "audiences", "products", "contents", "approvals", "execution", "feedback", "graph", "imports", "models", "tenants", "permissions"}
     if action.get("name") != "open_page" or action.get("context", {}).get("page") not in pages:
         raise HTTPException(422, "界面操作未授权")
@@ -1928,9 +1970,12 @@ def mock_product_catalog(_context: TenantContext = Depends(get_tenant_context)):
 
 
 @app.get("/api/product-catalog")
-def product_catalog_view(_context: TenantContext = Depends(get_tenant_context)):
+def product_catalog_view(_context: TenantContext = Depends(get_tenant_context), session: Session = Depends(get_session)):
     """Expose the product-management catalog through the production-facing contract."""
-    return product_catalog()
+    from .datasets import imported_product_catalog
+    from .airline_products import catalog_products
+    result = imported_product_catalog(session, _context.tenant_id) or product_catalog()
+    return {**result, "products": [*result["products"], *catalog_products()]}
 
 
 @app.post("/api/integrations/profile/audiences")

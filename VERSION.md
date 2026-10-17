@@ -1,3 +1,23 @@
+## v3.20 - 2026-10-14
+
+- Restored China Eastern branding and the official wordmark across sign-in, homepage, workbenches, agent prompts and A2UI output.
+- Preserved compatibility with existing M-airline workspace labels and App channel aliases; deployment updates only known fixture labels without changing source provenance or custom workspace names.
+
+## v3.19 - 2026-10-13
+
+- Added an evidence-driven holiday travel marketing planner for Dongdong, covering demand, audience eligibility, flight/product constraints, campaign draft, content and effect measurement.
+- Added deterministic typed-ontology gates and counterfactual relation checks; missing Flight→Route/ProductPackage→Ancillary paths block composition and expose source records.
+- Added streamed A2UI MarketingStage cards with charts, tables, evidence paths, source expansion, scenario controls and reviewable draft task creation.
+- Added regression coverage for cross-domain filtering, time/version boundaries, tenant isolation, missing ontology relations, A2UI streaming and draft projection.
+
+## v3.18 - 2026-10-12
+
+- Added atomic versioned dataset import, complete source-record storage, tenant-scoped data catalog and indexed detail queries.
+- Projected imported aviation records into the registered ontology, with source references and explicit crawled/synthetic boundaries.
+- Added data catalog/detail dialogs, full ontology search and bounded neighborhood inspection, and imported product catalog records.
+- Added dataset and customer-segment statistics for Dongdong A2UI charts; bounded graph and ontology tool queries for large imports.
+- Added import idempotency, rollback, source-preservation and tenant-isolation regression coverage.
+
 ## v3.17 - 2026-10-10
 
 - Added four competition cases, explicit simulated business date, aggregate persona changes, demand scoring evidence, import outcome examples, and channel timing rationale.
