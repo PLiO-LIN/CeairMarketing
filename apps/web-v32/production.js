@@ -1916,7 +1916,7 @@ function mountMarketingAssistantV2(){
     if(q('#marketingAssistant')) q('#marketingAssistant').remove();
     const root=document.createElement('div');
     root.id='marketingAssistant';
-    root.innerHTML=`<button class="assistant-fab" title="打开东东" aria-label="打开东东"><img class="assistant-fab-mark" src="./brand/dongdong-robot.svg" alt=""><span>东东</span></button>
+    root.innerHTML=`<button class="assistant-fab" title="打开东东AI助理" aria-label="打开东东AI助理"><img class="assistant-fab-mark" src="./brand/3d/ceair-symbol-3d-rotate.webp" alt="东航 3D 标志"><span class="assistant-fab-label">东东AI助理</span></button>
       <section class="assistant-panel" hidden aria-label="东东对话框">
         <header class="assistant-drag-handle">
           <div class="assistant-title"><div><b>东东</b><button class="assistant-history-button" type="button" data-assistant-history>历史</button></div></div>
@@ -1936,15 +1936,25 @@ function mountMarketingAssistantV2(){
     const readLayout=()=>{try{return JSON.parse(localStorage.getItem(stateKey)||'{}')}catch{return {}}};
     const saveLayout=()=>{if(panel.classList.contains('is-docked'))return;const panelRect=panel.getBoundingClientRect(),fabRect=fab.getBoundingClientRect();localStorage.setItem(stateKey,JSON.stringify({panel:{left:panelRect.left,top:panelRect.top,width:panelRect.width,height:panelRect.height},fab:{left:fabRect.left,top:fabRect.top},collapsed:panel.classList.contains('is-collapsed')}));};
     const clamp=(value,min,max)=>Math.min(Math.max(value,min),Math.max(min,max));
-    const positionElement=(element,left,top)=>{const rect=element.getBoundingClientRect();element.style.right='auto';element.style.bottom='auto';element.style.left=clamp(left,8,window.innerWidth-rect.width-8)+'px';element.style.top=clamp(top,8,window.innerHeight-rect.height-8)+'px';};
+    const positionElement=(element,left,top)=>{const rect=element.getBoundingClientRect();element.style.setProperty('right','auto','important');element.style.setProperty('bottom','auto','important');element.style.setProperty('left',clamp(left,8,window.innerWidth-rect.width-8)+'px','important');element.style.setProperty('top',clamp(top,8,window.innerHeight-rect.height-8)+'px','important');};
     const restoreLayout=()=>{const state=readLayout();if(state.panel){panel.style.width=clamp(Number(state.panel.width)||410,340,Math.max(340,window.innerWidth-16))+'px';panel.style.height=clamp(Number(state.panel.height)||640,360,Math.max(360,window.innerHeight-16))+'px';positionElement(panel,Number(state.panel.left)||24,Number(state.panel.top)||24);}if(state.fab)positionElement(fab,Number(state.fab.left)||window.innerWidth-160,Number(state.fab.top)||window.innerHeight-72);if(state.collapsed)panel.classList.add('is-collapsed');};
     let suppressFabClick=false;
     const makeDraggable=(handle,target,isFab=false)=>{
-      handle.addEventListener('pointerdown',event=>{if(event.button!==0||event.target.closest('button')&&!isFab)return;const rect=target.getBoundingClientRect(),originX=event.clientX,originY=event.clientY;let moved=false;target.style.right='auto';target.style.bottom='auto';target.style.left=rect.left+'px';target.style.top=rect.top+'px';handle.setPointerCapture(event.pointerId);target.classList.add('is-dragging');
-        const move=moveEvent=>{const dx=moveEvent.clientX-originX,dy=moveEvent.clientY-originY;if(Math.abs(dx)+Math.abs(dy)>5)moved=true;positionElement(target,rect.left+dx,rect.top+dy);};
-        const end=()=>{handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',end);handle.removeEventListener('pointercancel',end);target.classList.remove('is-dragging');if(isFab&&moved)suppressFabClick=true;saveLayout();};
-        handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);
-      });
+      let active=false;
+      const start=(event,type)=>{
+        if(active||(!['touch'].includes(type)&&event.button!==undefined&&event.button!==0)||event.target.closest('button')&&!isFab)return;
+        const point=type==='touch'?event.touches[0]:event;if(!point)return;event.preventDefault();active=true;
+        const rect=target.getBoundingClientRect(),originX=point.clientX,originY=point.clientY;let moved=false;
+        target.style.setProperty('right','auto','important');target.style.setProperty('bottom','auto','important');target.style.left=rect.left+'px';target.style.top=rect.top+'px';
+        if(type==='pointer'){try{handle.setPointerCapture?.(event.pointerId);}catch{}}
+        target.classList.add('is-dragging');
+        const move=moveEvent=>{if(!active)return;const p=type==='touch'?moveEvent.touches[0]:moveEvent;if(!p)return;moveEvent.preventDefault?.();const dx=p.clientX-originX,dy=p.clientY-originY;if(Math.abs(dx)+Math.abs(dy)>5)moved=true;positionElement(target,rect.left+dx,rect.top+dy);};
+        const end=()=>{if(!active)return;active=false;window.removeEventListener(type==='pointer'?'pointermove':type==='touch'?'touchmove':'mousemove',move);window.removeEventListener(type==='pointer'?'pointerup':type==='touch'?'touchend':'mouseup',end);window.removeEventListener('pointercancel',end);target.classList.remove('is-dragging');if(isFab&&moved)suppressFabClick=true;saveLayout();};
+        window.addEventListener(type==='pointer'?'pointermove':type==='touch'?'touchmove':'mousemove',move,{passive:false});window.addEventListener(type==='pointer'?'pointerup':type==='touch'?'touchend':'mouseup',end,{once:true});window.addEventListener('pointercancel',end,{once:true});
+      };
+      handle.addEventListener('pointerdown',event=>start(event,'pointer'));
+      handle.addEventListener('mousedown',event=>start(event,'mouse'));
+      handle.addEventListener('touchstart',event=>start(event,'touch'),{passive:false});
     };
     const setCollapsed=collapsed=>{panel.classList.toggle('is-collapsed',collapsed);collapseButton.innerHTML='<i data-lucide="'+(collapsed?'chevron-up':'minus')+'"></i>';collapseButton.setAttribute('aria-label',collapsed?'展开对话框':'折叠对话框');collapseButton.title=collapsed?'展开':'折叠';if(window.lucide)lucide.createIcons();saveLayout();};
     const conversation=[];
@@ -2009,7 +2019,7 @@ function mountMarketingAssistantV2(){
       finally{streaming?.remove();answer.classList.remove('is-streaming');form.dataset.busy='';input.disabled=false;submitButton.disabled=false;stopButton.hidden=true;currentRequest=null;if(!panel.hidden)input.focus();messages.scrollTop=messages.scrollHeight;}
     };
     workspace=window.createAssistantWorkspace(panel,{request,escapeHtml,bindModal:bindProductionModal,toast,navigate:page=>window.activate?.(page),busy:()=>!!form.dataset.busy,focus:()=>input.focus(),conversationId:()=>conversationId,setConversation:(id,history)=>{conversationId=id;conversation.splice(0,conversation.length,...history);setLive('就绪');},refreshBusiness:loadTenantData});
-    fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}panel.hidden=!panel.hidden;if(!panel.hidden){restoreLayout();setCollapsed(false);input.focus();}});
+    fab.addEventListener('click',()=>{if(suppressFabClick){suppressFabClick=false;return;}if(typeof window.activate==='function'){window.activate('smartspace');}else{setDocked?.('smartspace');}});
     q('[data-assistant-history]',root).addEventListener('click',()=>workspace.show());
     q('[data-assistant-close]',root).addEventListener('click',()=>{panel.hidden=true;saveLayout();});
     collapseButton.addEventListener('click',()=>setCollapsed(!panel.classList.contains('is-collapsed')));

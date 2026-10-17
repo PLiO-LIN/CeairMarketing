@@ -181,6 +181,13 @@ body.preview-ui #marketingAssistant .assistant-fab::before, body.preview-ui #mar
 body.preview-ui #marketingAssistant .assistant-fab-mark { width: 36px; height: 36px; filter: none; animation: none; }
 body.preview-ui #marketingAssistant .assistant-fab > span { display: none; }
 
+/* 3D 东航标志直接悬浮，去掉旧的白色圆形外框；尺寸为原 72px 悬浮窗的三倍。 */
+body.preview-ui #marketingAssistant .assistant-fab { width: 108px; min-width: 108px; height: 132px; min-height: 132px; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; touch-action: none; cursor: grab; }
+body.preview-ui #marketingAssistant .assistant-fab { pointer-events: auto !important; position: fixed; }
+body.preview-ui #marketingAssistant .assistant-fab.is-dragging { cursor: grabbing; }
+body.preview-ui #marketingAssistant .assistant-fab-mark { width: 96px; height: 96px; filter: none; }
+body.preview-ui #marketingAssistant .assistant-fab > span.assistant-fab-label { display: block !important; margin-top: -1px; color: #17498f; background: transparent; font-size: 13px; font-weight: 700; line-height: 18px; white-space: nowrap; text-shadow: 0 1px 3px rgba(255,255,255,.9); pointer-events: none; }
+
 /* 实时与历史消息采用相同的气泡结构，按内容收高。 */
 .assistant-panel .assistant-message.user,
 .assistant-panel .assistant-message.user > .assistant-user-body,
